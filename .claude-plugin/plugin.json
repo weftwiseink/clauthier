@@ -1,0 +1,10 @@
+{
+  "name": "cdocs",
+  "description": "Documentation framework for organizing development work with structured devlogs, proposals, reviews, and reports.",
+  "version": "0.1.0",
+  "author": {
+    "name": "weftwiseink"
+  },
+  "repository": "https://github.com/weftwiseink/cdocs",
+  "license": "MIT"
+}
