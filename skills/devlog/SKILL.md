@@ -33,14 +33,15 @@ Fill in:
 
 All devlogs should include an Objective, Plan, and Verification section.
 Most devlogs should include the other sections as well, but use your judgement (a quick config change doesn't need a debugging process section).
-You may also include novel sections not specified - use your judgement and think critically about what best documents the work.
+You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.
   - Skipping test-first for prototyping? Acknowledge it: "Rapid prototyping without test-first, will add coverage after."
-- **Implementation Notes:** Technical decisions (why, not what) and issues solved.
-- **Debugging Process** (if bug fix): Systematic debugging using the 4-phase approach below.
+  > NOTE: _Strongly_ lean away from skipping testing or relying on manual testing.
+- **Implementation Notes:** Technical decisions (why, brief summaries of what) and issues solved.
+- **Debugging Process:** Systematic debugging using the 4-phase approach below.
 - **Changes Made:** Table of files modified/created with brief descriptions.
 - **Testing:** Build verification and test results.
 - **Screenshots:** Visual changes with captions. Save to `cdocs/_media/YYYY-MM-DD_description.png`.
@@ -85,6 +86,10 @@ No completion claims without pasted evidence.
 - Screenshot or description of actual behavior.
 - For UI changes: before/after screenshots.
 
+Remember:
+- A task is not complete until its been fully tested and the test output has been verified.
+- Incomplete or deferred work, while best avoided, _must at least_ be surfaced at a high-level so it isn't buried or forgotten about. 
+
 ## Parallel Agent Documentation
 
 When dispatching parallel agents for multi-failure debugging, document in "Issues Encountered and Solved":
@@ -101,8 +106,12 @@ When dispatching parallel agents for multi-failure debugging, document in "Issue
 ## Best Practices
 
 - Start the devlog when beginning work. Update as you go, not at the end.
-- Be concise but detailed on decisions. Explain WHY, not just what.
-- Include code snippets for key changes.
+- Be concise but sufficiently detailed on decisions. Explain WHY, not just what.
 - Note what didn't work and why.
 - Make the devlog the single source of truth for the work session.
 - Ensure the devlog contains enough context for another agent to resume the work.
+
+## Handoff devlogs
+
+Some work prepped from the initial planner or an earlier implementer with context and references to earlier docs.
+When these are written and read, it should be kept in mind that they should _not_ try to cover every point themselves, but _should_ provide enough context and references to do so as needed.

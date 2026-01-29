@@ -7,11 +7,20 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 
 # CDocs Report
 
-Generate a structured report.
-
 This is a **deliverable skill**: the user explicitly requests a report.
+
+Research and produce a structured report on a given topic.
+Topics may be:
+- Library and architecture research in preparation for writing a proposal.
+- Analysis and synthesis of patterns in the codebase.
+- Assessment of the current status of a specific line of work.
+- The result of some analysis or investigation such as performance testing, profiling, or a spike/prototype.
+- Any other ad-hoc work that fits the broad exploration/synthesis model.
+
+Reports might optionally result in some suggestions, but they are usually less conclusive than a decision proposal and should be framed as reference recommendations for deeper consideration of all options (ie, maybe the report is part of a series done on each option)
+
 Reports are audience-facing documents that summarize findings, status, or analysis.
-They differ from devlogs: reports answer "what did we learn/accomplish?" - devlogs answer "how did we do the work?"
+They differ from devlogs: reports answer "what did we learn/accomplish?" while devlogs answer "how did we do the work?"
 
 ## Invocation
 
@@ -20,19 +29,6 @@ They differ from devlogs: reports answer "what did we learn/accomplish?" - devlo
 3. Determine today's date.
 4. Create `cdocs/reports/YYYY-MM-DD_topic.md` using the template below.
 5. If `cdocs/reports/` doesn't exist, suggest running `/cdocs:init` first.
-
-## Report Subtypes
-
-A single flexible template supports all subtypes.
-Include type-specific optional sections as relevant.
-
-| Subtype | When to Use | Key Focus |
-|---------|-------------|-----------|
-| **Status** | Regular cadence updates (weekly, sprint, milestone) | Accomplishments, blockers, next steps |
-| **Investigation** | Technical feasibility, performance analysis, root cause | Findings, analysis, recommendations |
-| **Incident** | After system failures or production issues | Timeline, impact, root cause, prevention |
-| **Audit** | Code quality, dependency, compliance reviews | Scope, methodology, severity ratings |
-| **Retrospective** | End of sprint, project, or work arc | What went well, what didn't, improvements |
 
 ## Template
 
@@ -46,44 +42,17 @@ Fill in:
 
 ## Core Sections
 
-All reports should include a BLUF and key findings. Most reports should include the other core sections as well, but use your judgement (a brief status update doesn't need a full analysis section).
-You may also include novel sections not specified - use your judgement and think critically about what best serves the report's audience.
+All reports should include a BLUF and key findings.
+Most reports should include the other core sections as well, but use your judgement.
+Most reports should also include custom sections specific to the topic.
 
 - **> BLUF:** 2-4 sentences: what, why, key finding, main recommendation.
 - **Context / Background:** What prompted this report, relevant history.
 - **Key Findings:** Bulleted discoveries, data, observations.
-- **Analysis:** Interpretation of findings, implications.
-- **Recommendations:** Prioritized action items with owners where applicable.
+- As many detailed sections as applicable for the topic
+- **Recommendations:** if any
 
-## Optional Sections (By Subtype)
-
-### Status Reports
-- **Accomplishments this period**
-- **Blockers / Risks**
-- **Plan for next period**
-- **Metrics / KPIs**
-
-### Investigation / Analysis Reports
-- **Methodology:** How the investigation was conducted.
-- **Data:** Raw data, measurements, benchmarks.
-- **Alternatives considered**
-
-### Incident Reports
-- **Timeline of events:** Chronological sequence.
-- **Impact assessment:** Users affected, duration, severity.
-- **Root cause**
-- **Preventive measures:** What changes prevent recurrence.
-
-### Audit Reports
-- **Scope and methodology**
-- **Compliance checklist**
-- **Severity ratings** for findings
-- **Remediation deadlines**
-
-### Retrospectives
-- **What went well**
-- **What didn't go well**
-- **Action items for improvement**
+Remember: reports are rather freeform by default and should be tailored to the task at hand.
 
 ## Reports vs. Devlogs
 
