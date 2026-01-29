@@ -36,7 +36,8 @@ Add slashes for subprojects: `NOTE(mjr/cdocs/hooks)`.
 ## History-Agnostic Framing
 
 - Frame documents in present tense as if the current state has always been the state.
-- Don't reference "previously", "now updated", "added in this version", "old approach".
+- Don't reference "previously", "now updated", "added in this version", "old approach" in the test of the document.
+- If a change is very very imporant, the _previous_ approach can be put in a qualifying `> NOTE` callout.
 - Exception: Devlogs document chronological work. Proposals may reference prior approaches in NOTE() callouts.
 
 ## Commentary Decoupling

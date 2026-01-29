@@ -30,18 +30,20 @@ Fill in:
 - `type: proposal`, `state: live`, `status: wip`.
 - Tags relevant to the proposal.
 
-## Required Sections
+## Sections
 
-Each proposal must include:
+All proposals should always include a BLUF, and almost always an objective and background section.
+Most proposals should include the other sections as well, but use your judgement (ie a high-level architecture proposal does not need unit test plans).
+You may also include novel sections not specified - again, use your judgement and think critically to the best of your ability when crafting the proposal.
 
-- **BLUF** -- Bottom line summary at top. Must clearly state the approach without surprises and line up with the final settled approach. Reference the most important sources.
-- **Objective** -- Problem or improvement goal.
-- **Background** -- Important docs, links, prior art. Context needed to understand the proposal.
-- **Proposed Solution** -- Architecture or approach. The core of the proposal.
-- **Important Design Decisions** -- Each decision with "Decision" and "Why" subsections. Explain rationale, not just the choice.
-- **Edge Cases / Challenging Scenarios** -- What could go wrong, how to handle it.
-- **Test Plan** -- Test examples and verification strategies considering the edge cases above.
-- **Implementation Phases** -- Detailed but without time estimates. See guidance below.
+- **> BLUF:** Bottom line summary at top. Must clearly state the approach without surprises and line up with the final settled approach. Reference the most important sources.
+- **Objective:** Problem or improvement goal.
+- **Background:** Important docs, links, prior art. Context needed to understand the proposal.
+- **Proposed Solution:** Architecture or approach. The core of the proposal.
+- **Important Design Decisions:** Each decision with "Decision" and "Why" subsections. Explain rationale, not just the choice.
+- **Stories:** User or logical scenarios to consider
+- **Edge Cases:** What could go wrong, how to handle it.
+- **Phases:** Detailed unless otherwise requested, should usually include testing plans, should never include time estimates. More guidance below
 
 ## Implementation Phase Guidance
 
@@ -63,12 +65,14 @@ When the proposal has 5+ largely independent phases with clear success criteria:
 
 1. Start with the BLUF. Write it first, even if rough.
 2. Fill in Objective and Background for context.
-3. Design the Proposed Solution.
-4. Document Design Decisions as they arise.
-5. Consider Edge Cases against the solution.
-6. Write the Test Plan informed by edge cases.
-7. Break the solution into Implementation Phases.
-8. Revisit and refine the BLUF to match the final approach.
+3. Explore and consider possible approaches if applicable.
+4. For decision proposals, stay at a medium level of depth, analyze options, and recommend a decision/approach.
+5. For implementation proposals:
+   - Break the solution into phases.
+   - Write test plan and acceptance criteria for each phase.
+   - Consider edge cases and refine the above based on them.
+6. Reviewing the author checklist
+7. Revisit and refine the BLUF and frontmatter based on completed draft.
 
 ## Author Checklist
 
@@ -78,10 +82,16 @@ Before marking status as `review_ready`:
 - [ ] Technical decisions explain "why" not just "what."
 - [ ] Follow writing conventions: critical/detached analysis, brevity, commentary decoupled from technical content.
 - [ ] NOTE/TODO/WARN callouts added where future readers need context.
-- [ ] With fresh eyes, review whether someone unfamiliar with the context could follow the proposal.
+- [ ] With fresh eyes, review:
+  - [ ] whether someone unfamiliar with the context could follow the proposal.
+  - [ ] whether there is anything inconsitent or missing from the initial draft.
 
-## Notes
+> NOTE: "Review" here is not a full-fledged review doc or worthy of frontmatter, but rather a professional courtesy to make the review process easier.
 
-- Proposals should only be altered on explicit request. Don't modify an existing proposal unless asked.
-- Design changes post-authoring should be noted in NOTE callouts, not by rewriting.
+## Revisions
+
+When revising a proposal:
+- Per our writing convention, proposals should retain History-Agnostic Framing, with past states only mentioned in `> NOTE` callouts if at all.
 - Proposals with `status: evolved` have been superseded by a follow-up proposal.
+  This approach should be preferred when a proposal is already being worked on.
+- An ammended proposal MUST be returned to `status: review_ready`.
