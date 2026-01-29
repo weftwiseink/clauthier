@@ -50,3 +50,22 @@ Created plugin manifest, 3 rule files, and init skill.
 - SKILL.md absorbs full README content: required sections, implementation phase guidance (standard + subagent-driven), author checklist.
 - Added a "Drafting Approach" section with recommended authoring order (BLUF first, revisit at end).
 - Template provides frontmatter + all required section headers.
+
+### Phase 3: Research Skills
+
+Researched best practices for document reviews and reports before building.
+
+**Review skill (`skills/review/`):**
+- Deliverable skill. Structure drawn from code review and architecture review processes.
+- Verdict taxonomy: accept, revise, reject. Kept simple -- extended categories (accept-with-conditions, defer, superseded) deferred as they add complexity without clear value yet.
+- Multi-round review handling: subsequent rounds reference prior reviews, track resolution of action items, update round counter.
+- Action items use `[blocking]`/`[non-blocking]` prefix for clear prioritization.
+- "What Makes a Good Review" section: specific references, reasoning over impressions, alternatives when rejecting.
+- Review updates the target doc's `last_reviewed` frontmatter (verdict -> status mapping specified).
+
+**Report skill (`skills/report/`):**
+- Deliverable skill. Single flexible template with type-specific optional sections (vs. separate templates per subtype).
+- 5 subtypes identified: status, investigation, incident, audit, retrospective. Each has optional sections.
+- Decision: one template because subtypes share core structure (BLUF, findings, analysis, recommendations) and separate templates would proliferate without proportional value.
+- Explicit "Reports vs. Devlogs" comparison table to clarify when to use which.
+- Reports are audience-facing and conclusions-focused; devlogs are implementer-facing and process-focused.
