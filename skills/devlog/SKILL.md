@@ -2,22 +2,22 @@
 name: devlog
 description: Create and scaffold a development log for the current work session
 argument-hint: "[feature_name]"
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # CDocs Devlog
 
 Create a development log for the current work session.
 
-This is an **infrastructure skill**: Claude should auto-invoke it when starting substantive work (triggered by the "always create a devlog" writing convention).
-The user can also invoke it directly via `/cdocs:devlog feature_name`.
+**Usage:** Claude should auto-invoke this skill when starting substantive work (triggered by the "always create a devlog" writing convention).
+The user can also invoke it directly.
+Model auto-invocation is the most common entry point.
 
 ## Invocation
 
 1. If `$ARGUMENTS` provides a feature name, use it. Otherwise, infer from context or prompt the user.
 2. Determine today's date.
 3. Create `cdocs/devlogs/YYYY-MM-DD_feature_name.md` using the template below.
-4. If `cdocs/devlogs/` doesn't exist, suggest running `/cdocs:init` first.
+4. If `cdocs/devlogs/` doesn't exist, suggest running `/cdoc:init` first.
 
 ## Template
 

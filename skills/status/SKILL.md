@@ -2,37 +2,36 @@
 name: status
 description: Query and manage CDocs document metadata (status, state, tags, filters)
 argument-hint: "[filter or path] [--update status=value]"
-allowed-tools: Glob, Read, Edit
 ---
 
 # CDocs Status
 
 Query and manage CDocs document metadata.
 
-This is an **infrastructure skill**, used to inspect and update the document corpus.
+**Usage:** User-invoked for doc inventory and metadata updates. Claude may also auto-invoke to check document state when relevant to ongoing work.
 Provides a lightweight "docs as DB" interface over `cdocs/` frontmatter.
 
 ## Invocation Modes
 
 ### List all documents
 ```
-/cdocs:status
+/cdoc:status
 ```
 Scan all `cdocs/**/*.md` files (excluding READMEs), parse frontmatter, and display a summary table.
 
 ### Filter documents
 ```
-/cdocs:status --type=proposal
-/cdocs:status --status=wip
-/cdocs:status --state=live --type=devlog
-/cdocs:status --tag=architecture
+/cdoc:status --type=proposal
+/cdoc:status --status=wip
+/cdoc:status --state=live --type=devlog
+/cdoc:status --tag=architecture
 ```
 Apply filters to narrow the results. Multiple filters are AND-combined.
 
 ### Update a document's metadata
 ```
-/cdocs:status cdocs/proposals/2026-01-29_topic.md --update status=review_ready
-/cdocs:status cdocs/proposals/2026-01-29_topic.md --update state=archived
+/cdoc:status cdocs/proposals/2026-01-29_topic.md --update status=review_ready
+/cdoc:status cdocs/proposals/2026-01-29_topic.md --update state=archived
 ```
 Update a specific document's frontmatter field.
 

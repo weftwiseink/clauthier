@@ -28,7 +28,7 @@ Author the foundational proposal for reworking the CDocs repo into a Claude Code
 ### Key architectural decision: full plugin over bare skills
 
 Bare `.claude/skills/` would work for single-project use, but the plan explicitly targets distributable, reusable tooling.
-A plugin (`.claude-plugin/plugin.json`) gives namespaced commands (`/cdocs:devlog`), bundled hooks and rules, and a versioned manifest.
+A plugin (`.claude-plugin/plugin.json`) gives namespaced commands (`/cdoc:devlog`), bundled hooks and rules, and a versioned manifest.
 
 ### Skills absorb READMEs
 
@@ -62,7 +62,7 @@ These are documented in the proposal for future expansion.
 
 Fresh-eyes review surfaced 9 action items. Key issues:
 
-1. **Devlog skill misclassified.** Devlogs are work infrastructure (Claude-auto-invoked), not user-requested deliverables. The proposal treats `/cdocs:devlog` identically to `/cdocs:proposal`, but the invocation model is fundamentally different. The "always create a devlog" rule should be the trigger - the skill is the mechanism.
+1. **Devlog skill misclassified.** Devlogs are work infrastructure (Claude-auto-invoked), not user-requested deliverables. The proposal treats `/cdoc:devlog` identically to `/cdoc:proposal`, but the invocation model is fundamentally different. The "always create a devlog" rule should be the trigger - the skill is the mechanism.
 2. **CLAUDE.md migration table moves general patterns into type-specific skills.** "Dispatching Parallel Agents" and "Subagent-Driven Development" are workflow-general, not devlog/proposal-specific. They should stay as rules.
 3. **No distribution story.** The proposal designs a plugin but never explains how users install it. Chicken-and-egg with the init skill.
 4. **README removal loses plugin-less fallback.** Without READMEs, `cdocs/` is opaque to non-plugin users and GitHub readers.

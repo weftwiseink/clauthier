@@ -2,7 +2,6 @@
 name: init
 description: Scaffold CDocs directory structure in a project
 argument-hint: "[--minimal]"
-allowed-tools: Bash, Read, Write, Edit, Glob
 ---
 
 # CDocs Init
@@ -21,7 +20,7 @@ Scaffold the CDocs documentation structure in the current project.
 2. Generate a lightweight README.md in each document subdir with:
    - A brief description of the doc type's purpose.
    - A format summary (required sections, naming convention).
-   - A reference to the full skill: "See `/cdocs:<type>` for complete authoring guidelines."
+   - A reference to the full skill: "See `/cdoc:<type>` for complete authoring guidelines."
 
 3. Create or update `.claude/rules/cdocs.md` with core CDocs writing conventions.
    If `.claude/rules/` doesn't exist, create it.
@@ -37,7 +36,7 @@ Scaffold the CDocs documentation structure in the current project.
 # Development Logs
 
 Detailed logs of development work.
-See `/cdocs:devlog` for complete authoring guidelines.
+See `/cdoc:devlog` for complete authoring guidelines.
 
 **Naming:** `YYYY-MM-DD_feature_name.md`
 
@@ -49,7 +48,7 @@ See `/cdocs:devlog` for complete authoring guidelines.
 # Proposals
 
 Design and solution proposals.
-See `/cdocs:proposal` for complete authoring guidelines.
+See `/cdoc:propose` for complete authoring guidelines.
 
 **Naming:** `YYYY-MM-DD_topic.md`
 
@@ -61,7 +60,7 @@ See `/cdocs:proposal` for complete authoring guidelines.
 # Reviews
 
 Document reviews with structured findings and verdicts.
-See `/cdocs:review` for complete authoring guidelines.
+See `/cdoc:review` for complete authoring guidelines.
 
 **Naming:** `YYYY-MM-DD_review_of_{doc_name}.md`
 
@@ -73,7 +72,7 @@ See `/cdocs:review` for complete authoring guidelines.
 # Reports
 
 Findings, status updates, and analysis.
-See `/cdocs:report` for complete authoring guidelines.
+See `/cdoc:report` for complete authoring guidelines.
 
 **Naming:** `YYYY-MM-DD_topic.md`
 

@@ -14,34 +14,34 @@ git clone https://github.com/weftwiseink/cdocs ~/.claude/cdocs-plugin
 claude --plugin-dir ~/.claude/cdocs-plugin
 
 # Option B: Enable in user settings (~/.claude/settings.json)
-# "enabledPlugins": { "cdocs": true }
+# "enabledPlugins": { "cdoc": true }
 ```
 
 ## Quick Start
 
 ```
-/cdocs:init              # Scaffold cdocs/ in your project
-/cdocs:devlog my_feature # Create a devlog (also auto-created by Claude)
-/cdocs:proposal my_topic # Author a design proposal
-/cdocs:review path/to/doc.md  # Review a document
-/cdocs:report my_topic   # Generate a report
-/cdocs:status            # List all docs with metadata
-/cdocs:status --type=proposal --status=wip  # Filter docs
+/cdoc:init              # Scaffold cdocs/ in your project
+/cdoc:devlog my_feature # Create a devlog (also auto-created by Claude)
+/cdoc:propose my_topic # Author a design proposal
+/cdoc:review path/to/doc.md  # Review a document
+/cdoc:report my_topic   # Generate a report
+/cdoc:status            # List all docs with metadata
+/cdoc:status --type=proposal --status=wip  # Filter docs
 ```
 
 ## Skills
 
-| Skill | Type | Description |
-|-------|------|-------------|
-| `/cdocs:init` | Infrastructure | Scaffold `cdocs/` directory structure in a project |
-| `/cdocs:devlog` | Infrastructure | Create a development log (auto-invoked by Claude on substantive work) |
-| `/cdocs:proposal` | Deliverable | Author a design proposal with structured sections |
-| `/cdocs:review` | Deliverable | Review a document with findings and verdict |
-| `/cdocs:report` | Deliverable | Generate a report (status, investigation, incident, audit, retrospective) |
-| `/cdocs:status` | Infrastructure | Query and manage document metadata |
+| Skill | Description |
+|-------|-------------|
+| `/cdoc:init` | Scaffold `cdocs/` directory structure in a project |
+| `/cdoc:devlog` | Create a development log |
+| `/cdoc:propose` | Author a design proposal with structured sections |
+| `/cdoc:review` | Review a document with findings and verdict |
+| `/cdoc:report` | Generate a report (status, investigation, incident, audit, retrospective) |
+| `/cdoc:status` | Query and manage document metadata |
 
-**Infrastructure skills** are auto-invoked by Claude or used for system management.
-**Deliverable skills** are explicitly requested by the user.
+Any skill can be invoked by the user or auto-invoked by Claude depending on context.
+Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
 
 ## Rules
 

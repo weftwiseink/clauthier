@@ -48,7 +48,7 @@ Use for structured execution of complex implementation plans with 5+ tasks.
 Before completing any task, review:
 
 1. Check relevant checklists for the type of work completed.
-   - **Proposals**: See the proposal skill for the author checklist.
+   - **Proposals**: See the propose skill for the author checklist.
    - **Devlogs**: Ensure devlog contains sufficient context for work resumption.
    - **Documentation**: Final pass for NOTE(), TODO(), WARN() callouts.
 2. Verify adherence to communication guidelines (BLUF, brevity, critical analysis).

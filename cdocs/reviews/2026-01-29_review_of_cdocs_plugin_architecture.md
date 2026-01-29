@@ -25,17 +25,17 @@ The 10-phase implementation plan is over-decomposed for what is predominantly a 
 
 ### Devlog as a skill: category mismatch
 
-The proposal treats `/cdocs:devlog` identically to `/cdocs:proposal`, a user-invoked command that creates a document.
+The proposal treats `/cdoc:devlog` identically to `/cdoc:proposal`, a user-invoked command that creates a document.
 This misses the fundamental difference in how devlogs work versus other doc types:
 
 - **Proposal, review, report:** The user explicitly requests a deliverable. "Write me a proposal about X." Skill invocation is the natural entry point.
-- **Devlog:** The user requests *work*. "Fix the auth bug." The devlog is infrastructure that Claude creates as a side effect of doing the work. The user should not need to invoke `/cdocs:devlog` - it should happen automatically.
+- **Devlog:** The user requests *work*. "Fix the auth bug." The devlog is infrastructure that Claude creates as a side effect of doing the work. The user should not need to invoke `/cdoc:devlog` - it should happen automatically.
 
 The current CLAUDE.md encodes this correctly: "IMPORTANT: Always create a devlog" is a *rule*, not a command.
 The devlog skill is still useful as a scaffolding utility that Claude auto-invokes, but the proposal should:
 1. Distinguish between **deliverable skills** (proposal, review, report: user-invoked) and **infrastructure skills** (devlog: Claude-auto-invoked, user-invocable as fallback).
 2. Make the "always create a devlog" rule the *trigger*, with the skill as the *mechanism*.
-3. Consider whether the skill should default to `disable-model-invocation: false` + document that Claude auto-invokes it, rather than presenting it as a peer of `/cdocs:proposal`.
+3. Consider whether the skill should default to `disable-model-invocation: false` + document that Claude auto-invokes it, rather than presenting it as a peer of `/cdoc:proposal`.
 
 This isn't a fatal flaw (the skill can work both ways), but the proposal's framing conflates two different usage patterns.
 
@@ -46,15 +46,15 @@ The migration table moves general workflow patterns into type-specific skills:
 | Section | Proposed destination | Problem |
 |---------|---------------------|---------|
 | "Dispatching Parallel Agents" | `skills/devlog/SKILL.md` | Parallel agent dispatch is a general debugging workflow, not a devlog format concern. You dispatch agents when fixing bugs, not when writing devlogs. |
-| "Subagent-Driven Development" | `skills/proposal/SKILL.md` | Subagent-driven development applies to any complex implementation, not just proposals. Proposals may *describe* subagent phases, but the workflow guidance applies at the project level. |
-| "Final Checklist Review" | Split between proposal skill and CLAUDE.md | The checklist applies to all work products, including devlogs and reports. Splitting it loses that. |
+| "Subagent-Driven Development" | `skills/propose/SKILL.md` | Subagent-driven development applies to any complex implementation, not just proposals. Proposals may *describe* subagent phases, but the workflow guidance applies at the project level. |
+| "Final Checklist Review" | Split between propose skill and CLAUDE.md | The checklist applies to all work products, including devlogs and reports. Splitting it loses that. |
 
 These should remain as rules (ambient context) or stay in CLAUDE.md.
 Moving them into type-specific skills means they're only loaded when that skill is invoked, not during general work.
 
 ### Plugin distribution: unaddressed chicken-and-egg
 
-The proposal says "any project can adopt CDocs by enabling the plugin and running `/cdocs:init`" but never explains how a project gets the plugin.
+The proposal says "any project can adopt CDocs by enabling the plugin and running `/cdoc:init`" but never explains how a project gets the plugin.
 This is the most important UX question for adoption and it's entirely absent.
 
 Options the proposal should evaluate:
@@ -77,7 +77,7 @@ Scenarios where this matters:
 
 The READMEs served as self-documenting fallbacks.
 The proposal should either:
-- Keep lightweight READMEs that reference the skill for full guidance (e.g., "See `/cdocs:devlog` skill for complete guidelines").
+- Keep lightweight READMEs that reference the skill for full guidance (e.g., "See `/cdoc:devlog` skill for complete guidelines").
 - Have the `init` skill generate format-guide READMEs in the project's `cdocs/` subdirs.
 - Accept this as a deliberate tradeoff and state it explicitly.
 

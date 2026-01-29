@@ -2,15 +2,13 @@
 name: review
 description: Review a CDocs document with structured findings and a verdict
 argument-hint: "<path_to_document>"
-allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 
 # CDocs Review
 
 Conduct a structured review of a CDocs document.
 
-This is a **deliverable skill**: the user explicitly requests a review.
-
+**Usage:** Typically user-invoked when a document needs evaluation. Claude may also suggest a review when a document reaches `review_ready` status.
 Reviews evaluate a document's quality, correctness, and completeness, producing findings and a verdict.
 
 > IMPORTANT: Doc Reviews should keep an eye our for any underconsidered sections, potential pitfalls, and points in need of clarification.
@@ -26,7 +24,7 @@ Reviews evaluate a document's quality, correctness, and completeness, producing 
 4. Determine today's date.
 5. Create `cdocs/reviews/YYYY-MM-DD_review_of_{doc_name}.md` using the template below.
 6. After writing the review, update the target document's `last_reviewed` frontmatter field.
-7. If `cdocs/reviews/` doesn't exist, suggest running `/cdocs:init` first.
+7. If `cdocs/reviews/` doesn't exist, suggest running `/cdoc:init` first.
 
 ## Template
 

@@ -2,12 +2,11 @@
 name: report
 description: Generate a structured report (status, analysis, incident, audit, or retrospective)
 argument-hint: "[topic]"
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # CDocs Report
 
-This is a **deliverable skill**: the user explicitly requests a report.
+**Usage:** Typically user-invoked when findings need to be documented. Claude may also suggest a report after completing research, analysis, or investigation work.
 
 Research and produce a structured report on a given topic.
 Topics may be:
@@ -28,7 +27,7 @@ They differ from devlogs: reports answer "what did we learn/accomplish?" while d
 2. Determine the report subtype (see below). If ambiguous, ask the user.
 3. Determine today's date.
 4. Create `cdocs/reports/YYYY-MM-DD_topic.md` using the template below.
-5. If `cdocs/reports/` doesn't exist, suggest running `/cdocs:init` first.
+5. If `cdocs/reports/` doesn't exist, suggest running `/cdoc:init` first.
 
 ## Template
 

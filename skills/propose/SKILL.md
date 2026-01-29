@@ -1,15 +1,14 @@
 ---
-name: proposal
+name: propose
 description: Author a design proposal with structured sections and implementation phases
 argument-hint: "[topic]"
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
-# CDocs Proposal
+# CDocs Propose
 
 Author a design proposal document.
 
-This is a **deliverable skill**: the user explicitly requests a proposal.
+**Usage:** Typically user-invoked when a design needs to be specified. Claude may also suggest creating a proposal when scoping complex work.
 Proposals specify designs and solutions, outlining implementation phases.
 They should retain a "timeless" quality: design changes are noted in NOTE callouts or by reference to another document, not by rewriting.
 
@@ -18,7 +17,7 @@ They should retain a "timeless" quality: design changes are noted in NOTE callou
 1. If `$ARGUMENTS` provides a topic, use it. Otherwise, prompt the user.
 2. Determine today's date.
 3. Create `cdocs/proposals/YYYY-MM-DD_topic.md` using the template below.
-4. If `cdocs/proposals/` doesn't exist, suggest running `/cdocs:init` first.
+4. If `cdocs/proposals/` doesn't exist, suggest running `/cdoc:init` first.
 
 ## Template
 

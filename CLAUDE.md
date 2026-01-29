@@ -18,6 +18,6 @@ Writing conventions, workflow patterns, frontmatter spec, and doc-type guideline
 - **Writing conventions**: `@rules/writing_conventions.md`
 - **Workflow patterns** (parallel agents, subagent dev, checklists): `@rules/workflow_patterns.md`
 - **Frontmatter spec**: `@rules/frontmatter_spec.md`
-- **Skills**: `skills/{devlog,proposal,review,report,status,init}/SKILL.md`
+- **Skills**: `skills/{devlog,propose,review,report,status,init}/SKILL.md`
 
 Test the plugin locally: `claude --plugin-dir .`

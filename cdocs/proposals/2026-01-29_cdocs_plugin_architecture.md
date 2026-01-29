@@ -17,8 +17,8 @@ tags: [architecture, claude_skills, plugin, future_work]
 # CDocs Plugin Architecture
 
 > BLUF: Package CDocs as a Claude Code plugin with six skills, shared rules, and a validation hook.
-> Skills split into two categories: **deliverable skills** (proposal, review, report) that the user explicitly invokes, and **infrastructure skills** (devlog, status, init) that Claude auto-invokes or that manage the system.
-> The "always create a devlog" directive stays as a rule (the trigger) - the devlog skill provides the scaffolding (the mechanism).
+> Any skill can be invoked by the user or auto-invoked by Claude depending on context.
+> The "always create a devlog" directive stays as a rule (the trigger); the devlog skill provides the scaffolding (the mechanism).
 > Existing README guidelines are absorbed into skills, but `init` generates lightweight READMEs in each `cdocs/` subdir for plugin-less discoverability.
 > v1 distribution: git clone + `claude --plugin-dir`.
 > Key sources: Claude Code plugin spec (`.claude-plugin/plugin.json`, skills, hooks, rules), existing `cdocs/` READMEs, `cdocs_plan.md`.
@@ -26,7 +26,7 @@ tags: [architecture, claude_skills, plugin, future_work]
 ## Objective
 
 Transform the current CDocs repo (a collection of markdown guidelines and directory scaffolding copied from a project) into a distributable Claude Code plugin.
-The plugin should encode document creation workflows, writing conventions, and formatting enforcement so that any project can adopt CDocs by installing the plugin and running `/cdocs:init`.
+The plugin should encode document creation workflows, writing conventions, and formatting enforcement so that any project can adopt CDocs by installing the plugin and running `/cdoc:init`.
 
 ## Background
 
@@ -56,7 +56,7 @@ cdocs/                                  # repo root = plugin root
 │   ├── devlog/
 │   │   ├── SKILL.md                    # creation workflow + guidelines
 │   │   └── template.md                 # frontmatter + section scaffold
-│   ├── proposal/
+│   ├── propose/
 │   │   ├── SKILL.md
 │   │   └── template.md
 │   ├── review/
@@ -102,7 +102,7 @@ git clone https://github.com/weftwiseink/cdocs ~/.claude/cdocs-plugin
 claude --plugin-dir ~/.claude/cdocs-plugin
 
 # Option B: Enable in user settings (~/.claude/settings.json)
-# Add: "enabledPlugins": { "cdocs": true }
+# Add: "enabledPlugins": { "cdoc": true }
 # With plugin path configured
 
 # Option C: Vendor into project (no external dependency)
@@ -112,29 +112,27 @@ cp -r ~/.claude/cdocs-plugin/rules .claude/rules
 ```
 
 Option A or B is recommended.
-Option C loses `/cdocs:` namespacing (skills become `/devlog`, `/proposal`, etc.) but works without plugin infrastructure.
+Option C loses `/cdoc:` namespacing (skills become `/devlog`, `/propose`, etc.) but works without plugin infrastructure.
 
 **Future:** Marketplace distribution via `marketplace.json` entry once the plugin stabilizes.
 
 ### Skills
 
-Skills fall into two categories based on invocation pattern:
+Any skill can be invoked by the user or auto-invoked by Claude depending on context.
+Expected usage patterns:
 
-**Deliverable skills:** the user explicitly requests a document:
-- `/cdocs:proposal`, `/cdocs:review`, `/cdocs:report`
-- User-invoked - Claude may also suggest them when relevant.
+- `/cdoc:devlog`: Most commonly auto-invoked by Claude when starting substantive work (triggered by the "always create a devlog" rule). User can also invoke directly.
+- `/cdoc:propose`: Typically user-invoked when a design needs specification. Claude may suggest it when scoping complex work.
+- `/cdoc:review`: Typically user-invoked. Claude may suggest it when a document reaches `review_ready`.
+- `/cdoc:report`: Typically user-invoked after research or analysis. Claude may suggest it after completing investigative work.
+- `/cdoc:status`: User-invoked for doc inventory. Claude may auto-invoke to check document state.
+- `/cdoc:init`: User-invoked to scaffold a new project.
 
-**Infrastructure skills:** Claude auto-invokes as part of normal work, or the user invokes for system management:
-- `/cdocs:devlog`: Claude auto-invokes when starting substantive work (triggered by the "always create a devlog" rule). User can also invoke manually.
-- `/cdocs:status`: User invokes for doc inventory - Claude may auto-invoke to check state.
-- `/cdocs:init`: User invokes to scaffold a new project.
+#### `/cdoc:devlog`: Create a development log
 
-#### `/cdocs:devlog`: Create a development log (infrastructure)
-
-- **User-invocable:** yes (also auto-invocable by Claude)
+- **User-invocable:** yes
 - **Argument hint:** `[feature_name]`
-- **SKILL.md frontmatter:** `disable-model-invocation: false` (default, explicit for clarity)
-- **Invocation model:** The `rules/writing_conventions.md` rule contains the "always create a devlog when starting substantive work" directive. This rule is the *trigger*. When Claude begins work that warrants a devlog, it invokes this skill as the *mechanism* to create the properly formatted file. The user can also invoke `/cdocs:devlog feature_name` directly.
+- **Expected usage:** Most commonly auto-invoked by Claude. The `rules/writing_conventions.md` rule contains the "always create a devlog when starting substantive work" directive. This rule is the *trigger*; the skill is the *mechanism*. The user can also invoke `/cdoc:devlog feature_name` directly.
 - **Behavior:**
   1. Determine date and feature name (from arg or prompt).
   2. Create `cdocs/devlogs/YYYY-MM-DD_feature_name.md` with frontmatter and section scaffold from `template.md`.
@@ -143,7 +141,7 @@ Skills fall into two categories based on invocation pattern:
   5. Return context instructing Claude to update the devlog as work proceeds (single source of truth).
 - **Skill instructions absorb:** `cdocs/devlogs/README.md` content (structure, best practices, verification requirements, debugging phases).
 
-#### `/cdocs:proposal`: Author a proposal (deliverable)
+#### `/cdoc:propose`: Author a proposal
 
 - **User-invocable:** yes
 - **Argument hint:** `[topic]`
@@ -153,24 +151,24 @@ Skills fall into two categories based on invocation pattern:
   3. Guide Claude through BLUF-first drafting, design decisions, implementation phases.
 - **Skill instructions absorb:** `cdocs/proposals/README.md` content (required sections, implementation phase guidance, author checklist).
 
-#### `/cdocs:review`: Review a document (deliverable)
+#### `/cdoc:review`: Review a document
 
 - **User-invocable:** yes
 - **Argument hint:** `<path_to_document>`
+- **Expected usage:** Typically user-invoked. Claude may suggest a review when a document reaches `review_ready`.
 - **Behavior:**
   1. Read the target document.
   2. Create `cdocs/reviews/YYYY-MM-DD_review_of_{doc_name}.md`.
   3. Set `review_of` frontmatter to the target path.
   4. Structure: summary assessment, section-by-section findings, verdict (accept/revise/reject), action items.
   5. Update target doc's `last_reviewed` field.
-- **Allowed tools:** `Read`, `Glob`, `Grep` (for reading context), `Write`, `Edit` (for creating review and updating target).
 
 > NOTE(claude-opus-4-5/plugin_architecture): Review structure needs research.
 > The current repo has no review README.
 > Phase 3 includes researching best practices for structured document reviews in Claude-assisted workflows.
 > Initial structure above is a reasonable starting point, but should be validated.
 
-#### `/cdocs:report`: Generate a report (deliverable)
+#### `/cdoc:report`: Generate a report
 
 - **User-invocable:** yes
 - **Argument hint:** `[topic]`
@@ -183,10 +181,11 @@ Skills fall into two categories based on invocation pattern:
 > Reports likely vary more than other types (status report vs. analysis report vs. audit).
 > Phase 3 includes researching report taxonomies and deciding whether subtypes warrant separate templates.
 
-#### `/cdocs:status`: Query and manage documents (infrastructure)
+#### `/cdoc:status`: Query and manage documents
 
-- **User-invocable:** yes (also auto-invocable by Claude)
+- **User-invocable:** yes
 - **Argument hint:** `[filter]`
+- **Expected usage:** User-invoked for doc inventory. Claude may auto-invoke to check state.
 - **Behavior:**
   1. Scan `cdocs/` for all `.md` files (excluding READMEs).
   2. Parse frontmatter from each.
@@ -201,13 +200,13 @@ Skills fall into two categories based on invocation pattern:
   For larger corpora, a frontmatter index file (`cdocs/.index.json`) maintained by the PostToolUse hook would avoid repeated full scans.
   Alternatively, promote the MCP server timeline if this becomes a bottleneck.
 
-#### `/cdocs:init`: Scaffold CDocs in a project (infrastructure)
+#### `/cdoc:init`: Scaffold CDocs in a project
 
 - **User-invocable:** yes
 - **Argument hint:** `[--minimal]`
 - **Behavior:**
   1. Create directory structure: `cdocs/{devlogs,proposals,reviews,reports,_media}/`.
-  2. Generate lightweight READMEs in each subdir with format summaries and a reference to the full skill (e.g., "See `/cdocs:proposal` for complete authoring guidelines"). These serve as fallback documentation for non-plugin users and GitHub readers.
+  2. Generate lightweight READMEs in each subdir with format summaries and a reference to the full skill (e.g., "See `/cdoc:propose` for complete authoring guidelines"). These serve as fallback documentation for non-plugin users and GitHub readers.
   3. Create a `.claude/rules/cdocs.md` rule file with core CDocs writing conventions, or append a CDocs section to the project's `CLAUDE.md`.
   4. Optionally enable the cdocs plugin in `.claude/settings.json`.
   5. `--minimal` flag skips rule file and README creation (bare directory structure only).
@@ -328,19 +327,10 @@ Post-migration, `CLAUDE.md` retains only:
 
 **Decision:** Full plugin (`.claude-plugin/plugin.json`).
 
-**Why:** A plugin gives us namespaced skills (`/cdocs:devlog` vs `/devlog`), bundled hooks and rules, a versioned manifest for distribution, and a clean boundary between CDocs concerns and project concerns.
+**Why:** A plugin gives us namespaced skills (`/cdoc:devlog` vs `/devlog`), bundled hooks and rules, a versioned manifest for distribution, and a clean boundary between CDocs concerns and project concerns.
 Bare skills in `.claude/skills/` would work for single-project use but don't distribute.
 
-### Deliverable vs. infrastructure skills
-
-**Decision:** Two skill categories with different invocation models.
-
-**Why:** Proposals, reviews, and reports are deliverables the user explicitly requests - user invocation is the natural entry point.
-Devlogs are work infrastructure that Claude creates automatically as a side effect of doing work.
-Treating them identically obscures this distinction.
-The devlog skill defaults to auto-invocable (Claude invokes it when the writing_conventions rule triggers), while deliverable skills wait for explicit user requests.
-
-### Skills absorb READMEs - init generates fallback READMEs
+### Skills absorb READMEs; init generates fallback READMEs
 
 **Decision:** Canonical guidelines move into `SKILL.md` files. The `init` skill generates lightweight READMEs in each `cdocs/` subdir.
 
@@ -421,7 +411,7 @@ They should be captured during implementation and may warrant additional skills 
 Testing is primarily manual/interactive given the skill-based nature:
 
 1. **Skill invocation:** For each skill, verify it creates a correctly named file with valid frontmatter and complete section scaffolding.
-2. **Devlog auto-invocation:** Start a substantive task without explicitly invoking `/cdocs:devlog` -> verify Claude creates one automatically.
+2. **Devlog auto-invocation:** Start a substantive task without explicitly invoking `/cdoc:devlog` -> verify Claude creates one automatically.
 3. **Frontmatter validation hook:** Write a cdocs file with missing frontmatter -> verify warning appears in context. Write a non-cdocs file -> verify no warning.
 4. **Status skill:** Create several docs with varied states -> verify status output is accurate and filterable.
 5. **Init skill:** Run in a clean directory -> verify full scaffolding and READMEs created. Run in a directory with existing `cdocs/` -> verify no destructive overwrites.
@@ -439,16 +429,16 @@ Testing is primarily manual/interactive given the skill-based nature:
 - Write `rules/workflow_patterns.md` (extracted from CLAUDE.md).
 - Write `rules/frontmatter_spec.md` with `paths: ["cdocs/**/*.md"]` scoping (extracted from `cdocs_plan.md`).
 - Implement `skills/init/SKILL.md` with directory scaffolding and README generation.
-- **Success criteria:** `claude --plugin-dir .` loads the plugin. Rules appear in ambient context. `/cdocs:init` creates the directory structure with READMEs in a test project.
+- **Success criteria:** `claude --plugin-dir .` loads the plugin. Rules appear in ambient context. `/cdoc:init` creates the directory structure with READMEs in a test project.
 - **Constraints:** Do not modify existing `cdocs/` content or CLAUDE.md yet.
 
 ### Phase 2: Core skills (devlog + proposal)
 
-- Write `skills/devlog/SKILL.md` absorbing `cdocs/devlogs/README.md`. Include invocation model (auto-invoked infrastructure skill), template, best practices, verification requirements, debugging phases.
+- Write `skills/devlog/SKILL.md` absorbing `cdocs/devlogs/README.md`. Include invocation model, template, best practices, verification requirements, debugging phases.
 - Write `skills/devlog/template.md` with frontmatter and section scaffold.
-- Write `skills/proposal/SKILL.md` absorbing `cdocs/proposals/README.md`. Include author checklist, implementation phase guidance.
-- Write `skills/proposal/template.md`.
-- **Success criteria:** `/cdocs:devlog my_feature` creates a well-formed devlog. `/cdocs:proposal my_topic` creates a well-formed proposal. Starting substantive work without explicit invocation triggers devlog auto-creation.
+- Write `skills/propose/SKILL.md` absorbing `cdocs/proposals/README.md`. Include author checklist, implementation phase guidance.
+- Write `skills/propose/template.md`.
+- **Success criteria:** `/cdoc:devlog my_feature` creates a well-formed devlog. `/cdoc:propose my_topic` creates a well-formed proposal. Starting substantive work without explicit invocation triggers devlog auto-creation.
 - **Depends on:** Phase 1 (plugin structure and frontmatter spec exist).
 - **Parallel-safe:** Devlog and proposal skills can be developed concurrently.
 
@@ -461,7 +451,7 @@ Testing is primarily manual/interactive given the skill-based nature:
 - Research report taxonomies (status, analysis, audit, summary).
 - Decide whether subtypes warrant separate templates or a single flexible template.
 - Write `skills/report/SKILL.md` and `skills/report/template.md`.
-- **Success criteria:** `/cdocs:review path/to/doc.md` creates a linked review and updates the target. `/cdocs:report my_topic` creates a well-formed report.
+- **Success criteria:** `/cdoc:review path/to/doc.md` creates a linked review and updates the target. `/cdoc:report my_topic` creates a well-formed report.
 - **Depends on:** Phase 1.
 - **Research needed:** Review structure, verdict taxonomy, report subtypes, level of structure vs. flexibility.
 
@@ -473,7 +463,7 @@ Testing is primarily manual/interactive given the skill-based nature:
 - Remove the original `cdocs/devlogs/README.md` and `cdocs/proposals/README.md` (absorbed into skills).
 - Write `README.md` with installation and usage instructions.
 - Dogfood: verify all skills, hooks, and rules work together via `claude --plugin-dir .`.
-- **Success criteria:** `/cdocs:status` shows accurate doc inventory with filtering. Frontmatter validation hook warns on missing fields. No duplicated content between CLAUDE.md, skills, and rules. Plugin README documents all skills and installation options.
+- **Success criteria:** `/cdoc:status` shows accurate doc inventory with filtering. Frontmatter validation hook warns on missing fields. No duplicated content between CLAUDE.md, skills, and rules. Plugin README documents all skills and installation options.
 - **Depends on:** Phases 2 and 3 (all skills exist before cleanup removes READMEs).
 
 ## Recommended Claude Tasks

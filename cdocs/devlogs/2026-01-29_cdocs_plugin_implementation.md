@@ -19,7 +19,7 @@ Implement the CDocs Claude Code plugin as specified in `cdocs/proposals/2026-01-
 ## Plan
 
 1. **Phase 1 - Foundation:** Plugin manifest, 3 rule files, init skill.
-2. **Phase 2 - Core skills:** Devlog skill (infrastructure) + proposal skill (deliverable).
+2. **Phase 2 - Core skills:** Devlog skill + propose skill.
 3. **Phase 3 - Research skills:** Review + report skills (research best practices first).
 4. **Phase 4 - Management/cleanup:** Status skill, hooks, CLAUDE.md slimming, README.
 5. Commit semantically after each phase.
@@ -40,13 +40,13 @@ Created plugin manifest, 3 rule files, and init skill.
 ### Phase 2: Core Skills
 
 **Devlog skill (`skills/devlog/`):**
-- Marked as infrastructure skill (Claude auto-invokes when starting substantive work).
+- Claude typically auto-invokes when starting substantive work; user can also invoke directly.
 - SKILL.md absorbs full README content: required sections, debugging phases 1-4, verification requirements, parallel agent documentation, best practices.
 - Removed Weft-specific references (Y.js, WebRTC, localhost:3000) from the README content - kept debugging phases generic.
 - Template provides frontmatter + minimal section scaffold.
 
-**Proposal skill (`skills/proposal/`):**
-- Marked as deliverable skill (user explicitly requests).
+**Propose skill (`skills/propose/`):**
+- Typically user-invoked when a design needs specification.
 - SKILL.md absorbs full README content: required sections, implementation phase guidance (standard + subagent-driven), author checklist.
 - Added a "Drafting Approach" section with recommended authoring order (BLUF first, revisit at end).
 - Template provides frontmatter + all required section headers.
@@ -56,7 +56,7 @@ Created plugin manifest, 3 rule files, and init skill.
 Researched best practices for document reviews and reports before building.
 
 **Review skill (`skills/review/`):**
-- Deliverable skill. Structure drawn from code review and architecture review processes.
+- Structure drawn from code review and architecture review processes.
 - Verdict taxonomy: accept, revise, reject. Kept simple - extended categories (accept-with-conditions, defer, superseded) deferred as they add complexity without clear value yet.
 - Multi-round review handling: subsequent rounds reference prior reviews, track resolution of action items, update round counter.
 - Action items use `[blocking]`/`[non-blocking]` prefix for clear prioritization.
@@ -64,7 +64,7 @@ Researched best practices for document reviews and reports before building.
 - Review updates the target doc's `last_reviewed` frontmatter (verdict -> status mapping specified).
 
 **Report skill (`skills/report/`):**
-- Deliverable skill. Single flexible template with type-specific optional sections (vs. separate templates per subtype).
+- Single flexible template with type-specific optional sections (vs. separate templates per subtype).
 - 5 subtypes identified: status, investigation, incident, audit, retrospective. Each has optional sections.
 - Decision: one template because subtypes share core structure (BLUF, findings, analysis, recommendations) and separate templates would proliferate without proportional value.
 - Explicit "Reports vs. Devlogs" comparison table to clarify when to use which.
@@ -73,7 +73,7 @@ Researched best practices for document reviews and reports before building.
 ### Phase 4: Management, Hooks, and Cleanup
 
 **Status skill (`skills/status/`):**
-- Infrastructure skill. Three invocation modes: list all, filter, update.
+- Three invocation modes: list all, filter, update.
 - Filters: `--type`, `--state`, `--status`, `--tag` (AND-combined).
 - Update mode: specify file path + `--update field=value`.
 - Scaling note documented: practical up to ~100 docs, index file or MCP mitigation path for larger corpora.
@@ -99,15 +99,15 @@ Researched best practices for document reviews and reports before building.
 | `rules/workflow_patterns.md` | Workflow patterns rule (unscoped) |
 | `rules/frontmatter_spec.md` | Frontmatter spec rule (scoped to cdocs/) |
 | `skills/init/SKILL.md` | Init/scaffolding skill |
-| `skills/devlog/SKILL.md` | Devlog skill (infrastructure) |
+| `skills/devlog/SKILL.md` | Devlog skill |
 | `skills/devlog/template.md` | Devlog template |
-| `skills/proposal/SKILL.md` | Proposal skill (deliverable) |
-| `skills/proposal/template.md` | Proposal template |
-| `skills/review/SKILL.md` | Review skill (deliverable) |
+| `skills/propose/SKILL.md` | Propose skill |
+| `skills/propose/template.md` | Propose template |
+| `skills/review/SKILL.md` | Review skill |
 | `skills/review/template.md` | Review template |
-| `skills/report/SKILL.md` | Report skill (deliverable) |
+| `skills/report/SKILL.md` | Report skill |
 | `skills/report/template.md` | Report template |
-| `skills/status/SKILL.md` | Status/query skill (infrastructure) |
+| `skills/status/SKILL.md` | Status/query skill |
 | `hooks/hooks.json` | PostToolUse hook config |
 | `hooks/cdocs_validate_frontmatter.sh` | Frontmatter validation script |
 | `CLAUDE.md` | Slimmed (migrated content to rules/skills) |
