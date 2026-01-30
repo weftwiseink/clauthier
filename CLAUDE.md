@@ -18,6 +18,6 @@ Writing conventions, workflow patterns, frontmatter spec, and doc-type guideline
 - **Writing conventions**: `@plugins/cdocs/rules/writing-conventions.md`
 - **Workflow patterns** (parallel agents, subagent dev, checklists): `@plugins/cdocs/rules/workflow-patterns.md`
 - **Frontmatter spec**: `@plugins/cdocs/rules/frontmatter-spec.md`
-- **Skills**: `plugins/cdocs/skills/{devlog,propose,review,report,status,init}/SKILL.md`
+- **Skills**: `plugins/cdocs/skills/{devlog,propose,review,report,status,init,triage,implement}/SKILL.md`
 
 Test the marketplace locally: `/plugin marketplace add .` then `/plugin install cdocs@weft-marketplace`
