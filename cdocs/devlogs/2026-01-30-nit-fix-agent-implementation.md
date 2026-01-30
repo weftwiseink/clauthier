@@ -40,7 +40,21 @@ Subsequent phases are verified by reading the created files and confirming they 
 
 ### Phase 0: Design Validation
 
-(To be filled during implementation.)
+Ran 2 haiku subagent tests against `writing-conventions.md` and a test document with known violations.
+
+**Test 1 (Convention Classification)**: All 11 conventions classified correctly.
+- MECHANICAL: Sentence-per-Line, Callout Syntax, Punctuation, Avoid Emojis
+- JUDGMENT-REQUIRED: BLUF, Brevity, History-Agnostic Framing, Commentary Decoupling, Critical Analysis, Devlog Convention, Mermaid Over ASCII
+
+**Test 2 (Mechanical Fixes + Protected Zones)**: Haiku correctly:
+- Identified 5 mechanical violations (1 sentence split, 3 bare callouts, 1 em-dash)
+- Identified 1 judgment-required violation (history-agnostic framing)
+- Skipped all 6 protected zone types (frontmatter, fenced code, indented code, inline code, tables, HTML comments)
+- Handled abbreviations (`e.g.`) without false-positive sentence splitting
+
+**Conclusion**: No `<!-- MECHANICAL -->` / `<!-- JUDGMENT -->` markup needed in rule files.
+The agent's heuristic classification is sufficient.
+Proceeding to Phase 1 with the agent prompt from Appendix A of the proposal.
 
 ### Phase 1: Agent Definition
 
