@@ -10,16 +10,15 @@ last_reviewed:
 task_list: cdocs/haiku_subagent
 type: proposal
 state: live
-status: result_accepted
+status: implementation_ready
 tags: [architecture, workflow_automation, claude_skills, subagent_patterns]
 ---
 
 # Haiku Subagent for Frontmatter Maintenance and Workflow Automation
 
-> BLUF(mjr/cdocs/haiku-subagent): Add a lightweight haiku subagent as an end-of-turn triage step that analyzes cdocs frontmatter/tags and recommends updates and workflow continuations (auto-review, auto-revision).
-> Triage is recommendation-only: it reads documents and returns a structured report, but does not make direct edits.
-> The top-level agent applies recommended frontmatter changes and dispatches workflow actions (opus for reviews, inline for revisions).
-> A future utility script can handle structured YAML mutations for machine-oriented correctness.
+> BLUF(mjr/cdocs/haiku-subagent): Add a lightweight haiku subagent as an end-of-turn triage step that maintains cdocs frontmatter/tags and recommends workflow continuations (auto-review, auto-revision).
+> Triage applies confident frontmatter edits directly (tags, timestamps) and reports them to the caller alongside recommendations for changes requiring judgment (status transitions, workflow actions).
+> The top-level agent reviews the report, acts on recommendations, and dispatches workflow actions (opus for reviews, inline for revisions).
 > The approach is a new `/cdoc:triage` skill backed by a haiku-model Task subagent, codified as a workflow pattern in `rules/workflow_patterns.md`.
 
 ## Objective
@@ -60,29 +59,27 @@ This proposal explores adding a lightweight haiku-model subagent that runs at th
 
 ### Architecture: three-layer design
 
-```
-Layer 1: Triage (haiku subagent) - READ-ONLY
-  - Reads modified cdocs files
-  - Analyzes frontmatter correctness (tags, status, timestamps)
-  - Returns structured recommendations (no direct edits)
+```mermaid
+graph TD
+    A["Layer 1: Triage (haiku subagent)"] --> B["Layer 2: Dispatch (top-level agent)"]
+    B --> C["Layer 3: Execution"]
 
-Layer 2: Dispatch (top-level agent)
-  - Receives triage recommendations
-  - Applies frontmatter updates recommended by triage
-  - Decides whether to act on workflow recommendations
-  - Spawns appropriate agents or invokes skills
+    A -- "direct edits" --> A1["Tags, timestamps, missing fields"]
+    A -- "recommendations" --> A2["Status transitions, workflow actions"]
 
-Layer 3: Execution (opus subagent or top-level agent)
-  - Reviews (opus subagent via Task tool)
-  - Revisions (top-level agent, needs full context)
-  - Status updates (top-level agent, quick edits)
+    B -- "applies status changes" --> B1["Frontmatter updates"]
+    B -- "spawns agents / invokes skills" --> C
+
+    C --> C1["Reviews (opus subagent)"]
+    C --> C2["Revisions (top-level agent)"]
+    C --> C3["Status updates (top-level agent)"]
 ```
 
 ### The triage subagent
 
 A haiku-model Task subagent invoked at the end of substantive work on cdocs documents.
-Triage is read-only: it analyzes documents and returns recommendations, but does not make direct edits.
-The top-level agent applies any recommended changes.
+Triage applies confident, mechanical edits directly (tags, timestamps, missing fields) and reports them to the caller.
+Changes requiring judgment (status transitions, workflow actions) are returned as recommendations for the top-level agent.
 
 **Invocation:** the top-level agent spawns a haiku Task subagent after completing substantive cdocs work.
 "End of turn" means: after the agent finishes responding to a user message that involved creating or modifying cdocs documents.
@@ -93,10 +90,10 @@ Triage is not invoked mid-authoring or after trivial edits (typo fixes, formatti
 - The triage prompt template (see Appendix A).
 
 **Responsibilities:**
-1. **Frontmatter analysis**: read each file, check that `status`, `state`, `tags`, and `last_reviewed` fields are present and reflect actual document content. Report discrepancies.
-2. **Tag recommendations**: scan document headings and content for topic keywords, compare to existing tags. Recommend additions/removals.
-3. **Status transition detection**: if a document appears complete but status is still `wip`, recommend updating to `review_ready`. Completeness signals: all template sections filled, verification section with evidence (for devlogs), BLUF present and consistent with content (for proposals/reports).
-4. **Workflow recommendations**: return a structured list of recommended next actions based on document state.
+1. **Frontmatter fixes (direct edits)**: add missing required fields, fix malformed timestamps, update tags to reflect document content. These are confident, mechanical changes applied via Edit calls and reported to the caller.
+2. **Tag maintenance (direct edits)**: scan document headings and content for topic keywords, compare to existing tags. Add missing tags, remove stale tags. Be conservative: only change tags clearly supported by (or contradicted by) document content.
+3. **Status transition detection (recommendations only)**: if a document appears complete but status is still `wip`, recommend updating to `review_ready`. Completeness signals: all template sections filled, verification section with evidence (for devlogs), BLUF present and consistent with content (for proposals/reports).
+4. **Workflow recommendations (recommendations only)**: return a structured list of recommended next actions based on document state.
 
 **Output format** (returned to top-level agent):
 
@@ -105,12 +102,16 @@ TRIAGE REPORT
 =============
 Files triaged: N
 
-FRONTMATTER RECOMMENDATIONS:
+CHANGES APPLIED:
 - cdocs/proposals/2026-01-29_foo.md:
-  tags: add [hooks, workflow], remove [future_work]
+  tags: added [hooks, workflow], removed [future_work]
+- cdocs/devlogs/2026-01-29_bar.md:
+  no changes needed
+
+RECOMMENDATIONS:
+- cdocs/proposals/2026-01-29_foo.md:
   status: recommend wip -> review_ready (all sections filled, BLUF present)
 - cdocs/devlogs/2026-01-29_bar.md:
-  tags: no changes needed
   status: no change (verification section empty)
 
 WORKFLOW RECOMMENDATIONS:
@@ -174,21 +175,19 @@ This doesn't require deep reasoning, just accurate pattern matching.
 Reviews require critical analysis: evaluating proposal quality, finding gaps, making judgment calls.
 Haiku keeps the triage step cheap and fast (sub-second), which matters if it runs at the end of every turn.
 
-### Decision 3: Triage is recommendation-only (no direct edits)
+### Decision 3: Confident edits applied directly, judgment calls recommended
 
-**Decision:** The haiku triage agent analyzes documents and returns recommendations.
-It does not make Edit calls.
-The top-level agent applies recommended frontmatter changes.
+**Decision:** The haiku triage agent applies confident, mechanical frontmatter edits directly (tags, timestamps, missing fields) and reports them.
+Status transitions and workflow actions are returned as recommendations for the top-level agent.
 
-**Why:** YAML frontmatter is whitespace-sensitive and structurally precise.
-Haiku-class models are less reliable at structured editing than opus-class models.
-A malformed Edit call could corrupt frontmatter, and the existing PostToolUse hook only validates field presence via regex, not YAML structural integrity.
-By making triage recommendation-only, we eliminate this risk entirely.
-The top-level agent (opus-class) is more reliable at applying structured edits and can validate recommendations before acting.
+**Why:** Tag additions/removals and timestamp fixes are unambiguous: a proposal discussing hooks either has the `hooks` tag or it doesn't.
+Haiku is reliable enough for these mechanical edits, and applying them directly avoids a round-trip through the top-level agent.
+Status transitions carry semantic weight (marking `review_ready` is a judgment about completeness) and remain recommendations.
+The existing PostToolUse hook validates field presence after edits, providing a basic safety net.
+All applied changes are reported in the triage output, so the top-level agent has full visibility.
 
-TODO(mjr/cdocs/haiku-subagent): A wrapping utility script (shell or Python) that accepts structured update instructions and applies them to YAML frontmatter would provide machine-oriented correctness for frontmatter mutations.
-This is a natural future enhancement that would benefit both triage-applied updates and manual frontmatter maintenance.
-It could be invoked via a hook or as a standalone tool.
+> TODO(mjr/cdocs/haiku-subagent): A wrapping utility script for structured YAML frontmatter mutations would provide machine-oriented correctness.
+> This is a natural future enhancement that benefits both triage and manual maintenance.
 
 ### Decision 4: Structured text output, not JSON
 
@@ -226,7 +225,7 @@ Top-level agent applies the frontmatter updates and acts on the `[REVIEW]` recom
 Top-level agent spawns opus review subagent.
 Review is written, verdict returned.
 If `revision_requested`: top-level agent revises, re-triages, re-reviews.
-If `accepted`: top-level agent updates `status: done` or `result_accepted`.
+If `accepted`: top-level agent updates proposal to `status: implementation_ready` (or `done` for non-implementation docs).
 
 ### Story 2: Agent resumes work on a previously-reviewed proposal
 
@@ -257,9 +256,9 @@ Top-level agent applies frontmatter updates, batches workflow actions or priorit
 
 Risk: haiku prematurely recommends a document as `review_ready` when the author intended to continue editing.
 
-Mitigation: triage is recommendation-only (Decision 3).
-The top-level agent (or user) reviews all recommendations before applying any frontmatter changes.
-This includes both status transitions and tag updates.
+Mitigation: status transitions are recommendations, not direct edits (Decision 3).
+The top-level agent (or user) reviews status recommendations before applying them.
+Tag and timestamp edits are applied directly but reported, so the caller has full visibility.
 
 ### 2. Triage runs on partially-written documents
 
@@ -351,7 +350,8 @@ The Task tool's model parameter works correctly: haiku subagents can read files,
    - `status: review_ready` + no `last_reviewed` -> `[REVIEW]` (first review)
    - `status: review_ready` + `last_reviewed.status: revision_requested` -> `[REVIEW]` (re-review)
    - `status: wip` + `last_reviewed.status: revision_requested` -> `[REVISE]` (revision needed)
-   - `last_reviewed.status: accepted` + `status` not yet `done` -> `[STATUS]` (update to done/result_accepted)
+   - `last_reviewed.status: accepted` + type `proposal` + `status` not `implementation_ready` -> `[STATUS]` (update to implementation_ready)
+   - `last_reviewed.status: accepted` + type not `proposal` + `status` not `done` -> `[STATUS]` (update to done)
    - `last_reviewed.round >= 3` + still `revision_requested` -> `[ESCALATE]`
 2. Integrate into triage agent prompt.
 
@@ -362,6 +362,11 @@ The Task tool's model parameter works correctly: haiku subagents can read files,
 1. Define how the top-level agent acts on `[REVIEW]` recommendations.
 2. Write the review subagent prompt template (includes inlined review skill instructions).
 3. Test end-to-end: author -> triage -> review -> triage -> report to user.
+
+> NOTE(mjr): The review subagent should be prompted to still consider if clarification is needed from the user.
+> If the subagent can request user input it should get clarification right then,
+> otherwise it should surface to its invoker that they should go request clarification with multi-choice options from the user
+> (depends on available apis).
 
 **Success criteria:** a review_ready document automatically gets reviewed when triage recommends it.
 
@@ -387,8 +392,10 @@ This is the prompt passed to the haiku Task subagent.
 The top-level agent fills in `$FILES` with the list of modified cdocs file paths.
 
 ```
-You are a CDocs triage subagent. Your job is to analyze cdocs documents and return
-a structured triage report. You do NOT make edits. You only read and recommend.
+You are a CDocs triage subagent. Your job is to maintain cdocs frontmatter and
+recommend workflow actions. You apply confident, mechanical edits directly (tags,
+timestamps, missing fields) and recommend changes that require judgment (status
+transitions, workflow actions).
 
 ## Files to triage
 
@@ -397,34 +404,40 @@ $FILES
 ## Your tasks
 
 For each file:
-1. Read the file completely.
+1. Read the file completely. If frontmatter is missing or unparseable, report the
+   file as "frontmatter missing or malformed" and skip further analysis.
 2. Check frontmatter fields against the CDocs frontmatter spec:
    - Required: first_authored (by, at), task_list, type, state, status, tags
    - Reviews also require: review_of
    - Non-reviews may have: last_reviewed (status, by, at, round)
-3. Analyze tags: scan document headings and content for topic keywords.
-   Compare to existing tags. Recommend additions (topics clearly present in content
-   but missing from tags) and removals (tags with no corresponding content).
-   Be conservative: only recommend changes clearly supported by document content.
-4. Analyze status: check for completeness signals.
+   - If required fields are missing, add them via Edit with sensible defaults
+     and report the addition.
+3. Maintain tags (DIRECT EDIT): scan document headings and content for topic keywords.
+   Compare to existing tags. Add missing tags, remove stale tags via Edit.
+   Be conservative: only change tags clearly supported by document content.
+   Report all tag changes in the triage output.
+4. Analyze status (RECOMMEND ONLY): check for completeness signals.
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence (pasted output, results).
    - Reports: BLUF present, key findings and analysis sections filled.
    - If document appears complete and status is wip, recommend review_ready.
    - If unsure, do NOT recommend a status change.
-5. Check workflow state:
+5. Check workflow state (RECOMMEND ONLY):
    - status: review_ready + no last_reviewed -> [REVIEW] (first review)
-   - status: review_ready + last_reviewed.status: revision_requested -> [REVIEW] (re-review: author marked revised doc ready)
-   - status: wip + last_reviewed.status: revision_requested -> [REVISE] (revision not yet started)
-   - last_reviewed.status: accepted + status not yet done -> [STATUS] (recommend done/result_accepted)
+   - status: review_ready + last_reviewed.status: revision_requested -> [REVIEW]
+     (re-review: author marked revised doc ready)
+   - status: wip + last_reviewed.status: revision_requested -> [REVISE]
+     (revision not yet started)
+   - last_reviewed.status: accepted + type proposal + status not implementation_ready
+     -> [STATUS] (recommend implementation_ready)
+   - last_reviewed.status: accepted + type not proposal + status not done
+     -> [STATUS] (recommend done)
    - last_reviewed.round >= 3 + still revision_requested -> [ESCALATE]
    - Otherwise -> [NONE]
 
 NOTE: The distinction between [REVISE] and [REVIEW] hinges on the status field.
 If status is review_ready, the author has declared the revision complete.
 If status is still wip with revision_requested, the revision hasn't started.
-This subtlety was discovered during dogfooding: haiku triage recommended [REVISE]
-on a proposal that had already been revised and marked review_ready.
 
 ## Output format
 
@@ -434,10 +447,13 @@ TRIAGE REPORT
 =============
 Files triaged: N
 
-FRONTMATTER RECOMMENDATIONS:
+CHANGES APPLIED:
 - <path>:
-  fields: <missing or invalid fields, or "all present">
-  tags: <add [x, y], remove [z], or "no changes needed">
+  <field>: <description of edit made>
+  (or "no changes needed")
+
+RECOMMENDATIONS:
+- <path>:
   status: <recommend X -> Y (reason), or "no change">
 
 WORKFLOW RECOMMENDATIONS:

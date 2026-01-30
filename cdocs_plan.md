@@ -53,7 +53,8 @@ More details on the above fields:
   - `review_ready`:
     - devlogs, proposals, and reports use this to mark their SoW fully complete and ready for review.
     - for devlogs, reviews apply to the work that was done
-  - `evolved`, `result_accepted`: proposals often two phased and the work might result in a new evolved proposal
+  - `implementation_ready`: proposal design accepted, ready to implement
+  - `evolved`, `implementation_accepted`: proposals often two phased and the work might result in a new evolved proposal
 7. last_reviewed: reviews themselves don't have this field.
    - status: options may be expanded depending on type
    - by, at: same as in first_authored

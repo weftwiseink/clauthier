@@ -95,6 +95,14 @@ This is a genuine edge case that wouldn't have surfaced without dogfooding.
 
 **Round 2 opus review:** Accept. All blocking issues resolved. 3 minor non-blocking suggestions for implementation (degenerate-case handling, backlog tracking for utility script, recommendation-only contract test).
 
+### Status vocabulary and implement skill
+
+The proposal lifecycle uses `implementation_ready` (design accepted, ready to build) and `implementation_accepted` (implementation completed and accepted).
+The `/cdoc:implement` skill lists `implementation_ready` proposals and primes the implementor with conventions: frequent commits, devlog maintenance, cdoc skill usage, deviation tracking.
+
+> NOTE(mjr/cdocs/haiku-subagent): These status values and the implement skill were added alongside this proposal work.
+> They apply to the broader frontmatter spec, not just the triage system.
+
 ## Changes Made
 
 | File | Description |
@@ -102,6 +110,12 @@ This is a genuine edge case that wouldn't have surfaced without dogfooding.
 | `cdocs/proposals/2026-01-29_haiku_subagent_workflow_automation.md` | Proposal document |
 | `cdocs/devlogs/2026-01-29_haiku_subagent_proposal.md` | This devlog |
 | `cdocs/reviews/2026-01-29_review_of_haiku_subagent_workflow_automation.md` | Review by opus subagent |
+| `skills/implement/SKILL.md` | New implement skill |
+| `rules/frontmatter_spec.md` | Added `implementation_ready`, `request_for_proposal`, `implementation_accepted` statuses |
+| `rules/writing_conventions.md` | Added mermaid over ASCII convention |
+| `skills/status/SKILL.md` | Updated status filter values |
+| `cdocs_plan.md` | Updated status vocabulary |
+| `cdocs/proposals/2026-01-29_nit_fix_skill.md` | RFP stub for nit_fix skill |
 
 ## Verification
 

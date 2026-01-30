@@ -73,6 +73,11 @@ Use colons, commas, or periods instead of em-dashes (` -- ` or `—`).
 For brief qualifying statements, use ` - ` (spaced hyphen).
 Em-dashes and semicolons should be used sparingly.
 
+## Prefer Mermaid Over ASCII for Diagrams
+
+Use Mermaid diagram syntax (` ```mermaid `) instead of ASCII art for flowcharts, sequence diagrams, state machines, and other visual representations.
+Mermaid renders natively in GitHub and most markdown viewers, is easier to maintain, and diffs cleanly.
+
 ## Avoid Emojis
 
 Avoid excessive use of emojis and overly-effusive language in all documentation.

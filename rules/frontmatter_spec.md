@@ -14,13 +14,13 @@ This spec defines the fields, their types, and valid values.
 ---
 review_of?: cdocs/.../YYYY-MM-DD_doc_name.md   # reviews only
 first_authored:
-  by: "@claude-opus-4-5-20251101"               # or "@username"
-  at: 2026-01-29T08:00:00-08:00                 # ISO 8601 with TZ
+  by: "@claude-opus-4-5-20251101"                  # or "@username"
+  at: 2026-01-29T08:00:00-08:00                    # ISO 8601 with TZ
 task_list: workstream/task_name
 type: devlog | proposal | review | report
 state: live | deferred | archived
-status: wip                                      # see per-type values below
-last_reviewed?:                                   # not on reviews themselves
+status: wip                                        # see per-type values below
+last_reviewed?:                                    # not on reviews themselves
   status: revision_requested | accepted | rejected
   by: "@reviewer"
   at: 2026-01-29T09:00:00-08:00
@@ -60,11 +60,13 @@ High-level condition of the document and/or its related work:
 
 ### `status` (required)
 Starts at `wip`. Additional values depend on type:
+- `request_for_proposal`: Stub proposal requesting future elaboration. Proposals only.
 - `wip`: Work in progress. All types.
 - `review_ready`: Statement of work complete, ready for review. Used by devlogs, proposals, reports.
   - For devlogs, reviews apply to the work that was done, not just the document.
+- `implementation_ready`: Proposal design has been reviewed and accepted, ready to implement. Proposals only.
 - `evolved`: Proposal has been superseded by a new version or follow-up proposal.
-- `result_accepted`: Proposal's implementation results have been accepted.
+- `implementation_accepted`: Proposal's implementation has been completed and accepted.
 - `done`: Work complete and verified.
 
 ### `last_reviewed` (optional, not on reviews)
