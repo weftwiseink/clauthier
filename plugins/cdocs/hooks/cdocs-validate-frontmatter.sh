@@ -21,7 +21,7 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 # Only validate cdocs markdown files
-if [[ ! "$FILE_PATH" =~ cdocs/.*\.md$ ]]; then
+if [[ ! "$FILE_PATH" =~ cdocs/(devlogs|proposals|reviews|reports)/ ]]; then
   exit 0
 fi
 
