@@ -59,8 +59,8 @@ After completing substantive work on cdocs documents, invoke `/cdocs:triage` to 
 
 **How it works:**
 1. The top-level agent spawns a haiku Task subagent with the list of modified cdocs file paths.
-2. The haiku agent reads each file, applies confident mechanical edits (tags, timestamps, missing fields), and returns recommendations for status transitions and workflow actions.
-3. The top-level agent reviews the triage report and dispatches recommended actions:
+2. The haiku agent reads each file (read-only) and returns recommendations for frontmatter fixes (tags, timestamps, missing fields), status transitions, and workflow actions.
+3. The top-level agent reviews the triage report, applies recommended edits, and dispatches workflow actions:
    - `[REVIEW]`: spawn an opus/sonnet review subagent.
    - `[REVISE]`: revise inline per review action items.
    - `[ESCALATE]`: present options to the user (round >= 3 without acceptance).

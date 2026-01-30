@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/haiku-subagent
 type: devlog
 state: live
-status: wip
+status: review_ready
 last_reviewed:
   status: revision_requested
   by: "@claude-opus-4-5-20251101"
@@ -89,7 +89,7 @@ The triage SKILL.md already contains revision dispatch instructions (top-level a
 
 The `cdocs-validate-frontmatter.sh` hook (line 24) uses the regex `cdocs/.*\.md$` which matches any path containing `cdocs/` — including plugin source files like `plugins/cdocs/skills/triage/SKILL.md` and `plugins/cdocs/rules/workflow-patterns.md`. These are skill definitions and rule files with their own frontmatter schema (name/description/argument-hint), not cdocs documents.
 
-The fix would be to anchor the regex to match only the document directory, e.g., `/cdocs/(devlogs|proposals|reviews|reports)/.*\.md$` or use a simpler prefix check for paths starting with `cdocs/` (not containing `cdocs/` anywhere). This is a pre-existing issue, not introduced by this implementation.
+The fix is to anchor the regex to match only document directories: `cdocs/(devlogs|proposals|reviews|reports)/`. This was a pre-existing issue, fixed in commit `b1b0a43`.
 
 ### Haiku edit boundary enforcement
 
