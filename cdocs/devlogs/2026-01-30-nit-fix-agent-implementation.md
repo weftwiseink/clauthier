@@ -58,7 +58,15 @@ Proceeding to Phase 1 with the agent prompt from Appendix A of the proposal.
 
 ### Phase 1: Agent Definition
 
-(To be filled during implementation.)
+Created `plugins/cdocs/agents/nit-fix.md` following the Appendix A draft from the proposal.
+No changes needed from Phase 0 findings: haiku performed well with the heuristic classification principle, so the agent body uses the proposal's design as-is.
+
+The agent follows the same pattern as `triage.md`: haiku model, `Read/Glob/Grep/Edit` tool allowlist, structured report output.
+Key differences from triage: nit-fix reads all `rules/*.md` files (not just `frontmatter-spec.md`), edits document body prose (not frontmatter), and uses a mechanical/judgment classification system.
+
+> NOTE(opus/cdocs/nit-fix-v2): The PostToolUse frontmatter validation hook fires on the agent file because it matches `*.md`.
+> This is expected: agent definitions use agent-specific frontmatter (`name`, `model`, `tools`), not cdocs document frontmatter.
+> The hook is informational-only and does not block.
 
 ### Phase 2: Dispatcher Skill
 
