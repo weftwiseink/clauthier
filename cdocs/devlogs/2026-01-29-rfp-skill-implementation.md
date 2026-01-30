@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rfp-skill
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [claude_skills, proposals, workflow_automation, implementation]
 ---
 
@@ -42,13 +42,73 @@ Since skills are markdown instruction files (not executable code), testing is st
 
 ### Phase 1: RFP skill and template
 
+Created `plugins/cdocs/skills/rfp/SKILL.md` and `template.md`.
+The SKILL.md follows the same structure as existing skills (devlog, propose): frontmatter with `name`/`description`/`argument-hint`, then Invocation, Template, Sections, and relationship guidance.
+Key design choices carried from the proposal:
+- Collision handling instruction (check before writing, ask user).
+- Missing directory handling (suggest `/cdocs:init`).
+- `task_list` guidance for nascent ideas where the workstream is provisional.
+- Optional sections suggested by example, not scaffolded.
+
+The template is minimal: frontmatter with `status: request_for_proposal` and four section headers (BLUF, Objective, Scope, Open Questions).
+
 ### Phase 2: Propose skill integration
 
+Updated `plugins/cdocs/skills/propose/SKILL.md` with two changes:
+1. **Invocation** split into two sub-sections: "New proposal (default)" preserves existing behavior; "Elaborate an existing RFP stub" adds the file-path detection logic.
+   The disambiguation rule: `$ARGUMENTS` ending in `.md` or containing `/` is treated as a file path; otherwise as a topic string.
+2. **Elaboration** section added between Template and Sections with the 7-step content-merging strategy from the proposal.
+   Key point: the skill assumes the user knowingly passed an RFP stub and does not require confirmation.
+
+No changes to the propose template.md — elaboration operates on existing files, not the template.
+
 ### Phase 3: Documentation and discoverability
+
+Updated `plugins/cdocs/skills/init/SKILL.md` proposals README template:
+- Added `/cdocs:rfp` reference.
+- Split "Key sections" into two lines: full proposals and RFP stubs, each with their section set.
+- Added elaboration hint: `/cdocs:propose path/to/stub.md`.
+
+`/cdocs:status` filters already support `--status=request_for_proposal` per the frontmatter spec; no changes needed.
 
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| `plugins/cdocs/skills/rfp/SKILL.md` | New RFP skill definition |
+| `plugins/cdocs/skills/rfp/template.md` | New RFP template with four required sections |
+| `plugins/cdocs/skills/propose/SKILL.md` | Added RFP elaboration invocation path and Elaboration section |
+| `plugins/cdocs/skills/init/SKILL.md` | Updated proposals README template to mention RFP stubs |
+| `cdocs/proposals/2026-01-29-rfp-skill.md` | Status transitioned to `implementation_wip` |
+| `cdocs/devlogs/2026-01-29-rfp-skill-implementation.md` | This devlog |
 
 ## Verification
+
+### Structural verification
+
+**RFP skill files exist and follow conventions:**
+- `plugins/cdocs/skills/rfp/SKILL.md` has `name: rfp`, `description`, `argument-hint` frontmatter matching other skills.
+- `plugins/cdocs/skills/rfp/template.md` has `status: request_for_proposal` and four section headers.
+
+**Propose skill updated correctly:**
+- Invocation section has two sub-paths: new proposal (default) and elaborate existing RFP stub.
+- Elaboration section describes 7-step in-place content merging.
+- Existing sections (Sections, Drafting Approach, Author Checklist, Revisions) unchanged.
+
+**Init skill updated correctly:**
+- Proposals README template references both `/cdocs:propose` and `/cdocs:rfp`.
+- Full proposals and RFP stubs documented with their respective section sets.
+
+**Status filters:**
+- `/cdocs:status` SKILL.md already lists `request_for_proposal` in supported `--status` filter values. No changes needed.
+
+### Commit history
+
+Three focused commits, one per phase:
+1. `feat: add /cdocs:rfp skill for scaffolding request-for-proposal stubs`
+2. `feat: add RFP elaboration path to propose skill`
+3. `docs: mention RFP stubs in init proposals README template`
+
+### No deviations from proposal
+
+All three implementation phases followed the proposal's plan without deviation.
