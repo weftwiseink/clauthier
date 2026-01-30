@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/archive-formalism
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 tags: [architecture, archival, cli, conventions]
 last_reviewed:
   status: accepted
@@ -84,7 +84,7 @@ To archive a document manually:
 1. Set `state: archived` in the document's frontmatter.
 2. Create `cdocs/$type/_archive/` if it does not exist.
 3. Move the file from `cdocs/$type/$filename` to `cdocs/$type/_archive/$filename`.
-4. Search the project for references to the old path (e.g., `grep -r "cdocs/$type/$filename"`) and update them to the new path.
+4. Search the project for references to the old path (e.g., `git grep "cdocs/$type/$filename"`) and update them to the new path.
 5. Commit the move and all reference updates together.
 
 This procedure is sufficient for low-volume archival.
