@@ -1,6 +1,6 @@
 ---
 name: reviewer
-model: sonnet
+model: opus
 description: Review cdocs documents with structured findings and verdicts
 tools: Read, Glob, Grep, Edit, Write
 skills:

@@ -89,3 +89,6 @@ For types we don't have detailed specs for yet like reviews and reports, the (su
 We might want to turn the repo into a claude plugin marketplace rather than a single plugin, not sure. Can figure out later.
 
 We also might want a way of quickly adding to the metadata or taxonomy of our system, of overlaying a new convention over the plugin for experimentation then later integration, etc
+
+### more
+auto followup/fixme/todo extraction, better downstream rfp ingestion

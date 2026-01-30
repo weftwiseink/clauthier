@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nit-fix
 type: proposal
 state: live
-status: wip
+status: evolved
 tags: [claude_skills, workflow_automation, writing_conventions, subagent_patterns]
 last_reviewed:
   status: revision_requested
