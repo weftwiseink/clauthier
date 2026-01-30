@@ -6,7 +6,7 @@ argument-hint: "[file1.md file2.md ...]"
 
 # CDocs Triage
 
-Run a lightweight haiku subagent to maintain cdocs frontmatter and recommend workflow actions.
+Run a read-only haiku subagent to analyze cdocs frontmatter and recommend changes and workflow actions.
 
 **Usage:** Auto-invoked at the end of agent turns that created or modified cdocs documents.
 The user can also invoke it directly.
@@ -30,18 +30,20 @@ Scan for cdocs files modified in the current turn (based on recent Write/Edit op
 
 1. **Collect file paths**: from `$ARGUMENTS` or from recent cdocs modifications in the current turn.
 2. **Spawn haiku subagent**: use the Task tool with `model: "haiku"` and `subagent_type: "general-purpose"`, passing the triage prompt (see below).
-3. **Receive triage report**: the subagent returns a structured report with changes applied and recommendations.
-4. **Act on recommendations**: the top-level agent reviews the report and dispatches actions.
+3. **Receive triage report**: the subagent returns a read-only analysis with field, status, and workflow recommendations.
+4. **Apply recommendations**: the top-level agent reviews the report, applies field/status changes via Edit, and dispatches workflow actions.
 
 ## Triage Subagent Prompt
 
 Pass the following prompt to a haiku Task subagent, replacing `$FILES` with the newline-separated list of absolute file paths to triage.
 
 ```
-You are a CDocs triage subagent. Your job is to maintain cdocs frontmatter and
-recommend workflow actions. You apply confident, mechanical edits directly (tags,
-timestamps, missing fields) and recommend changes that require judgment (status
-transitions, workflow actions).
+You are a CDocs triage subagent. Your job is to analyze cdocs frontmatter and
+recommend changes and workflow actions.
+
+CRITICAL: You are READ-ONLY. Do NOT use the Edit tool or Write tool. Do NOT
+modify any files. Your only job is to read files and produce a report.
+All edits will be applied by the top-level agent based on your recommendations.
 
 ## Files to triage
 
@@ -50,26 +52,25 @@ $FILES
 ## Your tasks
 
 For each file:
-1. Read the file completely. If frontmatter is missing or unparseable, report the
-   file as "frontmatter missing or malformed" and skip further analysis.
+1. Read the file completely using the Read tool. If frontmatter is missing or
+   unparseable, report the file as "frontmatter missing or malformed" and skip
+   further analysis.
 2. Check frontmatter fields against the CDocs frontmatter spec:
    - Required: first_authored (by, at), task_list, type, state, status, tags
    - Reviews also require: review_of
    - Non-reviews may have: last_reviewed (status, by, at, round)
-   - If required fields are missing, add them via Edit with sensible defaults
-     and report the addition.
-3. Maintain tags (DIRECT EDIT): scan document headings and content for topic keywords.
-   Compare to existing tags. Add missing tags, remove stale tags via Edit.
-   Be conservative: only change tags clearly supported by document content.
-   Report all tag changes in the triage output.
-4. Analyze status (RECOMMEND ONLY): check for completeness signals.
+   - If required fields are missing, recommend adding them with sensible defaults.
+3. Analyze tags: scan document headings and content for topic keywords.
+   Compare to existing tags. Recommend adding missing tags, removing stale tags.
+   Be conservative: only recommend tag changes clearly supported by document content.
+4. Analyze status (check for completeness signals):
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence (pasted output, results).
    - Reports: BLUF present, key findings and analysis sections filled.
    - Reviews: all sections filled, verdict present.
    - If document appears complete and status is wip, recommend review_ready.
    - If unsure, do NOT recommend a status change.
-5. Check workflow state (RECOMMEND ONLY):
+5. Check workflow state:
    - status: review_ready + no last_reviewed -> [REVIEW] (first review)
    - status: review_ready + last_reviewed.status: revision_requested -> [REVIEW]
      (re-review: author marked revised doc ready)
@@ -94,27 +95,30 @@ TRIAGE REPORT
 =============
 Files triaged: N
 
-CHANGES APPLIED:
+FIELD RECOMMENDATIONS:
 - <path>:
-  <field>: <description of edit made>
-  (or "no changes needed")
+  tags: add [x, y], remove [z] (or "no change")
+  missing fields: <list of missing required fields and suggested values> (or "none")
+  timestamps: <issues found> (or "valid")
 
-RECOMMENDATIONS:
+STATUS RECOMMENDATIONS:
 - <path>:
-  status: <recommend X -> Y (reason), or "no change">
+  status: recommend X -> Y (reason) (or "no change")
 
 WORKFLOW RECOMMENDATIONS:
 - [ACTION] <path>: <explanation>
 
 Be precise. Use repo-root-relative paths. Do not editorialize.
+Do NOT use Edit or Write tools. ONLY use Read tool and return your report.
 ```
 
 ## Acting on the Triage Report
 
 After receiving the triage report, the top-level agent should:
 
-### Changes Applied
-Review the list of direct edits. These are mechanical corrections (tags, timestamps, missing fields). No action needed unless something looks wrong.
+### Field Recommendations
+For each file, the report lists recommended tag changes, missing fields, and timestamp issues.
+The top-level agent applies sensible recommendations via Edit (add missing tags, fix timestamps, add missing required fields).
 
 ### Status Recommendations
 For each status transition recommendation, the top-level agent decides whether to apply it:
