@@ -14,10 +14,24 @@ They should retain a "timeless" quality: design changes are noted in NOTE callou
 
 ## Invocation
 
-1. If `$ARGUMENTS` provides a topic, use it. Otherwise, prompt the user.
+### New proposal (default)
+
+1. If `$ARGUMENTS` provides a topic string, use it. Otherwise, prompt the user.
 2. Determine today's date.
 3. Create `cdocs/proposals/YYYY-MM-DD-topic.md` using the template below.
 4. If `cdocs/proposals/` doesn't exist, suggest running `/cdocs:init` first.
+
+### Elaborate an existing RFP stub
+
+When `$ARGUMENTS` is a path to an existing file:
+
+1. Read the file and check its frontmatter `status`.
+2. If `status: request_for_proposal`: elaborate in-place (see **Elaboration** below).
+3. If any other status: warn that the document is already a full proposal and suggest `/cdocs:review` or manual revision.
+4. If the file does not exist or is not a proposal (`type` is not `proposal`): report an error with guidance.
+
+`$ARGUMENTS` is treated as a file path when it ends in `.md` or contains a `/`.
+Otherwise it is treated as a topic string.
 
 ## Template
 
@@ -28,6 +42,24 @@ Fill in:
 - `task_list` with the relevant workstream path.
 - `type: proposal`, `state: live`, `status: wip`.
 - Tags relevant to the proposal.
+
+## Elaboration
+
+When elaborating an RFP stub (`status: request_for_proposal`) in-place:
+
+1. Preserve `first_authored` unchanged (the original author retains attribution).
+2. Preserve the existing BLUF, Objective, and Scope content as starting points.
+3. Insert the full proposal sections after Scope: Background, Proposed Solution, Design Decisions, Edge Cases, Test Plan, Implementation Phases.
+4. Preserve Open Questions at the end of the document. Resolve them inline during elaboration or leave them for reviewers.
+5. Expand the BLUF to cover the full proposal scope (the original BLUF captured the idea; the elaborated BLUF summarizes the design).
+6. Transition `status` from `request_for_proposal` to `wip`.
+7. Update `tags` as appropriate for the expanded scope.
+
+The core authoring workflow is the same as creating a proposal from scratch: BLUF-first drafting, section filling, author checklist review.
+The only difference is that existing content provides a starting point rather than a blank template.
+
+Assume the user knowingly passed an RFP stub path and intends to elaborate it.
+No confirmation is needed unless context clues suggest otherwise (e.g., the user says "create a new proposal about X" while passing a stub path).
 
 ## Sections
 
