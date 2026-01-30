@@ -115,7 +115,6 @@ ASCII is acceptable for:
 
 **Judgment-required**: Converting ASCII diagrams to Mermaid requires understanding the diagram's semantic intent and choosing the appropriate Mermaid diagram type (graph, sequence, state, etc.).
 Automated detection can flag candidates, but human review should validate the conversion.
-```
 
 ## Detection Heuristics
 

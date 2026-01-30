@@ -4,8 +4,8 @@ first_authored:
   at: 2026-01-29T20:30:00-05:00
 task_list: cdocs/research
 type: devlog
-state: live
-status: complete
+state: archived
+status: done
 tags: [research, agents, plugins, hooks, mcp, tool-scoping]
 ---
 

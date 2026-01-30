@@ -9,7 +9,7 @@ last_reviewed:
   round: 2
 task_list: cdocs/haiku-subagent
 type: proposal
-state: live
+state: archived
 status: evolved
 tags: [architecture, workflow_automation, claude_skills, subagent_patterns]
 ---

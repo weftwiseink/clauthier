@@ -4,7 +4,7 @@ first_authored:
   at: 2026-01-29T12:00:00-08:00
 task_list: cdocs/plugin-architecture
 type: devlog
-state: live
+state: archived
 status: done
 tags: [architecture, claude_skills, plugin, proposal]
 ---

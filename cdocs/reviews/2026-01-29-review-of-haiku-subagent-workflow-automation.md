@@ -5,7 +5,7 @@ first_authored:
   at: 2026-01-29T13:00:00-08:00
 task_list: cdocs/haiku-subagent
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, architecture, rereview_agent]
 ---

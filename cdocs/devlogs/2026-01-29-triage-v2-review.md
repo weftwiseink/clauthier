@@ -4,7 +4,7 @@ first_authored:
   at: 2026-01-29T17:30:00-08:00
 task_list: cdocs/haiku-subagent
 type: devlog
-state: live
+state: archived
 status: done
 tags: [fresh_agent, review, architecture, subagent_patterns, hook_enforcement]
 ---

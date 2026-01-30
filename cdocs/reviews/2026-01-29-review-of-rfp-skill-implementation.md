@@ -5,7 +5,7 @@ first_authored:
   at: 2026-01-29T21:00:00-08:00
 task_list: cdocs/rfp-skill
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, implementation_review, claude_skills, proposal_conformance]
 ---

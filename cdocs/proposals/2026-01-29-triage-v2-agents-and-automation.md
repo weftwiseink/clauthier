@@ -9,7 +9,7 @@ last_reviewed:
   round: 1
 task_list: cdocs/haiku-subagent
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 tags: [architecture, workflow_automation, subagent_patterns, plugin_idioms, triage]
 ---
