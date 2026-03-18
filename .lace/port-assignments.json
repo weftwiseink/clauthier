@@ -1,0 +1,9 @@
+{
+  "assignments": {
+    "wezterm-server/hostSshPort": {
+      "label": "wezterm-server/hostSshPort",
+      "port": 22426,
+      "assignedAt": "2026-03-18T15:21:11.558Z"
+    }
+  }
+}

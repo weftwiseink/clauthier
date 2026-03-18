@@ -1,0 +1,28 @@
+{
+  "assignments": {
+    "project/claude-config-json": {
+      "label": "project/claude-config-json",
+      "resolvedSource": "/home/mjr/.claude.json",
+      "isOverride": false,
+      "assignedAt": "2026-03-18T15:21:11.556Z"
+    },
+    "wezterm-server/authorized-keys": {
+      "label": "wezterm-server/authorized-keys",
+      "resolvedSource": "/home/mjr/.config/lace/ssh/id_ed25519.pub",
+      "isOverride": false,
+      "assignedAt": "2026-03-18T15:21:11.556Z"
+    },
+    "project/bash-history": {
+      "label": "project/bash-history",
+      "resolvedSource": "/home/mjr/.config/lace/clauthier/mounts/project/bash-history",
+      "isOverride": false,
+      "assignedAt": "2026-03-18T15:21:11.556Z"
+    },
+    "project/claude-config": {
+      "label": "project/claude-config",
+      "resolvedSource": "/home/mjr/.claude",
+      "isOverride": true,
+      "assignedAt": "2026-03-18T15:21:11.556Z"
+    }
+  }
+}
