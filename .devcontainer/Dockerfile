@@ -76,9 +76,10 @@ USER ${USERNAME}
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
+# TODO: uncomment / adapt once structure is refined
 # Copy package files and install dependencies as node user
-COPY --chown=${USERNAME}:${USERNAME} package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+# COPY --chown=${USERNAME}:${USERNAME} package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# RUN pnpm install --frozen-lockfile
 
 # Copy source files
 COPY --chown=${USERNAME}:${USERNAME} . .

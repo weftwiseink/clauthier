@@ -52,7 +52,7 @@
     }
   },
   "mounts": [
-    "source=~/.local/share/opencode,target=/home/node/.local/share/opencode"
+    "source=${localEnv:HOME}/.local/share/opencode,target=/home/node/.local/share/opencode,type=bind"
   ],
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
