@@ -1,2 +1,4 @@
 .vscode/*
 .lace
+build/
+node_modules/

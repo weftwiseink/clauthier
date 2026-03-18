@@ -5,7 +5,7 @@ first_authored:
 task_list: marketplace/build-workspace
 type: proposal
 state: live
-status: review_ready
+status: implementation_wip
 tags: [architecture, build-system, workspace, gitignore, ci, npm]
 last_reviewed:
   status: accepted

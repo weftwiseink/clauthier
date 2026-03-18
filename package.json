@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "tsx scripts/build-opencode.ts",
+    "build:cdocs": "tsx scripts/build-opencode.ts cdocs"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

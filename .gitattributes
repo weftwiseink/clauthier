@@ -1,5 +1,1 @@
-# Mark generated OC files as auto-generated in GitHub diffs
-plugins/cdocs/opencode/agents/** linguist-generated=true
-plugins/cdocs/opencode/skills/** linguist-generated=true
-plugins/cdocs/opencode/rules/** linguist-generated=true
-plugins/cdocs/opencode/package.json linguist-generated=true
+# Build artifacts are gitignored; no linguist-generated markers needed.
