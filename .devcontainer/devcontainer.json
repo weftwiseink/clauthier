@@ -16,7 +16,7 @@
     "lace": {
       "workspace": {
         "layout": "bare-worktree",
-        "mountTarget": "/workspace/lace"
+        "mountTarget": "/workspace/clauthier"
       },
       "mounts": {
         "bash-history": {
