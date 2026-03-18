@@ -36,11 +36,12 @@ See `plugins/cdocs/README.md` "Rules Integration" for full details.
 ### Multi-Target Marketplace
 
 The cdocs plugin publishes for both Claude Code and OpenCode from a single canonical source.
-CC is the authoring format; a build script generates OC artifacts in `plugins/cdocs/opencode/`.
+CC is the authoring format; a build script generates OC artifacts in `build/cdocs/opencode/`.
 
-- **Build script**: `npx tsx plugins/cdocs/scripts/build-opencode.ts`
-- **Generated output**: `plugins/cdocs/opencode/` (committed, never edit manually)
+- **Build command**: `npm run build:cdocs`
+- **Build script**: `scripts/build-opencode.ts`
+- **Generated output**: `build/cdocs/opencode/` (gitignored, built on demand)
 - **OC npm package**: `@weftwise/cdocs-opencode`
-- **CI**: `.github/workflows/opencode-build.yml` validates generated files are up to date
+- **CI**: `.github/workflows/opencode-build.yml` builds, validates, and optionally publishes
 
 See `plugins/cdocs/README.md` "OpenCode Installation" for user-facing docs.

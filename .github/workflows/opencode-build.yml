@@ -1,7 +1,7 @@
 # CI workflow for OpenCode build artifacts.
-# Validates that generated files in plugins/cdocs/opencode/ are up to date.
+# Builds from source, validates the output, and optionally publishes.
 #
-# Triggers on changes to plugins/cdocs/ source files.
+# Triggers on changes to plugin source files or the build script.
 # Uses continue-on-error so CC-only PRs are not blocked by OC build failures.
 
 name: OpenCode Build
@@ -11,10 +11,12 @@ on:
     branches: [main]
     paths:
       - "plugins/cdocs/**"
+      - "scripts/build-opencode.ts"
       - ".github/workflows/opencode-build.yml"
   pull_request:
     paths:
       - "plugins/cdocs/**"
+      - "scripts/build-opencode.ts"
       - ".github/workflows/opencode-build.yml"
 
 jobs:
@@ -28,23 +30,14 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Install tsx
-        run: npm install -g tsx
+      - run: npm ci
 
-      - name: Run build script
-        run: tsx plugins/cdocs/scripts/build-opencode.ts
-
-      - name: Dirty check (generated files must be up to date)
-        run: |
-          git diff --exit-code plugins/cdocs/opencode/ || {
-            echo "::error::Generated files in plugins/cdocs/opencode/ are stale. Run 'npx tsx plugins/cdocs/scripts/build-opencode.ts' and commit the output."
-            git diff --stat plugins/cdocs/opencode/
-            exit 1
-          }
+      - name: Build OC artifacts
+        run: npm run build:cdocs
 
       - name: Validate generated agent frontmatter (YAML lint)
         run: |
-          for agent in plugins/cdocs/opencode/agents/*.md; do
+          for agent in build/cdocs/opencode/agents/*.md; do
             echo "Validating: $agent"
             # Check frontmatter delimiters exist
             head_line=$(head -1 "$agent")
@@ -68,5 +61,5 @@ jobs:
           done
 
       - name: Validate npm package
-        working-directory: plugins/cdocs/opencode
+        working-directory: build/cdocs/opencode
         run: npm pack --dry-run

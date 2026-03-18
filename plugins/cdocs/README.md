@@ -130,21 +130,21 @@ Users who prefer to deploy CC plugins directly to their OC config directory (`~/
 
 ### Building OC artifacts from source
 
-The generated `opencode/` directory is committed as build artifacts.
-To regenerate after modifying CC source files:
+Build output lives in `build/cdocs/opencode/` (gitignored, not committed).
+To build after modifying CC source files:
 
 ```bash
-npx tsx plugins/cdocs/scripts/build-opencode.ts
-# or: bun run plugins/cdocs/scripts/build-opencode.ts
+npm run build:cdocs
+# or: npx tsx scripts/build-opencode.ts
 ```
 
-Do not manually edit files in `opencode/`.
-The fix path is always: update the build script or CC sources, re-run, commit.
-
-The build script:
+The build script (`scripts/build-opencode.ts`):
 - Converts CC agent frontmatter to OC format (model mapping, tool expansion, permission generation)
-- Copies skills and rules into the `opencode/` bundle for npm packaging
-- Syncs the version from `.claude-plugin/plugin.json` to `opencode/package.json`
+- Copies skills and rules into the build output for npm packaging
+- Copies hand-written OC files (`plugins/cdocs/hooks/cdocs-hooks.ts`, `plugins/cdocs/scripts/postinstall.js`)
+- Syncs the version from `.claude-plugin/plugin.json` to the output `package.json`
+- Cleans the output directory before each build for a fresh slate
+- Accepts a plugin name argument (default: `cdocs`) for multi-plugin support
 - Auto-discovers new agents: adding a `.md` file to `agents/` and rebuilding produces a corresponding OC agent
 
 ## Document Types
