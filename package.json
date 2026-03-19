@@ -10,7 +10,5 @@
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-    "@weftwise/cdocs-opencode": "file:build/cdocs/opencode"
-  }
+  "dependencies": {}
 }
