@@ -5,9 +5,12 @@ first_authored:
 task_list: cdocs/opencode-integration
 type: proposal
 state: live
-status: request_for_proposal
+status: evolved
+evolved_into: 2026-03-19-decouple-oc-build-from-cc-plugin.md
 tags: [opencode, skills, postinstall, path-conventions]
 ---
+
+> NOTE(opus/opencode-decoupling): This RFP has been evolved into the [OC decoupling proposal](2026-03-19-decouple-oc-build-from-cc-plugin.md), which incorporates the skill nesting fix alongside the broader `.opencode/`-only confinement and source-repo guard.
 
 # Migrate cdocs-opencode Postinstall to Use OpenCode-Native Skill Paths
 
