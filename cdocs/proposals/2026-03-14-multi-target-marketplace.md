@@ -330,6 +330,12 @@ The generated `opencode/package.json`:
 > NOTE(claude-opus-4-6/multi-target): The postinstall script (`scripts/postinstall.js`) copies skills to `.opencode/skills/cdocs/` and rules to `.claude/rules/` from the bundled copies in the npm package.
 > Skills and rules are included in the `files` array so they ship with the package (no `__dirname/..` parent traversal needed).
 > Set `CDOCS_SKIP_POSTINSTALL=1` to skip the postinstall copy.
+>
+> NOTE(opus/opencode-decoupling): **Amended by [decouple-oc-build-from-cc-plugin](2026-03-19-decouple-oc-build-from-cc-plugin.md).**
+> The postinstall description above is stale.
+> The postinstall now targets `.opencode/skills/<name>/` (flat, no `cdocs/` nesting) and `.opencode/rules/cdocs/` exclusively.
+> It no longer writes to `.claude/` directories at all.
+> A source-repo guard skips execution when run inside the plugin development environment.
 
 > NOTE(claude-opus-4-6/multi-target): The `.ts` entry point (`plugins/cdocs-hooks.ts`) requires a Bun-compatible runtime.
 > OC auto-installs plugins via Bun, so this works in the standard OC installation path.
@@ -345,7 +351,7 @@ Users install via:
 }
 ```
 
-Skills and rules are bundled in the npm package and the `postinstall` script copies them into the project's `.opencode/skills/cdocs/` and `.claude/rules/` directories automatically.
+Skills and rules are bundled in the npm package and the `postinstall` script copies them into the project's `.opencode/` directories automatically (skills to `.opencode/skills/<name>/`, rules to `.opencode/rules/cdocs/`).
 
 > NOTE(claude-opus-4-6/multi-target): The npm package delivers hooks, converted agents, skills, and rules as a complete bundle.
 > The postinstall uses `__dirname`-relative paths (pointing to the bundled copies within the package) rather than parent directory traversal, so it works correctly for both in-repo and standalone npm installs.

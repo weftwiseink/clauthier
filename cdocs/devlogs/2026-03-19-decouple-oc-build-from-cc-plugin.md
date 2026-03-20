@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/opencode-decoupling
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [opencode, plugin-architecture, cc-plugin, build-pipeline]
 ---
 
@@ -89,7 +89,47 @@ Skills will appear in next CC session.
 - Removed committed `.claude/rules/*.md` files from git tracking and disk (they were redundant copies doubling rule content in context).
 - Fixed `.lace` gitignore entry to `.lace/` (trailing slash for directory).
 
-### Remaining Work
+### Phase 3: Postinstall Rewrite (OC-Only Confinement)
 
-- Phase 3 (OC skill path flattening + source-repo guard in postinstall): not yet implemented.
-- Phase 4 (documentation + evolve RFPs): not yet done.
+Rewrote `plugins/cdocs/scripts/postinstall.js` to confine all output to `.opencode/`:
+
+**Key changes:**
+- Skills now copy to `.opencode/skills/<name>/` (flat, no `cdocs/` nesting).
+  OC discovers skills at `skills/*/SKILL.md` -- one directory level.
+- Rules now copy to `.opencode/rules/cdocs/` (namespaced under cdocs/ to avoid collisions).
+- Removed all `.claude/` write paths (`SKILLS_DEST_CC`, `RULES_DEST` pointing to `.claude/`).
+- Added source-repo guard: detects `plugins/cdocs/.claude-plugin/plugin.json` and skips execution.
+- Always creates `.opencode/` if it does not exist.
+
+**Verification (scratch directory `/tmp/test-postinstall/`):**
+```
+npm init -y && npm install /path/to/build/cdocs/opencode
+
+# PASS: Skills at flat paths
+ls .opencode/skills/devlog/SKILL.md    # exists
+ls .opencode/skills/cdocs/             # does not exist (no nesting)
+
+# PASS: Rules at .opencode/rules/cdocs/
+ls .opencode/rules/cdocs/writing-conventions.md  # exists
+
+# PASS: No .claude/ leakage
+test -d .claude && echo FAIL || echo PASS   # PASS
+
+# PASS: Source-repo guard
+INIT_CWD=/path/to/source/repo node postinstall.js
+# Output: "cdocs-opencode: source repo detected, skipping postinstall"
+
+# PASS: Build script produces matching postinstall
+diff plugins/cdocs/scripts/postinstall.js build/cdocs/opencode/scripts/postinstall.js
+# (no differences)
+```
+
+All 10 skills discovered as flat directories.
+All 3 rule files in `.opencode/rules/cdocs/`.
+Zero `.claude/` artifacts created.
+
+### Phase 4: Documentation Updates
+
+- Added amendment NOTE to `cdocs/proposals/2026-03-14-multi-target-marketplace.md` (Section 5, Plugin Manifest and npm Packaging) documenting the stale postinstall description and referencing this proposal.
+- Updated inline text in the marketplace proposal to reflect the new `.opencode/`-only paths.
+- RFP `2026-03-19-opencode-skill-path-conventions.md` was already marked as `status: evolved` with `evolved_into` reference (done in prior session).

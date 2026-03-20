@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/opencode-decoupling
 type: proposal
 state: live
-status: wip
+status: implementation_wip
 tags: [opencode, plugin-architecture, cc-plugin, build-pipeline, worktree, postinstall]
 last_reviewed:
   status: revision_requested

@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /**
- * postinstall.js — Copy cdocs skills and rules to project paths on npm install.
+ * postinstall.js -- Copy cdocs skills and rules to .opencode/ on npm install.
  *
  * This script runs after `npm install @weftwise/cdocs-opencode` and copies:
- * - skills/ -> .opencode/skills/cdocs/ (or .claude/skills/cdocs/)
- * - rules/ -> .claude/rules/
+ * - skills/ -> .opencode/skills/<name>/  (flat, no cdocs/ nesting)
+ * - rules/ -> .opencode/rules/cdocs/     (namespaced under cdocs/)
+ *
+ * IMPORTANT: This script ONLY writes to .opencode/ directories.
+ * It NEVER creates or modifies anything under .claude/.
+ * CC artifact delivery is handled by the CC plugin system (SessionStart hook,
+ * /cdocs:init), not by this OC-specific npm package.
  *
  * Set CDOCS_SKIP_POSTINSTALL=1 to skip this step.
- *
- * The script uses the bundled copies within the npm package (__dirname-relative)
- * rather than parent directory traversal, so it works for both in-repo and
- * standalone npm installs.
  */
 
 const { cpSync, mkdirSync, existsSync, readdirSync } = require("fs");
@@ -22,41 +23,59 @@ if (process.env.CDOCS_SKIP_POSTINSTALL === "1") {
   process.exit(0);
 }
 
+// Source-repo guard: skip when running inside the plugin source repo.
+// The source repo has plugins/cdocs/.claude-plugin/plugin.json as a marker.
+const PROJECT_ROOT = process.env.INIT_CWD || process.cwd();
+const SOURCE_REPO_MARKER = join(PROJECT_ROOT, "plugins", "cdocs", ".claude-plugin", "plugin.json");
+if (existsSync(SOURCE_REPO_MARKER)) {
+  console.log("cdocs-opencode: source repo detected, skipping postinstall");
+  process.exit(0);
+}
+
 // Package root is one level up from scripts/
 const PKG_ROOT = resolve(__dirname, "..");
 const SKILLS_SRC = join(PKG_ROOT, "skills");
 const RULES_SRC = join(PKG_ROOT, "rules");
 
-// Project root is where npm install was run (INIT_CWD is set by npm)
-const PROJECT_ROOT = process.env.INIT_CWD || process.cwd();
-
-// Destination paths
-const SKILLS_DEST_OC = join(PROJECT_ROOT, ".opencode", "skills", "cdocs");
-const SKILLS_DEST_CC = join(PROJECT_ROOT, ".claude", "skills", "cdocs");
-const RULES_DEST = join(PROJECT_ROOT, ".claude", "rules");
+// Destination paths -- ONLY .opencode/, NEVER .claude/
+const SKILLS_DEST = join(PROJECT_ROOT, ".opencode", "skills");
+const RULES_DEST = join(PROJECT_ROOT, ".opencode", "rules", "cdocs");
 
 /**
- * Copy a directory if the source exists.
- * Creates the destination directory if needed.
+ * Copy skill directories to flat .opencode/skills/<name>/ paths.
+ * OC discovers skills at .opencode/skills/<name>/SKILL.md (one level).
+ * No cdocs/ namespace prefix -- skills are flat in the .opencode/skills/ directory.
  */
-function copyIfExists(src, dest, label) {
+function copySkillsFlat(src, dest) {
   if (!existsSync(src)) {
-    console.log(`cdocs-opencode: ${label} source not found, skipping: ${src}`);
-    return false;
+    console.log("cdocs-opencode: skills source not found, skipping");
+    return;
+  }
+  const skills = readdirSync(src, { withFileTypes: true }).filter(d => d.isDirectory());
+  for (const skill of skills) {
+    const skillSrc = join(src, skill.name);
+    const skillDest = join(dest, skill.name);
+    mkdirSync(skillDest, { recursive: true });
+    cpSync(skillSrc, skillDest, { recursive: true });
+  }
+  console.log(`cdocs-opencode: ${skills.length} skills copied to ${dest}`);
+}
+
+/**
+ * Copy rules to .opencode/rules/cdocs/ (namespaced to avoid collisions).
+ */
+function copyRules(src, dest) {
+  if (!existsSync(src)) {
+    console.log("cdocs-opencode: rules source not found, skipping");
+    return;
   }
   mkdirSync(dest, { recursive: true });
   cpSync(src, dest, { recursive: true });
-  console.log(`cdocs-opencode: ${label} copied to ${dest}`);
-  return true;
+  console.log(`cdocs-opencode: rules copied to ${dest}`);
 }
 
-// Copy skills
-// Prefer .opencode/skills/ if .opencode/ exists, otherwise use .claude/skills/
-if (existsSync(join(PROJECT_ROOT, ".opencode"))) {
-  copyIfExists(SKILLS_SRC, SKILLS_DEST_OC, "Skills");
-} else {
-  copyIfExists(SKILLS_SRC, SKILLS_DEST_CC, "Skills");
-}
+// Ensure .opencode/ exists
+mkdirSync(join(PROJECT_ROOT, ".opencode"), { recursive: true });
 
-// Copy rules to .claude/rules/ (OC reads this path natively)
-copyIfExists(RULES_SRC, RULES_DEST, "Rules");
+copySkillsFlat(SKILLS_SRC, SKILLS_DEST);
+copyRules(RULES_SRC, RULES_DEST);
