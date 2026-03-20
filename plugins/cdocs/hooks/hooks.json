@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.sh",
+            "command": "npx tsx ${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.ts",
             "timeout": 3
           }
         ]

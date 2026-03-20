@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/plugin-hardening
 type: proposal
 state: live
-status: wip
+status: implementation_wip
 tags: [hooks, frontmatter, architecture, typescript]
 ---
 
