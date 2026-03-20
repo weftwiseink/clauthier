@@ -7,6 +7,11 @@ type: devlog
 state: live
 status: review_ready
 tags: [opencode, plugin-architecture, cc-plugin, build-pipeline]
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-6"
+  at: 2026-03-19T17:45:00-07:00
+  round: 1
 ---
 
 # Decouple OC Build from CC Plugin Setup
@@ -103,7 +108,8 @@ Rewrote `plugins/cdocs/scripts/postinstall.js` to confine all output to `.openco
 
 **Verification (scratch directory `/tmp/test-postinstall/`):**
 ```
-npm init -y && npm install /path/to/build/cdocs/opencode
+cd /tmp/test-postinstall
+npm init -y && npm install /var/home/mjr/code/weft/clauthier/main/build/cdocs/opencode
 
 # PASS: Skills at flat paths
 ls .opencode/skills/devlog/SKILL.md    # exists
@@ -116,8 +122,13 @@ ls .opencode/rules/cdocs/writing-conventions.md  # exists
 test -d .claude && echo FAIL || echo PASS   # PASS
 
 # PASS: Source-repo guard
-INIT_CWD=/path/to/source/repo node postinstall.js
+cd /tmp/test-postinstall
+INIT_CWD=/var/home/mjr/code/weft/clauthier/main node node_modules/@weftwise/cdocs-opencode/scripts/postinstall.js
 # Output: "cdocs-opencode: source repo detected, skipping postinstall"
+
+# PASS: CDOCS_SKIP_POSTINSTALL opt-out
+CDOCS_SKIP_POSTINSTALL=1 node node_modules/@weftwise/cdocs-opencode/scripts/postinstall.js
+# Output: "cdocs-opencode: postinstall skipped (CDOCS_SKIP_POSTINSTALL=1)"
 
 # PASS: Build script produces matching postinstall
 diff plugins/cdocs/scripts/postinstall.js build/cdocs/opencode/scripts/postinstall.js
@@ -127,6 +138,10 @@ diff plugins/cdocs/scripts/postinstall.js build/cdocs/opencode/scripts/postinsta
 All 10 skills discovered as flat directories.
 All 3 rule files in `.opencode/rules/cdocs/`.
 Zero `.claude/` artifacts created.
+
+**Not programmatically verified (requires live sessions):**
+- CC skills loading after marketplace re-registration (done in prior session; needs new CC session to confirm).
+- OC skill discovery in a live OC instance (requires running OC with the installed package).
 
 ### Phase 4: Documentation Updates
 
