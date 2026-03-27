@@ -18,12 +18,19 @@ tags: [architecture, claude_skills, workflow, agent_orchestration]
 
 ## Objective
 
-Agents acting as orchestrators (overseers) frequently need to:
+`/oversee` is distinct from `/implement`.
+`/implement` is for an agent executing a single proposal's phases.
+`/oversee` is for a **top-level orchestrator**: an agent that maintains high-level context across a potentially very large project spanning multiple proposals, reviews, and implementations.
+The overseer dispatches subagents, monitors their progress, ensures quality gates are met, course-corrects when agents stall or diverge, and drives the overall arc forward.
+It is the agent equivalent of a tech lead running a multi-week initiative: it doesn't write the code itself, but it ensures the right work happens in the right order with the right verification.
+
+The overseer frequently needs to:
 1. Dispatch subagents for proposals, reviews, and implementations.
 2. Ensure each deliverable goes through review/revision cycles before proceeding.
 3. Drive implementations through all phases sequentially, committing and verifying at each step.
 4. Validate results against live system state (running containers, actual CLI output, real file contents), not just test suites.
 5. Continue autonomously through multiple phases when the user has indicated they'll be AFK.
+6. Maintain coherent high-level context as the project evolves across many subagent handoffs.
 
 Currently, users must manually specify all of this in each prompt.
 When they don't, common failure modes emerge:
@@ -79,4 +86,4 @@ The proposer should explore:
 
 5. **Verification specification format**: How does a proposal or implementation phase declare its verification requirements in a way the overseer can parse and execute? Structured frontmatter? A `## Verification` section with executable commands? A separate manifest?
 
-6. **Interaction with existing implement skill**: The current `/implement` skill already has phase execution, devlog tracking, and review loops. Is `/oversee` a wrapper around `/implement`, or does it replace it? The proposer should carefully analyze the boundary.
+6. **Interaction with existing implement skill**: `/oversee` does NOT replace `/implement`. It is a higher-level orchestrator that invokes `/implement` (and `/propose`, `/review`, `/report`) as tools. The boundary: `/implement` owns single-proposal execution; `/oversee` owns multi-proposal project arcs, cross-cutting verification, and autonomous phase progression. The proposer should design the composition interface.
