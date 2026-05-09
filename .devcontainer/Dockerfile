@@ -41,6 +41,21 @@ RUN mkdir -p /workspace /home/${USERNAME}/.claude ${COMMAND_HISTORY_PATH} && \
     touch ${COMMAND_HISTORY_PATH}/.bash_history && \
     chown -R ${USERNAME}:${USERNAME} /workspace /home/${USERNAME}/.claude ${COMMAND_HISTORY_PATH}
 
+# Mirror the host project path inside the container so Claude Code plugin
+# records (~/.claude/plugins/{installed_plugins,known_marketplaces}.json),
+# which are bind-mounted from the host and key entries by the host's
+# absolute project path, resolve here too. Without this, cdocs@clauthier
+# fails to load because the marketplace's installLocation points at a path
+# that doesn't exist inside the container, even though /workspace/clauthier
+# is the same files via bind-mount.
+#
+# TODO(mjr/cdocs-improvements): Personal stopgap, hardcoded to maintainer's
+# host layout. Remove once CC issues #14200 / #16538 are resolved and plugin
+# rule delivery no longer depends on host-keyed install records. See
+# cdocs/proposals/2026-05-08-cdocs-plugin-improvements.md Phase 3-4.
+RUN mkdir -p /var/home/mjr/code/weft && \
+    ln -s /workspace/clauthier /var/home/mjr/code/weft/clauthier
+
 # Persist bash history from https://github.com/anthropics/claude-code/blob/main/.devcontainer/Dockerfile
 RUN echo "export PROMPT_COMMAND='history -a' && export HISTFILE=${COMMAND_HISTORY_PATH}/.bash_history" >> /home/${USERNAME}/.bashrc
 

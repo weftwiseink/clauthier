@@ -23,6 +23,48 @@
       "resolvedSource": "/home/mjr/.claude",
       "isOverride": true,
       "assignedAt": "2026-03-18T15:21:11.556Z"
+    },
+    "neovim/plugins": {
+      "label": "neovim/plugins",
+      "resolvedSource": "/home/mjr/.local/share/nvim",
+      "isOverride": true,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "claude-code/config": {
+      "label": "claude-code/config",
+      "resolvedSource": "/home/mjr/.claude",
+      "isOverride": true,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "claude-code/config-json": {
+      "label": "claude-code/config-json",
+      "resolvedSource": "/home/mjr/.claude.json",
+      "isOverride": true,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "lace-fundamentals/authorized-keys": {
+      "label": "lace-fundamentals/authorized-keys",
+      "resolvedSource": "/home/mjr/.config/lace/ssh/id_ed25519.pub",
+      "isOverride": false,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "lace-fundamentals/dotfiles": {
+      "label": "lace-fundamentals/dotfiles",
+      "resolvedSource": "/home/mjr/code/personal/dotfiles",
+      "isOverride": true,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "lace-fundamentals/screenshots": {
+      "label": "lace-fundamentals/screenshots",
+      "resolvedSource": "/home/mjr/Pictures/Screenshots",
+      "isOverride": true,
+      "assignedAt": "2026-05-06T23:52:20.167Z"
+    },
+    "user/screenshots": {
+      "label": "user/screenshots",
+      "resolvedSource": "/home/mjr/.config/lace/clauthier/mounts/user/screenshots",
+      "isOverride": false,
+      "assignedAt": "2026-05-06T23:52:20.189Z"
     }
   }
 }
