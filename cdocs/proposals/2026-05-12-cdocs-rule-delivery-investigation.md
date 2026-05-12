@@ -67,6 +67,7 @@ The full proposal should explore:
 
 ## Prior Art
 
+- [cdocs/reports/2026-05-12-rule-delivery-options.md](../reports/2026-05-12-rule-delivery-options.md): supplemental investigation. Key finding: #16538 closed as "not planned"; #14200 open with no active development; no CC plugin install-time hook surface analogous to npm postinstall.
 - [cdocs/reports/2026-05-06-cc-plugin-api-updates.md](../reports/2026-05-06-cc-plugin-api-updates.md): broader May 2026 plugin API survey.
 - `plugins/cdocs/hooks/inject-rules.ts` and `plugins/cdocs/hooks/cdocs-hooks.ts`: current SessionStart hook implementation.
 - `plugins/cdocs/AGENTS.md`: cross-target fallback strategy for OpenCode.
@@ -86,10 +87,10 @@ The full proposal should explore:
 
 ## Investigation Plan
 
-A supplemental `/cdocs:report` (see `cdocs/reports/`) deepens the technical survey before this RFP is elaborated into a full proposal.
-The report's expected outputs:
+The supplemental [rule-delivery options report](../reports/2026-05-12-rule-delivery-options.md) is the technical-survey companion to this RFP.
+It delivers:
 
-- Empirical retest of #16538 on the current CC build.
+- Status check on #16538 and #14200 (both closed-not-planned and open-no-activity respectively).
 - Confirmation that the user-level hook fallback still works.
 - A catalog of any CC plugin install-time hook surfaces, with citations.
 - An evaluation of the npm-postinstall hybrid approach including OC implications.
