@@ -62,12 +62,16 @@ Verify the tool correctly identifies the cdocs plugin in the monorepo layout (pl
 
 ### 3. Smoke-test cdocs install under `strictKnownMarketplaces`
 
-Install cdocs into a scratch project that has `strictKnownMarketplaces: true` set.
-Confirm:
-- Install succeeds when the marketplace is registered in `extraKnownMarketplaces`.
-- Install fails clearly when it isn't.
+`strictKnownMarketplaces` is a managed-enterprise allowlist (array of source-pattern objects) read only from `policySettings`, not a project-level boolean.
+On Linux it lives at `/etc/claude-code/managed-settings.json`; project-level entries are silently ignored.
+The companion `extraKnownMarketplaces` field (project-level object) is what registers marketplace sources.
 
-No permanent config change to the cdocs source.
+Smoke-test by writing a temporary managed-settings file with a source allowlist and running install against a sandboxed `CLAUDE_CONFIG_DIR`.
+Confirm:
+- Install succeeds when the clauthier marketplace path matches the allowlist and the project registers it in `extraKnownMarketplaces`.
+- Marketplace add (and downstream install) fails with the enterprise-policy error when the path does not match the allowlist.
+
+No permanent config change to the cdocs source or to the maintainer's real `~/.claude/` state.
 This is a one-shot verification, not a recurring test.
 
 ### 4. Audit skill descriptions for the 250-character menu cap
@@ -109,7 +113,7 @@ Grep for the current descriptions before editing.
 - `claude plugin validate plugins/cdocs/.claude-plugin/plugin.json` passes.
 - `claude plugin validate .claude-plugin/marketplace.json` passes.
 - `claude plugin tag` against the current commit produces a valid `cdocs--v0.1.x` tag without pushing, and correctly resolves the cdocs plugin from the monorepo layout.
-- Fresh install in a scratch project with `strictKnownMarketplaces: true`: install succeeds when the marketplace is in `extraKnownMarketplaces`, fails clearly when it isn't.
+- Fresh install in a scratch project against a sandboxed `CLAUDE_CONFIG_DIR` with a temporary managed-settings `strictKnownMarketplaces` source-pattern allowlist: install succeeds when the allowlist covers the clauthier path and the project registers it in `extraKnownMarketplaces`; marketplace add fails with the enterprise-policy error when the path is excluded.
 - All `plugins/cdocs/skills/*/SKILL.md` `description` fields are at most 250 characters.
 
 ## Verification Methodology
