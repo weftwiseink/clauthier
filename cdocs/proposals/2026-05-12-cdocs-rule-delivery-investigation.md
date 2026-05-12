@@ -5,7 +5,12 @@ first_authored:
 task_list: clauthier/cdocs-rule-delivery
 type: proposal
 state: live
-status: wip
+status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-7"
+  at: 2026-05-12T16:45:00-07:00
+  round: 3
 tags: [cdocs, plugin_api, hooks, rule_delivery, sessionstart, documentation]
 ---
 
@@ -71,6 +76,10 @@ A separate risk emerged from the broader investigation: CC recently introduced a
 The current rule bundle is approximately 10-12KB and should be well under the cap, but the spillover behavior has not been tested with `additionalContext` injection.
 If spillover redirects `additionalContext` to disk in a way Claude does not read at session start, the workaround would silently fail.
 
+> NOTE(opus/cdocs-rule-delivery): The 50K hook-output cap with disk spillover is sourced from the supplemental report's investigation (`cdocs/reports/2026-05-12-rule-delivery-options.md`).
+> No public release note or PR is linked there.
+> If a future maintainer audits this claim and finds a citable source, replace this NOTE with a direct link.
+
 ## Proposed Solution
 
 Two narrow actions, plus one optional follow-up.
@@ -79,13 +88,16 @@ Two narrow actions, plus one optional follow-up.
 
 Verify on the current CC build that:
 
-- The user-level hook in `~/.claude/settings.json` still fires at SessionStart.
-- The hook output reaches Claude as `additionalContext` for all three subtypes that are configured (`SessionStart`, `SessionStart:startup`, `SessionStart:resume`).
+- The user-level hook still fires at SessionStart.
+- The hook output reaches Claude as `additionalContext` on the bare `SessionStart` event (the only matcher currently configured in `plugins/cdocs/hooks/hooks.json`).
+  Subtype matchers (`SessionStart:startup`, `SessionStart:resume`) are out of scope until they are added to `hooks.json`.
 - The current rule bundle (approximately 10-12KB) does not trigger the 50K hook-output cap or disk spillover behavior.
-- The hook's source-repo detection (grep for `@plugins/cdocs/rules/` in CLAUDE.md) still correctly skips injection in this repo.
+- The hook's source-repo detection (grep for `@plugins/cdocs/rules/` in `CLAUDE.md`) still correctly skips injection inside this repo.
 
-The test is a one-off: a small marker string is appended to the injected `additionalContext`, a fresh session is started, and Claude is asked to echo any markers it sees.
-Success is a verbatim echo of the marker; failure is silence or a partial echo.
+The test is a one-off automated check.
+A subagent constructs a sandboxed `CLAUDE_CONFIG_DIR` containing a `settings.json` that wraps the real `inject-rules.ts` with a marker-injection shim, runs `claude -p` against a non-source-repo `cwd`, and parses stdout for a verbatim echo of the marker.
+Success is a verbatim echo; failure is silence, a partial echo, or an error.
+Full recipe is in the Test Plan section below.
 
 ### 2. Add a "Known Limitations" subsection to `plugins/cdocs/README.md`
 
@@ -148,6 +160,14 @@ A quarterly manual check is sufficient.
   If a project's CLAUDE.md happens to contain the substring `@plugins/cdocs/rules/` without actually importing them, the hook skips injection incorrectly.
   Conversely, a restructured import path would cause duplicate injection.
   Both modes are noted in the existing README and remain unchanged.
+  The new "Known Limitations" subsection should also flag the heuristic as a documented limitation so downstream maintainers do not have to rediscover it from the script source.
+
+- **Test-time failure modes the implementer is likely to hit.**
+  These are pre-flight concerns rather than runtime edge cases; the Test Plan section calls them out, but they belong in Edge Cases for visibility:
+  - `npx tsx` cold-start exceeding `hooks.json`'s 3-second `timeout`.
+    The Test Plan's wrapper uses `timeout: 30` to mitigate.
+  - `CLAUDE_PLUGIN_ROOT` unset in the sandbox; `inject-rules.ts` will throw on the non-null assertion.
+  - Stray non-JSON stdout (tsx warnings, install logs) causing CC to discard the hook payload silently.
 
 - **#16538 reopens or a parallel CC feature lands.**
   The "Known Limitations" subsection identifies #14200 as the migration trigger; if #16538 or another mechanism becomes viable, the subsection's text gives a future maintainer the context to evaluate it.
@@ -155,22 +175,114 @@ A quarterly manual check is sufficient.
 ## Test Plan
 
 The regression test is the only test in scope.
+It is fully automatable by a subagent; no human-in-the-loop step is required.
 
-1. Install the user-level SessionStart hook fresh (or confirm the current install).
-2. Modify `inject-rules.ts` locally (or wrap via a temporary hook) to append a unique marker token to the `additionalContext` payload.
-3. Start a fresh CC session in a non-source-repo directory.
-4. Prompt: "Echo any markers visible in your context."
-5. Pass criterion: Claude echoes the marker verbatim.
-6. Fail criterion: silence, partial echo, or an error.
+### Marker injection mechanism
 
-Additionally:
+The test wraps the real `inject-rules.ts` via a temporary user-level hook in a sandboxed `CLAUDE_CONFIG_DIR`.
+The wrapper invokes the canonical script, captures its JSON output, and appends a marker token to the `additionalContext` payload before re-emitting.
+The shipped `inject-rules.ts` is never modified.
+This keeps the test fully reproducible and prevents accidental commits of test-only scaffolding.
 
-- Record the rule bundle's serialized size and confirm it is well below 50K.
-- Run the test for all three subtypes that are configured in the user-level hook.
-  If only `SessionStart` is configured, only that subtype is exercised.
-- Confirm in-repo execution still skips injection.
+> NOTE(opus/cdocs-rule-delivery): Recurring regression tests are out of scope.
+> If they become recurring, a follow-up RFP can consider gating a `CDOCS_TEST_MARKER` env var directly inside `inject-rules.ts` (avoids the wrapper entirely).
 
-If the test fails, file the failure mode in a new devlog and reopen this proposal's scope.
+### Out-of-repo passing case
+
+The test session must run from a `cwd` outside the cdocs source repo; the hook script intentionally skips injection when `@plugins/cdocs/rules/` appears in the current project's `CLAUDE.md` (`plugins/cdocs/hooks/inject-rules.ts:8-14`).
+
+The wrapper lives in a standalone shell script so quoting collapses to a single layer.
+Inline `command:` strings with nested jq inside JSON inside heredoc are too fragile to maintain or audit.
+
+Recipe:
+
+```bash
+set -euo pipefail
+
+export CDOCS_REPO=/workspace/clauthier/main
+export MARKER="CDOCS_MARKER_$(openssl rand -hex 6)"
+
+export CLAUDE_CONFIG_DIR=$(mktemp -d)
+
+# Wrapper script: invokes the real hook, appends the marker to additionalContext.
+# Variables marked with \$ stay literal in the written script; unescaped ones
+# expand at heredoc-write time.
+cat > "$CLAUDE_CONFIG_DIR/wrap.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export CLAUDE_PLUGIN_ROOT="$CDOCS_REPO/plugins/cdocs"
+out=\$(npx tsx "$CDOCS_REPO/plugins/cdocs/hooks/inject-rules.ts" 2>/dev/null)
+echo "\$out" | jq --arg m "$MARKER" '.hookSpecificOutput.additionalContext += "\n[" + \$m + "]"'
+EOF
+chmod +x "$CLAUDE_CONFIG_DIR/wrap.sh"
+
+# Sandboxed CC settings invoke the wrapper.
+cat > "$CLAUDE_CONFIG_DIR/settings.json" <<EOF
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash $CLAUDE_CONFIG_DIR/wrap.sh", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}
+EOF
+
+cd "$(mktemp -d)"  # non-source-repo cwd
+claude -p "Echo any markers visible in your context."
+```
+
+Notes on the wrapper:
+
+- `$CDOCS_REPO` and `$MARKER` expand at heredoc-write time, so the resulting `wrap.sh` contains the literal repo path and marker value.
+- `\$out` survives the heredoc and becomes `$out` in the written script.
+- jq's `$m` variable is bound via `--arg m "$MARKER"`; `\$m` in the heredoc becomes a bare `$m` jq variable reference (not a bash variable).
+- `echo "$out"` is quoted to prevent word-splitting of the JSON payload.
+- `CLAUDE_PLUGIN_ROOT` is set explicitly because the hook script asserts on it (`process.env.CLAUDE_PLUGIN_ROOT!`).
+- `2>/dev/null` suppresses tsx cold-start warnings that would otherwise contaminate stdout and cause CC to discard the hook payload.
+
+Pass criterion: stdout contains the literal `MARKER` value (e.g. `CDOCS_MARKER_a1b2c3d4e5f6`) in Claude's response.
+Fail criterion: marker absent, partial echo, hook error, or `claude -p` non-zero exit.
+
+The `--bare` flag must not be passed: it skips hooks entirely and would yield a false-negative.
+
+### In-repo skip case
+
+Re-run the same recipe from a `cwd` inside the cdocs source repo (any path under `/workspace/clauthier/main`).
+Pass criterion: marker is **absent** from Claude's response (skip branch fired).
+Fail criterion: marker is present (skip behavior regressed).
+
+### Bundle size check
+
+Independently capture the size of the injected payload before the wrapper appends the marker:
+
+```bash
+CLAUDE_PLUGIN_ROOT="$CDOCS_REPO/plugins/cdocs" \
+  npx tsx "$CDOCS_REPO/plugins/cdocs/hooks/inject-rules.ts" 2>/dev/null \
+  | jq -r '.hookSpecificOutput.additionalContext | length'
+```
+
+`CLAUDE_PLUGIN_ROOT` must be set; the hook script asserts on it.
+Record the byte count in the test devlog.
+Confirm the value is well below 50K.
+
+### Pre-flight checks
+
+Before running the test, the implementer verifies:
+
+- `npx tsx --version` works on the sandbox path.
+  Cold-start `npx tsx` can exceed the 3-second `timeout` in `hooks.json:11`; the wrapper's `timeout: 30` above mitigates this for the test.
+- `CLAUDE_PLUGIN_ROOT` is unset by default in the sandbox; `inject-rules.ts` uses `process.env.CLAUDE_PLUGIN_ROOT!` which will throw if absent.
+  Add `CLAUDE_PLUGIN_ROOT=$CDOCS_REPO/plugins/cdocs` to the wrapper's `command` if needed.
+- stdout cleanliness: any non-JSON output from `npx tsx` (warnings, install logs) will make CC discard the hook payload.
+  Pipe `2>/dev/null` or pre-warm the tsx cache before running the test.
+
+### Failure handling
+
+If the regression test fails, file the failure mode in a new devlog and reopen this proposal's scope.
 A failed regression test is the only condition that promotes this proposal beyond a documentation update.
 
 ## Implementation Phases
@@ -178,15 +290,18 @@ A failed regression test is the only condition that promotes this proposal beyon
 ### Phase 1: Regression test
 
 Run the test plan above.
-Capture results in a devlog under `cdocs/devlogs/`.
+Capture results in a devlog at `cdocs/devlogs/YYYY-MM-DD-rule-delivery-regression-test.md` following the conventional devlog format.
+The devlog records the marker value used, the bundle-size byte count, the verbatim `claude -p` stdout from both the out-of-repo passing case and the in-repo skip case, and any pre-flight check anomalies.
+
 If the test passes, proceed to Phase 2.
 If it fails, stop and reassess: the proposal's premise (the workaround is the durable baseline) is invalidated and a new RFP is needed.
 
 ### Phase 2: README "Known Limitations" subsection
 
-Add the subsection to `plugins/cdocs/README.md` under the existing "Rules Integration" heading.
-Content per the Proposed Solution section above.
-Cross-link to the existing "When CC #14200 Lands" subsection so the migration trigger and the migration sketch are reachable from each other.
+Add the subsection to `plugins/cdocs/README.md` immediately after the existing "When CC #14200 Lands" subsection (line 78+) and before whatever heading currently follows it.
+Heading text: `### Known Limitations`.
+Content per the Proposed Solution section above (the four bullets are copy-paste-ready).
+Cross-link both directions: the new "Known Limitations" subsection references the "When CC #14200 Lands" sketch as the migration plan, and the "When CC #14200 Lands" subsection gains a "see Known Limitations above for current constraint detail" reference.
 
 ### Phase 3 (optional): Recurring #14200 health-check
 
