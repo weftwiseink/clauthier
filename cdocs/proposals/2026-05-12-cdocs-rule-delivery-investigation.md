@@ -12,7 +12,7 @@ tags: [cdocs, plugin_api, hooks, rule_delivery, sessionstart, documentation]
 # CDocs Rule Delivery Investigation
 
 > BLUF(opus/cdocs-rule-delivery): The cdocs SessionStart-hook rule-injection workaround is the durable baseline.
-> Upstream CC issue #16538 is closed as "not planned" and #14200 has no active development, so plugin-native delivery is not viable.
+> Upstream Claude Code issue [#16538](https://github.com/anthropics/claude-code/issues/16538) is closed as "not planned" and [#14200](https://github.com/anthropics/claude-code/issues/14200) has no active development, so plugin-native delivery is not viable.
 > This proposal commits to two narrow actions: (1) regression-test the existing user-level SessionStart hook on the current CC build, since the supplemental report's live test was blocked and the new 50K hook-output cap with disk spillover could silently break injection; (2) add a "Known Limitations" subsection to `plugins/cdocs/README.md` that names #14200 as the upstream blocker and states what would trigger a migration.
 > An optional follow-up is a recurring health-check on #14200.
 > **Motivated By:** [cdocs/proposals/2026-05-08-cdocs-plugin-improvements.md](2026-05-08-cdocs-plugin-improvements.md), [cdocs/reports/2026-05-06-cc-plugin-api-updates.md](../reports/2026-05-06-cc-plugin-api-updates.md).
@@ -52,11 +52,11 @@ It skips injection in the source repo by detecting `@plugins/cdocs/rules/` impor
 
 Three upstream facts shape this proposal:
 
-1. **CC issue #16538** (plugin SessionStart hooks do not surface `additionalContext`) was closed as "not planned" with no PR.
+1. **Claude Code issue [#16538](https://github.com/anthropics/claude-code/issues/16538)** (plugin SessionStart hooks do not surface `additionalContext`) was closed as "not planned" with no PR.
    Anthropic has signaled they will not fix it.
    Plugin-native SessionStart context injection is therefore unavailable indefinitely.
 
-2. **CC issue #14200** (always-on plugin context, e.g. a `rules` field in `plugin.json`) is open with no assignees, no milestone, and no linked PRs.
+2. **Claude Code issue [#14200](https://github.com/anthropics/claude-code/issues/14200)** (always-on plugin context, e.g. a `rules` field in `plugin.json`) is open with no assignees, no milestone, and no linked PRs.
    It is the only realistic migration trigger.
 
 3. **No CC plugin install-time hook surface exists** analogous to npm postinstall.

@@ -78,6 +78,16 @@ Em-dashes and semicolons should be used sparingly.
 Use Mermaid diagram syntax (` ```mermaid `) instead of ASCII art for flowcharts, sequence diagrams, state machines, and other visual representations.
 Mermaid renders natively in GitHub and most markdown viewers, is easier to maintain, and diffs cleanly.
 
+## Direct Links for External References
+
+Use direct HTTP links for external references (GitHub issues, pull requests, commits, docs pages, npm packages, etc.).
+Bare references like `CC #14200` or `issue 16538` are less useful than a navigable URL.
+
+Format: `[#14200](https://github.com/anthropics/claude-code/issues/14200)` on first mention.
+Subsequent shortform references in the same document are acceptable if the linked URL is unambiguous from nearby context.
+
+This applies to all cdocs documents and to commit messages where practical.
+
 ## Avoid Emojis
 
 Avoid excessive use of emojis and overly-effusive language in all documentation.
