@@ -157,3 +157,45 @@ The build script (`scripts/build-opencode.ts`):
 | Report | `cdocs/reports/` | Audience-facing findings and analysis |
 
 All documents use `YYYY-MM-DD-dash-case.md` naming and require YAML frontmatter.
+
+## Releasing
+
+Use `claude plugin tag` to cut a release tag.
+It reads `plugins/cdocs/.claude-plugin/plugin.json`, validates that the enclosing `.claude-plugin/marketplace.json` entry agrees, and creates an annotated `cdocs--v{version}` git tag at HEAD.
+
+### Workflow
+
+1. Bump `version` in `plugins/cdocs/.claude-plugin/plugin.json` on a clean working tree and commit (conventional-commit style).
+2. Dry-run from the repo root to confirm the tag the tool intends to create:
+
+    ```bash
+    claude plugin tag --dry-run plugins/cdocs
+    ```
+
+    Expected output: a `Plugin / Version / Marketplace entry / Tag` summary followed by `Dry run — would create tag cdocs--v{version}`.
+3. Create the tag (still local-only):
+
+    ```bash
+    claude plugin tag plugins/cdocs
+    ```
+4. Push the tag when ready:
+
+    ```bash
+    claude plugin tag --push plugins/cdocs           # tag + push in one step
+    # or, if the tag already exists locally:
+    git push origin cdocs--v{version}
+    ```
+
+### Flags worth knowing
+
+- `--dry-run` — print what would be tagged without creating it.
+- `-m, --message <msg>` — override the default annotation (`%s` interpolates the version).
+- `--push` — push the tag to `--remote` (default `origin`) after creating it.
+- `--remote <name>` — push target for `--push`.
+- `-f, --force` — skip the dirty-working-tree and tag-already-exists checks. Used in CI or to retag.
+
+### Monorepo notes
+
+- Always pass `plugins/cdocs` as the path; running `claude plugin tag` from the repo root with no argument errors out (`No plugin manifest found. Expected /…/.claude-plugin/plugin.json.`) because it looks for the plugin manifest at the working directory, not the enclosing marketplace.
+- `claude plugin tag` is unconfused by the generated `build/cdocs/opencode/` output: the build directory contains a `package.json` but no `.claude-plugin/plugin.json`, so the tool resolves the canonical manifest under `plugins/cdocs/` without ambiguity.
+- The OpenCode npm package version in `build/cdocs/opencode/package.json` is regenerated from `plugin.json` by `scripts/build-opencode.ts`, so bumping the plugin manifest version is sufficient to keep both targets in sync.
