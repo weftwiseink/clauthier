@@ -26,6 +26,14 @@ Scaffold the CDocs documentation structure in the current project.
    If `.claude/rules/` doesn't exist, create it.
    If the project has a CLAUDE.md, add a reference line: `@.claude/rules/cdocs.md`
 
+   Immediately after any frontmatter and before the body, write the version-and-hash marker comment in the canonical form:
+   ```markdown
+   <!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->
+   ```
+   - Use the version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`.
+   - Compute `<sha256>` as the sha256 hex digest of the alphabetically-sorted, concatenated raw bodies of `${CLAUDE_PLUGIN_ROOT}/rules/*.md`. Bash one-liner: `(cd "$CLAUDE_PLUGIN_ROOT/rules" && ls *.md | sort | xargs cat) | sha256sum | awk '{print $1}'`.
+   - The freshness-check hook (`plugins/cdocs/hooks/inject-rules.ts`) reads this marker on subsequent session starts; hash-based comparison avoids spurious refresh nudges on version-only bumps. The marker shape must match exactly so the hook's opaque-string compare stabilizes on re-runs.
+
 4. If `$ARGUMENTS` includes `--minimal`, skip README generation and rules file creation.
    Only create the bare directory structure.
 
@@ -47,7 +55,7 @@ Scaffold the CDocs documentation structure in the current project.
       ---
       ```
       Strip any existing YAML frontmatter from the source rule file before prepending the OC frontmatter.
-      Add a version comment after the frontmatter: `<!-- cdocs rules vX.Y.Z - regenerate with /cdocs:init (use version from plugin.json) -->`
+      Add a version-and-hash comment after the frontmatter: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->` (same shape as `.claude/rules/cdocs.md`; see Step 3 for hash computation)
    c. The OC-enhanced frontmatter activates rules conditionally via the `opencode-rules` plugin: they load only when editing cdocs files or mentioning cdocs-specific terms.
 
 6. **AGENTS.md creation (cross-tool fallback):**
@@ -73,7 +81,7 @@ Scaffold the CDocs documentation structure in the current project.
      [Full content of frontmatter-spec.md, frontmatter stripped]
      <!-- cdocs-rules-end -->
      ```
-   - Add a version comment inside the delimiters: `<!-- cdocs rules vX.Y.Z - regenerate with /cdocs:init (use version from plugin.json) -->`
+   - Add a version-and-hash comment inside the delimiters: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->` (same shape as `.claude/rules/cdocs.md`; see Step 3 for hash computation)
    - This is idempotent: running init multiple times updates the content between delimiters without duplication.
 
    > NOTE(claude-opus-4-6/cross-target-rules): The inlined content can drift from the source rule files if the plugin is updated but init is not re-run.
@@ -130,6 +138,20 @@ See `/cdocs:report` for complete authoring guidelines.
 
 **Key sections:** BLUF, Context/Background, Key Findings, Analysis, Recommendations.
 ```
+
+## Read-after-write directive
+
+After all materialization steps complete, if `.claude/rules/cdocs.md` (or its OC/AGENTS.md counterparts) was actually rewritten during this run, the final line of the skill's response output must be the literal directive:
+
+```
+RULES_REFRESHED: .claude/rules/cdocs.md has been updated to version X.Y.Z. Read that file now to refresh your in-context rules. The @-imported version loaded at session start is stale and should be disregarded in favor of the freshly Read content.
+```
+
+Substitute the plugin version for `X.Y.Z`. The directive primes the next tool call to be a `Read` against the rewritten file so the session's working context reflects the current rules rather than the stale `@`-imported copy baked into the system prompt at session start.
+
+Idempotency: emit the directive only when the rule file content actually changed during the run. On a no-op re-run (file already matches plugin source), suppress it.
+
+First-time init note: when there is no prior `.claude/rules/cdocs.md` to supersede (initial scaffolding), the directive is technically harmless — the @-import did not exist before this session — but it is still emitted on the assumption that the freshly written rules are not yet in working context. The Read costs one tool call.
 
 ## Notes
 
