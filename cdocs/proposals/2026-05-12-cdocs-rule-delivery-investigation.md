@@ -5,7 +5,7 @@ first_authored:
 task_list: clauthier/cdocs-rule-delivery
 type: proposal
 state: live
-status: review_ready
+status: evolved
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-7"
@@ -15,6 +15,12 @@ tags: [cdocs, plugin_api, hooks, rule_delivery, sessionstart, documentation]
 ---
 
 # CDocs Rule Delivery Investigation
+
+> NOTE(opus/cdocs-rule-delivery): This proposal is **superseded** by [cdocs/proposals/2026-05-12-cdocs-rule-delivery-materialization.md](2026-05-12-cdocs-rule-delivery-materialization.md).
+> Phase 1 of this proposal (regression-test the existing SessionStart hook) failed empirically: CC's ~2KB inline cap on `additionalContext` silently truncates the cdocs bundle, invalidating the premise that the hook is a durable baseline.
+> The successor proposal pivots the delivery design entirely: `/cdocs:init` materializes rules into the project, and the SessionStart hook is repurposed as a small hash-based freshness check that nudges the agent to re-run `/cdocs:init` when materialized rules go stale.
+> Group C of the successor proposal's Test Plan empirically validates the Read-after-write design that closes the in-session staleness window.
+> See [cdocs/devlogs/2026-05-12-rule-delivery-regression-test.md](../devlogs/2026-05-12-rule-delivery-regression-test.md) for the failure analysis and [cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md](../devlogs/2026-05-12-rule-delivery-materialization-implementation.md) for the successor's implementation devlog.
 
 > BLUF(opus/cdocs-rule-delivery): The cdocs SessionStart-hook rule-injection workaround is the durable baseline.
 > Upstream Claude Code issue [#16538](https://github.com/anthropics/claude-code/issues/16538) is closed as "not planned" and [#14200](https://github.com/anthropics/claude-code/issues/14200) has no active development, so plugin-native delivery is not viable.
