@@ -118,6 +118,19 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 - **PreToolUse (Write|Edit):** Restricts cdocs subagents (triage, nit-fix, reviewer) to editing only `cdocs/` document directories. Main session is unaffected. CC-only (OC lacks agent identity in events).
 - **PostToolUse (Write|Edit):** Validates frontmatter on cdocs files. Informational warnings only (non-blocking).
 
+### Sandbox testing notes
+
+Future agents testing the hooks (especially the freshness check and the Read-after-write directive) need a sandboxed `CLAUDE_CONFIG_DIR` so the test does not pollute the maintainer's real `~/.claude/` state. Two non-obvious flags matter for `claude -p` against a sandbox:
+
+- **`--plugin-dir <plugin_path>`** (e.g. `--plugin-dir /workspace/clauthier/main/plugins/cdocs`).
+  A sandboxed `CLAUDE_CONFIG_DIR` inherits no marketplace state, so `/cdocs:*` skills do not resolve by default. Pass the plugin directory explicitly so the skills load.
+- **`--permission-mode bypassPermissions`**.
+  Sandbox CC has no permission allowlist; the agent's first `Write` tool call blocks otherwise. Use this only inside `mktemp -d` test sandboxes, never against real project state.
+- **`~/.claude/.credentials.json` and `~/.claude/.claude.json` copies into the sandbox** so `claude -p` can authenticate. Documented in [cdocs/devlogs/2026-05-12-rule-delivery-regression-test.md](../../cdocs/devlogs/2026-05-12-rule-delivery-regression-test.md) as a known deviation; the alternative is "Not logged in - run /login" failures.
+- **Do not pass `--bare`.** It skips hooks entirely and yields false-negative test results.
+
+Reference recipe: [cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md](../../cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md) (Group C test setup).
+
 ## OpenCode Installation
 
 CDocs is also available for [OpenCode](https://opencode.ai) via an npm package.
