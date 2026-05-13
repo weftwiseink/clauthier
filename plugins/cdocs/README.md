@@ -37,6 +37,7 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:review` | Review a document with findings and verdict |
 | `/cdocs:report` | Generate a report (status, investigation, incident, audit, retrospective) |
 | `/cdocs:status` | Query and manage document metadata |
+| `/cdocs:iterate` | Run an implement-review loop on a proposal with periodic judge meta-assessment |
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.
 Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
@@ -96,7 +97,7 @@ The `opencode-rules` plugin is not required: rules fall back to `.claude/rules/`
 
 ### Agent path resolution
 
-Agents (`nit-fix`, `triage`, `reviewer`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
+Agents (`nit-fix`, `triage`, `reviewer`, `judge`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
 This is experimental belt-and-suspenders alongside the `/cdocs:init` materialization path.
 
 ### When CC #14200 Lands
@@ -160,9 +161,9 @@ Users who prefer to deploy CC plugins directly to their OC config directory (`~/
 
 | Feature | OC Support | Notes |
 |---------|-----------|-------|
-| Skills | Full | All 10 skills work as-is via `.opencode/skills/` or `.claude/skills/` |
+| Skills | Full | All 11 skills work as-is via `.opencode/skills/` or `.claude/skills/` |
 | Rules | Full | Loaded via `.claude/rules/` (OC reads this natively) |
-| Agents | Full | 3 agents converted to OC frontmatter format |
+| Agents | Full | 4 agents converted to OC frontmatter format |
 | Hooks (frontmatter validation) | Full | Ported as `tool.execute.after` handler in TypeScript |
 | Hooks (path restriction) | Not available | OC events lack agent identity; cannot scope to cdocs subagents |
 | Hooks (rule injection) | Not needed | OC reads `.claude/rules/` natively |

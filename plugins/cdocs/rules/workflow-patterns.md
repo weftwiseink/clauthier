@@ -21,6 +21,20 @@ When 3+ independent failures occur, investigate in parallel instead of sequentia
 
 **Document in devlog:** Synthesize parallel agent findings into coherent narrative in "Issues Encountered and Solved" section.
 
+## Iterative Implementation Loop
+
+For proposals where verification depends on real-world state (UI rendering, integration behavior, end-to-end flows), use the `/cdocs:iterate` skill to run an implement-review loop with periodic meta-assessment.
+The skill is a peer to `/cdocs:implement` and `/cdocs:review`: it composes them, with the top-level session agent in overseer mode dispatching fresh subagents in alternation until accept-or-escalate.
+
+The loop has four roles:
+
+- **Overseer**: the top-level session agent, restricted to orchestration for the duration of the loop.
+- **Implementer**: a fresh `general-purpose` subagent that follows `/cdocs:implement` conventions for one iteration.
+- **Reviewer**: a fresh `reviewer` agent that inspects the live system, not just the diff.
+- **Judge**: a fresh `judge` agent that assesses loop meta-health (continue, rotate, or escalate) after `--judge-after` Revise verdicts.
+
+See [`plugins/cdocs/skills/iterate/SKILL.md`](../skills/iterate/SKILL.md) for the protocol, freshness disciplines, and audit-trail conventions.
+
 ## Subagent-Driven Development (Complex Multi-Task Plans)
 
 Use for structured execution of complex implementation plans with 5+ tasks.
@@ -90,10 +104,11 @@ After completing substantive work on cdocs documents, invoke `/cdocs:triage` to 
    - `[NONE]`: no action needed.
 4. After review completes, re-triage the review document to validate its frontmatter.
 
-**Architecture:** Three formal agents in `plugins/cdocs/agents/`:
+**Architecture:** Formal agents in `plugins/cdocs/agents/`:
 - **nit-fix** (haiku): writing convention enforcement on document body prose. Reads all `rules/*.md` files at runtime, applies mechanical fixes, reports judgment-required violations. Infrastructure-enforced tool allowlist (no Write/Bash).
 - **triage** (haiku): mechanical frontmatter analysis and fixes. Infrastructure-enforced tool allowlist (no Write/Bash).
-- **reviewer** (sonnet): structured document reviews. Preloads the review skill via `skills: [cdocs:review]`, reads rules at runtime.
+- **reviewer** (opus): structured document reviews. Preloads the review skill via `skills: [cdocs:review]`, reads rules at runtime.
+- **judge** (opus): meta-assessment of `/cdocs:iterate` loop health. Reads the iteration log and recent review documents only; tool allowlist excludes Edit, Bash, and Task.
 
 Each agent has a thin dispatcher skill: `/cdocs:nit_fix`, `/cdocs:triage`, and the triage skill dispatches the reviewer.
 Skills own orchestration (when to invoke, how to route); agents own their prompts (what to analyze, how to fix/review).
