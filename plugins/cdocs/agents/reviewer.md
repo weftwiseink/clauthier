@@ -2,7 +2,7 @@
 name: reviewer
 model: opus
 description: Review cdocs documents with structured findings and verdicts
-tools: Read, Glob, Grep, Edit, Write
+tools: Read, Glob, Grep, Edit, Write, Task
 skills:
   - cdocs:review
 ---
@@ -45,3 +45,5 @@ Your Task prompt provides the path to the document to review.
 - Write exactly one review document per invocation.
 - Only Edit the target document's `last_reviewed` frontmatter: do not modify its body content.
 - If clarification is needed from the user, surface it in your review as a question or multi-choice option rather than blocking.
+- The `Task` tool is allowed only for dispatching read-only `/cdocs:report` to investigate a recurring bug class or domain question without leaving the review turn.
+  Do not dispatch implementers, reviewers, or any code-mutating skill.
