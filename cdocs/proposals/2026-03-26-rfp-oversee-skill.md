@@ -74,6 +74,12 @@ The proposer should explore:
 - **Progress files**: A structured file (e.g., `.claude/oversee-state.json`) tracking which phases are complete, which agent owns what, and what verification has passed. This would let a continuation agent pick up where a crashed agent left off.
 - **Devlog as coordination point**: The devlog is already the "single source of truth" for a work session. Could it serve double duty as the coordination mechanism?
 
+## Related Work
+
+> NOTE(opus/cdocs/oversee-skill): Since this RFP was authored, [`/cdocs:iterate`](2026-05-13-iterate-skill.md) has shipped to codify the single-proposal implement-review loop (fresh implementer, fresh reviewer, accept-or-escalate termination, iteration log in the devlog).
+> A future `/oversee` elaboration may choose to invoke `/cdocs:iterate` per proposal in its chain, or may re-implement the loop differently if `/cdocs:iterate`'s contract does not fit `/oversee`'s needs.
+> This is informational context for whoever elaborates this RFP: it does not constrain the design space.
+
 ## Open Questions
 
 1. **Skill vs rule vs both?** Should `/oversee` be a skill that actively drives work, or a set of rules that any agent references? Or both: a skill that invokes the rules-aware pattern?
