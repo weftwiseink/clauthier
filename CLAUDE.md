@@ -7,7 +7,10 @@ IMPORTANT: Your context window will be automatically compacted as it approaches 
 
 ## Workflow
 
-- Commit regularly using the "conventional commit" format.
+- Commit early and often using the "conventional commit" format.
+  Each logical unit of work is its own commit; do not batch unrelated changes.
+  A single feature, a single fix, a single doc cross-reference: each warrants its own commit.
+  Frequent semantic commits make review, bisection, and revert cheap.
 - Deduplicating code and docs with the same semantic content is highly desirable.
 
 ## Marketplace Structure
