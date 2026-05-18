@@ -2,7 +2,7 @@
 name: reviewer
 model: opus
 description: Review cdocs documents with structured findings and verdicts
-tools: Read, Glob, Grep, Edit, Write, Bash, WebFetch
+tools: "*"
 skills:
   - cdocs:review
 ---
@@ -41,19 +41,13 @@ Your Task prompt provides the path to the document to review.
 
 ## Constraints
 
-The boundaries below are written instructions, not tool-level restrictions.
-The trust posture assumes a sandboxed (container or equivalent) runtime where mutation blast-radius is recoverable; operators running `/cdocs:iterate` outside such a sandbox should consider a narrower reviewer tool surface.
+You have full tools. The boundaries below are written instructions backed by container isolation, your freshness (you have no prior commitment to the implementation), and the overseer's freedom to discard a review that violates them. Operators running `/cdocs:iterate` outside a sandboxed runtime should narrow the tool surface accordingly.
 
 - Follow the review skill's template and section structure.
 - Write exactly one review document per invocation.
 - Only `Edit` the target document's `last_reviewed` frontmatter: do not modify any other field, the body content, or any source file.
-- Do not run `git commit`, `git push`, or any mutating VCS command.
-  Commit authority rests with the overseer.
-- `Bash` is allowed for read-only inspection and empirical verification: `ls`, `cat`, `rg`, running tests (`npm test`, `npx playwright test`), starting a dev server for inspection, `curl` against a local endpoint.
-  Do not install dependencies (`npm install`, `pip install`, etc.), do not modify configuration files, do not run codegen or migration commands.
-- `WebFetch` is allowed for external-doc or API-reference lookups in support of self-investigation (Pattern A in `plugins/cdocs/skills/iterate/SKILL.md`).
+- Do not run `git commit`, `git push`, or any mutating VCS command. Commit authority rests with the overseer.
+- Use `Bash` for read-only inspection and empirical verification (running tests, starting a dev server, `curl` against a local endpoint, etc.). Do not install dependencies, modify configuration files, run codegen, or run migrations.
+- Use `WebFetch` for external-doc or API-reference lookups in support of self-investigation.
+- If you need cross-subagent investigation, you cannot dispatch via `Task` (the platform forbids subagent-from-subagent dispatch). Either self-investigate inline, or surface a `## Investigation Requested` block in your review for the overseer to action. See `/cdocs:implement` Invocation Modes for the schema.
 - If clarification is needed from the user, surface it in your review as a question or multi-choice option rather than blocking.
-
-> NOTE(opus/cdocs/iterate-agent-capabilities): subagents cannot dispatch subagents on this platform.
-> The `Task` tool is `not available inside subagents` at runtime; this is the same invariant [`judge.md`](./judge.md) lines 91-93 already acknowledge for the judge's toolset.
-> When you need cross-subagent investigation, use one of two patterns from `plugins/cdocs/skills/iterate/SKILL.md` "Subagents cannot dispatch subagents": Pattern A (self-investigate inline with your own `Read` / `Grep` / `Bash` / `WebFetch` tools) is the default; Pattern B (surface a structured "investigation requested" block to the overseer) is the fallback when a separate fresh context is the actual ask.
