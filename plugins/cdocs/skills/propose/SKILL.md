@@ -74,6 +74,7 @@ In such cases, consider breaking the exhaustive details of the section into a su
 
 - **> BLUF:** Concise Bottom Line UpFront summary at top of proposal.
   Should succinctly state the most important info and conclusions, and should be kept up-to-date if they change.
+  _Should not_ exceed a few sentences or overly dense - use a summary for that if needed.
 - **Summary:** Add at the end of the authoring process to provide more details, notes, and references to make the proposal more digestible.
   Shouldn't be too long but is a good opportunity to flag context or add other `> NOTE`s that would bloat the BLUF.
 - **Objective:** Problem or improvement goal.

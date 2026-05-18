@@ -77,7 +77,7 @@ Prefer appending to the most recent devlog whose `task_list` matches the proposa
 Dispatch an implementer via the Task tool with `subagent_type: "general-purpose"`.
 The prompt must include:
 
-- The proposal path and the verification floor.
+- The proposal path and goals for this iterate session.
 - The previous review document path if any.
 - An explicit directive *not* to dispatch its own reviewer.
   This overrides `/cdocs:implement`'s in-skill review-dispatch instruction for the duration of the loop iteration.
@@ -259,29 +259,6 @@ AFK fallback: write a placeholder floor and tag rows `[placeholder-floor]` (see 
 ### Sandboxed-runtime trust posture
 
 `/cdocs:iterate`'s tool-surface trust posture (the reviewer with `Bash` and `WebFetch` under written-instruction constraints) assumes a sandboxed (container or equivalent) runtime where mutation blast-radius is recoverable; see [`reviewer.md`](../../agents/reviewer.md) Constraints for the per-tool boundaries.
-
-## Edge Cases
-
-- **Implementer ships partial work and returns "I'm stuck."**
-  Still dispatch a reviewer; the reviewer's job is to assess what was shipped.
-  Surface uncertainties in the iteration log notes.
-- **Reviewer crashes mid-review.**
-  Re-dispatch a *different* fresh reviewer (not a retry of the same one).
-  If three reviewers in a row crash, escalate.
-- **Judge crashes mid-assessment.**
-  Re-dispatch a *different* fresh judge once.
-  If the second judge also crashes, continue the loop with the same implementer for one more iteration and record the crash in the Judge Log notes; if the next required judge invocation also fails, escalate.
-- **Implementer dispatches its own reviewer despite the directive.**
-  The implementer's review is not authoritative; the skill's reviewer runs anyway.
-  Log "implementer dispatched unauthorized review" in the iteration row notes.
-- **`status: implementation_accepted` proposal.**
-  Warn and ask whether the user intends a re-implementation; if confirmed, tag iteration log entries `[re-implementation]`.
-- **Non-`implementation_ready` proposal.**
-  Warn but proceed on user confirmation; the skill is intentionally permissive for `wip` proposals.
-- **Parallel `/cdocs:iterate` invocations.**
-  Out of scope for v1; the skill is single-threaded.
-- **Token-budget exhaustion or auto-compaction mid-loop.**
-  The iteration log in the devlog is the durable resumption point: write a final row before yielding.
 
 ## Subagent Dispatch Reference
 
