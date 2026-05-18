@@ -13,6 +13,28 @@ IMPORTANT: Your context window will be automatically compacted as it approaches 
   Frequent semantic commits make review, bisection, and revert cheap.
 - Deduplicating code and docs with the same semantic content is highly desirable.
 
+## Local Checkout: Bare Repo with Sibling Worktrees
+
+This repo is checked out as a bare repo with sibling worktrees, not a single working copy.
+The typical layout:
+
+```
+/workspace/clauthier/        (or equivalent on host)
+├── .bare/                    bare git repository (config has `bare = true`)
+└── main/                     default worktree, checked out on branch `main`
+```
+
+Additional worktrees live as siblings of `main/` (paths like `/workspace/clauthier/<branch>/`) or under `main/.claude/worktrees/<name>/` when created via the `EnterWorktree` harness tool.
+
+Consequences worth remembering:
+
+- Untracked files in one worktree are NOT visible in sibling worktrees.
+  When a new worktree needs files that exist as untracked in `main/` (drafts, proposals not yet committed), copy them in explicitly before the new worktree session can see them.
+- `git status` is per-worktree; `git log` and history are shared via the bare repo.
+- The bare repo itself is not a working copy; you do not edit files or run application commands inside `.bare/`.
+- To merge a worktree branch back into main: from the `main/` directory, run `git merge --ff-only <worktree-branch>`.
+  If the source worktree imported files that already exist as untracked copies in `main/`, remove the untracked copies first or `git` will refuse to fast-forward.
+
 ## Marketplace Structure
 
 This repo is a Claude Code marketplace (`clauthier`) containing plugins under `plugins/`.
