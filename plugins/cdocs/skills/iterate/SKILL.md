@@ -80,9 +80,15 @@ The prompt must include:
 - The proposal path and the verification floor.
 - The previous review document path if any.
 - An explicit directive *not* to dispatch its own reviewer.
-  This overrides `/cdocs:implement`'s in-skill "Request `/cdocs:review` from a subagent after each phase" instruction for the duration of the loop iteration.
+  This overrides `/cdocs:implement`'s in-skill review-dispatch instruction for the duration of the loop iteration.
+- An explicit directive *not* to dispatch `/cdocs:report` as a subagent.
+  This overrides `/cdocs:implement`'s in-skill `/cdocs:report` dispatch text for the duration of the loop iteration.
+  The dispatched implementer self-investigates inline using its own tools (Pattern A) or surfaces an `## Investigation Requested` block in its summary for the overseer to action (Pattern B).
 - An explicit directive *not* to `git commit` if you want commit authority to rest with the overseer.
   (The default `/cdocs:implement` flow commits inside the iteration; choose explicitly.)
+
+> NOTE(opus/cdocs/iterate-agent-capabilities): include in the dispatch prompt the platform invariant "subagents cannot dispatch subagents" and point at the two-pattern model in this skill's "Subagents cannot dispatch subagents" section.
+> This saves the dispatched implementer a turn discovering the runtime error empirically.
 
 The implementer follows `/cdocs:implement` conventions for this single iteration, runs verification commands, and returns a structured summary.
 
@@ -172,14 +178,14 @@ An implementer mid-task carries valuable context and is not replaced reflexively
 
 ### `/cdocs:iterate` overrides `/cdocs:implement`'s in-skill review-dispatch instruction
 
-`/cdocs:implement` says "Request `/cdocs:review` from a subagent after each phase to catch issues early."
+`/cdocs:implement` instructs the implementor to dispatch `/cdocs:review` after each phase to catch issues early.
 Inside the iterate loop, the overseer suppresses that instruction in the dispatched implementer's prompt: the overseer dispatches the review itself.
 Without this override, the loop would produce a double-review per iteration and the iteration log would not match the produced reviews.
 
 ### Subagents cannot dispatch subagents
 
 The platform invariant: a subagent (implementer, reviewer, judge) cannot itself dispatch further subagents via the `Task` tool.
-The Task tool is `not available inside subagents` at runtime; any guidance that instructs a subagent to "dispatch `/cdocs:review` from a subagent" or "dispatch `/cdocs:report` from a subagent" fails on contact.
+The Task tool is `not available inside subagents` at runtime; any guidance that instructs a dispatched subagent to itself dispatch `/cdocs:review` or `/cdocs:report` via Task fails on contact.
 [`judge.md`](../../agents/judge.md) lines 91-93 already acknowledge this invariant for the judge's toolset; the same constraint applies to reviewers and implementers when they are dispatched by an overseer.
 
 Two legitimate patterns replace the dead second-order-dispatch text:
@@ -251,8 +257,9 @@ AFK fallback: write a placeholder floor and tag rows `[placeholder-floor]` (see 
 | Role | `subagent_type` | Model | Tools |
 |---|---|---|---|
 | Implementer | `general-purpose` | session default | full |
-| Reviewer | `reviewer` | opus (per `plugins/cdocs/agents/reviewer.md`) | Read, Glob, Grep, Edit, Write |
+| Reviewer | `reviewer` | opus (per `plugins/cdocs/agents/reviewer.md`) | Read, Glob, Grep, Edit, Write, Bash, WebFetch |
 | Judge | `judge` | opus (per `plugins/cdocs/agents/judge.md`) | Read, Glob, Grep, Write |
 
+The reviewer's `Bash` and `WebFetch` allow empirical re-verification (running tests, starting a dev server, fetching API references) under written-instruction constraints; see [`reviewer.md`](../../agents/reviewer.md) Constraints for the boundaries.
 The judge's tool allowlist deliberately omits Edit, Bash, and Task.
 A judge cannot edit source, run commands, or dispatch subagents; it reads artifacts and writes a verdict-and-rationale.
