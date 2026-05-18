@@ -135,8 +135,10 @@ Before marking status as `review_ready`:
 - [ ] Review the following and improve as relevant:
   - [ ] whether someone unfamiliar with the context could follow the proposal.
   - [ ] whether there is anything inconsitent or missing from the initial draft.
-- [] Request a substantive `/cdocs:review` from a subagent and integrate it's feedback.
-     This review should be immediately archived - it is a sanity check / way to cover our bases early.
+- [] Dispatch a substantive `/cdocs:review` and integrate its feedback.
+     Only available when `/cdocs:propose` itself runs at the top level: subagent-dispatched `/cdocs:propose` should surface the review request to its caller instead, since subagents cannot dispatch subagents.
+     Treat yourself as dispatched if your invocation included an explicit dispatch prompt from a parent agent; treat yourself as top-level if you were invoked directly by the user.
+     The sanity-check review should be archived immediately.
 
 
 ## Revisions
