@@ -5,7 +5,12 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: devlog
 state: live
-status: wip
+status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-7"
+  at: 2026-05-18T15:30:00-07:00
+  round: 1
 tags: [iterate_skill, reviewer_capabilities, dogfood, overseer_mode, indep_verify, sandbox_assumption]
 ---
 
@@ -33,12 +38,59 @@ The loop is run from a separate worktree at `.claude/worktrees/iterate-agent-cap
 
 | iteration | implementer | reviewer | review_verdict | review_path | notes |
 |---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | cdocs/reviews/2026-05-18-review-of-iterate-agent-capabilities-implementation.md | four atomic phase commits (28a0537, b187fcf, a772293, feb537d); all five grep invariants and per-file inspections pass; reviewer flagged two non-blocking carry-forwards (tag-form drift, em-dash style nit) [indep-verify: deferred-to-followup: live `/cdocs:iterate` smoke test to be filed as a separate top-level invocation under cdocs/devlogs/YYYY-MM-DD-iterate-agent-capabilities-smoke-test.md per the proposal NOTE at lines 266-269] |
 
 ## Judge Log
 
 | judge_iteration | trigger | verdict | rationale | judge_path |
 |---|---|---|---|---|
 
+The judge was not invoked: the loop terminated on Accept at iteration 1, well before `--judge-after=3` Revise verdicts could accumulate.
+
 ## Overseer synthesis
 
-(Populated as the loop progresses or at terminal Accept / Reject / escalate.)
+The `/cdocs:iterate` loop terminated on Accept at iteration 1.
+The proposal is documentation-and-configuration only and is unusually well-specified (Test Plan enumerates exact grep invariants, Implementation Phases enumerates exact commit messages, Verification Methodology declares the smoke test deferred), so a single implementer turn was sufficient to land all four phases and a single reviewer turn was sufficient to confirm the artifact-level floor.
+
+The four phase commits:
+
+- 28a0537 `docs(cdocs): replace dead second-order Task guidance with two-pattern model in /cdocs:iterate`
+- b187fcf `feat(cdocs): expand cdocs:reviewer to full general-purpose tools with written constraints`
+- a772293 `docs(cdocs): scrub dead Task-from-subagent text from /cdocs:implement and iterate override`
+- feb537d `feat(cdocs): require [indep-verify] audit tag on iterate Iteration Log rows`
+
+### Empirical learnings from this dogfooding
+
+- **Agent-definition reload latency.** The reviewer subagent dispatched for iteration 1 ran with the *old* `reviewer.md` allowlist (no `Bash`, has `Task`) because agent definitions are loaded at session start, not refreshed mid-session.
+  The reviewer noted this transparently in its Methodology section.
+  The new allowlist will take effect for the next `/cdocs:iterate` invocation (the smoke-test follow-up), which is consistent with the proposal's framing that the smoke test is a separate top-level run.
+  Implication for `/cdocs:iterate` users: a loop whose proposal changes the reviewer or judge agent's tool surface cannot empirically verify that change inside the same loop; the change takes effect on the next session.
+  This is structurally similar to the proposal's `deferred-to-followup` carve-out and an example of why it exists.
+- **Pre-specified commit messages reduce loop variance.** The proposal pre-specified one conventional-commit message per phase.
+  The implementer used them verbatim, which made commit-level audit (`git log --oneline`) cleanly map to phase-level audit (proposal Implementation Phases section).
+  This is a pattern worth replicating in future proposals that decompose into atomic phases.
+- **Pattern A was used; Pattern B was not.** The implementer self-investigated all unknowns inline (grep + Read).
+  The reviewer self-ran the grep invariants via the Grep tool.
+  Neither needed to surface an Investigation Requested item to the overseer.
+  This is the expected steady state for proposals that are well-specified at the artifact level.
+
+### Non-blocking carry-forwards from the review
+
+1. **Tag-form schema drift.** `iterate/SKILL.md` line 158 enumerates the four `[indep-verify: ...]` values without a `:<pointer>` slot for `deferred-to-followup`; `iterate/template.md` line 31 uses `[indep-verify: deferred-to-followup: <pointer>]` form (with pointer inlined into the tag).
+   The semantic content matches (SKILL.md prose at lines 167-170 separately mandates the pointer), but the literal tag forms drift.
+   Surfaced to the human user for a schema decision; a follow-up commit can harmonize once the canonical form is chosen.
+2. **Em-dash separator in Pattern headers.** `iterate/SKILL.md` lines 215 and 222 use em-dashes in the bolded Pattern A / Pattern B headers; writing conventions prefer colons.
+   Fixed in a follow-up commit (see `git log`).
+
+### Deferred-to-followup pointer
+
+Per the proposal's NOTE at lines 266-269 and Verification step at lines 322-328, the live `/cdocs:iterate` smoke test (one UI proposal + one documentation-only proposal) must be a separate top-level invocation.
+This devlog's Iteration Log row tags `[indep-verify: deferred-to-followup: ...]` with the pointer-target path for that future devlog.
+The smoke-test devlog should report whether the new reviewer allowlist takes effect in a fresh session and whether the `[indep-verify]` audit tag is grep-visible in the produced iteration logs.
+
+### Status
+
+- Proposal frontmatter: leaving `status: implementation_ready` unchanged.
+  Per `/cdocs:implement` conventions, `implementation_accepted` is set only by the human user.
+- Devlog frontmatter: `status: wip` → `status: review_ready` (the linter-edited `last_reviewed: accepted` from rev-1 stays).
+- Branch: `worktree-iterate-agent-capabilities` in `.claude/worktrees/iterate-agent-capabilities/`; ready for the user to merge or fast-forward into `main`.
