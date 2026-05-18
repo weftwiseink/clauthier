@@ -212,14 +212,14 @@ The Task tool is `not available inside subagents` at runtime; any guidance that 
 
 Two legitimate patterns replace the dead second-order-dispatch text:
 
-**Pattern A — Self-investigation (default).**
+**Pattern A: Self-investigation (default).**
 The dispatched subagent uses its own tools (`Read`, `Grep`, `Bash`, `WebFetch` where available) to do the investigation inline.
 Findings land in the review document (for reviewers), the implementation summary (for implementers), or a `cdocs/reports/` artifact written directly by the subagent if the finding is durably useful.
 
 Example: a reviewer hits an unfamiliar API pattern mid-review.
 Rather than trying to dispatch `/cdocs:report`, it uses `Grep` and `Read` to find every other call site, runs `Bash` to inspect a sample response (`curl … | head`), and inlines a four-line excerpt of the response into the review document's Findings section.
 
-**Pattern B — Surface to overseer (fallback).**
+**Pattern B: Surface to overseer (fallback).**
 When a *separate fresh context* is the actual ask (the investigation is large enough that doing it inline would derail the current review or implementation turn, or the question is durably useful beyond this proposal), the subagent returns a structured "investigation requested" item in its output.
 The overseer reads it and dispatches `/cdocs:report` itself, or rolls the request into the next implementer's brief.
 This mirrors how implementers already surface "I think this proposal is wrong" as structured uncertainty: the subagent does not autonomously escalate, it surfaces.
