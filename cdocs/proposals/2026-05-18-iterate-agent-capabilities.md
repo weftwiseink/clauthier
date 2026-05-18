@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_wip
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-7"
