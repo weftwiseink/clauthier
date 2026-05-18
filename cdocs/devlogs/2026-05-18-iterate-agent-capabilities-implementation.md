@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: devlog
 state: live
-status: review_ready
+status: done
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-7"
