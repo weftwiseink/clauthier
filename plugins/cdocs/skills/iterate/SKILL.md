@@ -176,18 +176,39 @@ An implementer mid-task carries valuable context and is not replaced reflexively
 Inside the iterate loop, the overseer suppresses that instruction in the dispatched implementer's prompt: the overseer dispatches the review itself.
 Without this override, the loop would produce a double-review per iteration and the iteration log would not match the produced reviews.
 
-### Asymmetric second-order dispatch
+### Subagents cannot dispatch subagents
 
-The loop is auditable from the iteration log and judge log, so write-side subagent dispatch by any of the loop's workers is forbidden.
-Implementers do not dispatch reviewers (the overseer owns review dispatch).
-The judge does not dispatch implementers or reviewers (the overseer owns rotation and re-review).
-None of them dispatch `/cdocs:implement` or other code-mutating subagents.
+The platform invariant: a subagent (implementer, reviewer, judge) cannot itself dispatch further subagents via the `Task` tool.
+The Task tool is `not available inside subagents` at runtime; any guidance that instructs a subagent to "dispatch `/cdocs:review` from a subagent" or "dispatch `/cdocs:report` from a subagent" fails on contact.
+[`judge.md`](../../agents/judge.md) lines 91-93 already acknowledge this invariant for the judge's toolset; the same constraint applies to reviewers and implementers when they are dispatched by an overseer.
 
-Read-side investigative dispatch is allowed for reviewers and implementers: a reviewer may dispatch `/cdocs:report` to investigate a recurring bug class without leaving the review turn, and an implementer may dispatch `/cdocs:report` if it needs context the proposal does not provide.
-Read-only investigation does not perturb the audited control flow.
-The judge's toolset omits Task entirely: a judge that wanted to dispatch a sub-investigation would be re-implementing the overseer's job at the wrong layer.
+Two legitimate patterns replace the dead second-order-dispatch text:
 
-An implementer that wants to escalate "I think this proposal is wrong" returns that as a structured uncertainty in its summary.
+**Pattern A — Self-investigation (default).**
+The dispatched subagent uses its own tools (`Read`, `Grep`, `Bash`, `WebFetch` where available) to do the investigation inline.
+Findings land in the review document (for reviewers), the implementation summary (for implementers), or a `cdocs/reports/` artifact written directly by the subagent if the finding is durably useful.
+
+Example: a reviewer hits an unfamiliar API pattern mid-review.
+Rather than trying to dispatch `/cdocs:report`, it uses `Grep` and `Read` to find every other call site, runs `Bash` to inspect a sample response (`curl … | head`), and inlines a four-line excerpt of the response into the review document's Findings section.
+
+**Pattern B — Surface to overseer (fallback).**
+When a *separate fresh context* is the actual ask (the investigation is large enough that doing it inline would derail the current review or implementation turn, or the question is durably useful beyond this proposal), the subagent returns a structured "investigation requested" item in its output.
+The overseer reads it and dispatches `/cdocs:report` itself, or rolls the request into the next implementer's brief.
+This mirrors how implementers already surface "I think this proposal is wrong" as structured uncertainty: the subagent does not autonomously escalate, it surfaces.
+
+The structured request is a fenced block:
+
+```
+## Investigation Requested
+
+Question: <one sentence>
+Context this would unblock: <one sentence on what the current turn cannot conclude without it>
+```
+
+The overseer chooses whether to dispatch `/cdocs:report` immediately, roll the request into the next implementer's brief, or note it as deferred follow-up.
+The review document or implementer summary records the request inline so the audit trail captures the decision.
+
+An implementer that wants to escalate "I think this proposal is wrong" returns that as a structured uncertainty in its summary (this is Pattern B applied to a different question).
 The overseer reads it and may escalate to the user or invoke the judge early.
 
 ### The judge is a meta-reviewer, not a second reviewer
