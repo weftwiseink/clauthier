@@ -38,7 +38,7 @@ The loop is run from a separate worktree at `.claude/worktrees/iterate-agent-cap
 
 | iteration | implementer | reviewer | review_verdict | review_path | notes |
 |---|---|---|---|---|---|
-| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | cdocs/reviews/2026-05-18-review-of-iterate-agent-capabilities-implementation.md | four atomic phase commits (28a0537, b187fcf, a772293, feb537d); all five grep invariants and per-file inspections pass; reviewer flagged two non-blocking carry-forwards (tag-form drift, em-dash style nit) [indep-verify: deferred-to-followup: live `/cdocs:iterate` smoke test to be filed as a separate top-level invocation under cdocs/devlogs/YYYY-MM-DD-iterate-agent-capabilities-smoke-test.md per the proposal NOTE at lines 266-269] |
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | cdocs/reviews/2026-05-18-review-of-iterate-agent-capabilities-implementation.md | four atomic phase commits (28a0537, b187fcf, a772293, feb537d); all five grep invariants and per-file inspections pass; reviewer flagged two non-blocking carry-forwards (tag-form drift, em-dash style nit); live `/cdocs:iterate` smoke test is a separate top-level invocation per proposal NOTE at lines 266-269, target devlog cdocs/devlogs/YYYY-MM-DD-iterate-agent-capabilities-smoke-test.md [indep-verify: deferred-to-followup] |
 
 ## Judge Log
 
@@ -76,11 +76,12 @@ The four phase commits:
 
 ### Non-blocking carry-forwards from the review
 
-1. **Tag-form schema drift.** `iterate/SKILL.md` line 158 enumerates the four `[indep-verify: ...]` values without a `:<pointer>` slot for `deferred-to-followup`; `iterate/template.md` line 31 uses `[indep-verify: deferred-to-followup: <pointer>]` form (with pointer inlined into the tag).
-   The semantic content matches (SKILL.md prose at lines 167-170 separately mandates the pointer), but the literal tag forms drift.
-   Surfaced to the human user for a schema decision; a follow-up commit can harmonize once the canonical form is chosen.
-2. **Em-dash separator in Pattern headers.** `iterate/SKILL.md` lines 215 and 222 use em-dashes in the bolded Pattern A / Pattern B headers; writing conventions prefer colons.
-   Fixed in a follow-up commit (see `git log`).
+1. **Tag-form schema drift, resolved by narrowing the micro-format.** `iterate/SKILL.md` line 158 originally enumerated the four `[indep-verify: ...]` values without a `:<pointer>` slot for `deferred-to-followup`; the SKILL.md example at line 175 used a `:<detail>` form for `confirmed`; `iterate/template.md` line 31 used a `:<pointer>` slot for `deferred-to-followup`.
+   Three forms in play.
+   User raised misgivings about colon-in-brackets micro-formats generally (collision risk with markdown reference-link syntax, parser edge cases, brittle audit grep).
+   Resolved by making the tag carry the value only: all supporting context (artifact citation, pointer to follow-up devlog, overseer justification) lives in the prose preceding the tag.
+   `SKILL.md` example and `template.md` enumeration both updated to the bare form in a follow-up commit.
+2. **Em-dash separator in Pattern headers, fixed.** `iterate/SKILL.md` lines 215 and 222 used em-dashes in the bolded Pattern A / Pattern B headers; replaced with colons in a follow-up commit (see `git log`).
 
 ### Deferred-to-followup pointer
 

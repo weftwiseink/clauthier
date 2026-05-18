@@ -172,7 +172,12 @@ The overseer assigns the tag for each row based on the verification floor stated
   The overseer must justify a `skipped` tag in the iteration row's notes or in the `### Overseer synthesis` subsection before Accept.
   An auditor reading only the Iteration Log can immediately spot `skipped` rows.
 
-Example `notes` cell with the tag: `initial pass; cards not rendering [indep-verify: confirmed: cdocs/reviews/2026-05-18-...-r1.md cites screenshot + Playwright excerpt]`.
+The tag is intentionally minimal: it carries one of the four values and nothing else.
+Evidence summaries, pointer paths, and overseer justifications live in the adjacent notes prose, not inside the tag's brackets.
+This keeps the bracketed micro-format short, avoids colon-in-brackets escape questions, and gives the auditor a simple grep target.
+
+Example `notes` cell: `initial pass; cards not rendering; review cites screenshot + Playwright excerpt [indep-verify: confirmed]`.
+Example for deferred: `text-and-config change; live smoke test runs as a top-level invocation, devlog target cdocs/devlogs/2026-05-19-iterate-smoke-test.md [indep-verify: deferred-to-followup]`.
 A grep for `[indep-verify:` over devlogs is the auditor query.
 
 **Judge Log** captures per-judge-invocation meta-assessments:
