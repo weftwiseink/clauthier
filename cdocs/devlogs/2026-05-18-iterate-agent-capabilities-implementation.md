@@ -36,9 +36,9 @@ The loop is run from a separate worktree at `.claude/worktrees/iterate-agent-cap
 
 ## Iteration Log
 
-| iteration | implementer | reviewer | review_verdict | review_path | notes |
-|---|---|---|---|---|---|
-| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | cdocs/reviews/2026-05-18-review-of-iterate-agent-capabilities-implementation.md | four atomic phase commits (28a0537, b187fcf, a772293, feb537d); all five grep invariants and per-file inspections pass; reviewer flagged two non-blocking carry-forwards (tag-form drift, em-dash style nit); live `/cdocs:iterate` smoke test is a separate top-level invocation per proposal NOTE at lines 266-269, target devlog cdocs/devlogs/YYYY-MM-DD-iterate-agent-capabilities-smoke-test.md [indep-verify: deferred-to-followup] |
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | deferred-to-followup | cdocs/reviews/2026-05-18-review-of-iterate-agent-capabilities-implementation.md | four atomic phase commits (28a0537, b187fcf, a772293, feb537d); all five grep invariants and per-file inspections pass; reviewer flagged two non-blocking carry-forwards (tag-form drift, em-dash style nit); live `/cdocs:iterate` smoke test runs as a separate top-level invocation per proposal NOTE, target devlog cdocs/devlogs/YYYY-MM-DD-iterate-agent-capabilities-smoke-test.md |
 
 ## Judge Log
 
