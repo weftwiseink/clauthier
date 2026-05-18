@@ -7,8 +7,8 @@ Copy the two H2 sections below into the devlog body verbatim, then append a row 
 
 ## Iteration Log
 
-| iteration | implementer | reviewer | review_verdict | review_path | notes |
-|---|---|---|---|---|---|
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
 
 ## Judge Log
 
@@ -25,18 +25,17 @@ Copy the two H2 sections below into the devlog body verbatim, then append a row 
 - `reviewer`: synthetic per-loop handle (`rev-N`) plus the subagent type in parentheses, e.g. `rev-2 (cdocs:reviewer)`.
   Reviewers are fresh every iteration: `rev-N` increments every row.
 - `review_verdict`: one of `accept`, `revise`, `reject`.
+- `review_proof`: one of `confirmed`, `n/a`, `deferred-to-followup`, `skipped`.
+  The overseer assigns the value per row based on the verification floor and the iteration's actual content; see `SKILL.md` "Iteration Log and Judge Log" for the per-value rules.
 - `review_path`: path to the review artifact, relative to repo root.
 - `notes`: short free text.
-  Use to surface implementer uncertainties, tag `[placeholder-floor]` rows when running without an explicit verification floor, or distinguish "tests passed but reviewer found a live-system gap" from "tests failed."
-  Every row's `notes` cell must end with one of `[indep-verify: confirmed]`, `[indep-verify: n/a]`, `[indep-verify: deferred-to-followup]`, or `[indep-verify: skipped]`.
-  The tag carries the value only; supporting context (artifact citation for `confirmed`, follow-up devlog pointer for `deferred-to-followup`, overseer justification for `skipped`) lives in the prose preceding the tag.
-  See the `## Iteration Log and Judge Log` section in `plugins/cdocs/skills/iterate/SKILL.md` for the per-value rules.
+  Surfaces implementer uncertainties, supporting evidence summaries, pointer paths (required for `deferred-to-followup`), overseer justifications (required for `skipped`), or `[placeholder-floor]` tags when running without an explicit verification floor.
 
-Example Iteration Log row with the tag:
+Example row:
 
-| iteration | implementer | reviewer | review_verdict | review_path | notes |
-|---|---|---|---|---|---|
-| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | revise | cdocs/reviews/2026-05-13-...-r1.md | cards not rendering; Playwright excerpt inlined in review [indep-verify: confirmed] |
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | cards not rendering; Playwright excerpt inlined in review |
 
 **Judge Log**
 
