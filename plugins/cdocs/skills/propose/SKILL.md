@@ -1,7 +1,7 @@
 ---
 name: propose
 description: Author a design proposal with structured sections and implementation phases
-argument-hint: "[topic]"
+argument-hint: "[topic | path] [--dispatched]"
 ---
 
 # CDocs Propose
@@ -136,10 +136,9 @@ Before marking status as `review_ready`:
 - [ ] Review the following and improve as relevant:
   - [ ] whether someone unfamiliar with the context could follow the proposal.
   - [ ] whether there is anything inconsitent or missing from the initial draft.
-- [] Dispatch a substantive `/cdocs:review` and integrate its feedback.
-     Only available when `/cdocs:propose` itself runs at the top level: subagent-dispatched `/cdocs:propose` should surface the review request to its caller instead, since subagents cannot dispatch subagents.
-     Treat yourself as dispatched if your invocation included an explicit dispatch prompt from a parent agent; treat yourself as top-level if you were invoked directly by the user.
-     The sanity-check review should be archived immediately.
+- [] Dispatch a substantive `/cdocs:review` and integrate its feedback (sanity check; archive the resulting review immediately).
+     Dispatched mode (`--dispatched` flag or subagent invocation): surface the review request to your caller via a `## Investigation Requested` block instead.
+     See `/cdocs:implement` Invocation Modes for the dispatched/top-level model.
 
 
 ## Revisions

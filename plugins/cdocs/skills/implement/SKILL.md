@@ -1,7 +1,7 @@
 ---
 name: implement
 description: Implement an accepted proposal with structured execution, devlog tracking, and frequent commits
-argument-hint: "[proposal_path]"
+argument-hint: "[proposal_path] [--dispatched]"
 ---
 
 # CDocs Implement
@@ -10,6 +10,21 @@ Implement a ready proposal.
 
 **Usage:** User-invoked when a proposal has been reviewed and accepted (`status: implementation_ready`).
 Claude may also suggest implementation when it encounters an `implementation_ready` proposal.
+
+## Invocation Modes
+
+`/cdocs:implement` runs in one of two modes:
+
+- **Top-level** (default): invoked directly by the user. Free to dispatch `/cdocs:review` and `/cdocs:report` as supporting subagents.
+- **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt. The platform forbids subagent-from-subagent dispatch (`Task` is `not available inside subagents`), so dispatched mode self-investigates inline and surfaces investigation requests to its caller via a fenced block:
+
+  ```
+  ## Investigation Requested
+  Question: <one sentence>
+  Context this would unblock: <one sentence>
+  ```
+
+  The caller decides whether to dispatch `/cdocs:report` itself, roll the request into the next iteration's brief, or treat it as deferred follow-up.
 
 ## Invocation
 
@@ -40,19 +55,16 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
    - Commit frequently using conventional commit format.
    - Update the devlog as work proceeds (decisions, complications, deviations from the plan).
    - Follow verification and troubleshooting methodology to ensure results are as expected.
-  - Dispatch `/cdocs:review` after each phase to catch issues early (top-level invocation only; when `/cdocs:implement` is itself dispatched as a subagent, the overseer or caller owns review dispatch, since subagents cannot dispatch subagents).
-  - Investigate inline using your own tools when you hit unknowns.
-    If you need a separate fresh context for the investigation, dispatch `/cdocs:report` (only available when `/cdocs:implement` itself runs at the top level; subagent-dispatched `/cdocs:implement` should self-investigate or surface the request to its caller as a structured uncertainty).
-    Treat yourself as dispatched if your invocation included an explicit dispatch prompt from a parent agent; treat yourself as top-level if you were invoked directly by the user.
+   - Top-level mode: dispatch `/cdocs:review` after each phase, and `/cdocs:report` for research topics not covered by the proposal.
+     Dispatched mode: self-investigate inline; surface anything that needs a separate fresh context via the `## Investigation Requested` block from Invocation Modes above.
 6. **On completion**: update the devlog with verification results, mark it `status: review_ready`.
-7. **After completion**:
+7. **After completion** (top-level mode only):
   - Have a final subagent `/cdocs:review` the entire body of work and integrate the feedback.
   - IMPORTANT: Take a step back and seriously consider how "verified" our implementation truly is.
     This retrospection is critical to our long-term implementation velocity:
     If we aren't equipping implementers with the right tools to verify their work,
     That is a project-level concern we need to think about.
     IE: A webdev needs something like playwright, otherwise they'll be forced to guess & shoot from the hip.
-   
 
 ## Implementation Conventions
 
@@ -68,11 +80,11 @@ The implementor should follow these conventions throughout:
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
 
-### Use cdocs skills as appropriate
-- `/cdocs:review` when implementation is complete and ready for evaluation (top-level invocation only; subagent-dispatched `/cdocs:implement` leaves review dispatch to its caller).
+### Use cdocs skills as appropriate (top-level mode)
+- `/cdocs:review` when implementation is complete and ready for evaluation.
 - `/cdocs:report` if the implementation reveals findings worth documenting separately.
-  Only available when `/cdocs:implement` itself runs at the top level: subagent-dispatched `/cdocs:implement` should self-investigate inline or surface the finding to its caller as a structured uncertainty.
-  Treat yourself as dispatched if your invocation included an explicit dispatch prompt from a parent agent; treat yourself as top-level if you were invoked directly by the user.
+
+Dispatched mode: see Invocation Modes above; surface the request to the caller via `## Investigation Requested` instead of dispatching.
 
 ### Note deviations from the proposal
 - If the implementation diverges from the proposal's design, document why in the devlog.
