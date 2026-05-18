@@ -28,6 +28,13 @@ Copy the two H2 sections below into the devlog body verbatim, then append a row 
 - `review_path`: path to the review artifact, relative to repo root.
 - `notes`: short free text.
   Use to surface implementer uncertainties, tag `[placeholder-floor]` rows when running without an explicit verification floor, or distinguish "tests passed but reviewer found a live-system gap" from "tests failed."
+  Every row's `notes` cell must end with one of `[indep-verify: confirmed]`, `[indep-verify: n/a]`, `[indep-verify: deferred-to-followup: <pointer>]`, or `[indep-verify: skipped]`; see the `## Iteration Log and Judge Log` section in `plugins/cdocs/skills/iterate/SKILL.md` for the per-value rules.
+
+Example Iteration Log row with the tag:
+
+| iteration | implementer | reviewer | review_verdict | review_path | notes |
+|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | revise | cdocs/reviews/2026-05-13-...-r1.md | cards not rendering; Playwright excerpt inlined in review [indep-verify: confirmed] |
 
 **Judge Log**
 
