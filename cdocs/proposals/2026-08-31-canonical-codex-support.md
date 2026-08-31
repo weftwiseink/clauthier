@@ -6,6 +6,11 @@ task_list: cdocs/codex-support
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@gpt-5.6-sol"
+  at: 2026-08-31T11:51:48-07:00
+  round: 1
 tags: [architecture, codex, multi-target, portability, build-system]
 ---
 
@@ -99,8 +104,9 @@ flowchart LR
     S[plugins/cdocs canonical source] --> C[Claude Code direct package]
     S --> O[scripts/build-target.ts opencode adapter]
     S --> X[scripts/build-target.ts codex adapter]
-    X --> P[Codex plugin manifest and marketplace]
-    X --> R[Repository bundle]
+    X --> G[Committed shared Codex payload]
+    G --> P[Codex plugin manifest and marketplace]
+    G --> R[Repository deployment]
     R --> RS[.agents/skills/cdocs-*]
     R --> RA[.codex/agents/cdocs-*.toml]
     R --> RR[.agents/cdocs/rules]
@@ -109,13 +115,28 @@ flowchart LR
 `plugins/cdocs/skills/`, `plugins/cdocs/rules/`, and the semantic bodies of `plugins/cdocs/agents/` remain the authored source of truth.
 Generated files must identify their source and content hash and must never become editing surfaces.
 
+The Codex adapter writes one committed payload under `plugins/cdocs/codex/`.
+Both Codex delivery modes consume that exact payload from a fresh Clauthier clone:
+
+```text
+plugins/cdocs/codex/                 # generated and committed
+  manifest.json                     # canonical input hashes and generated inventory
+  skills/cdocs-*/                   # translated public skills and role skills
+  agents/cdocs-*.toml               # project-agent definitions for repository deployment
+  rules/*.md                        # canonical rule snapshot
+```
+
+`plugins/cdocs/codex/` is a release artifact, not an authored tree.
+The build regenerates it from canonical skills, agents, and rules, and CI rejects drift.
+Committing it is required because a Git marketplace clone cannot consume ignored local build output.
+
 Refactor the existing OpenCode builder only as far as needed to share target-neutral inventory, copying, hashing, and validation helpers.
 Avoid a speculative generalized plugin framework: two small target adapters over shared utilities are easier to audit than one configuration language that attempts to encode every host.
 
 ### Canonical Codex plugin package
 
-Add `plugins/cdocs/.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`.
-The Codex manifest points `skills` at `./skills/` and uses the same package identity, version, repository, license, and publisher as the Claude manifest.
+Add `plugins/cdocs/.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json` only after the shared Codex payload passes transformation tests.
+The Codex manifest points `skills` at `./codex/skills/` and uses the same package identity, version, repository, license, and publisher as the Claude manifest.
 The build verifies that version and identity fields agree rather than maintaining independent release numbers.
 
 Add a Codex marketplace catalog at Clauthier's repository root under `.agents/plugins/marketplace.json`.
@@ -126,9 +147,18 @@ The plugin path is optional distribution.
 Documentation must state that `codex plugin marketplace add` and `codex plugin add` mutate user-local state and are appropriate only when the user wants that behavior.
 They are not part of repository-scoped setup or its tests.
 
+Codex plugin packaging does not install `.codex/agents/*.toml`.
+The optional plugin therefore dispatches Codex built-in agents with explicit generated role skills, while repository deployment uses named custom agents from the same role source.
+Formal review and iterate remain supported in both modes, but only repository mode provides names such as `cdocs-reviewer` in the custom-agent selector.
+
+The plugin's translated orchestration skills resolve the required role skill and require a newly spawned built-in agent to load it before acting.
+Reviewer dispatch always includes the complete generated reviewer role skill, which incorporates the canonical reviewer instructions and the complete `cdocs-review` methodology.
+Judge, triage, and nit-fix use equivalent generated role skills.
+If the host cannot prove that the spawned agent loaded the role skill, the workflow stops rather than reporting a formal CDocs review or iterate result.
+
 ### Generated repository bundle
 
-Add a Codex build target that writes a clean staging tree under `build/cdocs/codex/repository/`:
+Add a Codex build target that stages repository deployment from the committed shared payload under `build/cdocs/codex/repository/`:
 
 ```text
 build/cdocs/codex/repository/
@@ -156,7 +186,7 @@ build/cdocs/codex/repository/
 
 The target project checks these artifacts into source control.
 Checked-in generated files are intentional deployment artifacts analogous to materialized CDocs rules: canonical authors edit Clauthier, and projects update through the generator.
-The generated `manifest.json` records the CDocs version, source revision when available, and a content hash so drift can be detected without relying on timestamps.
+The deployed `manifest.json` records the CDocs version, shared-payload hash, source revision when available, managed paths, and shared-rule ownership observations so drift can be detected without relying on timestamps.
 
 Provide one idempotent deployment command owned by Clauthier that copies the staged bundle into an explicit target repository.
 The command must require a target path, verify the target is a Git worktree, limit writes to `.agents/cdocs/`, `.agents/skills/cdocs-*`, `.codex/agents/cdocs-*`, and the CDocs marker block in root `AGENTS.md`, and refuse to overwrite unmanaged collisions.
@@ -168,11 +198,19 @@ Although Codex follows symlinked skill folders, links into a sibling checkout en
 ### Skill metadata and invocation names
 
 Canonical Claude skills keep their current names because changing them would change `/cdocs:<skill>` commands.
-The Codex repository adapter rewrites only generated frontmatter names to `cdocs-<skill>` and preserves the markdown body and sibling resources.
-This gives unambiguous `$cdocs-propose`, `$cdocs-iterate`, and related selectors without altering Claude or OpenCode names.
+The Codex adapter rewrites generated frontmatter names to `cdocs-<skill>`, applies the enumerated host-integration transformations, and preserves all unaffected markdown and sibling resources byte-for-byte.
+This gives unambiguous repository skill selectors without altering Claude or OpenCode names.
+
+Repository documentation uses the explicit selector syntax that the supported Codex CLI reports through `/skills`, expected to be `$cdocs-propose` for the generated `name`.
+Plugin documentation uses the plugin or bundled-skill selector exposed by the active Codex surface, expected to be `@cdocs` followed by the workflow request on ChatGPT surfaces.
+Display inventory strings such as `cdocs:propose` are never documented as invocation syntax unless a runtime test proves that exact typed form on the supported client.
+Phase 1 records the actual selector and transcript for each client, and generated documentation snapshots derive from those verified forms.
 
 The adapter normalizes filesystem-only spelling where needed, such as the `nit_fix` directory and `cdocs-nit-fix` public name.
-A generated comment immediately after frontmatter identifies the canonical file and warns against manual edits.
+A generated comment immediately after frontmatter identifies the canonical file, transformation version, and input hash and warns against manual edits.
+
+The plugin manifest and repository deployer both read `plugins/cdocs/codex/manifest.json` and reject a stale or incomplete payload.
+No Codex manifest may point at the Claude-oriented `plugins/cdocs/skills/` tree.
 
 ### Host-neutral workflow language
 
@@ -185,29 +223,49 @@ Use narrowly scoped, tested transformations or generated preambles:
 | --- | --- | --- |
 | Explicit skill invocation | `/cdocs:implement` | `$cdocs-implement` or implicit skill selection |
 | General implementer | `general-purpose` Task subagent | built-in `worker`, unless the invocation requests another model |
-| Reviewer | `subagent_type: reviewer` | `cdocs-reviewer` custom agent |
-| Judge | `subagent_type: judge` | `cdocs-judge` custom agent |
-| Nit fix | `subagent_type: nit-fix` | `cdocs-nit-fix` custom agent |
-| Triage | `subagent_type: triage` | `cdocs-triage` custom agent |
+| Reviewer | `subagent_type: reviewer` | repository: `cdocs-reviewer`; plugin: fresh built-in agent plus `cdocs-reviewer-role` |
+| Judge | `subagent_type: judge` | repository: `cdocs-judge`; plugin: fresh built-in agent plus `cdocs-judge-role` |
+| Nit fix | `subagent_type: nit-fix` | repository: `cdocs-nit-fix`; plugin: built-in agent plus `cdocs-nit-fix-role` |
+| Triage | `subagent_type: triage` | repository: `cdocs-triage`; plugin: built-in agent plus `cdocs-triage-role` |
 | User choice | `AskUserQuestion` | request user input when the active client exposes it, otherwise ask a concise blocking question |
-| “haiku” role | low-cost mechanical work | `gpt-5.6-luna`, medium reasoning by default |
-| “opus” role | high-judgment review | `gpt-5.6`, high reasoning by default |
+| “haiku” role | low-cost mechanical work | inherited project or parent model; documentation recommends a current efficient profile |
+| “opus” role | high-judgment review | inherited project or parent model; documentation recommends a current high-judgment profile |
 
-Model mappings express role requirements, not claims of cross-vendor equivalence.
-They live in one Codex adapter table and are covered by snapshot tests.
-Invocation flags that explicitly request a model continue to override defaults.
+Model guidance expresses role requirements, not claims of cross-vendor equivalence.
+It lives in generated documentation rather than hard-pinned agent TOML.
+Invocation flags that explicitly request a model are passed at spawn time, while invocations without an override omit model fields and inherit Codex's project or parent defaults.
 
-Generated custom-agent instructions embed or reference the same semantic agent bodies but use Codex-native constraints.
+Generated custom-agent TOML omits `model` and `model_reasoning_effort` because Codex gives those file fields precedence over explicit spawn values.
+The orchestrating skill passes an invocation override explicitly when present and otherwise omits both values so Codex resolves project defaults and parent inheritance according to its native precedence.
+This preserves `--model` behavior without hard-pinning a conflicting custom-agent value.
+
+Generated custom-agent instructions reference the same semantic role packet but use Codex-native constraints.
+Every custom-agent instruction begins by requiring the agent to read its generated role skill completely before any write or verdict.
+The reviewer role skill contains the full review method rather than relying on Codex `skills.config`, which controls availability but does not guarantee preload.
+Runtime tests inspect the agent transcript and reject any review whose first write precedes that read.
 Reviewer and judge freshness remains a workflow invariant enforced by the overseer, not a property of the TOML file.
 The implementer remains a live agent across revise rounds until the judge requests rotation, matching the canonical iterate protocol.
 
 ### Rules delivery
 
-Repository deployment copies canonical rules to `.agents/cdocs/rules/` and updates root `AGENTS.md` through the existing marker-delimited, hash-based CDocs initialization behavior.
+Repository deployment copies canonical rules to `.agents/cdocs/rules/` and reconciles root `AGENTS.md` through the existing marker-delimited, hash-based CDocs initialization behavior.
 Generated skills and agents refer to repository-root-relative rule paths and retain the AGENTS fallback.
 
 Do not teach Codex to read rules from a Clauthier checkout or an installed plugin cache.
 Repository behavior must remain valid in Codex cloud and on machines where Clauthier is not checked out beside the consumer repository.
+
+Before reconciliation, the deployer classifies the root CDocs marker block as `absent`, `managed-identical`, `shared-identical`, or `divergent`.
+It records the classification and original block hash in the deployment manifest.
+An existing valid CDocs marker is shared infrastructure and is adopted, never reclassified as Codex-owned.
+A divergent or malformed marker blocks deployment.
+
+When a rule refresh changes the canonical hash, deployment updates the root marker block and every existing recognized materialization, including `.claude/rules/cdocs.md` and `.opencode/rules/cdocs/*.md`, in one planned operation.
+It does not create host-specific materializations for hosts that are not already configured.
+If any recognized materialization is divergent or cannot be updated, no rule target is changed.
+
+Codex `--remove` never removes or restores the shared `AGENTS.md` CDocs block and never removes Claude or OpenCode rule files.
+It removes only Codex-discovery artifacts listed in the deployment manifest and reports retained shared rules.
+General CDocs rule removal, including blocks created during initial setup, belongs to a separate cross-tool CDocs uninstall operation.
 
 The Codex adapter and `cdocs:init` must share the rule hash algorithm.
 Two independently implemented hashing conventions would turn freshness checks into permanent false positives.
@@ -222,14 +280,19 @@ Equivalent behavior is divided as follows:
 
 - rule injection is unnecessary because repository `AGENTS.md` and materialized rules supply instructions;
 - frontmatter validation remains an explicit triage or test command;
-- the CDocs-agent edit boundary remains written custom-agent instruction plus Codex sandbox configuration where enforceable;
+- the CDocs-agent edit boundary remains written custom-agent instruction plus coarse Codex sandbox configuration where enforceable;
 - any future Codex hook is a separate proposal backed by a failing and passing runtime fixture.
+
+Claude's edit-path hook is infrastructure-enforced.
+Codex's first release is instruction-enforced and a workspace-write agent can technically edit outside CDocs paths.
+The test suite deliberately asks each write-capable formal agent to attempt an out-of-scope edit in a disposable repository and records whether the host permits it.
+Acceptance requires the gap to be visible in documentation and review evidence and does not require the unimplemented hook to block the write.
 
 This is a deliberate parity boundary, not an omission hidden behind “compatible” packaging.
 
 ### Weftwise repository installation
 
-Deploy the generated repository bundle into Weftwise and commit only the generated Codex paths plus the corrected audit devlog.
+Deploy the shared Codex payload into Weftwise's repository-discovery paths and commit only the generated Codex paths plus the corrected audit devlog.
 Do not keep `weftwise/plugins/cdocs/` or a Weftwise-owned Codex marketplace entry.
 
 The resulting project configuration is conceptually parallel to `.claude/settings.json` enabling `cdocs@clauthier`: it is reviewed and versioned with the project.
@@ -328,9 +391,16 @@ Pin the minimum verified CLI version in adapter documentation, test against the 
 
 ### Plugin and repository bundle both active
 
-Codex can expose both `cdocs:propose` from an installed plugin and `$cdocs-propose` from repository discovery.
+Codex can expose both a plugin-bundled proposal workflow and a repository `cdocs-propose` skill.
 Documentation identifies repository skills as authoritative inside configured projects.
 Tests ensure duplicate availability does not result in generated skills recursively invoking the plugin name.
+
+### Dual marketplace catalogs
+
+Clauthier already contains `.claude-plugin/marketplace.json`, which Codex recognizes as a legacy-compatible marketplace location.
+Adding `.agents/plugins/marketplace.json` must not expose duplicate `cdocs` entries or ambiguous source roots.
+The Codex catalog test loads a fresh clone, lists every discovered marketplace and plugin identity, and requires exactly one Codex-installable `cdocs` source resolving to `plugins/cdocs/`.
+If the legacy catalog is sufficient or conflicts with the new catalog, the implementation must use one catalog rather than ship both.
 
 ### No multi-agent capability
 
@@ -361,9 +431,13 @@ No recursive deletion targets `~/.codex/plugins/cache/personal/`, the whole `plu
 ### Transformation tests
 
 - Snapshot every generated skill's frontmatter name and invocation preamble.
+- Assert the plugin manifest and repository staging tree reference the same committed payload hash.
+- Assert the plugin manifest never points directly at canonical Claude-oriented skills.
 - Snapshot each custom-agent TOML and parse it with a TOML parser.
 - Assert all canonical Claude integration tokens are either deliberately portable or transformed in generated output.
 - Assert role mappings select `worker`, `cdocs-reviewer`, `cdocs-judge`, `cdocs-nit-fix`, and `cdocs-triage` at the intended protocol points.
+- Assert generated custom-agent TOML contains no pinned `model` or `model_reasoning_effort`.
+- Assert the reviewer role packet contains the complete review methodology and both deployment modes require it before the first write.
 - Assert no generated path references a Clauthier checkout, Claude plugin cache, `${CLAUDE_PLUGIN_ROOT}`, or a user home directory.
 
 ### Deployment tests
@@ -372,15 +446,21 @@ No recursive deletion targets `~/.codex/plugins/cache/personal/`, the whole `plu
 - Modify one generated file and verify `--check` fails with that path.
 - Create an unmanaged collision and verify deployment refuses without modifying any other path.
 - Run `--remove` and verify only manifest-owned paths are removed.
+- Seed a valid pre-existing CDocs `AGENTS.md` block and parallel Claude and OpenCode materializations, then verify deployment adopts and synchronizes them atomically.
+- Verify `--remove` retains the shared `AGENTS.md` block and all non-Codex materializations unchanged.
 - Run deployment against a non-Git directory and verify it refuses.
 
 ### Runtime discovery tests
 
 - Start Codex from the temporary repository with isolated user state and no configured marketplaces or installed plugins.
 - Ask Codex to enumerate CDocs skills and verify all generated `cdocs-*` names are present.
-- Invoke `cdocs-propose` and verify it reads its full canonical instructions and template.
-- Spawn each CDocs custom agent by name and verify its role, model class, sandbox, and developer instructions are active.
-- Run a minimal dispatched implement-review exchange and verify the reviewer is a fresh agent.
+- Invoke the repository proposal skill through the selector shown by `/skills` and verify it reads its full translated instructions and template.
+- Spawn each repository CDocs custom agent by name and verify its role, inherited or explicitly spawned model, sandbox, and developer instructions are active.
+- Pass a non-default model override and verify the spawned custom agent uses it.
+- Run minimal dispatched review and iterate exchanges in repository mode and verify every reviewer is fresh and loads the complete review methodology before writing.
+- Install the plugin in a separate clean fixture, invoke it through the client-reported plugin selector, and verify no translated skill executes Claude-only mechanisms.
+- Run minimal dispatched review and iterate exchanges in plugin mode using fresh built-in agents plus role skills.
+- Attempt an out-of-scope write with each write-capable CDocs role in a disposable repository and preserve the result as enforcement-boundary evidence.
 
 ### Failure picture
 
@@ -391,6 +471,12 @@ Additional fail-loud pictures are:
 
 - `$cdocs-iterate` claims completion without spawning a fresh reviewer;
 - a generated skill references `/cdocs:implement`, `subagent_type`, or `${CLAUDE_PLUGIN_ROOT}` as an executable Codex mechanism;
+- a plugin-bundled skill loads the untranslated canonical body or attempts a Claude-only tool mechanism;
+- a fresh reviewer writes a review before loading the complete generated review methodology;
+- an invocation-level model override is ignored because custom-agent TOML pins a model or reasoning effort;
+- repository `--remove` deletes or rewrites a pre-existing shared CDocs marker block;
+- a write-capable Codex agent is described as path-restricted without an enforcement probe showing the actual host behavior;
+- two Clauthier marketplace catalogs expose duplicate or conflicting CDocs plugin identities;
 - cleanup leaves `cdocs@personal`, `marketplaces.personal`, or the exact experiment cache visible;
 - deployment overwrites an unmanaged `.agents/skills/` directory;
 - changing a canonical skill does not make `--check` fail in a deployed fixture.
@@ -423,8 +509,8 @@ For every iteration, the implementer records:
 The reviewer independently recreates the clean-room repository fixture and re-runs discovery without reading the implementer's cache or configuration.
 Acceptance requires the repository-only path to pass while the failure picture is demonstrably reproducible when `.agents/skills/` and `.codex/agents/` are withheld.
 
-For plugin packaging, test in a separate fixture by installing from the Clauthier marketplace and verifying namespaced skill discovery.
-This proves the optional package without allowing it to mask repository-bundle failures.
+For plugin packaging, test in a separate fixture by installing from the Clauthier marketplace and verifying client-reported invocation, translated payload loading, generic-agent role loading, review, and iterate.
+This proves the optional package without allowing it to mask repository-bundle failures or imply named custom agents are installed.
 
 ## Documentation
 
@@ -446,64 +532,79 @@ The Weftwise archived devlog links to this proposal and the final setup section 
 2. Add a clean-room Codex fixture with no marketplace or plugin state.
 3. Capture the primary failure picture: the current repository does not discover CDocs without user-local installation.
 4. Characterize current Claude and OpenCode build output so later refactoring must preserve it.
+5. Record supported repository-skill and plugin invocation syntax from each target client's own selector UI.
+6. Characterize Codex lifecycle events and the out-of-scope edit behavior without claiming hook enforcement.
 
 Acceptance criteria:
 
 - the repository-discovery test fails for the expected missing-skill reason;
 - fixture output proves no marketplace or plugin state is present;
+- unsupported invocation strings fail while the selected client-reported forms are recorded;
+- the OpenCode wildcard-tool warning is preserved as an explicit characterized result;
 - existing target characterization is committed before adapter implementation.
 
-### Phase 2: Canonical plugin packaging
+### Phase 2: Shared translated Codex payload
 
-1. Add `.codex-plugin/plugin.json` under `plugins/cdocs/`.
-2. Add Clauthier's `.agents/plugins/marketplace.json` catalog.
-3. Add manifest schema, path, identity, and version checks.
-4. Test optional install and namespaced skill discovery in an isolated plugin fixture.
-
-Acceptance criteria:
-
-- Codex accepts the canonical package directly;
-- no skill, rule, or agent body is copied into another source directory;
-- installing the optional package changes only the isolated fixture's user state.
-
-### Phase 3: Repository bundle generator
-
-1. Extract narrowly shared build utilities from `scripts/build-opencode.ts` without changing OpenCode output.
-2. Generate prefixed Codex skill frontmatter, resource copies, canonical rules, and a hashed manifest.
-3. Generate Codex custom-agent TOML from canonical roles and the explicit model-role map.
-4. Add deterministic, snapshot, resource-closure, and forbidden-reference tests.
+1. Extract narrowly shared build utilities from `scripts/build-opencode.ts` without changing characterized OpenCode output.
+2. Generate and commit prefixed Codex skills, role skills, rules, custom-agent TOML, and a hashed inventory under `plugins/cdocs/codex/`.
+3. Translate every enumerated Claude integration point and preserve unaffected skill content and resources.
+4. Compile the complete review methodology into the reviewer role packet.
+5. Add deterministic, snapshot, resource-closure, forbidden-reference, and model-precedence tests.
 
 Acceptance criteria:
 
-- two builds are byte-identical;
+- two clean builds are byte-identical and `--check` detects any source drift;
 - all canonical skills and roles have exactly one generated counterpart;
-- OpenCode characterization remains unchanged;
-- generated output contains no host-invalid executable instructions.
+- the reviewer role packet contains the complete review methodology;
+- generated agent TOML has no model pins and an explicit spawn override wins in a runtime probe;
+- generated output contains no executable Claude-only mechanism or external checkout path;
+- OpenCode characterization, including any unresolved warning, remains visible and unchanged unless separately fixed with evidence.
 
-### Phase 4: Safe project deployment
+### Phase 3: Safe repository deployment
 
-1. Add the explicit-target deploy, `--check`, and `--remove` command.
-2. Add managed-file markers, collision refusal, and partial-update protection.
-3. Integrate rule materialization and AGENTS marker updates with the existing hash convention.
-4. Document repository setup and maintenance.
-
-Acceptance criteria:
-
-- temporary-repository idempotency, drift, collision, and exact-removal tests pass;
-- deployment does not write outside its declared managed paths;
-- a clean-room Codex session discovers every repository skill and custom agent.
-
-### Phase 5: Workflow portability
-
-1. Implement tested Codex translations for invocation, user input, subagent roles, and model-role defaults.
-2. Exercise `propose`, `implement`, `review`, `triage`, `nit-fix`, and `iterate` through representative runtime probes.
-3. Verify reviewer and judge freshness and implementer continuity across a revise round.
-4. Document unsupported lifecycle-hook parity as an explicit limitation.
+1. Stage repository artifacts from the accepted shared payload.
+2. Add the explicit-target deploy, `--check`, and `--remove` command.
+3. Add managed-file markers, prior-manifest deletion, collision refusal, and partial-update protection.
+4. Implement `AGENTS.md` adoption classification and atomic synchronization of existing recognized rule materializations.
+5. Test that removal retains shared rules and removes only manifest-owned Codex discovery artifacts.
 
 Acceptance criteria:
 
-- the minimal implement-review loop produces a review artifact from a fresh named reviewer;
-- mechanical agents respect their edit scopes in their instructions and configured sandbox;
+- temporary-repository idempotency, drift, upgrade deletion, collision, and exact-removal tests pass;
+- a pre-existing CDocs marker and parallel Claude or OpenCode materializations remain safe and hash-consistent;
+- deployment does not write outside declared managed paths and recognized CDocs marker regions;
+- a clean-room Codex session discovers every repository skill and named custom agent with no plugin state.
+
+### Phase 4: Optional canonical plugin packaging
+
+1. Add `.codex-plugin/plugin.json` under `plugins/cdocs/` pointing only at the accepted shared Codex skill payload.
+2. Resolve whether the existing legacy-compatible Claude marketplace catalog can expose Codex without ambiguity.
+3. Add `.agents/plugins/marketplace.json` only if the dual-catalog test proves one unambiguous Codex identity.
+4. Add manifest schema, path, identity, payload-hash, and version checks.
+5. Install from a fresh Clauthier clone and exercise proposal selection plus role-skill dispatch in an isolated fixture.
+
+Acceptance criteria:
+
+- Codex installs the canonical package from a fresh clone and loads only translated skills;
+- the marketplace listing contains exactly one `cdocs` identity resolving to the canonical plugin root;
+- plugin mode successfully spawns a built-in agent that loads a generated role skill before acting;
+- installing the optional package changes only the isolated fixture's user state;
+- no named-agent capability is claimed for plugin mode.
+
+### Phase 5: Independent workflow acceptance
+
+1. Exercise `propose`, `implement`, `review`, `triage`, `nit-fix`, and `iterate` in repository mode.
+2. Exercise at least `review` and a revise-to-review `iterate` round independently in plugin mode.
+3. Verify reviewer and judge freshness, reviewer-method loading, implementer continuity, and invocation-level model overrides.
+4. Run the out-of-scope write probes and document Codex's instruction-enforced boundary beside Claude's infrastructure enforcement.
+5. Finalize the support matrix and client-specific invocation documentation from runtime transcripts.
+
+Acceptance criteria:
+
+- both modes produce a review artifact from a fresh reviewer that loaded the complete method before its first write;
+- repository mode uses named custom agents and plugin mode uses the documented built-in-agent role fallback;
+- an explicit model override wins in both modes;
+- enforcement probes are preserved and no path-level Codex restriction is claimed unless empirically enforced;
 - unavailable multi-agent capability fails loudly instead of simulating acceptance.
 
 ### Phase 6: Weftwise migration and exact cleanup

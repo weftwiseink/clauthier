@@ -52,6 +52,23 @@ The proposal treats this as a characterization requirement before shared build r
 | --- | --- |
 | `cdocs/devlogs/2026-08-31-cdocs-codex-support-proposal.md` | Session record and evidence trail. |
 | `cdocs/proposals/2026-08-31-canonical-codex-support.md` | Canonical Codex packaging, repository deployment, portability, cleanup, and verification design. |
+| `cdocs/reviews/2026-08-31-review-of-canonical-codex-support.md` | Fresh round-one review and revision requirements. |
+
+## Review Round 1 Resolution
+
+The fresh review returned `revision_requested` because the initial proposal left implementer choices at the highest-risk boundaries.
+
+The revised design resolves those blockers as follows:
+
+- one committed generated payload under `plugins/cdocs/codex/` supplies translated skills to both plugin and repository modes from a fresh clone;
+- repository deployment installs named agent TOML, while plugin mode uses fresh built-in agents plus generated role skills and makes no named-agent claim;
+- custom-agent TOML omits model fields, so explicit spawn overrides win and ordinary runs inherit native Codex defaults;
+- the generated reviewer role skill includes the complete canonical review method and must be loaded before any review write;
+- pre-existing `AGENTS.md`, Claude, and OpenCode rule materializations are classified as shared, synchronized atomically, and retained on Codex removal;
+- failure pictures cover untranslated plugin bodies, missing review methodology, ignored model overrides, instruction-only write boundaries, shared-marker removal, and duplicate marketplaces;
+- the generated payload and repository deployment precede plugin packaging, and both modes receive independent review and iterate runtime checks.
+
+No implementation files were changed.
 
 ## Verification
 
@@ -108,3 +125,17 @@ canonical references: PASS
 
 The OpenCode build emitted one existing warning while still exiting successfully: `Unknown CC tool "*"` for the reviewer agent.
 The proposal surfaces this warning as a Phase 1 characterization item.
+
+### Round 1 Revision Checks
+
+The nit-fix-equivalent scan found no em dash, bare callout, emoji, or sentence-layout correction to apply.
+The judgment pass found no history-dependent framing in the proposal body.
+
+The triage-equivalent pass preserved `first_authored` and the round-one `last_reviewed` record, verified all required frontmatter, and returned the revised proposal from `wip` to `review_ready`.
+
+```text
+blocking-topic coverage: PASS
+git diff --check: exit 0
+proposal status: review_ready
+last_reviewed: revision_requested, round 1 preserved
+```
