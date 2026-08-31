@@ -16,7 +16,7 @@ They should retain a "timeless" quality: design changes are noted in NOTE callou
 
 ### New proposal (default)
 
-1. If `$ARGUMENTS` provides a topic string, use it. Otherwise, prompt the user.
+1. If `$ARGUMENTS` provides a topic string, use it. Otherwise, use judgement, prompting the user if necessary.
 2. Determine today's date.
 3. Create `cdocs/proposals/YYYY-MM-DD-topic.md` using the template below.
 4. If `cdocs/proposals/` doesn't exist, suggest running `/cdocs:init` first.
@@ -75,8 +75,9 @@ In such cases, consider breaking the exhaustive details of the section into a su
 - **> BLUF:** Concise Bottom Line UpFront summary at top of proposal.
   Should succinctly state the most important info and conclusions, and should be kept up-to-date if they change.
   _Should not_ exceed a few sentences or overly dense - use a summary for that if needed.
-- **Summary:** Add at the end of the authoring process to provide more details, notes, and references to make the proposal more digestible.
-  Shouldn't be too long but is a good opportunity to flag context or add other `> NOTE`s that would bloat the BLUF.
+- **Summary:** A more complete summary of the proposal.
+  Useful to return to at the end of he authoring process to provide more details, notes, and references to make the proposal more digestible.
+  Shouldn't be too long, but is a good opportunity to flag context or add other `> NOTE`s that would bloat the BLUF.
 - **Objective:** Problem or improvement goal.
 - **Background:** Important docs, links, prior art.
   Context needed to understand the proposal.
@@ -113,17 +114,18 @@ Some heuristics and things to aim for if aiming for this framing:
 
 ## Drafting Approach
 
-1. Start with the BLUF. Write it first, even if rough.
-2. Fill in Objective and Background for context.
-3. Explore and consider possible approaches if applicable.
+1. Start with the BLUF. Write it first, even if rough. It should be concise: no more than aobout 500 characters.
+2. Next is a Summary section: A more complete summary of the proposal, but still not excessive. What you wish you had room for in the BLUF.
+3. Fill in Objective and Background for context.
+4. Explore and consider possible approaches if applicable.
    Consider starting a supplemental `/cdocs:report` here.
-4. For decision proposals, stay at a medium level of depth, analyze options, and recommend a decision/approach.
-5. For implementation proposals:
+5. For decision proposals, stay at a medium level of depth, analyze options, and recommend a decision/approach.
+6. For implementation proposals:
    - Break the solution into phases.
    - Write test plan and acceptance criteria for each phase.
    - Consider edge cases and refine the above based on them.
-6. Reviewing the author checklist
-7. Revisit and refine the BLUF and frontmatter based on completed draft.
+7. Reviewing the author checklist
+8. Revisit and refine the BLUF, Summary, and frontmatter based on completed draft.
 
 ## Author Checklist
 

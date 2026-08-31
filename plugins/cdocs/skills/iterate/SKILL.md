@@ -1,16 +1,23 @@
 ---
 name: iterate
 description: Run an implement-review loop on a proposal as the overseer, dispatching fresh implementer, reviewer, and judge subagents until accept-or-escalate
-argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N]"
+argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]]"
 ---
 
-# CDocs Iterate
+# CDocs Iterate Loop
 
-Run an iterative implement-review loop scoped to a proposal, a phase, or any unit the overseer chooses.
-The invoking session agent enters *overseer mode* and restricts itself to orchestration: it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
+Run an iterative implement-review loop scoped to a proposal, a phase, or any unit specified using /cdocs:implement and /cdocs:review subagents,
+The invoking session agent enters *overseer mode* and restricts itself to orchestration:
+it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
-> NOTE(opus/cdocs/iterate-skill): The overseer is a behavioral mode the top-level session agent enters when invoking this skill.
-> The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
+Overseers should aim to use subagents for all tasks beyond trivial few-liners,
+and should feel empowered to ask the user multi-choice questions for feedback and guideance unless otherwise strongly stated.
+
+The overseer is a behavioral mode the top-level session agent enters when invoking this skill.
+The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
+
+If the repo has worktree usage practices (it likely does) they should be used to contain the workstream,
+where code and cdocs should be committed early and often.
 
 ## Invocation
 
@@ -24,6 +31,11 @@ The invoking session agent enters *overseer mode* and restricts itself to orches
   If omitted and the proposal lacks a concrete `## Verification Methodology`, `AskUserQuestion` blocks the loop until provided.
   AFK fallback: write a placeholder floor and tag affected rows `[placeholder-floor]`, with a `> WARN` callout on the final summary.
 - `--judge-after N` defaults to 3; the judge runs from the Nth Revise verdict onward, and the overseer may invoke earlier at its discretion.
+- `-m | --model "<model_description"`: Which model & config to have implementation and review rounds done with.
+  Defaults to preferred model in CLAUDE.md or elsewhere, or the current session's config if none is specified.
+- `-f | --first-round ["<model_description"]`: Use a different model config for the first round implementation and review.
+  If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
+  If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
 
 ## Roles
 
@@ -59,10 +71,7 @@ Prefer appending to the most recent devlog whose `task_list` matches the proposa
 
 ### Turn N.a (Implement)
 
-Dispatch the implementer via Task with `subagent_type: "general-purpose"` and a prompt that follows `/cdocs:implement --dispatched` conventions, including:
-
-- The proposal path and goals for this iterate session (scope, verification floor, prior review path if any).
-- Whether commit authority rests with the implementer (the default) or the overseer.
+Dispatch the implementer via Task with `subagent_type: "general-purpose"` and a prompt that follows `/cdocs:implement --dispatched` conventions, including the proposal path and goals for this iterate session (scope, verification floor, prior review path if any).
 
 `--dispatched` mode suppresses subagent dispatch and routes investigation requests back to the overseer via `## Investigation Requested` blocks; see `/cdocs:implement` Invocation Modes for the schema.
 
@@ -101,7 +110,8 @@ Two tables live in the devlog body (not in frontmatter); copy them from `./templ
 
 The Iteration Log carries a `review_proof` column with one of `confirmed`, `n/a`, `deferred-to-followup`, or `skipped`:
 
-- `confirmed`: the reviewer empirically re-verified the work and cited at least one artifact in the review; ephemeral artifacts have excerpts inlined. Re-citing a prior round's artifact does not justify `confirmed`; the row rests on evidence the round-N reviewer produced.
+- `confirmed`: the reviewer empirically re-verified the work and cited at least one artifact in the review; ephemeral artifacts have excerpts inlined.
+  Re-citing a prior round's artifact does not justify `confirmed`; the row rests on evidence the round-N reviewer produced.
 - `n/a`: the verification floor does not require empirical browser/runtime evidence. Floors that mention browser, dev server, integration, end-to-end, or live behavior cannot be `n/a`.
 - `deferred-to-followup`: self-referential changes (e.g., to `/cdocs:iterate` itself) whose smoke test runs as a separate top-level invocation. The `notes` column points at where the deferred verification will be recorded.
 - `skipped`: fail-loud. The overseer justifies it in `notes` or in `### Overseer synthesis` before Accept.
@@ -126,5 +136,5 @@ A short rationale is mandatory: the verdict alone is not auditable.
 
 ### Sandboxed-runtime trust posture
 
-The reviewer runs with full tools backed by written-instruction constraints; this assumes a sandboxed (container or equivalent) runtime.
+The reviewer runs with full tools backed by written-instruction constraints.
 See [`reviewer.md`](../../agents/reviewer.md) for the boundaries.
