@@ -10,6 +10,10 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/workflow-patterns.md
 
+## Orchestration Discipline
+
+@rules/orchestration-discipline.md
+
 ## Frontmatter Specification
 
 @rules/frontmatter-spec.md

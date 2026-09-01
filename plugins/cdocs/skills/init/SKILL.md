@@ -76,6 +76,10 @@ Scaffold the CDocs documentation structure in the current project.
 
      [Full content of workflow-patterns.md, frontmatter stripped]
 
+     ## CDocs Orchestration Discipline
+
+     [Full content of orchestration-discipline.md, frontmatter stripped]
+
      ## CDocs Frontmatter Specification
 
      [Full content of frontmatter-spec.md, frontmatter stripped]

@@ -44,6 +44,7 @@ Plugin internals (rules, skills, agents, hooks) are documented in their respecti
 
 - **Writing conventions**: `@plugins/cdocs/rules/writing-conventions.md`
 - **Workflow patterns** (parallel agents, subagent dev, checklists): `@plugins/cdocs/rules/workflow-patterns.md`
+- **Orchestration discipline** (thin overseer, liveness reconciliation, single-writer ownership): `@plugins/cdocs/rules/orchestration-discipline.md`
 - **Frontmatter spec**: `@plugins/cdocs/rules/frontmatter-spec.md`
 - **Skills**: `plugins/cdocs/skills/{devlog,propose,review,report,status,init,triage,implement,iterate}/SKILL.md`
 
