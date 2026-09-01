@@ -9,8 +9,8 @@ status: review_ready
 last_reviewed:
   status: revision_requested
   by: "@gpt-5.6-sol"
-  at: 2026-08-31T11:51:48-07:00
-  round: 1
+  at: 2026-08-31T12:05:06-07:00
+  round: 2
 tags: [architecture, codex, multi-target, portability, build-system]
 ---
 
@@ -109,7 +109,7 @@ flowchart LR
     G --> R[Repository deployment]
     R --> RS[.agents/skills/cdocs-*]
     R --> RA[.codex/agents/cdocs-*.toml]
-    R --> RR[.agents/cdocs/rules]
+    RS --> RR[Per-skill Codex rule references]
 ```
 
 `plugins/cdocs/skills/`, `plugins/cdocs/rules/`, and the semantic bodies of `plugins/cdocs/agents/` remain the authored source of truth.
@@ -122,8 +122,8 @@ Both Codex delivery modes consume that exact payload from a fresh Clauthier clon
 plugins/cdocs/codex/                 # generated and committed
   manifest.json                     # canonical input hashes and generated inventory
   skills/cdocs-*/                   # translated public skills and role skills
+    references/cdocs-rules/         # portable core plus Codex appendix
   agents/cdocs-*.toml               # project-agent definitions for repository deployment
-  rules/*.md                        # canonical rule snapshot
 ```
 
 `plugins/cdocs/codex/` is a release artifact, not an authored tree.
@@ -165,14 +165,11 @@ build/cdocs/codex/repository/
   .agents/
     cdocs/
       manifest.json
-      rules/
-        frontmatter-spec.md
-        workflow-patterns.md
-        writing-conventions.md
     skills/
       cdocs-devlog/
         SKILL.md
         template.md
+        references/cdocs-rules/
       cdocs-implement/
         SKILL.md
       ...
@@ -189,8 +186,8 @@ Checked-in generated files are intentional deployment artifacts analogous to mat
 The deployed `manifest.json` records the CDocs version, shared-payload hash, source revision when available, managed paths, and shared-rule ownership observations so drift can be detected without relying on timestamps.
 
 Provide one idempotent deployment command owned by Clauthier that copies the staged bundle into an explicit target repository.
-The command must require a target path, verify the target is a Git worktree, limit writes to `.agents/cdocs/`, `.agents/skills/cdocs-*`, `.codex/agents/cdocs-*`, and the CDocs marker block in root `AGENTS.md`, and refuse to overwrite unmanaged collisions.
-It must support `--check` for CI and `--remove` for exact generated-artifact cleanup.
+The command must require a target path, verify the target is a Git worktree, limit writes to `.agents/cdocs/`, `.agents/skills/cdocs-*`, `.codex/agents/cdocs-*`, and the portable CDocs marker block in root `AGENTS.md`, and refuse to overwrite unmanaged collisions.
+It must support `--check` for CI and `--remove` for exact Codex-discovery cleanup.
 
 Do not use cross-repository symlinks for committed setup.
 Although Codex follows symlinked skill folders, links into a sibling checkout encode one machine's directory layout and fail for other contributors and Codex cloud.
@@ -248,27 +245,56 @@ The implementer remains a live agent across revise rounds until the judge reques
 
 ### Rules delivery
 
-Repository deployment copies canonical rules to `.agents/cdocs/rules/` and reconciles root `AGENTS.md` through the existing marker-delimited, hash-based CDocs initialization behavior.
-Generated skills and agents refer to repository-root-relative rule paths and retain the AGENTS fallback.
+#### Portable core and host appendices
 
-Do not teach Codex to read rules from a Clauthier checkout or an installed plugin cache.
-Repository behavior must remain valid in Codex cloud and on machines where Clauthier is not checked out beside the consumer repository.
+CDocs rules are authored in two layers:
 
-Before reconciliation, the deployer classifies the root CDocs marker block as `absent`, `managed-identical`, `shared-identical`, or `divergent`.
-It records the classification and original block hash in the deployment manifest.
-An existing valid CDocs marker is shared infrastructure and is adopted, never reclassified as Codex-owned.
-A divergent or malformed marker blocks deployment.
+- a portable core containing writing conventions, frontmatter, and semantic workflow invariants such as reviewer freshness, devlog ownership, and accept-or-escalate behavior;
+- host appendices containing executable selectors, dispatch APIs, model guidance, tool constraints, hooks, and filesystem paths for Claude Code, OpenCode, or Codex.
 
-When a rule refresh changes the canonical hash, deployment updates the root marker block and every existing recognized materialization, including `.claude/rules/cdocs.md` and `.opencode/rules/cdocs/*.md`, in one planned operation.
-It does not create host-specific materializations for hosts that are not already configured.
-If any recognized materialization is divergent or cannot be updated, no rule target is changed.
+Refactor the current `workflow-patterns.md` so Claude `Task`, `subagent_type`, slash commands, model aliases, and agent-frontmatter details live only in the Claude appendix.
+The portable core describes roles and required outcomes without naming a host mechanism.
+Codex rule output is the portable core plus a generated Codex appendix, not a byte-identical copy of the current Claude-oriented rule set.
 
-Codex `--remove` never removes or restores the shared `AGENTS.md` CDocs block and never removes Claude or OpenCode rule files.
-It removes only Codex-discovery artifacts listed in the deployment manifest and reports retained shared rules.
-General CDocs rule removal, including blocks created during initial setup, belongs to a separate cross-tool CDocs uninstall operation.
+Hash the portable core and each host appendix independently.
+Root `AGENTS.md` carries only the portable-core hash because its marker block is shared across hosts.
+Claude and OpenCode materializations carry the same core hash plus their own appendix hash.
+Each generated Codex skill records the core hash plus the Codex appendix hash.
+Composite freshness compares both components for a host and never claims translated appendices are byte-identical.
 
-The Codex adapter and `cdocs:init` must share the rule hash algorithm.
-Two independently implemented hashing conventions would turn freshness checks into permanent false positives.
+#### Delivery-stable resource closure
+
+Every generated public and role skill contains `references/cdocs-rules/` with the portable core and Codex appendix.
+Generated instructions resolve rules relative to their own `SKILL.md` directory before doing any work.
+The complete skill directory is copied unchanged into both `plugins/cdocs/codex/skills/` and repository `.agents/skills/`, so rule paths do not vary by delivery mode.
+
+Repository custom-agent TOML does not point directly at a separate rule directory.
+It requires the corresponding role skill, and that role skill loads its co-located rule references.
+Plugin mode uses the same role skill and therefore has the same resource path without requiring root `AGENTS.md`, a Clauthier checkout, or an installed-cache path.
+
+Duplicated reference files are generated closure artifacts with identical hashes, not authored rule copies.
+The build verifies that every skill's closure matches the shared Codex rule composite exactly.
+
+#### Shared project-rule ownership
+
+The Codex deployer owns only Codex discovery artifacts and the portable CDocs marker block in root `AGENTS.md`.
+The existing cross-target `cdocs:init` workflow remains the sole owner that writes `.claude/rules/cdocs.md` and `.opencode/rules/cdocs/*.md`.
+
+Before changing root `AGENTS.md`, the deployer preflights every recognized CDocs marker and materialization.
+If existing Claude or OpenCode materializations do not already carry the target portable-core hash, deployment refuses with a command to refresh them through `cdocs:init`.
+If the root block is absent and no stale host materialization exists, deployment may create the portable block.
+If the root block is current, deployment adopts it as shared infrastructure without rewriting it.
+A malformed, divergent, or partially updated marker blocks deployment before any write.
+
+The deployment operation first renders every Codex target and the prospective `AGENTS.md` block into a temporary tree, validates hashes and collisions, and records the complete mutation plan.
+Only then does it atomically replace managed Codex paths and, when needed, the one marker-delimited root block.
+On filesystems where atomic replacement of the whole plan is unavailable, it takes byte-for-byte backups of the touched managed paths and restores them on any failed rename.
+No `.claude/` or `.opencode/` path is in the deployment write allowlist.
+
+Codex `--remove` means exact Codex-discovery cleanup, not full reversal of shared CDocs setup.
+It removes only manifest-listed `.agents/cdocs/`, `.agents/skills/cdocs-*`, and `.codex/agents/cdocs-*` artifacts and always retains root `AGENTS.md`, Claude rules, and OpenCode rules.
+The command reports retained shared instructions explicitly.
+General CDocs rule removal belongs to a separate cross-tool uninstall operation.
 
 ### Hooks boundary
 
