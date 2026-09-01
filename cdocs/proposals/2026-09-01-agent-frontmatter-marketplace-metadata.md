@@ -20,6 +20,8 @@ tags: [subagents, marketplace, frontmatter, discovery, architecture]
 > `memory` is deliberately WITHHELD from `reviewer` and `judge` to preserve their "fresh eyes, no prior commitment" invariant.
 > Round 2: resolved the round-1 `maxTurns`/batch-mode tension by extending the reviewer's own "a cap that bites is worse than no cap" argument to `triage`/`nit-fix`, leaving both uncapped rather than assigning a larger fixed number; added OpenCode-build verification and a minimum-CC-version note.
 
+> NOTE(claude-opus-4-8/cdocs/agent-frontmatter-marketplace): Post-implementation reversal. `memory: project` was granted to `triage`/`nit-fix` as this proposal describes, then REVERTED (commit `11a6b8d`): memory is now withheld from ALL four agents. A follow-up review ([[2026-09-01-review-of-overseer-approach]]) found it regresses determinism and drifts from the canonical rule files — `nit-fix`'s own charter states "the files are the source of truth," which persistent memory shadows. The "Important Design Decisions" section below still argues the original grant; it is retained as the historical rationale that the reversal overrides. `.claude/agent-memory/` is now gitignored regardless.
+
 ## Objective
 
 Two small, independent enhancements to cdocs packaging:
