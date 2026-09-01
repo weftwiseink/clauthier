@@ -3,8 +3,6 @@ FROM lace.local/node:24-bookworm
 
 ARG GIT_DELTA_VERSION="0.18.2"
 
-ARG COMMAND_HISTORY_PATH="/commandhistory"
-
 ARG USERNAME=node
 
 ARG TZ
@@ -37,9 +35,8 @@ RUN mkdir -p /usr/local/share/npm-global && \
 # https://code.claude.com/docs/en/devcontainer
 #
 # Create workspace and config directories and set permissions (as root)
-RUN mkdir -p /workspace /home/${USERNAME}/.claude ${COMMAND_HISTORY_PATH} && \
-    touch ${COMMAND_HISTORY_PATH}/.bash_history && \
-    chown -R ${USERNAME}:${USERNAME} /workspace /home/${USERNAME}/.claude ${COMMAND_HISTORY_PATH}
+RUN mkdir -p /workspace /home/${USERNAME}/.claude && \
+    chown -R ${USERNAME}:${USERNAME} /workspace /home/${USERNAME}/.claude
 
 # Mirror the host project path inside the container so Claude Code plugin
 # records (~/.claude/plugins/{installed_plugins,known_marketplaces}.json),
@@ -56,8 +53,10 @@ RUN mkdir -p /workspace /home/${USERNAME}/.claude ${COMMAND_HISTORY_PATH} && \
 RUN mkdir -p /var/home/mjr/code/weft && \
     ln -s /workspace/clauthier /var/home/mjr/code/weft/clauthier
 
-# Persist bash history from https://github.com/anthropics/claude-code/blob/main/.devcontainer/Dockerfile
-RUN echo "export PROMPT_COMMAND='history -a' && export HISTFILE=${COMMAND_HISTORY_PATH}/.bash_history" >> /home/${USERNAME}/.bashrc
+# Bash history persistence is provided by the user-level `bash-history` lace
+# feature: it declares the /bash-history per-project bind mount and sets
+# HISTFILE. The previous image-state history path was never bind-mounted, so it
+# did not survive rebuilds; the feature-injected mount does.
 
 WORKDIR /workspace
 
