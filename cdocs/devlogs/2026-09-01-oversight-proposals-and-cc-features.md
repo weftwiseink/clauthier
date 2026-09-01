@@ -126,9 +126,19 @@ Then a concurrency wrinkle: the orphaned proposer child (`a79c9b26`) — the one
 
 Q2 resolved: accept CC/OC divergence (OC build drops the 3 fields by design) + add `npm run build:cdocs` check.
 
+## Integration (landed on main)
+
+All work committed to `main` (linear history, `54f7674`):
+- 5 doc commits: overseer expansion; devlog-value report; overseer consolidation + restatus (iterate-skill→`implementation_accepted`, rfp-oversee cross-ref NOTE); 7 triage archives; this devlog.
+- 6 frontmatter/marketplace commits cherry-picked from the isolated full-send branch (ff-equivalent; zero file overlap → no conflicts). Isolated worktree + redundant branches removed (stale lock unlocked first; tree confirmed clean, nothing lost).
+
+Deferred (needs interactive CC session): `/plugin marketplace add . && /plugin install cdocs@clauthier` round-trip for the marketplace-metadata change.
+
+Follow-up flagged for the overseer /review (running): reconsider `memory: project` on `triage`/`nit-fix` — mechanical enforcers risk stale-convention drift and non-determinism; the fresh-eyes argument may extend to them.
+
 ## Verification
 
-- Overseer proposal: `git diff --stat` = +99/−34, frontmatter valid (`type: proposal`, `status: review_ready` intact).
-- Artifact + both exemplary repo URLs verified live by the reporting agent via WebFetch.
-- Nothing committed; changes staged for review.
+- Frontmatter fields verified on main: judge (`color: red`, `maxTurns: 10`, no memory), triage (`color: green`, `memory: project`, no maxTurns), reviewer (color only), nit-fix (color + memory, no maxTurns).
+- Implementer validation (pasted in `2026-09-01-agent-frontmatter-marketplace.md`): `jq` parses both manifests; `npm run build:cdocs` clean (confirms OC build drops the 3 fields by design); CI OC-frontmatter check + `npm pack --dry-run` pass.
+- Artifact + both exemplary repo URLs verified live via WebFetch.
 
