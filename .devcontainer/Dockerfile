@@ -1,5 +1,5 @@
 # don't upgrade to 25! for some reason corepack doesn't come installed with it.
-FROM lace.local/node:24-bookworm
+FROM node:24-bookworm
 
 ARG GIT_DELTA_VERSION="0.18.2"
 
@@ -85,10 +85,6 @@ RUN echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} && \
 
 # Switch to node user for all user-level installations and builds
 USER ${USERNAME}
-
-# Configure npm to use user-writable global directory
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
 # TODO: uncomment / adapt once structure is refined
 # Copy package files and install dependencies as node user

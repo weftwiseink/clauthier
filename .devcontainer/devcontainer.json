@@ -10,18 +10,18 @@
     "context": ".."
   },
   "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/weftwiseink/devcontainer-features/lace-fundamentals:1": {},
+    "ghcr.io/danzilberdan/devcontainers/opencode:0": {}
+  },
   "customizations": {
     "lace": {
       "workspace": {
         "layout": "bare-worktree",
         "mountTarget": "/workspace/clauthier"
-      },
-      "prebuildFeatures": {
-        "ghcr.io/devcontainers/features/git:1": {
-          "version": "latest"
-        },
-        "ghcr.io/weftwiseink/devcontainer-features/lace-fundamentals:1": {},
-        "ghcr.io/danzilberdan/devcontainers/opencode:0": {}
       }
     }
   },
