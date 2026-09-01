@@ -4,12 +4,18 @@ first_authored:
   at: 2026-03-19T15:00:00-07:00
 task_list: cdocs/hook-testing
 type: proposal
-state: live
-status: wip
+state: archived
+status: evolved
 tags: [testing, hooks, rules-injection, plugin-architecture, opencode, cc-plugin]
 ---
 
 # CDocs Rules Hook Testing Methodology
+
+> NOTE(claude-sonnet-5/hook-testing): Archived. This proposal's premise no longer holds: it specifies tests for `inject-rules.sh`'s content-injection behavior (reading `rules/*.md`, stripping frontmatter, and returning rule content as `additionalContext`).
+> That script was deleted and its successor, `plugins/cdocs/hooks/inject-rules.ts`, does not inject content at all — CC's SessionStart `additionalContext` silently truncates payloads over ~2KB (the cdocs rule bundle is ~13KB), so rule delivery moved to `/cdocs:init` materialization, and the hook was repurposed as a small hash-based freshness check (compares a sha256 over the plugin's `rules/*.md` against a marker hash in the project's `.claude/rules/cdocs.md`, emitting a re-run-`/cdocs:init` directive on mismatch).
+> See `cdocs/proposals/2026-05-12-cdocs-rule-delivery-materialization.md` for that redesign.
+> Superseded by `cdocs/proposals/2026-09-01-rules-hook-testing-methodology-v2.md`, which targets the current hash-based hook.
+> `status: evolved` per `plugins/cdocs/rules/frontmatter-spec.md` ("Proposal has been superseded by a new version or follow-up proposal"): this proposal was never implemented, and its premise evolved out from under it before implementation began.
 
 > BLUF(opus/hook-testing): The cdocs SessionStart hook (`inject-rules.sh`) is the primary delivery mechanism for rules in CC consumer projects, but there is no automated way to verify it works after installation.
 > This proposal defines a concrete testing methodology covering three verification layers: (1) hook script unit tests run in isolation, (2) integration tests simulating CC's hook invocation protocol against the real lace project at `~/code/weft/lace/main`, and (3) OC skill discoverability checks validating that the postinstall produces correct flat paths.
