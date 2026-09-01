@@ -10,10 +10,9 @@ Run an iterative implement-review loop scoped to a proposal, a phase, or any uni
 The invoking session agent enters *overseer mode* and restricts itself to orchestration:
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
-Overseers should aim to use subagents for all tasks beyond trivial few-liners,
-and should feel empowered to ask the user multi-choice questions for feedback and guideance unless otherwise strongly stated.
-
-The overseer is a behavioral mode the top-level session agent enters when invoking this skill.
+The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership, on-resume liveness reconciliation) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
+Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log before compacting; use a fresh reviewer every iteration and a fresh judge every invocation.
+The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
 If the repo has worktree usage practices (it likely does) they should be used to contain the workstream,
@@ -104,9 +103,24 @@ Append a Judge Log row.
 The loop terminates on Accept, Reject, judge `escalate`, or user interrupt.
 No retry-count cap on Accept-bound progress: a patient overseer is bounded by review-signal quality and judge meta-assessment.
 
+## On-Resume Reconciliation
+
+Before acting on a resumed loop, reconstruct child-dispatch liveness from the Iteration Log's Dispatch/Return Events rows, not from in-window belief.
+The harness notifies the overseer only when NO live children remain, so a session resumed mid-interruption can hold a stale "child in flight" belief.
+If you believe a child (implementer, reviewer, or judge) is in flight but the harness has returned control (no live children remain), that child has terminated: inspect its on-disk artifacts (its review file, the devlog, committed work) and proceed from the actual state rather than waiting on a child that is already gone.
+Likewise, before dispatching a writer against a path, check the event rows for an open ownership claim by another live agent and serialize or re-scope rather than dispatch a second concurrent writer.
+See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 1b for the full liveness-reconciliation and single-writer-ownership disciplines.
+
 ## Iteration Log and Judge Log
 
-Two tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0.
+Three tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0: the Iteration Log, the Judge Log, and the Dispatch/Return Events table.
+
+The Iteration Log carries two additive thinness columns for overseer-context legibility: `overseer_ctx_est` (an approximate current-context estimate, e.g. "~150K (30% inline)") and `inline_work` (a yes/no flag for whether the overseer did inline work this turn).
+The overseer writes these each row; the judge reads them to key `escalate` and writes its own `overseer_thinness` verdict (`clean`/`bloat_detected`/`signal_missing`) in the Judge Log.
+Absent the overseer columns, the judge logs `signal_missing`, so the checkpoint is enforceable rather than only inferable from prose.
+See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Judge-Observable Thinness Signal."
+
+The Dispatch/Return Events table records each child dispatch and return (with the target files it claims) so a resumed overseer can reconcile liveness and file-ownership from the log rather than from in-window belief (see "On-Resume Reconciliation" above).
 
 The Iteration Log carries a `review_proof` column with one of `confirmed`, `n/a`, `deferred-to-followup`, or `skipped`:
 

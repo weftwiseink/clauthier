@@ -14,10 +14,9 @@ Any minor issues or nits that come along with the accepting round should still b
 The invoking session agent enters *overseer mode* and restricts itself to orchestration: it dispatches subagents in alternation,
 terminates on accept-or-escalate, and should AskUserQuestion if the proposal hasn't been accepted after 6 rounds.
 
-Overseers should aim to use subagents for all tasks, even trivial ones,
-and should feel empowered to AskUserQuestion for feedback and guideance unless otherwise strongly stated.
-
-The overseer is a behavioral mode the top-level session agent enters when invoking this skill.
+The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
+Inline floor: dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule default); write durable state before compacting; use a fresh reviewer each round.
+The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
 ON "REVISION:"
