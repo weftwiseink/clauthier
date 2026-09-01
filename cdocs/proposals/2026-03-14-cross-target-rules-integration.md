@@ -4,8 +4,8 @@ first_authored:
   at: 2026-03-14T14:30:00-07:00
 task_list: marketplace/cross-target-rules
 type: proposal
-state: live
-status: results_accepted
+state: archived
+status: implementation_accepted
 tags: [architecture, rules, multi-target, opencode, portability, plugin-api]
 last_reviewed:
   status: revision_requested
@@ -15,6 +15,11 @@ last_reviewed:
 ---
 
 # Cross-Target Rules Integration: Making cdocs Rules Work in CC and OpenCode
+
+> NOTE(claude-sonnet-5/cross-target-rules): Archived. `status: results_accepted` was not a valid frontmatter value (see `plugins/cdocs/rules/frontmatter-spec.md`) and has been corrected to `implementation_accepted`.
+> This proposal's design (CC SessionStart hook injecting rule content as `additionalContext`, plus OC/`AGENTS.md` delivery layers) shipped — see `cdocs/devlogs/2026-03-16-cross-target-rules-implementation.md` and the `c345c09`/`8450094`/`92db9e2` commits introducing `inject-rules.sh`.
+> The CC SessionStart content-injection layer was later superseded by the hash-based freshness/materialization design in `cdocs/proposals/2026-05-12-cdocs-rule-delivery-materialization.md` (CC's ~2KB `additionalContext` inline cap silently truncated the ~13KB rule bundle this proposal's hook injected).
+> `implementation_accepted` (not `evolved`) is used because the proposal's own implementation was completed and accepted at the time; the superseding work is a separate, later proposal correcting a defect discovered after acceptance, not this proposal being retargeted before implementation.
 
 > BLUF: cdocs ships three rule files (writing-conventions, workflow-patterns, frontmatter-spec) that define its document standards.
 > These rules work in the source repo via `@`-imports in CLAUDE.md but do not propagate to external CC installs (plugin rules gap [#14200](https://github.com/anthropics/claude-code/issues/14200)) and have no delivery path in OpenCode.
