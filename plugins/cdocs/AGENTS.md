@@ -14,6 +14,10 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/orchestration-discipline.md
 
+## Model Tiering
+
+@rules/model-tiering.md
+
 ## Frontmatter Specification
 
 @rules/frontmatter-spec.md

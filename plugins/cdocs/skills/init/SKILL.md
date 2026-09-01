@@ -80,6 +80,10 @@ Scaffold the CDocs documentation structure in the current project.
 
      [Full content of orchestration-discipline.md, frontmatter stripped]
 
+     ## CDocs Model Tiering
+
+     [Full content of model-tiering.md, frontmatter stripped]
+
      ## CDocs Frontmatter Specification
 
      [Full content of frontmatter-spec.md, frontmatter stripped]
