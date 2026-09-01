@@ -53,7 +53,7 @@ The agent reads the frontmatter spec at runtime, applies mechanical fixes (tags,
 
 | Recommendation | Action | Agent |
 |----------------|--------|-------|
-| `[REVIEW]` | Invoke the reviewer agent via Task tool with `subagent_type: "reviewer"`. Pass the document path. | Reviewer agent (sonnet) |
+| `[REVIEW]` | Invoke the reviewer agent via Task tool with `subagent_type: "reviewer"`. Pass the document path. | Reviewer agent (opus) |
 | `[REVISE]` | Read the review's action items, revise the document inline. | Top-level agent (has authoring context) |
 | `[ESCALATE]` | Report to the user with options. Review round >= 3 without acceptance indicates the loop needs human judgment. | Top-level agent presents options |
 | `[STATUS]` | Apply the recommended frontmatter status update directly via Edit. | Top-level agent |
