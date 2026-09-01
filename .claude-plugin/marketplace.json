@@ -13,7 +13,8 @@
       "name": "cdocs",
       "source": "./plugins/cdocs",
       "description": "Documentation framework for structured devlogs, proposals, reviews, and reports",
-      "category": "productivity"
+      "category": "productivity",
+      "tags": ["documentation", "devlog", "proposal", "review", "workflow", "subagents"]
     }
   ]
 }
