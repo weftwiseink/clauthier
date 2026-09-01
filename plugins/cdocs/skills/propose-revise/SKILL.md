@@ -38,6 +38,7 @@ Unless stated explicitly by the user, cdocs docs should be committed early and o
 - `-f | --first-round ["<model_description"]`: Use a different model config for the first round prroposal and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
+  For default tier guidance (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins), see [`model-tiering.md`](../../rules/model-tiering.md).
 
 ## Roles
 
