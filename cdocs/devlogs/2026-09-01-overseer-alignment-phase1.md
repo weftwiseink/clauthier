@@ -45,6 +45,8 @@ Run as an implement-review loop (dogfooding `/cdocs:iterate` discipline): dispat
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
+| dispatch | impl-1 (general-purpose) | rule + 3 skills + judge + AGENTS.md + CLAUDE.md + init/SKILL.md + iterate/template.md | 2026-09-01T15:05 | Phase 1 full implementation |
+| return | impl-1 (general-purpose) | (as above) | 2026-09-01T15:10 | all deliverables + self-verify + build pass; no live children remain |
 
 ## Implementation Notes
 </content>
