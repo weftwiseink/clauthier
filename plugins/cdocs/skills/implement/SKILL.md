@@ -16,6 +16,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 `/cdocs:implement` runs in one of two modes:
 
 - **Top-level** (default): invoked directly by the user. Free to dispatch `/cdocs:review` and `/cdocs:report` as supporting subagents.
+  When dispatching, a top-level session is a thin lead: follow the overseer thinness and durable-specialist pattern in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) (dispatch-by-default; carry per-workstream context in a named specialist, not the lead window), so the discipline is not `iterate`-only.
 - **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt. The platform forbids subagent-from-subagent dispatch (`Task` is `not available inside subagents`), so dispatched mode self-investigates inline and surfaces investigation requests to its caller via a fenced block:
 
   ```

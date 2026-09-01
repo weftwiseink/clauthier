@@ -141,6 +141,7 @@ Before marking status as `review_ready`:
 - [] Dispatch a substantive `/cdocs:review` and integrate its feedback (sanity check; archive the resulting review immediately).
      Dispatched mode (`--dispatched` flag or subagent invocation): surface the review request to your caller via a `## Investigation Requested` block instead.
      See `/cdocs:implement` Invocation Modes for the dispatched/top-level model.
+     Top-level mode: dispatch as a thin lead per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) (overseer thinness plus the durable-specialist pattern), so the discipline is not `iterate`-only.
 
 
 ## Revisions

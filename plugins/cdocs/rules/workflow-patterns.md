@@ -34,6 +34,7 @@ The loop has four roles:
 - **Judge**: a fresh `judge` agent that assesses loop meta-health (continue, rotate, or escalate) after `--judge-after` Revise verdicts.
 
 See [`plugins/cdocs/skills/iterate/SKILL.md`](../skills/iterate/SKILL.md) for the protocol, freshness disciplines, and audit-trail conventions.
+For the overseer's thin-lead discipline and the durable-specialist pattern that carries per-workstream context across iterations (the implementer kept warm until the judge rotates it), see [`orchestration-discipline.md`](orchestration-discipline.md) "Pillar 3: Durable Specialists".
 
 ## Subagent-Driven Development (Complex Multi-Task Plans)
 
@@ -50,6 +51,8 @@ Use for structured execution of complex implementation plans with 5+ tasks.
 - Tightly coupled tasks requiring cross-task context
 - Simple 1-3 task changes
 - Heavy UI/collaboration work requiring manual verification
+
+Carry each workstream's deep context in one named, resumable specialist rather than absorbing it into the lead session: see [`orchestration-discipline.md`](orchestration-discipline.md) "Pillar 3: Durable Specialists" for resume-by-name, the `fork` carve-out for side-investigations, and the one-per-workstream bound.
 
 **Critical requirements:**
 - Maintain devlog as single source of truth (synthesize subagent findings)
