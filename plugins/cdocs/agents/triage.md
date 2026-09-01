@@ -4,7 +4,6 @@ model: haiku
 description: Analyze cdocs frontmatter and apply mechanical fixes
 tools: Read, Glob, Grep, Edit
 color: green
-memory: project
 ---
 
 # CDocs Triage Agent
