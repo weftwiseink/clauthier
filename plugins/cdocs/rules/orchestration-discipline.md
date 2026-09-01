@@ -134,6 +134,7 @@ Source: https://code.claude.com/docs/en/context-window.md ("What survives compac
 
 CAVEAT: **path-scoped** rules (rules with `paths:` frontmatter) and **nested** `CLAUDE.md` files do NOT reliably reseed.
 They reload only when Claude next reads a matching file, so overarching discipline must live in project-root `CLAUDE.md` or unscoped rules for the reseed guarantee to hold.
+cdocs' own `frontmatter-spec.md` is path-scoped (`paths: ["cdocs/**/*.md"]`), a concrete in-repo instance of the caveat: it reseeds only when a `cdocs/**/*.md` file is next read, which is why this discipline ships unscoped instead.
 
 This lands for cdocs because `/cdocs:init` materializes rules as an unscoped `.claude/rules/cdocs.md`, and source repos deliver the discipline via root `CLAUDE.md` `@`-imports: both are in the auto-reseeded set.
 A consumer who path-scopes or nests the cdocs rules loses the guarantee.
