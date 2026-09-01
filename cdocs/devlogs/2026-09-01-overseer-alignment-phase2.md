@@ -33,7 +33,21 @@ LOAD-BEARING ORDERING: dispatch the reseed-mechanic research (claude-code-guide)
 
 ## Reseed-mechanic finding (load-bearing research)
 
-_Pending — claude-code-guide subagent dispatched; result absorbed below before implementer writes cadence/reseed guidance._
+**Verdict: CONFIRMED (with a scope precision), not corrected.** The proposal's load-bearing assumption — "the repo-root `CLAUDE.md` is re-read from disk after compaction, so overarching context reseeds" — holds against current Claude Code behavior. Research via a `claude-code-guide` subagent against the official docs.
+
+What is confirmed:
+
+- **Auto-compaction AND manual `/compact`:** project-root `CLAUDE.md` and unscoped rules (`.claude/rules/*.md` with no `paths:` frontmatter) are "Re-injected from disk" as part of compaction. Source: [context-window.md, "What survives compaction"](https://code.claude.com/docs/en/context-window.md).
+- **`/clear`:** starts a fresh session; `CLAUDE.md` loads normally at startup (SessionStart source `clear`). Source: [commands.md](https://code.claude.com/docs/en/commands.md).
+- A `SessionStart` hook with a `compact` matcher can additionally re-inject `additionalContext` after every compaction; `PreCompact`/`PostCompact` hooks exist. Source: [hooks-guide.md, "Re-inject context after compaction"](https://code.claude.com/docs/en/hooks-guide.md).
+
+The scope precision the guidance must carry (so it does not overclaim):
+
+- Re-injection is **selective**. Project-root `CLAUDE.md` and *unscoped* rules reseed automatically. **Path-scoped rules** (`paths:` frontmatter) and **nested** `CLAUDE.md` files do NOT reliably reseed: they reload only when Claude next reads a matching file (CC re-reads up to 5 recently-touched files post-compaction and reloads their applicable rules). Source: context-window.md (lines 1610-1611).
+
+Why this lands cleanly for cdocs: `/cdocs:init` materializes rules as **unscoped** `.claude/rules/cdocs.md` and the source-repo delivers them via **root `CLAUDE.md`** `@`-imports — both are in the auto-reseeded set. So "compact aggressively, rely on reseed" is safe for cdocs' own delivery. The guidance still states the caveat, because a consumer who path-scopes or nests the cdocs rules loses the guarantee.
+
+Sources cited: context-window.md, hooks-guide.md, memory.md, commands.md (all under https://code.claude.com/docs/en/).
 
 ## Iteration Log
 
@@ -50,3 +64,4 @@ _Pending — claude-code-guide subagent dispatched; result absorbed below before
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | research-1 (claude-code-guide) | n/a (read-only research) | 2026-09-01T16:02 | verify CLAUDE.md reseed-after-compaction mechanic; load-bearing for cadence guidance |
+| return | research-1 (claude-code-guide) | n/a | 2026-09-01T16:04 | CONFIRMED with scope caveat; finding recorded above with sources; no live children remain |
