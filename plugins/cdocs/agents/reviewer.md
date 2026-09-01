@@ -5,6 +5,7 @@ description: Review cdocs documents with structured findings and verdicts
 tools: "*"
 skills:
   - cdocs:review
+color: purple
 ---
 
 # CDocs Reviewer Agent

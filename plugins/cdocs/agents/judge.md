@@ -3,6 +3,8 @@ name: judge
 model: opus
 description: Assess implement-review loop meta-health and return continue, rotate-implementer, or escalate with a written rationale
 tools: Read, Glob, Grep, Write
+color: red
+maxTurns: 10
 ---
 
 # CDocs Judge Agent

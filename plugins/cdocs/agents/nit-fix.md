@@ -3,6 +3,8 @@ name: nit-fix
 model: haiku
 description: Enforce writing conventions on cdocs documents
 tools: Read, Glob, Grep, Edit
+color: yellow
+memory: project
 ---
 
 # CDocs Nit Fix Agent
