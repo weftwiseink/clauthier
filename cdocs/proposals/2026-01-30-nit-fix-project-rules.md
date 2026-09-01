@@ -4,7 +4,7 @@ first_authored:
   at: 2026-01-30T09:00:00-08:00
 task_list: cdocs/nit-fix-v2
 type: proposal
-state: live
+state: archived
 status: evolved
 tags: [claude_skills, writing_conventions, plugin_idioms, extensibility]
 ---

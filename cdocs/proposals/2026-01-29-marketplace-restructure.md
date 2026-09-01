@@ -4,8 +4,8 @@ first_authored:
   at: 2026-01-29T17:00:00-08:00
 task_list: marketplace/restructure
 type: proposal
-state: live
-status: implementation_ready
+state: archived
+status: implementation_accepted
 tags: [architecture, marketplace, rename]
 ---
 

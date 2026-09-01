@@ -4,7 +4,7 @@ first_authored:
   at: 2026-05-12T13:30:00-07:00
 task_list: clauthier/cdocs-rule-delivery
 type: proposal
-state: live
+state: archived
 status: evolved
 last_reviewed:
   status: accepted

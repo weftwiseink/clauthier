@@ -4,8 +4,8 @@ first_authored:
   at: 2026-01-29T12:00:00-08:00
 task_list: cdocs/plugin_architecture
 type: proposal
-state: live
-status: review_ready
+state: archived
+status: implementation_accepted
 last_reviewed:
   status: revision_requested
   by: "@claude-opus-4-5-20251101"

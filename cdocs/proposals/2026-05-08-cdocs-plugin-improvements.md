@@ -4,8 +4,8 @@ first_authored:
   at: 2026-05-08T13:30:00-07:00
 task_list: clauthier/cdocs-improvements
 type: proposal
-state: live
-status: review_ready
+state: archived
+status: implementation_accepted
 last_reviewed:
   status: review_ready
   by: "@claude-opus-4-7-1m"
