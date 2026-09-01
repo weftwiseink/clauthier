@@ -74,6 +74,9 @@ Dispatch the implementer via Task with `subagent_type: "general-purpose"` and a 
 
 `--dispatched` mode suppresses subagent dispatch and routes investigation requests back to the overseer via `## Investigation Requested` blocks; see `/cdocs:implement` Invocation Modes for the schema.
 
+Append a `dispatch` row to the Dispatch/Return Events table when a child (implementer, reviewer, judge, or fork) is dispatched, naming the files it may claim, and a matching `return` row when it reports done.
+These rows are what the on-resume reconciliation reads, so the write is not optional: an unpopulated table leaves a resumed overseer nothing to reconcile against.
+
 ### Turn N.b (Review)
 
 Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "reviewer"`.
