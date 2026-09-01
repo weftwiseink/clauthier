@@ -11,7 +11,7 @@ The invoking session agent enters *overseer mode* and restricts itself to orches
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
 The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership, on-resume liveness reconciliation) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
-Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log before compacting; use a fresh reviewer every iteration and a fresh judge every invocation.
+Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log and a Completed/Decisions Made/Open Todos handoff before compacting; use a fresh reviewer every iteration and a fresh judge every invocation.
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
@@ -88,7 +88,7 @@ This citation is what makes a `confirmed` row admissible.
 
 Read the review and branch on the verdict:
 
-- **Accept**: terminate. Update proposal frontmatter per `/cdocs:implement` conventions; write the final devlog entry.
+- **Accept**: terminate. Update proposal frontmatter per `/cdocs:implement` conventions; write the final devlog entry, then run the Checkpoint (below).
 - **Reject**: escalate immediately. Reject pre-empts the judge path even if `review_count >= --judge-after`.
 - **Revise**, `review_count < --judge-after`: loop to Turn (N+1).a with the same implementer.
 - **Revise**, `review_count >= --judge-after`: dispatch the judge before the next implementer turn.
@@ -99,12 +99,23 @@ The overseer may invoke the judge earlier on suspicion of trouble (high uncertai
 
 Dispatch a fresh judge with the iteration log and the recent review paths.
 The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale (inline for one or two sentences; longer rationales go to `cdocs/devlogs/_judge/` with the path in `judge_path`).
-Append a Judge Log row.
+Append a Judge Log row, then run the Checkpoint (below).
+
+### Checkpoint (handoff-before-compact)
+
+The checkpoint fires at each judge assessment (Turn N.d) and on Accept (Turn N.c Accept branch), and proactively after every 3 to 5 iterations at a task-unit boundary.
+Write the handoff into the devlog first, THEN compact (`/compact`, or `/clear` for a hard reset).
+The handoff is the three-subsection Completed / Decisions Made / Open Todos section defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2; do not restate the format here.
+The checkpoint is not complete until the handoff is written: compacting without it is a failure, because the hand-written handoff is more complete than auto-compaction's lossy summary.
 
 ## Termination
 
 The loop terminates on Accept, Reject, judge `escalate`, or user interrupt.
 No retry-count cap on Accept-bound progress: a patient overseer is bounded by review-signal quality and judge meta-assessment.
+
+A soft context-budget signal is a JUDGE INPUT weighed against progress, never a hard kill.
+Overseer context trending past the ~150K target, a run of inline-work turns, or excessive loop length is surfaced by the overseer to the judge, which weighs it against forward progress; it does not itself terminate the loop.
+This preserves the accept/reject/escalate/interrupt contract: the soft budget informs a verdict, it never overrides one.
 
 ## On-Resume Reconciliation
 

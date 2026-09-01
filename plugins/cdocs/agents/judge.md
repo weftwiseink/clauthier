@@ -65,6 +65,7 @@ You may also be asked to read older review documents to spot recurring patterns.
   Symptoms include: conflicting requirements that every iteration satisfies one of by violating the other; the reviewer and implementer are talking past each other on definitional points; unresolvable design tension.
   Overseer context bloat is one input among these meta-health signals: a rising `overseer_ctx_est` trend across rows, or a run of `inline_work: yes` turns, weighs toward `escalate` when it coexists with stalled progress.
   Weigh it against forward progress: rising context WITH clear progress may still be `continue` (the bloat is logged, not acted on); rising context WITHOUT progress escalates.
+  A soft context-budget or loop-length cap the overseer surfaces (context trending past target, or an over-long run of iterations) is one such input, weighed the same way against progress, not a hard trigger.
   Surface to the user.
 
 Reject pre-empts judge: if the most recent reviewer verdict is `reject`, the overseer should not have dispatched you.

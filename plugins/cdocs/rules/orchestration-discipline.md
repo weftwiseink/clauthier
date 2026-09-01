@@ -102,8 +102,49 @@ This `overseer_thinness` field, not prose guidance, is what makes the judge-back
 
 > NOTE(claude-sonnet-5/overseer-alignment-round2): The remaining context-cleanliness discipline (handoff format, proactive compaction cadence, `CLAUDE.md` reseed verification) ships in Phase 2 and references this rule for the enforcement backbone.
 
+## Pillar 2: Context Persistence and Cleanliness
+
+The overseer keeps its own turns thin across a long loop by checkpointing and compacting deliberately rather than drifting toward the window limit.
+The thinness columns and the judge's `overseer_thinness` verdict (see "Judge-Observable Thinness Signal" above) make bloat legible; this pillar is the discipline that keeps the signal clean.
+
+### Handoff-before-compact format
+
+At each task-unit boundary the overseer writes a handoff into the devlog BEFORE compacting.
+The checkpoint is not complete until the handoff is written: skipping the handoff and compacting anyway is a failure, because auto-compaction's summary is lossy and a hand-written handoff is more complete, which is why the write precedes the compact.
+
+The handoff is a markdown section with exactly three subsections:
+
+- **Completed**: what this task unit finished, including the files touched.
+- **Decisions Made**: cross-cutting choices and their rationale, so they are not re-litigated after the compact.
+- **Open Todos**: what remains, phrased so the next reader can pick it up cold.
+
+A fresh reader must be able to orient from the handoff in under 30 seconds.
+
+### Proactive compaction cadence
+
+Run `/compact` (or `/clear` for a hard reset) proactively at task-unit boundaries, NOT reactively at the window limit.
+Concrete trigger: after every 3 to 5 iterations of the implement-review loop, OR whenever a judge invocation completes, checkpoint-and-compact immediately.
+The target is keeping overseer turns under roughly 150K tokens rather than letting them grow to 800K+.
+
+### CLAUDE.md reseed mechanism
+
+The reseed is what makes aggressive compaction safe: it restores the discipline the compact would otherwise drop.
+Project-root `CLAUDE.md` and *unscoped* rules (`.claude/rules/*.md` with no `paths:` frontmatter) are re-injected from disk on both auto-compaction and manual `/compact`.
+Source: https://code.claude.com/docs/en/context-window.md ("What survives compaction").
+
+CAVEAT: **path-scoped** rules (rules with `paths:` frontmatter) and **nested** `CLAUDE.md` files do NOT reliably reseed.
+They reload only when Claude next reads a matching file, so overarching discipline must live in project-root `CLAUDE.md` or unscoped rules for the reseed guarantee to hold.
+
+This lands for cdocs because `/cdocs:init` materializes rules as an unscoped `.claude/rules/cdocs.md`, and source repos deliver the discipline via root `CLAUDE.md` `@`-imports: both are in the auto-reseeded set.
+A consumer who path-scopes or nests the cdocs rules loses the guarantee.
+A `SessionStart` hook with a `compact` matcher can additionally re-inject context after a compaction (source: https://code.claude.com/docs/en/hooks-guide.md), but the root-`CLAUDE.md`/unscoped-rules path is the primary guarantee.
+
+> NOTE(claude-opus-4-8/overseer-alignment-phase2): The reseed behavior above is verified against current Claude Code behavior: project-root `CLAUDE.md` and unscoped rules re-inject on compaction, while path-scoped rules and nested `CLAUDE.md` files do not reliably reseed.
+> Source: https://code.claude.com/docs/en/context-window.md ("What survives compaction").
+
 ## Cross-Target Degradation
 
 Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
 Only the *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork`/`compact` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
+Likewise, where a target lacks a `/compact` equivalent, Pillar 2's compaction cadence degrades to "start a fresh session from the handoff doc" rather than silently breaking off-Claude-Code.
 The discipline still holds; only the primitive changes.
