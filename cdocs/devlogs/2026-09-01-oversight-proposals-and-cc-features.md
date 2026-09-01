@@ -136,6 +136,24 @@ Deferred (needs interactive CC session): `/plugin marketplace add . && /plugin i
 
 Follow-up flagged for the overseer /review (running): reconsider `memory: project` on `triage`/`nit-fix` — mechanical enforcers risk stale-convention drift and non-determinism; the fresh-eyes argument may extend to them.
 
+## Overseer-alignment phased implementation (full-send per phase)
+
+Approach: each Implementation Phase run as its own isolated-worktree, liveness-aware full-send loop; merged ff into main sequentially (phases share `orchestration-discipline.md` + registration surfaces, so parallel would collide).
+
+- **Phase 1** (merged `d64af78`): shared `orchestration-discipline.md` rule (thin overseer, inline floor, Pillar 1b liveness + single-writer ownership); registered at 3 surfaces; 3 skills → reference+floor; Iteration-Log thinness/liveness fields; judge `overseer_thinness`. Accept iter 1, no deadlock, dogfooded.
+- **Phase 2** (merged `11b57fe`): Pillar 2 context persistence — handoff-before-compact (Completed/Decisions/Open Todos), soft context-budget as judge input, compaction cadence. Reseed mechanic CONFIRMED w/ caveat (root CLAUDE.md + unscoped `.claude/rules/*.md` reseed; path-scoped/nested don't — cdocs safe via `/cdocs:init` unscoped materialization; src: code.claude.com/docs/en/context-window.md). Accept iter 1.
+- **Phase 3** (running): durable specialists (Pillar 3) — pattern in the rule, cross-refs from workflow-patterns.md.
+- Phases 4 (model tiering), 5 (advisory hook) queued after.
+
+Interactive-only checks deferred across phases: live `/cdocs:init` scratch materialization + hook stale/silent round-trip; live iterate behavioral probe (overseer writes handoff before compact, per-turn ctx <150K).
+
+## Companion docs this session
+
+- New proposal `2026-09-01-iterate-refinements.md` (triage log-awareness + mid-loop steering); predecessor `iterate-agent-capabilities.md` archived.
+- New RFP `2026-09-01-devlog-autoflush-hook.md` (PreCompact/SessionEnd checkpoint).
+- New RFP `2026-09-01-rules-hook-testing-methodology-v2.md`; obsolete v1 archived. `cross-target-rules-integration.md` archived + invalid status fixed.
+- `CLAUDE.md` rules-delivery description corrected (hook is a freshness nudge, not a content channel).
+
 ## Verification
 
 - Frontmatter fields verified on main: judge (`color: red`, `maxTurns: 10`, no memory), triage (`color: green`, `memory: project`, no maxTurns), reviewer (color only), nit-fix (color + memory, no maxTurns).
