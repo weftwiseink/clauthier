@@ -4,7 +4,7 @@ first_authored:
   at: 2026-05-18T09:22:34-07:00
 task_list: cdocs/iterate-skill
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted
@@ -15,6 +15,9 @@ tags: [iterate, reviewer, implementer, agent_capabilities, tool_surface, subagen
 ---
 
 # Expand `/cdocs:iterate` Reviewer Capabilities, Delete Dead Sub-Dispatch, Add Audit Tag
+
+> NOTE(sonnet-5/cdocs/iterate-refinements): This proposal shipped and is a completed, filed increment; archived here for that reason (implementation retained as `status: implementation_accepted`).
+> The next increment against this workstream is [`2026-09-01-iterate-refinements.md`](2026-09-01-iterate-refinements.md), which closes the two follow-on gaps (triage log-awareness, mid-loop steering) this proposal's Objective named but left unaddressed.
 
 > BLUF(opus/cdocs/iterate-agent-capabilities): `/cdocs:iterate` was authored with a tool-minimal reviewer, but the intended deployment is container-sandboxed general-purpose agents that can drive UIs and dev servers.
 > This proposal expands the `cdocs:reviewer` allowlist to full general-purpose tooling (adding `Bash`) with boundary constraints retained as written instructions, deletes the non-executable second-order `Task`-dispatch guidance from `iterate/SKILL.md`, `reviewer.md`, and `implement/SKILL.md`, and replaces it with a two-pattern model (**self-investigate by default; surface to overseer when fresh context is the actual ask**).
