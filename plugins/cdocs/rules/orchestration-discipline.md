@@ -143,6 +143,44 @@ A `SessionStart` hook with a `compact` matcher can additionally re-inject contex
 > NOTE(claude-opus-4-8/overseer-alignment-phase2): The reseed behavior above is verified against current Claude Code behavior: project-root `CLAUDE.md` and unscoped rules re-inject on compaction, while path-scoped rules and nested `CLAUDE.md` files do not reliably reseed.
 > Source: https://code.claude.com/docs/en/context-window.md ("What survives compaction").
 
+## Pillar 3: Durable Specialists
+
+Deep per-workstream context belongs in a named, resumable specialist subagent, not absorbed into the overseer's window.
+This is the mechanism that keeps the overseer thin while a workstream still carries its full history: the retained context lives in the specialist, addressable by name, rather than in ever-growing overseer turns.
+It extends the graded enforcement and judge backstop of Pillar 1 (see "Graded Enforcement"), it does not restate them: a proliferation of specialists is a bloat pattern the same judge layer flags.
+
+### Resume-by-name
+
+One specialist per active workstream, resumed by name via `SendMessage`, so the specialist IS the retained context: addressable rather than re-explained.
+The overseer routes work to a specialist by name and a one-line pointer to its devlog, never by repeating the workstream's accumulated context.
+This generalizes the pattern `iterate` already half-encodes: the implementer is kept across iterations unless the judge returns `rotate-implementer`, because an implementer mid-task carries valuable context that a fresh dispatch would discard.
+That implementer is already a durable specialist; this pillar names the pattern and extends it beyond the implement loop, so an overseer running several workstreams keeps one warm specialist per stream rather than re-briefing a fresh subagent each turn.
+
+### Fork for side-context
+
+A `fork` subagent is the tool for a side-investigation that needs full parent context WITHOUT growing the parent thread.
+The overseer forks a fresh agent that inherits the current context, gets a short answer, and resumes the main thread; the fork's context is disposable and ends when the fork completes.
+This is distinct from a named specialist: a `fork` is for a one-off question that would otherwise bloat the overseer, a specialist is for a workstream carried across turns.
+
+### One-per-workstream bound
+
+N parallel large-context specialists recreate the cost problem this discipline exists to prevent.
+The bound is explicit: at most one durable specialist per active workstream, not one-per-subtask and not workstream-count plus advisory specialists.
+An overseer managing ten workstreams spawns ten specialists maximum; if the workstream count grows past what one overseer can hold, it escalates to a parent overseer or re-scopes the work rather than spawning more.
+
+### File ownership by construction
+
+A durable specialist that owns its OWN files satisfies the "Pillar 1b: Single-Writer File Ownership" guarantee BY CONSTRUCTION: the single writer of those paths is the one named specialist across turns, so no second concurrent writer is ever dispatched against them.
+See that section for the guarantee itself; this pillar supplies the constructive case where it holds automatically rather than by per-dispatch check.
+
+### Cross-target degradation
+
+Where a target lacks `SendMessage`/`fork` equivalents, this pattern degrades to starting a fresh session from the handoff doc plus the Iteration Log's event rows, the same runtime fallback the "Cross-Target Degradation" section names for Pillar 1b.
+The discipline still holds; only the primitive changes, and the durable state (handoff plus event rows) is what makes the fresh-session restart faithful.
+
+> NOTE(claude-opus-4-8/overseer-alignment-phase3): This pillar is additive to Pillars 1, 1b, and 2 and restates none of them.
+> It is discoverable from `workflow-patterns.md` and the `implement`/`propose` skills by pointer, keeping the canonical prose here per the project's deduplication value.
+
 ## Cross-Target Degradation
 
 Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
