@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/overseer-alignment
 type: proposal
 state: live
-status: review_ready
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"

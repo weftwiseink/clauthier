@@ -142,8 +142,11 @@ Approach: each Implementation Phase run as its own isolated-worktree, liveness-a
 
 - **Phase 1** (merged `d64af78`): shared `orchestration-discipline.md` rule (thin overseer, inline floor, Pillar 1b liveness + single-writer ownership); registered at 3 surfaces; 3 skills → reference+floor; Iteration-Log thinness/liveness fields; judge `overseer_thinness`. Accept iter 1, no deadlock, dogfooded.
 - **Phase 2** (merged `11b57fe`): Pillar 2 context persistence — handoff-before-compact (Completed/Decisions/Open Todos), soft context-budget as judge input, compaction cadence. Reseed mechanic CONFIRMED w/ caveat (root CLAUDE.md + unscoped `.claude/rules/*.md` reseed; path-scoped/nested don't — cdocs safe via `/cdocs:init` unscoped materialization; src: code.claude.com/docs/en/context-window.md). Accept iter 1.
-- **Phase 3** (running): durable specialists (Pillar 3) — pattern in the rule, cross-refs from workflow-patterns.md.
-- Phases 4 (model tiering), 5 (advisory hook) queued after.
+- **Phase 3** (merged `b1ffd13`): durable specialists (Pillar 3) — resume-by-name, fork carve-out, one-per-workstream, file-ownership-by-construction; cross-refs from workflow-patterns.md + implement/propose. Accept iter 1.
+- **Phase 4** (merged `47027c7`): model tiering (Pillar 4) — new `model-tiering.md` rule (opus lead/judge, sonnet search/research, haiku mechanical); registered at 3 surfaces; advisory-with-consumer-precedence framing honoring the weftwise floor. Accept iter 1. Follow-up: fixed stale `reviewer=sonnet` → opus in triage SKILL.
+- **Phase 5** (advisory enforcement hook): optional/future per proposal — NOT implemented.
+
+All 4 core phases done; `overseer-alignment.md` → `status: implementation_accepted` (state live; Phase 5 optional remains). Every phase accepted iteration 1 with no deadlock; overseer orchestrators stayed thin (~70K/turn) and dogfooded the liveness/thinness discipline they built.
 
 Interactive-only checks deferred across phases: live `/cdocs:init` scratch materialization + hook stale/silent round-trip; live iterate behavioral probe (overseer writes handoff before compact, per-turn ctx <150K).
 
