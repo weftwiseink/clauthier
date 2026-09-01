@@ -11,6 +11,9 @@ tags: [architecture, claude_skills, workflow, agent_orchestration]
 
 # RFP: `/oversee` Skill and Autonomous Orchestration Rules
 
+> NOTE(claude-opus-4-8/cdocs/oversee-skill): Partially superseded. The single-proposal implement-review loop this RFP anticipated shipped as `/cdocs:iterate` (see [[2026-05-13-iterate-skill]]), and overseer resource discipline is now tracked canonically in [[2026-08-28-overseer-alignment]].
+> What remains genuinely unbuilt and unique to this RFP: multi-proposal-arc orchestration — chain invocation, an arc-level AFK continuation signal, shared-state/lock files, and cross-agent coordination. See the consolidation memo [[2026-09-01-overseer-consolidation]] for the deduplicated open-question set and canonical-doc decision.
+
 > BLUF(opus/cdocs/oversee-skill): Users repeatedly specify the same multi-phase orchestration pattern: "propose, review, revise, implement, verify against real state, continue through all phases autonomously."
 > A dedicated `/oversee` skill and supporting rules would codify this pattern, ensuring agents drive work forward through validation loops and phase transitions without requiring manual nudges at each step.
 >
