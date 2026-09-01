@@ -65,3 +65,4 @@ Sources cited: context-window.md, hooks-guide.md, memory.md, commands.md (all un
 |---|---|---|---|---|
 | dispatch | research-1 (claude-code-guide) | n/a (read-only research) | 2026-09-01T16:02 | verify CLAUDE.md reseed-after-compaction mechanic; load-bearing for cadence guidance |
 | return | research-1 (claude-code-guide) | n/a | 2026-09-01T16:04 | CONFIRMED with scope caveat; finding recorded above with sources; no live children remain |
+| dispatch | impl-1 (general-purpose) | orchestration-discipline.md + iterate/SKILL.md + judge.md | 2026-09-01T16:06 | Phase 2: Pillar 2 rule section (handoff/cadence/reseed), iterate checkpoint wire-in, soft-budget judge input |
