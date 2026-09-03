@@ -7,6 +7,12 @@ type: proposal
 state: live
 status: review_ready
 tags: [oversee, agent_orchestration, workflow, cdocs_meta, claude_skills]
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-03T12:30:00-08:00
+  round: 1
+  path: cdocs/reviews/2026-09-03-review-of-overseer-arc.md
 ---
 
 # `/oversee`: Multi-Proposal-Arc Orchestration
