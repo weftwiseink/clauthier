@@ -7,6 +7,12 @@ type: proposal
 state: live
 status: review_ready
 tags: [oversee, agent_orchestration, cdocs_meta, consolidation, iterate, full_send]
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-03T10:30:00-07:00
+  round: 1
+  path: cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md
 ---
 
 # Overseer Proposal Consolidation
