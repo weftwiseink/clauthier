@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/oversee-skill
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 tags: [oversee, agent_orchestration, workflow, cdocs_meta, claude_skills]
 last_reviewed:
   status: accepted
@@ -99,10 +99,10 @@ The composition **interface** is two directional contracts:
 
 - **Down (what `/oversee` passes into a composed loop):** the proposal path (or topic, for `full`), a `--verification-floor` derived from the proposal's required ladder rung (see below), model flags passed through unchanged (`-m`/`-f`, governed by `model-tiering.md`), and an autonomy signal derived from the arc AFK field.
   The autonomy signal is conveyed as dispatch-BRIEF PROSE, not a flag: `iterate`/`full-send` expose no `--afk`/autonomy parameter, and adding one would modify a composed skill (forbidden by the spanning constraint), so the arc overseer states the autonomy expectation ("run to accept-or-escalate without pausing for confirmation; I am AFK") in the brief it already controls.
-- **Up (what `/oversee` reads back):** the composed loop's terminal state, read as a reconciled TRIPLE, not frontmatter alone: the proposal's new frontmatter `status` (`implementation_accepted` on success), the loop's final devlog handoff, and the arc-state file's own `arc_state` for the proposal.
-  This IS the return contract.
-  The triple (rather than frontmatter alone) is what makes the terminal-write race safe (see Edge Cases): if the loop dies after Accept but before writing frontmatter, all three read stale-in-progress and the overseer safely re-runs; frontmatter alone could be misread.
-  Consistent with Pillar 1 summary-absorption, `/oversee` reads these three durable signals to decide advance-vs-escalate; it does NOT re-read the loop's Iteration Log turns or the implementer's diffs.
+- **Up (what `/oversee` reads back):** the composed loop's terminal state. The loop PRODUCES two signals, the proposal's new frontmatter `status` (`implementation_accepted` on success) and its final devlog handoff; these two are the loop's return contract.
+  The overseer reconciles them against a THIRD signal it owns, the arc-state file's `arc_state` for the proposal, to decide advance-vs-escalate: the reconciled triple, not any single field, is the durable decision basis.
+  No single field is trusted to have been written atomically at the terminal moment (see the terminal-write race in Edge Cases): if the loop dies after Accept but before its writes land, all three read stale-in-progress and the overseer safely re-runs.
+  Consistent with Pillar 1 summary-absorption, `/oversee` reads these durable signals to decide; it does NOT re-read the loop's Iteration Log turns or the implementer's diffs.
 
 Mode-to-composition mapping:
 
@@ -261,12 +261,14 @@ A reusable rung taxonomy, authored once in `oversee-arc.md`, broader than `itera
 
 Each rung SUBSUMES the ones above it (a `live` requirement implies `compile`..`smoke` all pass).
 `/oversee` selects the required rung per proposal and generates the `--verification-floor` sentence it passes into that proposal's `iterate` composition, including at least one failure-picture as `iterate` requires.
-Rung selection, in precedence order:
+Rung selection for an existing (chain) proposal, in precedence order:
 
 1. the proposal's `required_rung` frontmatter field, if present;
-2. else, for a `chain` of authored proposals with no field, read the proposal's own `## Verification Methodology` section and derive the floor from it, exactly as `iterate` already does when no `--verification-floor` is passed;
-3. else (no field and no `## Verification Methodology`), fall back to `iterate`'s existing floor rule: `AskUserQuestion` for a floor, or under AFK write a placeholder floor and tag the affected rows, per `iterate`'s documented AFK fallback;
-4. for `full <topic>`, where proposals are freshly authored, the overseer sets a default rung (`smoke` unless the topic implies otherwise) at authoring time.
+2. else read the proposal's own `## Verification Methodology` section and derive the floor from it, exactly as `iterate` already does when no `--verification-floor` is passed;
+3. else (no field and no `## Verification Methodology`), fall back to `iterate`'s existing floor rule: `AskUserQuestion` for a floor, or under AFK write a placeholder floor and tag the affected rows, per `iterate`'s documented AFK fallback.
+
+For `full <topic>`, where proposals are freshly authored rather than read, the mode branch is different: the overseer sets a default rung (`smoke` unless the topic implies otherwise) at authoring time, before the precedence chain above applies to any later re-run.
+
 The ladder is the shared vocabulary; the per-loop `review_proof` column remains the per-round audit field inside the loop.
 
 ## Important Design Decisions
