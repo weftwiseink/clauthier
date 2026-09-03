@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/oversee-skill
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [oversee, agent_orchestration, workflow, cdocs_meta, claude_skills]
 ---
 
@@ -41,6 +41,9 @@ Spanning constraint: do NOT modify or restate `orchestration-discipline.md`, `mo
 
 ## Open Todos
 
-- (tracked per phase; see commits)
+- Phases 1-6 complete (one commit per phase). Phase 6 was done, not deferred: the `.claude/rules/cdocs.md` hash and `.opencode/` copy loop already glob `rules/*.md`, so only the explicit enumerations (init AGENTS.md template, plugin AGENTS.md, CLAUDE.md, README) needed edits.
+- Verification floor (`smoke`) is `deferred-to-followup`: a live `/oversee` run is self-referential (like `/cdocs:iterate`'s own smoke test) and was verified structurally, not by execution. A follow-up should drive two toy proposals through `/oversee chain` in a scratch worktree per the proposal's Test Plan.
+- Self-verification results: (a) rungs/modes/arc_state/afk_policy cross-reference cleanly between skill and rule, no dangling refs; (b) skill stays arc-altitude, troubleshooting budget is non-reach-in per the rule; (c) no forbidden files changed; (d) skill (auto-discovered) + rule registered on all surfaces; (e) no em-dashes in authored content, copyable JSON skeletons parse.
+- Open Questions from the proposal remain open (field names for `required_rung`/`footprint` in `frontmatter-spec.md`; `full <topic>` scoping autonomy; claim TTL).
 </content>
 </invoke>
