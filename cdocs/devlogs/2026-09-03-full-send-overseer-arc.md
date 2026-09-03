@@ -56,9 +56,19 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 - overseer-arc is self-referential (like /cdocs:iterate): live end-to-end `/oversee` smoke test is `deferred-to-followup`; reviewer does structural verification.
 - Read-only `Explore` is wrong for write tasks — use write-capable `general-purpose`; reviewer role briefed manually (no `reviewer` subagent_type registered this session).
 
+### Overseer synthesis (Track 2 accept)
+
+The implementation review returned `revision_requested` for exactly ONE mechanical defect — a stray `</content>` authoring-wrapper line at the tail of the rule, skill, and template — while passing floor items (a) no-dangling-refs, (b) no reach-in / arc-altitude budget, (c) spanning constraint (no forbidden files touched), (d) registration, and certifying all six phases faithful to the proposal. The overseer applied the fix inline as a trivial few-liner (three one-line deletions), verified `git diff` was exactly those three deletions and that no `</content>` remained, and accepted on synthesis rather than spinning a fresh reviewer to re-confirm a byte-verified deletion the prior reviewer had fully specified. `review_proof: deferred-to-followup` — a live end-to-end `/oversee chain` smoke test over two toy proposals in a scratch worktree remains the outstanding follow-up verification (self-referential, exactly as the proposal's Test Plan specifies).
+
+## Handoff (checkpoint @ 2026-09-03T11:55 — Tracks 1 & 2 DONE)
+
+**Completed**
+- **Track 1 CLOSED:** overseer-arc proposal accepted, `implementation_accepted` (`2bf414b`).
+- **Track 2 CLOSED:** `/oversee` skill + `oversee-arc` rule + template built (all 6 phases), reviewed, stray-line fix, merged `--ff-only` to main (`e518ce6`), registered on every surface (README, AGENTS.md, CLAUDE.md ×2 synced, /cdocs:init template), worktree retired. Impl review: `cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md`. Impl devlog: `cdocs/devlogs/2026-09-03-oversee-skill-implementation.md`.
+
 **Open Todos**
-- **Track 2 (active):** create worktree; `/iterate` overseer-arc Phases 1-5 (6 optional) with implementer→reviewer to accept; verification-floor = structural coherence + no composed-skill/shipped-rule file modified; commit early/often on branch; ff-merge to main; set proposal `implementation_accepted`.
-- **Track 3 (after Track 2):** apply memo body revision (10 items in `cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md`) + add RFP NOTE → overseer-arc; set memo status.
+- **Track 3 (active, last track):** apply the memo BODY revision — 10 action items in `cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md` — to `cdocs/proposals/2026-09-01-overseer-consolidation.md`: refresh stale lifecycle claims (overseer-alignment + iterate-skill both implementation_accepted), reframe §A "fully unbuilt" → now SHIPPED as `/oversee` (skill+rule on main, proposal implementation_accepted), mark §C #12/#17/#18/#19 resolved, reclassify satisfied recommendations. §A stays in the memo (Q B → option 1). Then add the RFP (`2026-03-26-rfp-oversee-skill.md`) NOTE pointing at overseer-arc as the elaboration of its remaining §A scope. Then settle the memo's own status (Q A → lean reference/settled). Dispatch a writer; overseer reviews.
+- **Follow-up (out of full-send scope):** live `/oversee chain` smoke test over toy proposals (deferred-to-followup verification).
 
 ## Iteration Log
 
@@ -67,7 +77,7 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | 1 (propose) | prop-1 (general-purpose) | arc-rev-1 (general-purpose) | revise | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc.md | ~90K (5% inline) | no | Round 1: proposal review_ready (b4be894); review Revise (b6c82c6) — 1 blocking + 8 non-blocking; design sound, all 6 flagged points ok |
 | 2 (propose) | prop-1 (resumed) | arc-rev-2 (general-purpose) | accept | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md | ~100K (5% inline) | no | Round 2: revision 59fd01f; ACCEPTED (e84c6ae). Blocking + 8/8 non-blocking resolved; 3 cosmetic nits for fold-in |
 | 3 (propose) | prop-1 (resumed) | — (nit fold-in) | accept | n/a | — | ~100K (5% inline) | no | Accepting-round nit fold-in + advance to implementation_ready; closes Track 1 propose-revise |
-| 1 (iterate) | impl-1 (general-purpose) | rev-1 (general-purpose) | pending | deferred-to-followup | pending | ~100K (5% inline) | no | Track 2: impl-1 built ALL Phases 1-6 on branch overseer-arc (13dd049..b2b8789); self-verify clean; live /oversee smoke = deferred-to-followup. Fresh reviewer dispatched. |
+| 1 (iterate) | impl-1 (general-purpose) | rev-1 (general-purpose) | accept | deferred-to-followup | cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md | ~105K (10% inline) | yes | Track 2: impl-1 built ALL Phases 1-6 (13dd049..b2b8789). rev-1 (ed6e8f2) floor a-d PASS + all phases faithful; sole blocking = stray </content> line ×3. Overseer fixed inline (7ce3e43, trivial carve-out, verified diff=only 3 deletions) → accept on synthesis. Live /oversee smoke deferred-to-followup. |
 
 ## Judge Log
 
@@ -95,3 +105,6 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | dispatch | impl-1 (general-purpose) | [worktree overseer-arc] plugins/cdocs/rules/oversee-arc.md, plugins/cdocs/skills/oversee/**, plugin skill registration | 2026-09-03T11:15:00-08:00 | Track 2 iterate: implement overseer-arc Phases 1-5 in sibling worktree; --dispatched; commit early/often on branch overseer-arc via git -C |
 | return | impl-1 (general-purpose) | [worktree overseer-arc] rules/oversee-arc.md, skills/oversee/{SKILL,template}.md, README/AGENTS/CLAUDE/init registration | 2026-09-03T11:40:00-08:00 | Phases 1-6 done, 8 commits (13dd049..b2b8789). Self-verify a-e clean; no forbidden files touched. |
 | dispatch | rev-1 (general-purpose as reviewer) | [worktree overseer-arc] cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md | 2026-09-03T11:41:00-08:00 | Track 2 iterate review: verify implementation vs proposal + floor; commit review on branch |
+| return | rev-1 (general-purpose) | [worktree overseer-arc] cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md | 2026-09-03T11:50:00-08:00 | Verdict revision_requested (ed6e8f2); floor a-d PASS, phases faithful; sole blocker = stray </content> ×3 (floor e). |
+| (overseer inline) | overseer | [worktree] rules/oversee-arc.md, skills/oversee/{SKILL,template}.md | 2026-09-03T11:52:00-08:00 | Trivial carve-out fix: removed 3 stray lines (7ce3e43); verified diff = only those deletions; accepted on synthesis. |
+| (merge) | overseer | main ← overseer-arc | 2026-09-03T11:55:00-08:00 | Rebased branch onto main (disjoint paths), git merge --ff-only (e518ce6); proposal→implementation_accepted (2bf414b); CLAUDE.md copies synced; worktree+branch retired. |
