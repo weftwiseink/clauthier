@@ -5,14 +5,14 @@ first_authored:
 task_list: cdocs/oversee-skill
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_accepted
 tags: [oversee, agent_orchestration, workflow, cdocs_meta, claude_skills]
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
-  at: 2026-09-03T13:15:00-08:00
-  round: 2
-  path: cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md
+  at: 2026-09-03T11:55:00-08:00
+  round: 3
+  path: cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md
 ---
 
 # `/oversee`: Multi-Proposal-Arc Orchestration
