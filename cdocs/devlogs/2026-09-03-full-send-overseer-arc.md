@@ -63,7 +63,8 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
-| 1 (propose) | prop-1 (general-purpose) | arc-rev-1 (pending) | pending | n/a | pending | ~90K (5% inline) | no | Track 1 propose-revise round 1: proposal authored review_ready (b4be894); review dispatched |
+| 1 (propose) | prop-1 (general-purpose) | arc-rev-1 (general-purpose) | revise | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc.md | ~90K (5% inline) | no | Round 1: proposal review_ready (b4be894); review Revise (b6c82c6) — 1 blocking + 8 non-blocking; design sound, all 6 flagged points ok |
+| 2 (propose) | prop-1 (resumed) | arc-rev-2 (pending) | pending | n/a | pending | ~95K (5% inline) | no | Round 2: resume prop-1 (durable specialist, Pillar 3) to address the review; not extreme revisions |
 
 ## Judge Log
 
@@ -81,3 +82,5 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | return | prop-1 (general-purpose) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T09:35:00-08:00 | Committed b4be894, status: review_ready. Skill+rule split, composition-over-reimpl, one-overseer-per-arc interleaving, durable arc-state file. Returned 6-point Investigation Requested. |
 | dispatch | arc-rev-1 (general-purpose as reviewer) | cdocs/reviews/2026-09-03-review-of-overseer-arc.md, cdocs/proposals/2026-09-03-overseer-arc.md (last_reviewed only) | 2026-09-03T09:36:00-08:00 | Track 1 round-1 review of overseer-arc proposal; carries proposer's 6 scrutiny points |
 | return | cons-write-1 (general-purpose, haiku) | cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md, cdocs/proposals/2026-09-01-overseer-consolidation.md | 2026-09-03T09:40:00-08:00 | Committed 82ed889. Review persisted + memo last_reviewed=revision_requested set. Memo BODY revision deferred to after Track 1 accept. |
+| return | arc-rev-1 (general-purpose) | cdocs/reviews/2026-09-03-review-of-overseer-arc.md, cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T10:05:00-08:00 | Verdict Revise (b6c82c6). 1 blocking (troubleshooting-budget breaks black-box contract) + 8 non-blocking. |
+| dispatch | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T10:06:00-08:00 | Round-2 revision: resume original author to address review action items |
