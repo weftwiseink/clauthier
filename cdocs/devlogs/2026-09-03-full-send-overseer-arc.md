@@ -41,23 +41,24 @@ dispatch-by-default, single-writer file ownership, fresh reviewer each round.
 
 Model: default session config (opus lead). No `-m`/`-f` passed by user.
 
-## Handoff (checkpoint @ 2026-09-03T09:40)
+## Handoff (checkpoint @ 2026-09-03T11:10)
 
 **Completed**
-- Turn 0 devlog + log tables (committed).
-- Track 1: overseer-arc proposal authored, `review_ready`, committed `b4be894`. Design: `/oversee` skill + `oversee-arc.md` rule; composes full-send/iterate per chain element; one-overseer-per-arc with footprint-disjoint turn interleaving; durable JSON arc-state file + repo-global claim registry; verification-depth ladder; AFK as a state-file field. 6 flagged review points.
-- Track 3: consolidation-memo review (verdict Revise) persisted, committed `82ed889`; memo `last_reviewed` set.
+- Turn 0 devlog + log tables.
+- **Track 1 CLOSED (propose-revise → accepted):** `cdocs/proposals/2026-09-03-overseer-arc.md` authored (`b4be894`), round-1 Revise (`b6c82c6`), revised (`59fd01f`), round-2 ACCEPT (`e84c6ae`), nits folded + `status: implementation_ready` (`0fda75a`). Reviews: `cdocs/reviews/2026-09-03-review-of-overseer-arc.md` (r1), `...-r2.md` (r2). Design: `/oversee` skill + `oversee-arc.md` rule; composes full-send/iterate per chain element; one-overseer-per-arc with footprint-disjoint turn interleaving (default `--max-parallel 3`); durable JSON arc-state file (`.claude/oversee/<arc-id>.json`) + repo-global claim registry (`.claude/oversee/claims/`); verification-depth ladder; AFK as an arc-state field; troubleshooting budget enforced at arc altitude only. Phases: 1 rule+schema → 2 skill/sequential-chain MVP → 3 claim-independent resume → 4 AFK+escalation → 5 footprint interleaving+claim registry → 6 (optional) init materialization.
+- Track 3: consolidation-memo review (Revise) persisted `82ed889`; memo `last_reviewed` set.
 
 **Decisions Made**
-- overseer-arc = NEW proposal `2026-09-03-overseer-arc.md` (not in-place RFP elaboration); RFP stays `request_for_proposal`, to get a NOTE pointing at overseer-arc.
+- overseer-arc = NEW proposal (not in-place RFP elaboration); RFP stays `request_for_proposal`, gets a NOTE → overseer-arc (in Track 3 revision).
 - Memo §A stays in the memo as canonical dedup; overseer-arc points back (reviewer Q B → option 1).
-- Memo body revision deferred until Track 1 accept, then applied once (avoids double-churn).
-- Read-only `Explore` is the wrong agent for write tasks — use write-capable `general-purpose`; reviewer role briefed manually since no `reviewer` subagent_type is registered this session.
+- Memo body revision deferred until AFTER Track 2 (so it can reference the shipped skill/rule, not just the proposal). Then settle memo's own status (reviewer Q A → lean toward reference/settled).
+- Track 2 runs in a sibling worktree `/workspace/clauthier/overseer-arc` (branch `overseer-arc`); subagents use `git -C <worktree>` and absolute paths, never touch main; ff-merge to main on accept.
+- overseer-arc is self-referential (like /cdocs:iterate): live end-to-end `/oversee` smoke test is `deferred-to-followup`; reviewer does structural verification.
+- Read-only `Explore` is wrong for write tasks — use write-capable `general-purpose`; reviewer role briefed manually (no `reviewer` subagent_type registered this session).
 
 **Open Todos**
-- Track 1: arc-rev-1 round-1 review in flight → on return, decide accept/revise; loop propose-revise to accept.
-- Track 2 (not started): after Track 1 accept, set proposal `implementation_ready`, create worktree, run `/iterate` to implement (skill + rule + arc-state + claim registry).
-- Track 3: apply memo body revision (10 action items in the review) + add RFP NOTE pointing at overseer-arc; then settle memo's own status (reviewer Q A).
+- **Track 2 (active):** create worktree; `/iterate` overseer-arc Phases 1-5 (6 optional) with implementer→reviewer to accept; verification-floor = structural coherence + no composed-skill/shipped-rule file modified; commit early/often on branch; ff-merge to main; set proposal `implementation_accepted`.
+- **Track 3 (after Track 2):** apply memo body revision (10 items in `cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md`) + add RFP NOTE → overseer-arc; set memo status.
 
 ## Iteration Log
 
@@ -89,3 +90,4 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | dispatch | arc-rev-2 (general-purpose as reviewer) | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md, cdocs/proposals/2026-09-03-overseer-arc.md (last_reviewed only) | 2026-09-03T10:36:00-08:00 | Track 1 round-2 review (fresh reviewer); verify round-1 items resolved |
 | return | arc-rev-2 (general-purpose) | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md, cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:00:00-08:00 | Verdict ACCEPTED (e84c6ae). All round-1 items resolved; 3 cosmetic nits noted. |
 | dispatch | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:01:00-08:00 | Fold in 3 accepting-round nits + set status implementation_ready |
+| return | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:10:00-08:00 | Committed 0fda75a. 3 nits folded; status=implementation_ready. Track 1 propose-revise CLOSED. |
