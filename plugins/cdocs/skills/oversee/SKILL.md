@@ -103,6 +103,23 @@ At each proposal boundary, BEFORE starting the next proposal (and before compact
 The handoff format is defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2; do not restate it here.
 The checkpoint is not complete until both durable writes land: compacting without them is a failure.
 
+## AFK and Escalation Gates
+
+The arc AFK signal governs whether the overseer advances between PROPOSALS unattended.
+It is distinct from `iterate`'s per-loop AFK fallback (which only handles a MISSING verification floor within one loop); this is a separate, higher signal and does not touch that fallback.
+
+**AFK lives in the arc-state file** (`afk` + `afk_policy`), because the defining requirement is that an arc interrupted mid-flight and resumed in a fresh session knows whether to keep going without re-asking, and only the arc-state file is read on resume.
+The `--afk` flag is the SETTER that writes the field on invocation; a `.claude/oversee/pause` marker file is the out-of-band STOP (a user with no live session drops it to force the arc to escalate-and-hold at its next gate), checked at each gate and cleared on acknowledgement.
+
+Gate semantics:
+
+- A **soft gate** ("should I continue to the next proposal?", "which of two acceptable defaults?") under `afk: true` becomes "apply the logged default and proceed."
+- A **hard gate** fires even under AFK. Hard gates: a `reject` verdict, an unresolvable footprint conflict, and (for `full <topic>`) deciding the proposal SET. At a hard gate the overseer writes the escalation into the arc-state file AND a `.claude/oversee/escalations/` marker (skeleton in [`./template.md`](./template.md)), then per `afk_policy`:
+  - `hold` (default): stop the arc and surface the escalation.
+  - `skip-blocked` (`--afk=skip-blocked`): mark the blocked proposal `arc_state: blocked`, skip it, and continue the rest of the arc, recording the choice.
+
+`/oversee full <topic>` scoping is itself a hard gate under AFK: deciding the proposal set for an open topic is judgment the user may want to see, so the default is to escalate the proposed set once even under AFK (an Open Question preserved in the proposal).
+
 ## Cross-Session Resume
 
 Resume is the DEFINING durability guarantee: an arc interrupted mid-flight (rate limit, crash, closed terminal) must reconstruct itself in a fresh session without re-running or double-implementing a done proposal.
