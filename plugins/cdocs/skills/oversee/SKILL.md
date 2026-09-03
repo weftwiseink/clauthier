@@ -103,6 +103,22 @@ At each proposal boundary, BEFORE starting the next proposal (and before compact
 The handoff format is defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2; do not restate it here.
 The checkpoint is not complete until both durable writes land: compacting without them is a failure.
 
+## Cross-Session Resume
+
+Resume is the DEFINING durability guarantee: an arc interrupted mid-flight (rate limit, crash, closed terminal) must reconstruct itself in a fresh session without re-running or double-implementing a done proposal.
+`/oversee resume` needs only the arc-state file.
+
+On resume:
+
+1. **Reconstruct** arc `position` and each proposal's `arc_state` from `.claude/oversee/<arc-id>.json`.
+2. **Apply Pillar 1b liveness reconciliation at the arc altitude**: the harness notifies the overseer only when NO live children remain, so a resumed session can hold a stale "loop in flight" belief. If `arc_state: in_progress` but no live children exist, that loop has TERMINATED: adopt the on-disk triple (frontmatter `status` + final devlog handoff + `arc_state`) and proceed, rather than re-running the loop or waiting on a child that is already gone. Reuse Pillar 1b's mechanism; do not invent a new liveness test.
+3. **Detect and repair `arc_state`-vs-frontmatter drift, both directions:**
+   - Frontmatter reads `implementation_accepted` but `arc_state: in_progress`: the loop finished during the interruption. Reconcile FORWARD: mark `arc_state: done` and advance.
+   - The terminal-write race, where a loop died between the review-Accept decision and the write of its frontmatter/devlog: all three signals read stale-in-progress, so re-run the loop. This is SAFE: `iterate` re-reviews the already-done work, finds it passing, and re-Accepts at the cost of one redundant review round. This is exactly why the return signal is the reconciled triple, not frontmatter alone.
+4. **Do NOT re-run an already-done proposal** (`arc_state: done`); resume at `position`.
+
+**Arc disambiguation.** `resume` with no `arc-id` disambiguates among the arcs under `.claude/oversee/`: if exactly one arc file is non-terminal, resume that one; otherwise list the candidate arc ids and `AskUserQuestion` (or, under AFK, resume the most recently written non-terminal arc and log the choice).
+
 ## Termination
 
 The arc terminates when every proposal reaches `arc_state: done`, when a hard gate holds the arc (see AFK and Escalation Gates), or on user interrupt.
