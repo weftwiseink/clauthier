@@ -98,9 +98,11 @@ flowchart TD
 The composition **interface** is two directional contracts:
 
 - **Down (what `/oversee` passes into a composed loop):** the proposal path (or topic, for `full`), a `--verification-floor` derived from the proposal's required ladder rung (see below), model flags passed through unchanged (`-m`/`-f`, governed by `model-tiering.md`), and an autonomy signal derived from the arc AFK field.
-- **Up (what `/oversee` reads back):** the composed loop's terminal state, expressed as the proposal's new frontmatter `status` (`implementation_accepted` on success, unchanged-plus-escalation on failure) and its devlog path.
+  The autonomy signal is conveyed as dispatch-BRIEF PROSE, not a flag: `iterate`/`full-send` expose no `--afk`/autonomy parameter, and adding one would modify a composed skill (forbidden by the spanning constraint), so the arc overseer states the autonomy expectation ("run to accept-or-escalate without pausing for confirmation; I am AFK") in the brief it already controls.
+- **Up (what `/oversee` reads back):** the composed loop's terminal state, read as a reconciled TRIPLE, not frontmatter alone: the proposal's new frontmatter `status` (`implementation_accepted` on success), the loop's final devlog handoff, and the arc-state file's own `arc_state` for the proposal.
   This IS the return contract.
-  Consistent with Pillar 1 summary-absorption, `/oversee` reads the proposal's frontmatter `status` and the loop's final devlog handoff to decide advance-vs-escalate; it does NOT re-read the loop's Iteration Log turns or the implementer's diffs.
+  The triple (rather than frontmatter alone) is what makes the terminal-write race safe (see Edge Cases): if the loop dies after Accept but before writing frontmatter, all three read stale-in-progress and the overseer safely re-runs; frontmatter alone could be misread.
+  Consistent with Pillar 1 summary-absorption, `/oversee` reads these three durable signals to decide advance-vs-escalate; it does NOT re-read the loop's Iteration Log turns or the implementer's diffs.
 
 Mode-to-composition mapping:
 
@@ -120,11 +122,16 @@ Therefore there is exactly one overseer per arc: the top-level session.
 - **Sequential arcs**: the top-level session runs each proposal's composed loop AS itself, one proposal at a time, checkpointing (Pillar 2 handoff-before-compact) at each proposal boundary before starting the next.
 - **"Parallel" arcs**: the SAME top-level overseer INTERLEAVES turns across footprint-disjoint proposals: it dispatches proposal A's implementer and proposal B's implementer concurrently (parallel subagent dispatch IS supported), then interleaves their review/decide turns.
   There is still one overseer doing all dispatch, so the nested-dispatch prohibition is never violated.
+  The parallelism is real but modest: the expensive dispatched work (multiple implementers) runs concurrently, while only the overseer's own thin review/decide turns serialize.
   "Parallelization" at the arc level means interleaved turns under one overseer, NOT nested overseers.
 
-> NOTE(claude-opus-4-8/cdocs/oversee-skill): This is a load-bearing constraint, not an incidental one.
+**Concurrency cap.** Interleaving is bounded, because the one overseer must absorb summaries from all interleaved children AND hold one warm specialist per stream (Pillar 3) against the Pillar 2 ~150K-token target.
+The bound: at most **3** footprint-disjoint proposals interleaved at once by default (each a distinct workstream with one specialist, honoring Pillar 3's one-per-workstream bound), with `--max-parallel N` to adjust.
+Past the cap the overseer serializes the surplus (defers them to run after an in-flight one terminates) or re-scopes, exactly as Pillar 3 escalates when workstream count outgrows what one overseer can hold; it does not spawn a second overseer.
+
+> NOTE(claude-opus-4-8/cdocs/oversee-skill): This one-overseer / interleave-not-nest rule is the load-bearing constraint of the whole design and is stated canonically HERE; other sections reference it rather than re-argue it.
 > True parallel multi-proposal loops (each a full nested `/oversee`) would require nested-overseer support the current model does not guarantee.
-> The interleaving model sidesteps it entirely and is the shipped design; see Cross-Target Degradation for where even interleaving thins out.
+> See Cross-Target Degradation for where even interleaving thins to sequential.
 
 ### Arc-level AFK / autonomous continuation (consolidation §A.2)
 
@@ -154,6 +161,17 @@ At a hard gate under AFK the overseer writes the escalation into the arc-state f
 
 A single JSON file per arc at `.claude/oversee/<arc-id>.json` is the durable resumption point, distinct from `iterate`'s per-loop Iteration Log: the Iteration Log tracks turns WITHIN one proposal's loop; the arc-state file tracks WHICH proposals in the chain are done and their ownership.
 Two altitudes, two files.
+
+**Why a structured JSON file and not a section of a top-level arc devlog (resolves OQ3).**
+The arc-state file is not a human handoff narrative like a devlog; it is read and reconciled PROGRAMMATICALLY by a possibly-concurrent second session: footprint globs are intersected, claims are checked for staleness, and `arc_state` is diffed against the proposal's mirrored frontmatter `status` to detect drift.
+`iterate` resumes fine from a markdown Iteration Log because only its own single session reads it and does so as prose; the arc case is a machine reconciliation across sessions and arcs, which wants structured fields, not free text.
+The human-readable arc narrative still lives in a normal arc devlog that the overseer ALSO keeps (Completed / Decisions Made / Open Todos per Pillar 2); the JSON is the machine substrate beside it, not a replacement for it.
+
+> NOTE(claude-opus-4-8/cdocs/oversee-skill): The "write the arc-state file before compacting" discipline below is the arc-altitude ANALOGUE of Pillar 2's handoff-before-compact, applied to the machine substrate, not a second competing handoff artifact.
+> The prose handoff still goes to the arc devlog; the JSON write is the structured half of the same checkpoint.
+
+`arc_id` is minted from the invocation: `YYYY-MM-DD` plus a dash-cased slug of the `full <topic>` topic, or of the first proposal's basename for a `chain`.
+The overseer states the minted id in its Turn-0 brief and reuses it on resume.
 
 Schema (illustrative, not exhaustive; the rule carries the normative version):
 
@@ -223,8 +241,11 @@ This uses `overseer-alignment`'s one-specialist-per-workstream bound as an adjac
 Rule (in `oversee-arc.md`): "isolate first, full-cycle second."
 When a proposal's loop is stuck debugging, cap expensive full-cycle retries (container rebuild, full integration run) at a small N (default 2) before the overseer requires a switch to an isolation strategy: a minimal repro, a bisect, or a dispatched focused-diagnostic fork (`fork` per Pillar 3, disposable side-context).
 
-Enforcement is graded, matching the discipline's posture: the arc overseer tracks full-cycle-retry count per proposal in the state file (`budget.full_cycle_retries_max`) and, when a proposal's loop trends past it, surfaces the signal into that loop's judge (the same soft-budget-as-judge-input mechanism `iterate` uses for context budget) or escalates the proposal as blocked.
-It is a budget the overseer WATCHES and surfaces, not a hard kill, preserving the loop's accept/reject/escalate contract.
+Enforcement is at the ARC altitude ONLY, to stay inside the black-box return contract.
+The arc overseer tracks full-cycle-retry count per proposal in the arc-state file (`budget.full_cycle_retries_max`), inferring it from what the composed loop reports UP (its devlog handoff and iteration count), and when a proposal trends past the budget the overseer escalates that proposal as `blocked`.
+It does NOT reach into the composed loop's judge: that channel is internal to `iterate` (iterate's own overseer surfaces to iterate's own judge), and injecting into it would either break the black box or require a new `iterate` parameter, both forbidden.
+Any budget signal the arc overseer WANTS a composed loop's judge to see travels only through the down-channel it already controls: the dispatch brief and `--verification-floor` prose (for example, a brief that says "prefer isolating the fault over another full rebuild; you have one full-cycle retry left").
+It is a budget the overseer WATCHES from the outside and enforces by escalation, not a hard kill or a reach-in, preserving both the loop's accept/reject/escalate contract and the arc's black-box boundary.
 
 ### Verification-depth ladder (consolidation §A.7)
 
@@ -239,14 +260,20 @@ A reusable rung taxonomy, authored once in `oversee-arc.md`, broader than `itera
 | `live` | Validated against live/production-shaped state | real request/response, real data, cited artifact |
 
 Each rung SUBSUMES the ones above it (a `live` requirement implies `compile`..`smoke` all pass).
-`/oversee` selects the required rung per proposal (from the proposal's `required_rung`, or a `full <topic>` default) and generates the `--verification-floor` sentence it passes into that proposal's `iterate` composition, including at least one failure-picture as `iterate` requires.
+`/oversee` selects the required rung per proposal and generates the `--verification-floor` sentence it passes into that proposal's `iterate` composition, including at least one failure-picture as `iterate` requires.
+Rung selection, in precedence order:
+
+1. the proposal's `required_rung` frontmatter field, if present;
+2. else, for a `chain` of authored proposals with no field, read the proposal's own `## Verification Methodology` section and derive the floor from it, exactly as `iterate` already does when no `--verification-floor` is passed;
+3. else (no field and no `## Verification Methodology`), fall back to `iterate`'s existing floor rule: `AskUserQuestion` for a floor, or under AFK write a placeholder floor and tag the affected rows, per `iterate`'s documented AFK fallback;
+4. for `full <topic>`, where proposals are freshly authored, the overseer sets a default rung (`smoke` unless the topic implies otherwise) at authoring time.
 The ladder is the shared vocabulary; the per-loop `review_proof` column remains the per-round audit field inside the loop.
 
 ## Important Design Decisions
 
 - **Skill + rule, not one or the other (OQ1).** Driver in the skill, vocabulary in the rule; mirrors `iterate` + `orchestration-discipline.md` and honors deduplication.
 - **AFK lives in the state file, not the flag (§A.2).** Only a state-file field is durable across the interruption the AFK signal exists to survive; the flag and marker are setters/overrides, not the source of truth.
-- **One overseer per arc; parallel = interleaved turns, not nested overseers.** Forced by the no-nested-dispatch rule; the interleaving model is what makes arc-level concurrency legal at all.
+- **One overseer per arc; parallel = interleaved turns, not nested overseers.** The load-bearing constraint, forced by the no-nested-dispatch rule and stated canonically under "The arc overseer is the ONLY overseer"; it is what makes arc-level concurrency legal at all.
 - **Return contract is proposal frontmatter `status` + devlog, not loop internals.** Keeps the arc overseer thin (Pillar 1 summary-absorption): it reads a status field and a handoff, never the loop's raw turns.
 - **Claim registry is repo-global, outside any devlog.** Cross-arc visibility is the whole point; a per-loop Iteration Log claim (Pillar 1b) is invisible to a second session, so the new primitive must live in a shared location.
 - **Footprint uncertainty defaults to serialize.** Asymmetric cost: a missed conflict clobbers work; a false conflict only costs latency.
@@ -256,6 +283,7 @@ The ladder is the shared vocabulary; the per-loop `review_proof` column remains 
 ## Edge Cases / Challenging Scenarios
 
 - **Interrupted mid-proposal.** On resume, `arc_state: in_progress` but the proposal's frontmatter reads `implementation_accepted`: the loop finished during the gap. Apply Pillar 1b liveness reconciliation at the arc altitude: no live children means the child terminated; adopt the on-disk state (frontmatter + final devlog handoff) and advance, do not restart the loop.
+- **Terminal-write race.** A loop dies between the review-Accept decision and the write of the proposal's frontmatter `status`/devlog handoff: all three return signals (frontmatter `status`, devlog handoff, `arc_state`) read stale-in-progress, so the overseer re-runs the loop. This is SAFE: `iterate` re-reviews the already-done work, finds it passing, and re-Accepts, at the cost of one redundant review round. This is why the return signal is the reconciled triple, not frontmatter alone: no single field is trusted to have been written atomically at the terminal moment. It is the mirror of the reverse drift below (frontmatter accepted but `arc_state: in_progress`); both are resolved by the same forward-reconciliation rule.
 - **Stale claim from a dead agent.** A claim file marked `live` whose owner is gone (no live children on resume) is reconciled to `stale` and released, so the arc does not deadlock waiting on a claim no one holds. This is Pillar 1b liveness reconciliation applied to the registry.
 - **Footprint scout wrong (missed overlap).** Two "disjoint" interleaved proposals turn out to touch the same file mid-flight. The per-dispatch Pillar 1b check inside each loop is the second line of defense: the second writer against the now-shared path is caught at dispatch time and serialized. Footprint prediction reduces conflicts; it does not replace the per-dispatch guarantee.
 - **AFK plus a hard gate.** A `reject` verdict or an unresolvable footprint conflict fires even under `afk: true`: write the escalation to the state file and `.claude/oversee/escalations/`, then hold (default) or skip-blocked-and-continue per `afk_policy`.
@@ -316,29 +344,31 @@ Sequential only; no AFK, no parallelism yet.
 - **Success:** Test Plan scenario 1 (sequential chain happy path) passes.
 - **Do NOT:** implement any loop internals; `/oversee` must invoke the existing skills.
 
-### Phase 3: AFK field and escalation gates
+### Phase 3: Cross-session resume (claim-independent)
+
+This is the headline durability guarantee (the AFK rationale calls resume "the DEFINING requirement"), and it needs only the state file from Phase 2, so it lands early rather than gated behind the claim work.
+Add `/oversee resume`: reconstruct arc `position` and per-proposal `arc_state` from the arc-state file, apply Pillar 1b liveness reconciliation at the arc altitude (no live children means the child terminated: adopt the on-disk triple and advance rather than re-running), detect/repair `arc_state`-vs-frontmatter drift (both directions, including the terminal-write race), and do NOT re-run an already-done proposal.
+`/oversee resume` with no argument disambiguates among multiple arcs under `.claude/oversee/`: if exactly one arc file is non-terminal it resumes that one, otherwise it lists the candidate arc ids and `AskUserQuestion` (or, under AFK, resumes the most recently written non-terminal arc and logs the choice).
+
+- **Depends on:** Phase 2 (state file). Claim-INDEPENDENT: stale-claim reconciliation is deferred to Phase 5 with the claim registry.
+- **Success:** Test Plan scenario 5 passes.
+- **Do NOT:** invent a new liveness mechanism; reuse Pillar 1b's "no live children means terminated, adopt on-disk state."
+
+### Phase 4: AFK field and escalation gates
 
 Add the `afk` / `afk_policy` fields, the `--afk` setter, the `.claude/oversee/pause` out-of-band marker, the soft/hard gate distinction, and escalation-to-state-file plus `.claude/oversee/escalations/` behavior.
 
-- **Depends on:** Phase 2 (state file, gate points).
+- **Depends on:** Phase 2 (state file, gate points); composes cleanly with Phase 3's resume (AFK is durable in the state file it already reads).
 - **Success:** Test Plan scenarios 4 and 7 pass.
 - **Do NOT:** touch `iterate`'s per-loop AFK verification-floor fallback; the arc AFK is a separate, higher signal.
 
-### Phase 4: Footprint conflict detection and interleaving
+### Phase 5: Footprint conflict detection, interleaving, and the claim registry
 
-Add footprint declaration/derivation (the sonnet-tier footprint scout), the overlap test, the repo-global claim registry (acquire/release/check), the single-overseer interleaving execution model, and the serialize-on-uncertainty default.
+Add footprint declaration/derivation (the sonnet-tier footprint scout), the overlap test, the repo-global claim registry (acquire/release/check), the single-overseer interleaving execution model with its concurrency cap, the serialize-on-uncertainty default, and stale-claim reconciliation on resume (a `live` claim owned by a dead agent is marked `stale` and released).
 
-- **Depends on:** Phase 2 (state file, per-proposal loop); benefits from Phase 3 but is independent of it.
-- **Success:** Test Plan scenarios 2 and 3 pass; no clobber under interleaving.
+- **Depends on:** Phase 2 (state file, per-proposal loop) and Phase 3 (resume, which stale-claim reconciliation extends); benefits from Phase 4 but is independent of it.
+- **Success:** Test Plan scenarios 2, 3, and 6 pass; no clobber under interleaving.
 - **Do NOT:** attempt nested overseers; interleaving is one overseer dispatching concurrently. Do NOT weaken the per-dispatch Pillar 1b check inside each loop; footprint prediction is additive, the per-dispatch guarantee is the backstop.
-
-### Phase 5: Cross-session resume and arc-level liveness reconciliation
-
-Add `/oversee resume`: reconstruct arc position from the state file, apply Pillar 1b liveness reconciliation at the arc altitude (adopt on-disk proposal state when no live children remain; reconcile stale claims to released), and detect/repair `arc_state`-vs-frontmatter drift.
-
-- **Depends on:** Phase 2 (state file) and Phase 4 (claims, for stale-claim reconciliation).
-- **Success:** Test Plan scenarios 5 and 6 pass.
-- **Do NOT:** invent a new liveness mechanism; reuse Pillar 1b's "no live children means terminated, adopt on-disk state."
 
 ### Phase 6 (optional): `/cdocs:init` materialization and cross-target check
 
@@ -361,8 +391,8 @@ Only the RUNTIME mechanics degrade where a target lacks Claude-Code-only primiti
 
 Preserved from the RFP and consolidation §A where this design leaves a genuine choice to the implementer or a future iteration:
 
-1. **Verification specification format (RFP OQ5).** How does a proposal DECLARE its `required_rung` and `footprint`? A frontmatter field (`required_rung:`, `footprint:`), a dedicated `## Verification` / `## Footprint` section, or a separate manifest? This proposal assumes frontmatter fields with a derive-on-absence fallback (the footprint scout); the exact field names and whether they belong in `frontmatter-spec.md` are open. Adding fields to `frontmatter-spec.md` would touch a file outside the current no-change set and should be its own proposal.
+1. **Verification specification format (RFP OQ5).** How does a proposal DECLARE its `required_rung` and `footprint`? A frontmatter field (`required_rung:`, `footprint:`), a dedicated `## Verification` / `## Footprint` section, or a separate manifest? This proposal assumes frontmatter fields with a derive-on-absence fallback (the footprint scout, and the `## Verification Methodology` read for the rung); the exact field names are still open, which is the real reason to defer the `frontmatter-spec.md` addition, NOT a no-touch boundary: `frontmatter-spec.md` is not in this proposal's spanning no-change set. Cementing field names before they settle is premature, and derive-on-absence keeps the skill fully functional without them, so the field additions are best made once the names are settled (plausibly a small follow-up edit to `frontmatter-spec.md`, not a separate proposal).
 2. **`full <topic>` scoping autonomy under AFK.** Should deciding the proposal SET for an open topic ever proceed unattended? Default here is to escalate the proposed set once even under AFK; whether a stronger "trust scoping" acknowledgement should let it proceed fully unattended is unresolved.
-3. **Devlog-as-coordination-point (RFP §3).** The RFP floated the devlog doing double duty as the coordination mechanism. This design uses a dedicated arc-state file plus claim registry instead, because cross-ARC visibility needs a repo-global location a per-session devlog does not provide. Whether the arc-state file should instead be a section of a top-level arc devlog (single artifact) versus a separate JSON (machine-legible, cross-session) is a real trade-off left open.
+3. **Devlog-as-coordination-point (RFP §3), resolved.** The RFP floated the devlog doing double duty as the coordination mechanism. This design instead uses a dedicated structured arc-state file plus claim registry, and keeps a normal arc devlog beside them for the human narrative (see "Cross-session durability" for the resolved rationale: the state file is a cross-session MACHINE reconciliation target, not a human handoff). This is settled in-proposal, not left open; it is listed here only to record that the RFP's devlog-double-duty option was considered and declined.
 4. **Claim registry granularity and TTL.** One file per claim vs. a single registry file; glob granularity; whether claims carry a TTL so an abandoned arc's claims auto-expire without an explicit resume-reconciliation pass.
 5. **Agent model selection for the arc overseer (RFP OQ4).** `model-tiering.md` puts the overseer/judgment tier at opus and the footprint scout at sonnet; whether the arc overseer should ever run at a cheaper tier for a long sequential chain is left to the consumer's floor and the pass-through `-m`/`-f` flags.
