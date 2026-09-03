@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/oversee-skill
 type: devlog
 state: live
-status: wip
+status: done
 tags: [oversee, agent_orchestration, full_send, overseer_arc, multi_proposal, cdocs_meta]
 ---
 
@@ -66,9 +66,19 @@ The implementation review returned `revision_requested` for exactly ONE mechanic
 - **Track 1 CLOSED:** overseer-arc proposal accepted, `implementation_accepted` (`2bf414b`).
 - **Track 2 CLOSED:** `/oversee` skill + `oversee-arc` rule + template built (all 6 phases), reviewed, stray-line fix, merged `--ff-only` to main (`e518ce6`), registered on every surface (README, AGENTS.md, CLAUDE.md ×2 synced, /cdocs:init template), worktree retired. Impl review: `cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md`. Impl devlog: `cdocs/devlogs/2026-09-03-oversee-skill-implementation.md`.
 
-**Open Todos**
-- **Track 3 (active, last track):** apply the memo BODY revision — 10 action items in `cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md` — to `cdocs/proposals/2026-09-01-overseer-consolidation.md`: refresh stale lifecycle claims (overseer-alignment + iterate-skill both implementation_accepted), reframe §A "fully unbuilt" → now SHIPPED as `/oversee` (skill+rule on main, proposal implementation_accepted), mark §C #12/#17/#18/#19 resolved, reclassify satisfied recommendations. §A stays in the memo (Q B → option 1). Then add the RFP (`2026-03-26-rfp-oversee-skill.md`) NOTE pointing at overseer-arc as the elaboration of its remaining §A scope. Then settle the memo's own status (Q A → lean reference/settled). Dispatch a writer; overseer reviews.
-- **Follow-up (out of full-send scope):** live `/oversee chain` smoke test over toy proposals (deferred-to-followup verification).
+**Open Todos** — none for this full-send. All three tracks closed (2026-09-03T12:20).
+- **Follow-up (out of full-send scope, awaiting user):** live `/oversee chain` smoke test over two toy proposals in a scratch worktree — the `deferred-to-followup` end-to-end verification named in the overseer-arc Test Plan. Self-referential (a top-level `/oversee` run), so it is a separate invocation, not part of this loop.
+
+## Final Summary — full-send COMPLETE
+
+`/full-send overseer-arc` + consolidation review/revise: all delivered.
+
+- **overseer-arc proposal** `cdocs/proposals/2026-09-03-overseer-arc.md` — `implementation_accepted`. Propose-revise: author (b4be894) → Revise (b6c82c6) → revise (59fd01f) → Accept (e84c6ae) → nits+ready (0fda75a).
+- **`/oversee` skill + `oversee-arc` rule** — shipped on main (ff-merge e518ce6): `plugins/cdocs/skills/oversee/{SKILL,template}.md`, `plugins/cdocs/rules/oversee-arc.md`. All 6 phases; registered in README, AGENTS.md, both CLAUDE.md copies, and the /cdocs:init template. Impl review `cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md`; impl devlog `cdocs/devlogs/2026-09-03-oversee-skill-implementation.md`. Live smoke test deferred-to-followup.
+- **Consolidation memo** `cdocs/proposals/2026-09-01-overseer-consolidation.md` — reviewed (Revise) then revised to shipped reality; `implementation_accepted` (373c834). Review `cdocs/reviews/2026-09-03-review-of-overseer-consolidation.md`.
+- **RFP** `cdocs/proposals/2026-03-26-rfp-oversee-skill.md` — NOTE now points at the shipped overseer-arc (e2ce788); stays `request_for_proposal` (correct).
+
+Overseer stayed thin throughout: 8 subagents dispatched (2 proposer-turns via durable-specialist resume, 3 reviewers, 1 impl, 1 haiku writer, 1 memo reviser); only inline overseer work was the 3-line wrapper-leak fix (trivial carve-out) and durable-state maintenance.
 
 ## Iteration Log
 
@@ -109,3 +119,4 @@ The implementation review returned `revision_requested` for exactly ONE mechanic
 | (overseer inline) | overseer | [worktree] rules/oversee-arc.md, skills/oversee/{SKILL,template}.md | 2026-09-03T11:52:00-08:00 | Trivial carve-out fix: removed 3 stray lines (7ce3e43); verified diff = only those deletions; accepted on synthesis. |
 | (merge) | overseer | main ← overseer-arc | 2026-09-03T11:55:00-08:00 | Rebased branch onto main (disjoint paths), git merge --ff-only (e518ce6); proposal→implementation_accepted (2bf414b); CLAUDE.md copies synced; worktree+branch retired. |
 | dispatch | cons-revise-1 (general-purpose) | cdocs/proposals/2026-09-01-overseer-consolidation.md, cdocs/proposals/2026-03-26-rfp-oversee-skill.md | 2026-09-03T12:00:00-08:00 | Track 3: apply 10 memo action items (reflect SHIPPED /oversee), add RFP NOTE→overseer-arc, set memo status |
+| return | cons-revise-1 (general-purpose) | cdocs/proposals/2026-09-01-overseer-consolidation.md (373c834), cdocs/proposals/2026-03-26-rfp-oversee-skill.md (e2ce788) | 2026-09-03T12:20:00-08:00 | All 10 items applied; memo→implementation_accepted; RFP NOTE→overseer-arc added, RFP status unchanged. Verified. |
