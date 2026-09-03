@@ -64,7 +64,8 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
 | 1 (propose) | prop-1 (general-purpose) | arc-rev-1 (general-purpose) | revise | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc.md | ~90K (5% inline) | no | Round 1: proposal review_ready (b4be894); review Revise (b6c82c6) — 1 blocking + 8 non-blocking; design sound, all 6 flagged points ok |
-| 2 (propose) | prop-1 (resumed) | arc-rev-2 (pending) | pending | n/a | pending | ~95K (5% inline) | no | Round 2: resume prop-1 (durable specialist, Pillar 3) to address the review; not extreme revisions |
+| 2 (propose) | prop-1 (resumed) | arc-rev-2 (general-purpose) | accept | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md | ~100K (5% inline) | no | Round 2: revision 59fd01f; ACCEPTED (e84c6ae). Blocking + 8/8 non-blocking resolved; 3 cosmetic nits for fold-in |
+| 3 (propose) | prop-1 (resumed) | — (nit fold-in) | accept | n/a | — | ~100K (5% inline) | no | Accepting-round nit fold-in + advance to implementation_ready; closes Track 1 propose-revise |
 
 ## Judge Log
 
@@ -86,3 +87,5 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | dispatch | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T10:06:00-08:00 | Round-2 revision: resume original author to address review action items |
 | return | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T10:35:00-08:00 | Committed 59fd01f. All 9 items applied, none declined; still review_ready. No investigation requested. |
 | dispatch | arc-rev-2 (general-purpose as reviewer) | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md, cdocs/proposals/2026-09-03-overseer-arc.md (last_reviewed only) | 2026-09-03T10:36:00-08:00 | Track 1 round-2 review (fresh reviewer); verify round-1 items resolved |
+| return | arc-rev-2 (general-purpose) | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md, cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:00:00-08:00 | Verdict ACCEPTED (e84c6ae). All round-1 items resolved; 3 cosmetic nits noted. |
+| dispatch | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:01:00-08:00 | Fold in 3 accepting-round nits + set status implementation_ready |
