@@ -69,6 +69,8 @@ The implementation review returned `revision_requested` for exactly ONE mechanic
 **Open Todos** — none for this full-send. All three tracks closed (2026-09-03T12:20).
 - **Follow-up (out of full-send scope, awaiting user):** live `/oversee chain` smoke test over two toy proposals in a scratch worktree — the `deferred-to-followup` end-to-end verification named in the overseer-arc Test Plan. Self-referential (a top-level `/oversee` run), so it is a separate invocation, not part of this loop.
 
+> NOTE(overseer): The Track-2 branch was rebased onto main before the `--ff-only` merge, which rewrote its commit hashes. The pre-rebase SHAs recorded in the Iteration Log / Dispatch-Return rows above (`13dd049..b2b8789`, impl review `ed6e8f2`, fix `7ce3e43`) are therefore orphaned. The authoritative post-merge history is `git log` on main; the current anchors are: Phases 1-6 `c20256d..f12430f`, impl review `b504e69`, wrapper-leak fix `e518ce6` (= merged branch tip).
+
 ## Final Summary — full-send COMPLETE
 
 `/full-send overseer-arc` + consolidation review/revise: all delivered.
