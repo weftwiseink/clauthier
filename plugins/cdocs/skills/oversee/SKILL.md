@@ -97,6 +97,29 @@ Per proposal at `position`:
 3. Compose: `iterate` for `implementation_ready`, `full-send` for a stub, running AS the arc overseer itself.
 4. On loop terminal, read the reconciled triple. On `implementation_accepted`, mirror `status`, set `arc_state: done`, run the Checkpoint, and advance `position`. Otherwise escalate the proposal as `blocked`.
 
+## Footprint Conflict, Interleaving, and the Claim Registry
+
+Concurrency at the arc level is INTERLEAVED turns under ONE overseer, never nested overseers: a dispatched subagent cannot dispatch its own workers, so the arc overseer cannot spawn sub-overseers that each run a loop.
+The one overseer dispatches proposal A's and proposal B's implementers concurrently (parallel subagent dispatch IS supported), then interleaves its own thin review/decide turns. The expensive dispatched work runs concurrently; only the overseer's own turns serialize.
+
+**Footprint declaration and the overlap test** (heuristic defined in [`oversee-arc.md`](../../rules/oversee-arc.md)):
+
+1. Read each proposal's `footprint:` field, or derive it by dispatching the sonnet-tier footprint scout against the proposals' Implementation Phases.
+2. Intersect the two glob sets. Non-empty intersection means the proposals CONFLICT and must SERIALIZE.
+3. Disjoint proposals are eligible to interleave.
+4. **Uncertainty defaults to serialize** (low scout confidence or broad globs like `**/*`): a false conflict costs latency, a missed conflict costs a clobber.
+
+**Concurrency cap.** At most **3** footprint-disjoint proposals interleave at once by default (each a distinct workstream with one durable specialist, honoring Pillar 3's one-per-workstream bound against the overseer's ~150K-token budget), adjustable with `--max-parallel N`.
+Past the cap the overseer serializes the surplus (defers them to run after an in-flight one terminates) or re-scopes, exactly as Pillar 3 escalates when workstream count outgrows one overseer; it does NOT spawn a second overseer.
+
+**Claim registry** (repo-global `.claude/oversee/claims/`, format and protocol in [`oversee-arc.md`](../../rules/oversee-arc.md); skeleton in [`./template.md`](./template.md)):
+
+- Before starting or interleaving a proposal whose footprint intersects an EXISTING live claim owned by a different arc/owner, acquire fails: serialize or re-scope.
+- Acquire a claim file on proposal start; release (delete or mark `stale`) on terminal. Each is an arc-level transition, so write the arc-state file too.
+- On resume, a `live` claim whose owner is gone (no live children) is reconciled to `stale` and released, so the arc does not deadlock. This extends the Phase 3 liveness reconciliation to the registry.
+
+**The per-dispatch Pillar 1b check inside each loop is the backstop.** Footprint prediction REDUCES conflicts; it does not replace the per-dispatch single-writer guarantee. If two "disjoint" interleaved proposals turn out to touch the same file mid-flight, the second writer against the now-shared path is caught at dispatch time and serialized inside the loop. Do not weaken that check.
+
 ## Checkpoint (proposal boundary)
 
 At each proposal boundary, BEFORE starting the next proposal (and before compacting), write the arc-state file AND a three-subsection Completed / Decisions Made / Open Todos handoff into the arc devlog, then compact (`/compact`, or `/clear` for a hard reset).
