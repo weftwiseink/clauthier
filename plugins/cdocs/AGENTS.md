@@ -18,6 +18,10 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/model-tiering.md
 
+## Overseer Arc
+
+@rules/oversee-arc.md
+
 ## Frontmatter Specification
 
 @rules/frontmatter-spec.md
@@ -30,6 +34,7 @@ Key skills for workflow composition:
 - `/cdocs:implement`: implement a single proposal.
 - `/cdocs:review`: review a cdocs document.
 - `/cdocs:iterate`: run an implement-review loop on a proposal with overseer-mode orchestration and periodic judge meta-assessment.
+- `/cdocs:oversee`: drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and cross-arc claim registry.
 
 ## Formal Agents
 
