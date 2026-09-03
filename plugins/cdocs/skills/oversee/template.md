@@ -81,4 +81,3 @@ The overseer checks for it at each gate, escalates-and-holds at the next gate wh
 
 Keep a normal cdocs devlog (`type: devlog`) beside the JSON for the human narrative.
 It uses the same Completed / Decisions Made / Open Todos handoff sections as every overseer loop (see [`../../rules/orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2); the JSON is the structured half of the same checkpoint, not a competing artifact.
-</content>

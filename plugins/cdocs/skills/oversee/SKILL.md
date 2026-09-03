@@ -168,4 +168,3 @@ The arc-state file is the durable record: a fresh session reading only it plus t
 
 Rule CONTENT ships cross-target cleanly; only RUNTIME mechanics degrade (absent `fork`/`SendMessage` the arc runs sequential-only; absent `/compact` the checkpoint becomes a fresh-session restart from the arc-state file plus the last handoff).
 See [`oversee-arc.md`](../../rules/oversee-arc.md) "Cross-Target Degradation" for the full mapping.
-</content>

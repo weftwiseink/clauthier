@@ -138,4 +138,3 @@ Only the RUNTIME mechanics degrade where a target lacks Claude-Code-only primiti
   Practically, absent these primitives the arc runs SEQUENTIAL only (no interleaving), since one session cannot hold multiple warm specialists.
 - Where `/compact` is absent, the proposal-boundary checkpoint degrades to "start a fresh session from the arc-state file and the last handoff," Pillar 2's stated fallback.
 - The arc-state file and the claim registry are plain files and are the durable substrate that makes every one of these fallbacks faithful; they carry no Claude-Code dependency.
-</content>
