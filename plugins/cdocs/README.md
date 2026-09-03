@@ -38,16 +38,20 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:report` | Generate a report (status, investigation, incident, audit, retrospective) |
 | `/cdocs:status` | Query and manage document metadata |
 | `/cdocs:iterate` | Run an implement-review loop on a proposal with periodic judge meta-assessment |
+| `/cdocs:oversee` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file, cross-arc claim registry, AFK continuation, and a verification-depth ladder |
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.
 Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
 
 ## Rules
 
-Three rule files ship with the plugin and are delivered to consuming projects via `/cdocs:init`:
+Rule files ship with the plugin and are delivered to consuming projects via `/cdocs:init`:
 
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
 - **`workflow-patterns.md`:** Parallel agent dispatch, subagent-driven development, completeness checklists.
+- **`orchestration-discipline.md`:** Canonical overseer discipline (thin lead, single-writer ownership, liveness reconciliation, durable specialists).
+- **`model-tiering.md`:** Advisory model tiers (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins).
+- **`oversee-arc.md`:** Arc-layer primitives for `/cdocs:oversee` (arc-state schema, claim registry, footprint heuristic, troubleshooting budget, verification-depth ladder).
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
 
 ### Rules Integration
