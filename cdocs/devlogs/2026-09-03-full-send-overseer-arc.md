@@ -67,7 +67,7 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | 1 (propose) | prop-1 (general-purpose) | arc-rev-1 (general-purpose) | revise | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc.md | ~90K (5% inline) | no | Round 1: proposal review_ready (b4be894); review Revise (b6c82c6) — 1 blocking + 8 non-blocking; design sound, all 6 flagged points ok |
 | 2 (propose) | prop-1 (resumed) | arc-rev-2 (general-purpose) | accept | n/a | cdocs/reviews/2026-09-03-review-of-overseer-arc-r2.md | ~100K (5% inline) | no | Round 2: revision 59fd01f; ACCEPTED (e84c6ae). Blocking + 8/8 non-blocking resolved; 3 cosmetic nits for fold-in |
 | 3 (propose) | prop-1 (resumed) | — (nit fold-in) | accept | n/a | — | ~100K (5% inline) | no | Accepting-round nit fold-in + advance to implementation_ready; closes Track 1 propose-revise |
-| 1 (iterate) | impl-1 (general-purpose) | rev-1 (pending) | pending | pending | pending | ~100K (5% inline) | no | Track 2: implement overseer-arc Phases 1-5 (6 optional) in worktree /workspace/clauthier/overseer-arc; floor=structural coherence + no composed/shipped file modified |
+| 1 (iterate) | impl-1 (general-purpose) | rev-1 (general-purpose) | pending | deferred-to-followup | pending | ~100K (5% inline) | no | Track 2: impl-1 built ALL Phases 1-6 on branch overseer-arc (13dd049..b2b8789); self-verify clean; live /oversee smoke = deferred-to-followup. Fresh reviewer dispatched. |
 
 ## Judge Log
 
@@ -93,3 +93,5 @@ Model: default session config (opus lead). No `-m`/`-f` passed by user.
 | dispatch | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:01:00-08:00 | Fold in 3 accepting-round nits + set status implementation_ready |
 | return | prop-1 (resumed) | cdocs/proposals/2026-09-03-overseer-arc.md | 2026-09-03T11:10:00-08:00 | Committed 0fda75a. 3 nits folded; status=implementation_ready. Track 1 propose-revise CLOSED. |
 | dispatch | impl-1 (general-purpose) | [worktree overseer-arc] plugins/cdocs/rules/oversee-arc.md, plugins/cdocs/skills/oversee/**, plugin skill registration | 2026-09-03T11:15:00-08:00 | Track 2 iterate: implement overseer-arc Phases 1-5 in sibling worktree; --dispatched; commit early/often on branch overseer-arc via git -C |
+| return | impl-1 (general-purpose) | [worktree overseer-arc] rules/oversee-arc.md, skills/oversee/{SKILL,template}.md, README/AGENTS/CLAUDE/init registration | 2026-09-03T11:40:00-08:00 | Phases 1-6 done, 8 commits (13dd049..b2b8789). Self-verify a-e clean; no forbidden files touched. |
+| dispatch | rev-1 (general-purpose as reviewer) | [worktree overseer-arc] cdocs/reviews/2026-09-03-review-of-overseer-arc-impl.md | 2026-09-03T11:41:00-08:00 | Track 2 iterate review: verify implementation vs proposal + floor; commit review on branch |
