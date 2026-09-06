@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: proposal
 state: live
-status: wip
+status: review_ready
 tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop]
 ---
 
