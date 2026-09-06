@@ -34,7 +34,14 @@ User asked for a triage of outstanding proposals, then to (a) sonnet-verify whet
 
 | round | actor | verdict | notes |
 |---|---|---|---|
-| 1 | cdocs:reviewer (opus) | _pending_ | dispatched; awaiting review doc in cdocs/reviews/ |
+| 1 | cdocs:reviewer (opus) | revise | 1 blocking (accept-row maps to implementation_ready, should be implementation_accepted; fails proposal's own dry-run) + 6 non-blocking. Review: cdocs/reviews/2026-09-06-review-of-iterate-refinements.md |
+| 1 | reviser (opus, /cdocs:propose) | _pending_ | dispatched to address all 7 action items + 3 settled clarifications |
+
+### Settled clarifications (review Q1-Q3)
+
+- **Q1 (triage logic placement)**: BUMP AGENT MODEL — keep glob/filter/parse/map in the triage agent, raise its model tier for the iterate-aware path; required `subagent_type: triage` fixture gate. (user decision)
+- **Q2 (already-accepted case)**: `[NONE]` + mismatch flag only if `last_reviewed.status` never updated post-Accept; synthetic `implementation_ready` fixture → `[STATUS] implementation_accepted`. (recommended default)
+- **Q3 (resume)**: fold pending-directive recovery into existing On-Resume Reconciliation section. (recommended default)
 
 ## Open items
 

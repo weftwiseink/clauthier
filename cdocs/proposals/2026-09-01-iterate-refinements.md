@@ -6,6 +6,11 @@ task_list: cdocs/iterate-skill
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-06T09:20:00-07:00
+  round: 1
 tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop]
 ---
 
