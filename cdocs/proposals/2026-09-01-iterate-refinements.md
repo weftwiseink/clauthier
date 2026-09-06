@@ -5,12 +5,12 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-4-8"
-  at: 2026-09-06T09:20:00-07:00
-  round: 1
+  at: 2026-09-06T11:05:00-07:00
+  round: 2
 tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop]
 ---
 
@@ -103,7 +103,7 @@ The rationale for `[NONE]` on an open loop is the same fresh-subagent discipline
 **Injection points.** The overseer already pauses between turns (it dispatches one subagent, waits for it to report, then decides).
 These existing pauses are the only injection points; no new interrupt handling is introduced.
 The concrete point where the overseer consults the Steering Log is **Turn N.c (Decide)** — its own reasoning turn between Review and the next dispatch (`iterate/SKILL.md` Turn N.c), where it already reads the verdict and branches.
-Concretely: after Turn N.b (Review) resolves, the overseer at Turn N.c (Decide) consults the Steering Log before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired); and after Turn N.d (Judge) resolves it consults again before Turn (N+1).a.
+Concretely: after Turn N.b (Review) resolves, the overseer at Turn N.c (Decide) consults the Steering Log before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired); and after Turn N.d (Judge) resolves it consults again before Turn (N+1).a — this is the post-judge dispatch boundary, not a second Decide (N.c) turn, since the judge verdict branches directly to the next dispatch with no named Decide turn after it.
 A user message that arrives while a subagent is actively dispatched (mid Task call) is **queued**, not injected: the overseer never interrupts or reinjects into an in-flight subagent, since that would breach the same freshness/isolation invariant the reviewer and judge are built on.
 The queued message is applied at the next injection point instead.
 
@@ -150,6 +150,8 @@ The log-state mapping only activates when a matching devlog is found; every prop
 The accept path is the one place the change is not purely additive: it emits `[STATUS] implementation_accepted`, a recommendation value the blind workflow-state table (`triage.md` lines 56-63) never produces.
 An iterate-loop Accept means the *implementation* was accepted, whose terminal status is `implementation_accepted`, not the design-review `implementation_ready` the blind accepted-mapping (`triage.md` line 60) emits; deferring to that blind mapping would recommend the wrong status.
 The new value is scoped to the matched-devlog path, so it still cannot regress the no-devlog majority.
+
+Because `triage.md` carries a single `model:` field, the bump runs *all* triage on sonnet — including pure-mechanical frontmatter fan-out with no iterate history, not just the iterate-aware path; this is the accepted tradeoff of choosing the model bump over splitting the skill.
 
 ### `task_list` match plus explicit path citation, not `task_list` match alone
 
@@ -250,7 +252,7 @@ Files: [`plugins/cdocs/agents/triage.md`](../../plugins/cdocs/agents/triage.md),
 - Add the devlog-location analysis step (glob by `task_list`, filter to `## Iteration Log` presence, filter to explicit path citation, pick most recent) before "Check workflow state" in `triage.md`.
 - Add the log-state → recommendation mapping table to `triage.md`, documented as taking precedence over the existing blind heuristics when a matching devlog exists; the accept path emits `[STATUS] implementation_accepted` (or `[NONE]` when already accepted) per Proposed Solution §A, a recommendation value the current table does not have.
 - Parse the last row of each table by column *header name*, not by fixed position. The Iteration Log schema drifts across devlog vintages: `2026-05-13-iterate-skill-implementation.md` has `iteration | implementer | reviewer | review_verdict | review_path | notes` (no `review_proof`, no `overseer_ctx_est`/`inline_work` thinness columns); `2026-05-18-iterate-agent-capabilities-implementation.md` adds `review_proof` but still lacks the two thinness columns; the current `template.md` carries all nine. The mapping only needs `review_verdict` (and the Judge Log's `verdict`), but positional indexing would misread the older logs, so `triage.md` must instruct locating the field by header.
-- Bump the triage agent's model tier so the multi-step glob/filter/parse/map is not asked of the haiku floor. The base mechanical-fix workload keeps triage at the `model: haiku` Mechanical/Deterministic Fan-Out tier (`model-tiering.md`), but the iterate-aware step (glob `cdocs/devlogs/*.md`, filter by frontmatter, filter by body citation, tie-break, then parse two header-keyed markdown tables and apply a precedence mapping) is parse/reasoning work that sits in the Search/Explore tier. Since `triage.md` declares a single `model:` frontmatter field (`triage.md` line 3, currently `model: haiku`), raise it to `model: sonnet`; note in `model-tiering.md`'s triage mention (line 28) that the iterate-aware analysis is what lifts triage above the pure-mechanical floor.
+- Bump the triage agent's model tier so the multi-step glob/filter/parse/map is not asked of the haiku floor. The base mechanical-fix workload keeps triage at the `model: haiku` Mechanical/Deterministic Fan-Out tier (`model-tiering.md`), but the iterate-aware step (glob `cdocs/devlogs/*.md`, filter by frontmatter, filter by body citation, tie-break, then parse two header-keyed markdown tables and apply a precedence mapping) is parse/reasoning work that sits in the Search/Explore tier. Since `triage.md` declares a single `model:` frontmatter field (`triage.md` line 3, currently `model: haiku`), raise it to `model: sonnet`; and reword `model-tiering.md` line 28 — which today names both `nit-fix` and `triage` as canonical `model: haiku` Mechanical cases — so `nit-fix` remains the canonical haiku example while triage's bump to sonnet (for the iterate-aware glob/filter/parse/map, Search/Explore tier) is explained, leaving the file free of the contradiction that triage is both haiku and sonnet.
 - Add the `ITERATE LOOP STATE:` block to the agent's Output Format.
 - Cross-reference the new step from `skills/triage/SKILL.md`'s Behavior section so the dispatcher's expectations match the agent's actual steps.
 

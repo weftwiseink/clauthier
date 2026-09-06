@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/iterate-skill
 type: devlog
 state: live
-status: wip
+status: done
 tags: [triage, iterate, propose_revise, agent_orchestration]
 ---
 
@@ -35,7 +35,11 @@ User asked for a triage of outstanding proposals, then to (a) sonnet-verify whet
 | round | actor | verdict | notes |
 |---|---|---|---|
 | 1 | cdocs:reviewer (opus) | revise | 1 blocking (accept-row maps to implementation_ready, should be implementation_accepted; fails proposal's own dry-run) + 6 non-blocking. Review: cdocs/reviews/2026-09-06-review-of-iterate-refinements.md |
-| 1 | reviser (opus, /cdocs:propose) | _pending_ | dispatched to address all 7 action items + 3 settled clarifications |
+| 1 | reviser (opus, /cdocs:propose) | done | all 7 action items + 3 clarifications addressed; blocking accept-row split into two explicit rows; triage.md model haiku→sonnet for iterate path (commit 8cd770d) |
+| 2 | cdocs:reviewer (opus) | accept | blocking fix + all clarifications verified against live files; 3 non-blocking nits for accepting round. Review: cdocs/reviews/2026-09-06-review-of-iterate-refinements-r2.md |
+| 2 | reviser (opus) | done | all 3 nits resolved (model-tiering line 28 reword, whole-agent-bump cost note, post-judge boundary label) |
+
+**Loop closed: ACCEPTED at round 2.** Proposal promoted `review_ready` → `implementation_ready`. Ready for `/cdocs:implement`.
 
 ### Settled clarifications (review Q1-Q3)
 
