@@ -30,7 +30,7 @@ That second proposal's own Objective named four coupled follow-on gaps but only 
 The other two, triage awareness and mid-loop steering, were re-surfaced independently during the 2026-09-01 overseer-consolidation survey and are this proposal's scope.
 
 Both refinements are additive to the existing loop protocol: neither changes the Accept/Reject/Revise verdict taxonomy, the freshness disciplines, or the judge's read-only meta-reviewer posture.
-Refinement A only changes what `/cdocs:triage` reads before recommending a status transition.
+Refinement A changes what `/cdocs:triage` reads before recommending a status transition; it is additive for proposals with no iterate history, but on the accept path it also introduces one new recommendation output value (`[STATUS] implementation_accepted`) the blind table lacks.
 Refinement B only changes what happens at turn boundaries the overseer already has (it does not add new interrupt machinery); it formalizes and extends the existing "write a final row before yielding" resumption discipline to cover a deliberate pause, not just a crash.
 
 ## Objective
@@ -67,7 +67,7 @@ It has no step that looks for a devlog, let alone one with `## Iteration Log` / 
 A proposal driven through `/cdocs:iterate` updates its `last_reviewed` frontmatter only via the reviewer agent's per-round convention and via the overseer's Accept-turn update; nothing keeps triage's blind heuristics (e.g. `round >= 3` triggers `[ESCALATE]`) aligned with what the loop's own judge already decided.
 
 `/cdocs:iterate` has no protocol turn or log column for human input arriving after Turn 0.
-The human is stated to be "the supervisor: they invoke the skill and receive escalations" (`SKILL.md` line 17), but nothing describes what happens if the supervisor wants to say something *before* an escalation, mid-loop.
+The human is stated to be "the supervisor: they invoke the skill and receive escalations" (`SKILL.md` line 16), but nothing describes what happens if the supervisor wants to say something *before* an escalation, mid-loop.
 In practice a user typing into the overseer's session between subagent dispatches already reaches the overseer; what's missing is a convention for what the overseer does with it and how that's recorded.
 
 ## Proposed Solution
@@ -80,14 +80,15 @@ In practice a user typing into the overseer's session between subagent dispatche
 2. Among matches, keep only devlogs containing a `## Iteration Log` heading (i.e., produced by `/cdocs:iterate` Turn 0).
 3. `task_list` match is necessary but not sufficient (a workstream can span multiple proposals): further keep only devlogs whose body names this proposal's path explicitly (the Turn 0 Brief cites `<proposal_path>`).
 4. If multiple devlogs remain, take the most recently dated one (filename date, tie-broken by `first_authored.at`).
-5. If none remain, fall back to the existing blind `last_reviewed`-based heuristics unchanged: this refinement is purely additive and degrades gracefully for proposals with no iterate history.
-6. Otherwise, read the matched devlog's Iteration Log and Judge Log tables and take the **last row of each**.
+5. If none remain, fall back to the existing blind `last_reviewed`-based heuristics unchanged: for the no-devlog path this refinement is additive and degrades gracefully for proposals with no iterate history. (The accept path is not merely additive: it introduces a new recommendation output value, `[STATUS] implementation_accepted`, that the blind table never produces; see the mapping table below.)
+6. Otherwise, read the matched devlog's Iteration Log and Judge Log tables and take the **last row of each**, keying every field off its column *header name*, never a fixed column position (the Iteration Log schema drifts across devlog vintages; see Phase 1).
 
 **How log state maps to frontmatter recommendations.** These rules are checked before the existing "Check workflow state" table and, when a matching devlog exists, take precedence over it:
 
 | Log state (last row of each table) | Recommendation |
 |---|---|
-| Iteration Log last row `review_verdict: accept` | `[STATUS]` per the existing accepted-mapping (`implementation_ready` or `implementation_accepted`, per current proposal `status`); cross-check against `last_reviewed.status` and flag a mismatch in the report if the frontmatter was never actually updated post-Accept. |
+| Iteration Log last row `review_verdict: accept`, proposal not yet `implementation_accepted` | `[STATUS] implementation_accepted`. An `/cdocs:iterate` Accept is an *implementation* Accept, whose terminal status is `implementation_accepted` (`iterate/SKILL.md` Turn N.c Accept branch, line 92: "update proposal frontmatter per `/cdocs:implement` conventions"), not the design-review `implementation_ready` the blind accepted-mapping emits (`triage.md` line 60). This is a NEW recommendation value the blind table never produces. |
+| Iteration Log last row `review_verdict: accept`, proposal already `implementation_accepted` | `[NONE]` — no transition. Cross-check against `last_reviewed.status` and flag a mismatch in the report ONLY if `last_reviewed.status` was never updated post-Accept. |
 | Iteration Log last row `review_verdict: reject` | `[ESCALATE]`, mirroring the loop's own "Reject pre-empts judge" rule; do not wait for `round >= 3`. |
 | Judge Log last row `verdict: escalate` (and no later Iteration Log row superseding it) | `[ESCALATE]`, regardless of round count; surface the judge's rationale (inline text or `judge_path`) verbatim in the triage report. |
 | Judge Log last row `verdict: rotate-implementer`, or Iteration Log last row `review_verdict: revise` with no Judge Log row yet | `[NONE]` — the loop is still open and owns this document; note "in-flight iterate loop, devlog: `<path>`" in the report so a human reading the triage output understands why no action was recommended. |
@@ -101,11 +102,12 @@ The rationale for `[NONE]` on an open loop is the same fresh-subagent discipline
 
 **Injection points.** The overseer already pauses between turns (it dispatches one subagent, waits for it to report, then decides).
 These existing pauses are the only injection points; no new interrupt handling is introduced.
-Concretely: after Turn N.b (Review) resolves and before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired), and after Turn N.d (Judge) resolves and before Turn (N+1).a.
+The concrete point where the overseer consults the Steering Log is **Turn N.c (Decide)** — its own reasoning turn between Review and the next dispatch (`iterate/SKILL.md` Turn N.c), where it already reads the verdict and branches.
+Concretely: after Turn N.b (Review) resolves, the overseer at Turn N.c (Decide) consults the Steering Log before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired); and after Turn N.d (Judge) resolves it consults again before Turn (N+1).a.
 A user message that arrives while a subagent is actively dispatched (mid Task call) is **queued**, not injected: the overseer never interrupts or reinjects into an in-flight subagent, since that would breach the same freshness/isolation invariant the reviewer and judge are built on.
 The queued message is applied at the next injection point instead.
 
-**The Steering Log.** A new devlog table, alongside the Iteration Log and Judge Log, copied from `template.md` on Turn 0 like the other two:
+**The Steering Log.** A new devlog table — the *fourth*, alongside the three that already exist (Iteration Log, Judge Log, and Dispatch/Return Events; `iterate/SKILL.md` line 131) — copied from `template.md` on Turn 0 like the existing three:
 
 ```
 ## Steering Log
@@ -142,10 +144,12 @@ The next Iteration Log row's `notes` column cross-references the override (e.g. 
 
 ## Important Design Decisions
 
-### Triage precedence is additive, not a replacement
+### Triage precedence: additive for the no-devlog path, a new output value on the accept path
 
-The log-state mapping only activates when a matching devlog is found; every proposal with no iterate history behaves exactly as `triage.md` already specifies.
-This keeps the change low-risk: it cannot regress triage's behavior on the majority of documents that were never run through `/cdocs:iterate`.
+The log-state mapping only activates when a matching devlog is found; every proposal with no iterate history behaves exactly as `triage.md` already specifies, so the change cannot regress triage's behavior on the majority of documents that were never run through `/cdocs:iterate`.
+The accept path is the one place the change is not purely additive: it emits `[STATUS] implementation_accepted`, a recommendation value the blind workflow-state table (`triage.md` lines 56-63) never produces.
+An iterate-loop Accept means the *implementation* was accepted, whose terminal status is `implementation_accepted`, not the design-review `implementation_ready` the blind accepted-mapping (`triage.md` line 60) emits; deferring to that blind mapping would recommend the wrong status.
+The new value is scoped to the matched-devlog path, so it still cannot regress the no-devlog majority.
 
 ### `task_list` match plus explicit path citation, not `task_list` match alone
 
@@ -212,7 +216,9 @@ If the floor change makes that follow-up's scope stale, that is a manual judgmen
 ### Phase A (triage)
 
 - **Dry-run against real history**: run the updated triage analysis (read-only rehearsal, no edits) against this repo's own `2026-05-18-iterate-agent-capabilities-implementation.md` devlog and its proposal, and against `2026-05-13-iterate-skill-implementation.md` and its proposal.
-  Confirm the recommended status matches what was actually set (`implementation_accepted` for both, per `2026-09-01-oversight-proposals-and-cc-features.md`'s triage findings) without relying on `last_reviewed.round`.
+  Both target proposals already carry `status: implementation_accepted`, and both cited devlogs end their Iteration Log on an `accept` row, so the correct recommendation is `[NONE]` (already-accepted branch) with no false mismatch flag, keyed off the log's `accept` row rather than `last_reviewed.round`.
+- **Synthetic accept-transition fixture**: construct a throwaway devlog (in the scratch directory, not committed) whose Iteration Log ends on an `accept` row, paired with a synthetic proposal still at `status: implementation_ready`.
+  Confirm the mapping recommends `[STATUS] implementation_accepted` (the new output value), not the blind mapping's `[STATUS] implementation_ready`.
 - **Synthetic escalate fixture**: construct a throwaway devlog (in the scratch directory, not committed) with an Iteration Log ending in a `revise` row at round 2 and a Judge Log ending in an `escalate` row.
   Confirm the mapping recommends `[ESCALATE]` despite `round < 3`, which the current blind heuristic would miss.
 - **Synthetic in-flight fixture**: construct a throwaway devlog with an Iteration Log ending in `revise` and no Judge Log row.
@@ -227,7 +233,8 @@ This is a live-loop-interaction feature; a genuine test requires actually runnin
 
 ## Verification Methodology
 
-Phase A is verified by direct inspection of the updated `triage.md` table plus the dry-run and synthetic fixtures above; no live agent dispatch is required to verify the mapping logic itself (the mapping is deterministic table lookups over log rows already testable by static inspection of example devlogs), though a `subagent_type: "triage"` dispatch against the fixtures is worthwhile to confirm the *agent* actually follows the updated instructions, not just that the instructions are internally consistent.
+Phase A is verified by direct inspection of the updated `triage.md` table plus the dry-run and synthetic fixtures above (the mapping is deterministic table lookups over header-keyed log rows, statically inspectable against the example devlogs).
+Static inspection alone is insufficient here: a `subagent_type: "triage"` dispatch against the dry-run targets and the synthetic fixtures is a REQUIRED success gate, not optional, because the multi-step glob/filter/parse/map is exactly the kind of work a mechanical-tier agent can get subtly wrong even when the written instructions are internally consistent. The dispatch confirms the *agent* — at its bumped tier — actually follows the updated instructions and produces the documented recommendations (`[NONE]` for the two already-accepted targets with no false mismatch flag; `[STATUS] implementation_accepted` for the synthetic still-`implementation_ready` fixture; `[ESCALATE]` for the synthetic escalate fixture; `[NONE]` for the synthetic in-flight fixture).
 
 Phase B's structural correctness (schema, injection-point rules, non-mutation of Judge Log rows) is verified by inspection and the table-top walkthrough.
 Its behavioral correctness (the overseer actually applies a queued directive at the right turn, actually stops cleanly on pause) can only be verified by the deferred live smoke test.
@@ -238,25 +245,28 @@ Its behavioral correctness (the overseer actually applies a queued directive at 
 
 ### Phase 1: Triage reads Iteration/Judge Logs
 
-Files: [`plugins/cdocs/agents/triage.md`](../../plugins/cdocs/agents/triage.md), [`plugins/cdocs/skills/triage/SKILL.md`](../../plugins/cdocs/skills/triage/SKILL.md).
+Files: [`plugins/cdocs/agents/triage.md`](../../plugins/cdocs/agents/triage.md), [`plugins/cdocs/skills/triage/SKILL.md`](../../plugins/cdocs/skills/triage/SKILL.md), [`plugins/cdocs/rules/model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md) (reconcile the triage tier mention with the model bump).
 
 - Add the devlog-location analysis step (glob by `task_list`, filter to `## Iteration Log` presence, filter to explicit path citation, pick most recent) before "Check workflow state" in `triage.md`.
-- Add the log-state → recommendation mapping table to `triage.md`, documented as taking precedence over the existing blind heuristics when a matching devlog exists.
+- Add the log-state → recommendation mapping table to `triage.md`, documented as taking precedence over the existing blind heuristics when a matching devlog exists; the accept path emits `[STATUS] implementation_accepted` (or `[NONE]` when already accepted) per Proposed Solution §A, a recommendation value the current table does not have.
+- Parse the last row of each table by column *header name*, not by fixed position. The Iteration Log schema drifts across devlog vintages: `2026-05-13-iterate-skill-implementation.md` has `iteration | implementer | reviewer | review_verdict | review_path | notes` (no `review_proof`, no `overseer_ctx_est`/`inline_work` thinness columns); `2026-05-18-iterate-agent-capabilities-implementation.md` adds `review_proof` but still lacks the two thinness columns; the current `template.md` carries all nine. The mapping only needs `review_verdict` (and the Judge Log's `verdict`), but positional indexing would misread the older logs, so `triage.md` must instruct locating the field by header.
+- Bump the triage agent's model tier so the multi-step glob/filter/parse/map is not asked of the haiku floor. The base mechanical-fix workload keeps triage at the `model: haiku` Mechanical/Deterministic Fan-Out tier (`model-tiering.md`), but the iterate-aware step (glob `cdocs/devlogs/*.md`, filter by frontmatter, filter by body citation, tie-break, then parse two header-keyed markdown tables and apply a precedence mapping) is parse/reasoning work that sits in the Search/Explore tier. Since `triage.md` declares a single `model:` frontmatter field (`triage.md` line 3, currently `model: haiku`), raise it to `model: sonnet`; note in `model-tiering.md`'s triage mention (line 28) that the iterate-aware analysis is what lifts triage above the pure-mechanical floor.
 - Add the `ITERATE LOOP STATE:` block to the agent's Output Format.
 - Cross-reference the new step from `skills/triage/SKILL.md`'s Behavior section so the dispatcher's expectations match the agent's actual steps.
 
-**Success criteria**: dry-run and synthetic-fixture cases from Test Plan Phase A produce the documented recommendations; proposals with no iterate history are unaffected (spot-check one).
+**Success criteria**: dry-run and synthetic-fixture cases from Test Plan Phase A produce the documented recommendations (including `[NONE]` for the two already-accepted dry-run targets and `[STATUS] implementation_accepted` for the synthetic still-`implementation_ready` fixture); proposals with no iterate history are unaffected (spot-check one); the required `subagent_type: "triage"` fixture dispatch (see Verification Methodology) passes against the fixtures.
 
 ### Phase 2: Steering Log convention and injection points
 
 Files: [`plugins/cdocs/skills/iterate/SKILL.md`](../../plugins/cdocs/skills/iterate/SKILL.md), [`plugins/cdocs/skills/iterate/template.md`](../../plugins/cdocs/skills/iterate/template.md).
 
 - Add the `## Steering Log` table to `template.md`, with column semantics matching Proposed Solution item B.
-- Add an "Injection points" subsection to `SKILL.md` (near "Iteration Log and Judge Log" or "Termination"): the turn-boundary rule, the queue-don't-interrupt rule for mid-dispatch messages, and the five `kind` values with their handling (steer-implementer, steer-reviewer-floor, pause, resume, override-judge).
+- Add an "Injection points" subsection to `SKILL.md` (near "Iteration Log and Judge Log" or "Termination"): the turn-boundary rule naming Turn N.c (Decide) as the point the overseer consults the Steering Log, the queue-don't-interrupt rule for mid-dispatch messages, and the five `kind` values with their handling (steer-implementer, steer-reviewer-floor, pause, resume, override-judge).
 - Extend "Termination" to state explicitly that `pause` is not a fourth verdict and does not invoke Accept/Reject/judge logic.
-- Extend the Turn 0 devlog-scaffolding instruction to copy the Steering Log table alongside the other two.
+- Update the Turn 0 devlog-scaffolding instruction (`SKILL.md` line 69, which currently names only "Iteration Log and empty Judge Log") to copy the Steering Log alongside the existing three tables, and reconcile the table count in the "Iteration Log and Judge Log" section (`SKILL.md` line 131, currently "Three tables") to *four*. These two lines currently disagree on the count (line 69 implies two, line 131 says three); both must be brought to four so the scaffolding instruction and the table inventory agree.
+- Fold Steering-Log pending-directive recovery into the existing On-Resume Reconciliation section of `iterate/SKILL.md` (lines 121-127), which today reconstructs liveness only from the Dispatch/Return Events rows. That section is the single source of truth for resume, so the resume behavior asserted in Proposed Solution §B ("a fresh overseer resuming a paused loop reads the Steering Log to recover any pending, not-yet-applied directives") must be codified there — a fresh overseer re-reads the Steering Log for rows whose `applied_at_iteration` is `pending` and re-queues them — rather than living only in prose the reconciliation section would otherwise contradict. Do NOT add a separate resume subsection.
 
-**Success criteria**: Test Plan Phase B's table-top walkthrough traces cleanly against the documented schema; grep for `## Steering Log` finds it in both `SKILL.md`'s references and `template.md`.
+**Success criteria**: Test Plan Phase B's table-top walkthrough traces cleanly against the documented schema; grep for `## Steering Log` finds it in both `SKILL.md`'s references and `template.md`; the Turn 0 scaffolding instruction, the "Iteration Log and Judge Log" table count, and the On-Resume Reconciliation section all reflect the four-table inventory and the pending-directive recovery.
 
 ### Verification: Live smoke test (deferred, separate top-level invocation; not a commit)
 
