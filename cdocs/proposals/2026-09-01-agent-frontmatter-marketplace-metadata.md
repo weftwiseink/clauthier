@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/agent-frontmatter-marketplace
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
