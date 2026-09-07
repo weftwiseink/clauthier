@@ -41,3 +41,6 @@ tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop, imp
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
+| dispatch | impl-1 (general-purpose) | plugins/cdocs/agents/triage.md, plugins/cdocs/skills/triage/SKILL.md, plugins/cdocs/rules/model-tiering.md, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/skills/iterate/template.md | 2026-09-07T08:03:00-07:00 | full proposal, Phase 1 + Phase 2; builds synthetic fixtures for reviewer's required triage dispatch |
+| return | impl-1 (general-purpose) | (same) | 2026-09-07T08:12:00-07:00 | done; commits 9f1863f, d34be55, 30679a2; fixtures in worktree scratch-fixtures/ (untracked); hand-traced all Phase A cases pass |
+| dispatch | rev-1 (cdocs:reviewer) | (read-only; may create synthetic fixtures under cdocs/ as untracked for triage dispatch, then delete) | 2026-09-07T08:13:00-07:00 | Turn 1.b; MUST run required subagent_type:triage fixture dispatch and cite artifacts |
