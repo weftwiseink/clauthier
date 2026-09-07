@@ -4,8 +4,8 @@ first_authored:
   at: 2026-03-19T14:30:00-07:00
 task_list: cdocs/opencode-decoupling
 type: proposal
-state: live
-status: implementation_wip
+state: archived
+status: implementation_accepted
 tags: [opencode, plugin-architecture, cc-plugin, build-pipeline, worktree, postinstall]
 last_reviewed:
   status: revision_requested
@@ -13,6 +13,10 @@ last_reviewed:
   at: 2026-03-19T15:00:00-07:00
   round: 1
 ---
+
+> NOTE(claude-sonnet-5/frontmatter-reclassification): Reclassified from `implementation_wip` to `implementation_accepted` (`state: archived`).
+> Fully implemented and accepted per `cdocs/devlogs/2026-03-19-decouple-oc-build-from-cc-plugin.md` and `cdocs/reviews/2026-03-19-review-of-oc-decoupling-implementation.md` (Accept).
+> Confirmed live: `plugins/cdocs/scripts/postinstall.js` writes only to `.opencode/skills/<name>/` (flat) and `.opencode/rules/cdocs/`, contains zero `.claude/` write paths, and includes the source-repo guard.
 
 # Decouple OpenCode Build from Claude Code Plugin Setup
 
