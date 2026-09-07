@@ -25,8 +25,11 @@ This tier covers exploratory search sweeps, codebase reconnaissance, and straigh
 ## Mechanical / Deterministic Fan-Out Tier (haiku, cheapest capable model)
 
 When the task has a clear pass/fail signal and needs no reasoning flexibility, the cheapest capable model is the default.
-The `nit-fix` and `triage` agents are the canonical cases: both are `model: haiku` in `plugins/cdocs/agents/`.
+The `nit-fix` agent is the canonical case: it is `model: haiku` in `plugins/cdocs/agents/`.
 These tasks fan out mechanically against a deterministic rubric, so a stronger model buys nothing.
+
+The `triage` agent's base mechanical-fix workload (frontmatter fields, timestamps, tags) fits this tier, but the agent is `model: sonnet` (not haiku) because its iterate-aware analysis step sits in the Search/Explore tier: it globs `cdocs/devlogs/*.md`, filters by frontmatter `task_list` and by body citation, tie-breaks candidates, then parses two header-keyed markdown tables and applies a precedence mapping.
+Since `triage.md` carries a single `model:` field, the whole agent runs at the higher tier the parse/reasoning step requires; this is the accepted tradeoff of a model bump over splitting the skill.
 
 ## Precedence
 
