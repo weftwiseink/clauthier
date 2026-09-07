@@ -34,6 +34,8 @@ Scan for cdocs files modified in the current turn (based on recent Write/Edit op
 5. **Apply status recommendations**: evaluate each status transition recommendation. Apply sensible ones via Edit. Defer or ask the user if unsure.
 6. **Route workflow actions**: dispatch based on the agent's workflow recommendations (see below).
 
+For `type: proposal` documents, the triage agent runs an iterate-devlog analysis step before its blind workflow-state check (see `agents/triage.md` "Locate the iterate devlog and read its logs"): it locates the `/cdocs:iterate` devlog for the proposal's `task_list` and reads the last row of its Iteration Log and Judge Log. When such a devlog exists, the log-state mapping takes precedence over the blind heuristics and the report carries an `ITERATE LOOP STATE:` block. Two outcomes differ from the blind path: an iterate-loop Accept yields `[STATUS] implementation_accepted` (not `implementation_ready`), and an in-flight or judge-escalated loop yields `[NONE]`/`[ESCALATE]` regardless of round count. The dispatcher acts on these exactly as the table below prescribes.
+
 ## Dispatching the Triage Agent
 
 Use the Task tool:
@@ -56,8 +58,8 @@ The agent reads the frontmatter spec at runtime, applies mechanical fixes (tags,
 | `[REVIEW]` | Invoke the reviewer agent via Task tool with `subagent_type: "reviewer"`. Pass the document path. | Reviewer agent (opus) |
 | `[REVISE]` | Read the review's action items, revise the document inline. | Top-level agent (has authoring context) |
 | `[ESCALATE]` | Report to the user with options. Review round >= 3 without acceptance indicates the loop needs human judgment. | Top-level agent presents options |
-| `[STATUS]` | Apply the recommended frontmatter status update directly via Edit. | Top-level agent |
-| `[NONE]` | No action needed. | - |
+| `[STATUS]` | Apply the recommended frontmatter status update directly via Edit. Includes `[STATUS] implementation_accepted` (emitted when an iterate devlog's Iteration Log ends on an `accept` row and the proposal is not yet accepted). | Top-level agent |
+| `[NONE]` | No action needed. Also emitted for an in-flight iterate loop that already owns the document (see the `ITERATE LOOP STATE:` block for the devlog path). | - |
 
 ### Review Dispatch Details
 
