@@ -42,5 +42,5 @@ Formal agents in `plugins/cdocs/agents/` with explicit tool allowlists:
 
 - `reviewer`: structured document reviews (opus).
 - `judge`: meta-assessment of `/cdocs:iterate` loop health (opus; no Edit, Bash, or Task).
-- `triage`: frontmatter analysis and mechanical fixes (haiku).
+- `triage`: frontmatter analysis, mechanical fixes, and iterate-devlog log-state mapping (sonnet).
 - `nit-fix`: writing-convention enforcement (haiku).
