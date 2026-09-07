@@ -1,9 +1,9 @@
 # Iterate Skill: Devlog Section Templates
 
-The `/cdocs:iterate` skill appends three table sections to the loop's devlog on Turn 0.
+The `/cdocs:iterate` skill appends four table sections to the loop's devlog on Turn 0.
 This file is the source for those snippets.
 
-Copy the three H2 sections below into the devlog body verbatim, then append a row to each table as the loop progresses.
+Copy the four H2 sections below into the devlog body verbatim, then append a row to each table as the loop progresses.
 
 ## Iteration Log
 
@@ -18,6 +18,11 @@ Copy the three H2 sections below into the devlog body verbatim, then append a ro
 ## Dispatch/Return Events
 
 | event | agent_handle | target_files | at | notes |
+|---|---|---|---|---|
+
+## Steering Log
+
+| at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 
 ## Column Semantics
@@ -69,3 +74,14 @@ Records each child dispatch and return so a resumed overseer can reconcile liven
   `n/a` for a read-only child (e.g. the judge).
 - `at`: ISO 8601 timestamp of the event.
 - `notes`: short free text, e.g. the return summary pointer or a re-scope note.
+
+**Steering Log**
+
+Records human directives that arrive after Turn 0 so the overseer can fold them into the *next* dispatch (never an in-flight subagent) and a fresh overseer can recover pending directives on resume (see `SKILL.md` "Injection points" and "On-Resume Reconciliation").
+
+- `at`: ISO 8601 timestamp the directive was received.
+- `kind`: one of `steer-implementer`, `steer-reviewer-floor`, `pause`, `resume`, `override-judge`.
+- `target`: which future actor/turn the directive applies to, e.g. `impl-2`, `rev-3`, `judge-escalate@i4`.
+- `content`: the actual instruction, floor text, or override rationale, as free text.
+- `applied_at_iteration`: the iteration number where the overseer folded the directive into a dispatch prompt; `pending` while queued/not-yet-applied; `n/a` for a `pause`/`resume` marker row.
+  The overseer appends the row the moment it notices the directive (even if application is deferred) and updates this field when it actually folds the content into a dispatch.
