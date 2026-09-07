@@ -4,8 +4,8 @@ first_authored:
   at: 2026-03-17T00:55:00-07:00
 task_list: marketplace/build-workspace
 type: proposal
-state: live
-status: implementation_wip
+state: archived
+status: implementation_accepted
 tags: [architecture, build-system, workspace, gitignore, ci, npm]
 last_reviewed:
   status: accepted
@@ -13,6 +13,9 @@ last_reviewed:
   at: 2026-03-17T14:00:00-07:00
   round: 1
 ---
+
+> NOTE(claude-sonnet-5/frontmatter-reclassification): Reclassified from `implementation_wip` to `implementation_accepted` (`state: archived`).
+> Fully implemented per `cdocs/devlogs/2026-03-18-build-workspace-reorganization.md` (commits `5ce8e9c`, `8324a9b`, `4e50688`, `a5715f2`, `eafa78b`) and confirmed live: `build/cdocs/opencode/` is gitignored build output, `plugins/cdocs/opencode/` is gone, root `package.json`/`tsconfig.json` exist, `scripts/build-opencode.ts` exists, and `.github/workflows/opencode-build.yml` runs build+validate (no dirty-check).
 
 # Build Workspace Reorganization
 
