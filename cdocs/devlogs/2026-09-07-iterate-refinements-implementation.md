@@ -31,6 +31,7 @@ tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop, imp
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-09-07-review-of-iterate-refinements-implementation.md | ~115K (some inline) | yes | empirical triage gate 5/5 PASS (cited, cdocs/devlogs/_verify/2026-09-07-...); 1 blocking: 3 sibling docs still call triage haiku (plugins/cdocs/AGENTS.md:45, rules/workflow-patterns.md:101,112) — under-specified model-bump ripple |
 
 ## Judge Log
 
@@ -46,3 +47,7 @@ tags: [iterate, triage, agent_orchestration, audit_trail, human_in_the_loop, imp
 | dispatch | gate-1 (general-purpose sonnet) | n/a (read-only) | 2026-09-07T08:15:00-07:00 | overseer-run empirical triage gate; reviewer cannot dispatch subagents, and subagent_type:triage would load the installed (pre-edit) plugin |
 | return | gate-1 (general-purpose sonnet) | n/a | 2026-09-07T08:21:00-07:00 | 5/5 PASS; artifact cdocs/devlogs/_verify/2026-09-07-iterate-refinements-triage-gate.md |
 | dispatch | rev-1 (cdocs:reviewer) | n/a (read-only) | 2026-09-07T08:22:00-07:00 | Turn 1.b structural review; cites the gate artifact for the empirical floor |
+| return | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-07-review-of-iterate-refinements-implementation.md | 2026-09-07T08:30:00-07:00 | verdict revise; 1 blocking (3 sibling docs still call triage haiku) |
+| dispatch | impl-1 (general-purpose, resumed) | plugins/cdocs/AGENTS.md, plugins/cdocs/rules/workflow-patterns.md | 2026-09-07T08:31:00-07:00 | Turn 2.a; 3-line fix for blocking finding; same implementer (context intact) |
+| return | impl-1 (general-purpose, resumed) | plugins/cdocs/AGENTS.md, plugins/cdocs/rules/workflow-patterns.md | 2026-09-07T08:38:00-07:00 | commit 64743d4; AGENTS.md hand-authored (not generated); grep confirms no stray triage-haiku sentence remains |
+| dispatch | rev-2 (cdocs:reviewer) | n/a (read-only) | 2026-09-07T08:39:00-07:00 | Turn 2.b; verify blocking fix resolved + no regression |
