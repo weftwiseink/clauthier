@@ -109,7 +109,7 @@ After completing substantive work on cdocs documents, invoke `/cdocs:triage` to 
 
 **Architecture:** Formal agents in `plugins/cdocs/agents/`:
 - **nit-fix** (haiku): writing convention enforcement on document body prose. Reads all `rules/*.md` files at runtime, applies mechanical fixes, reports judgment-required violations. Infrastructure-enforced tool allowlist (no Write/Bash).
-- **triage** (sonnet): mechanical frontmatter analysis and fixes, plus an iterate-devlog log-state mapping step (glob/filter/parse) that sits in the Search/Explore tier; see `model-tiering.md`. Infrastructure-enforced tool allowlist (no Write/Bash).
+- **triage** (sonnet): mechanical frontmatter analysis and fixes, plus an iterate-devlog log-state mapping step (glob/filter/parse) that sits in the Search/Explore tier. See `model-tiering.md`. Infrastructure-enforced tool allowlist (no Write/Bash).
 - **reviewer** (opus): structured document reviews. Preloads the review skill via `skills: [cdocs:review]`, reads rules at runtime.
 - **judge** (opus): meta-assessment of `/cdocs:iterate` loop health. Reads the iteration log and recent review documents only; tool allowlist excludes Edit, Bash, and Task.
 
