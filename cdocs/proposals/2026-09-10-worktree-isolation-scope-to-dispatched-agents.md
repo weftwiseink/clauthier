@@ -5,19 +5,20 @@ first_authored:
 task_list: clauthier/worktree-isolation-guardrails
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_accepted
 footprint:
   - "plugins/cdocs/rules/orchestration-discipline.md"
   - "plugins/cdocs/rules/oversee-arc.md"
   - "plugins/cdocs/agents/reviewer.md"
   - "plugins/cdocs/skills/implement/SKILL.md"
   - "plugins/cdocs/skills/iterate/SKILL.md"
+  - "plugins/cdocs/skills/oversee/SKILL.md"
 tags: [architecture, orchestration, worktree, clauthier]
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
-  at: 2026-09-10T14:30:00-07:00
-  round: 1
+  at: 2026-09-10T12:24:53-07:00
+  round: 2
 ---
 
 # Scope Worktree-Isolation to Dispatched Agents, Not the Overseer
