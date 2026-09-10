@@ -60,7 +60,7 @@ This is the arc-altitude analogue of Pillar 2's handoff-before-compact applied t
 That check is invisible to a SECOND top-level `/oversee` in another worktree or a concurrent arc, which has no visibility into the first overseer's private log.
 The claim registry is the cross-arc / cross-session extension of that same guarantee, and nothing more: it does not restate Pillar 1b, it relocates the claim to a shared location.
 
-This cooperative registry, plus single-writer ownership, is the FIRST-CLASS overseer clobber-safety mechanism — NOT a session-wide worktree lock. The overseer is never isolation-bound (see [`orchestration-discipline.md`](./orchestration-discipline.md) "Isolation is a dispatched-agent property"); it must land, resolve, and fork freely, so cross-worktree safety comes from these legible on-disk claims, with any harness-level lock only a coarse backstop, never the primary control.
+This cooperative registry, plus single-writer ownership, is the FIRST-CLASS overseer clobber-safety mechanism, not a session-wide worktree lock. The overseer is never isolation-bound (see the "Isolation is a dispatched-agent property" section of [`orchestration-discipline.md`](./orchestration-discipline.md)): it must land, resolve, and fork freely. Cross-worktree safety comes from these legible on-disk claims, with any harness-level lock only a coarse backstop, never the primary control.
 
 The registry is a repo-global directory `.claude/oversee/claims/`, one file per claim, OUTSIDE any single devlog so every session in the repo can see it:
 

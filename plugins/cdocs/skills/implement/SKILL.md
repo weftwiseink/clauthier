@@ -27,7 +27,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 
   The caller decides whether to dispatch `/cdocs:report` itself, roll the request into the next iteration's brief, or treat it as deferred follow-up.
 
-  A DISPATCHED implementer works in isolation (its own worktree; no cross-worktree writes) so it cannot clobber a sibling workstream — a property of the dispatched agent, not of the top-level invocation, which is never isolation-bound (see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property", symmetric with [`reviewer.md`](../../agents/reviewer.md)).
+  A DISPATCHED implementer works in isolation (its own worktree, no cross-worktree writes) so it cannot clobber a sibling workstream. Isolation is a property of the dispatched agent, not of the top-level invocation, which is never isolation-bound (see the "Isolation is a dispatched-agent property" section of [`orchestration-discipline.md`](../../rules/orchestration-discipline.md), symmetric with [`reviewer.md`](../../agents/reviewer.md)).
 
 ## Invocation
 

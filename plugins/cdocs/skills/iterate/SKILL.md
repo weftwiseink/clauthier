@@ -90,7 +90,7 @@ This citation is what makes a `confirmed` row admissible.
 Read the review and branch on the verdict:
 
 - **Accept**: terminate. Update proposal frontmatter per `/cdocs:implement` conventions; write the final devlog entry, then run the Checkpoint (below).
-  If landing the accepted work is a cross-worktree step (a merge into `main`, or a fork off `main`), the overseer is NOT isolation-bound: it surfaces that step as an explicit precondition up front and ROUTES it to the repo's cross-worktree commands (weftwise: `/resolve-wt`, `/dogfood-wt`, `/worktree` / `/wt`), warning never refusing. See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property" (Isolation-aware routing).
+  If landing the accepted work is a cross-worktree step (a merge into `main`, or a fork off `main`), the overseer is NOT isolation-bound: it surfaces that step as an explicit precondition up front and ROUTES it to the consuming repo's cross-worktree commands (e.g. in weftwise: `/resolve-wt`, `/dogfood-wt`, `/worktree`), warning never refusing. See the "Isolation is a dispatched-agent property" section (Isolation-aware routing) of [`orchestration-discipline.md`](../../rules/orchestration-discipline.md).
 - **Reject**: escalate immediately. Reject pre-empts the judge path even if `review_count >= --judge-after`.
 - **Revise**, `review_count < --judge-after`: loop to Turn (N+1).a with the same implementer.
 - **Revise**, `review_count >= --judge-after`: dispatch the judge before the next implementer turn.
