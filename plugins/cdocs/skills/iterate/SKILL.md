@@ -15,8 +15,7 @@ Inline floor: dispatch by default for all tasks beyond trivial few-liners (singl
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
-If the repo has worktree usage practices (it likely does) they should be used to contain the workstream,
-where code and cdocs should be committed early and often.
+Code and cdocs should be committed early and often.
 
 ## Invocation
 
