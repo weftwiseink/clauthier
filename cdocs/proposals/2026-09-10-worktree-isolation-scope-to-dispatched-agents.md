@@ -5,7 +5,7 @@ first_authored:
 task_list: clauthier/worktree-isolation-guardrails
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 footprint:
   - "plugins/cdocs/rules/orchestration-discipline.md"
   - "plugins/cdocs/rules/oversee-arc.md"
@@ -13,17 +13,21 @@ footprint:
   - "plugins/cdocs/skills/implement/SKILL.md"
   - "plugins/cdocs/skills/iterate/SKILL.md"
 tags: [architecture, orchestration, worktree, clauthier]
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-8"
+  at: 2026-09-10T14:30:00-07:00
+  round: 1
 ---
 
 # Scope Worktree-Isolation to Dispatched Agents, Not the Overseer
 
-> BLUF: Worktree isolation binds NESTED DISPATCHED agents (implementer, reviewer), NEVER the top-level overseer/session. State this ONCE canonically in `orchestration-discipline.md` (Graded Enforcement, adjacent to the "hard tool-allowlist on the top-level session is not available" line); skills keep only a thin inline floor plus a reference. The one ambiguous authored line (`iterate`'s "contain the workstream") was interim-removed in `de34bee` and must NOT be restored. The report's `/resolve-wt` mid-merge collision was the HARNESS SANDBOX confining the session, not authored confinement, so clauthier's durable contribution is (a) the canonical principle, (b) isolation-AWARE loop skills that DETECT and ROUTE/WARN (route to weftwise's `/resolve-wt`, `/dogfood-wt`) instead of dead-ending, and (c) a harness-advocacy appendix. No weftwise source edit is required.
+> BLUF: Worktree isolation binds NESTED DISPATCHED agents (implementer, reviewer), NEVER the top-level overseer/session. State this ONCE canonically in `orchestration-discipline.md` (Graded Enforcement, adjacent to the "hard tool-allowlist on the top-level session is not available" line); skills keep only a thin inline floor plus a reference. The one ambiguous authored line (`iterate`'s "contain the workstream") was interim-removed in `de34bee` and must NOT be restored. The report's `/resolve-wt` mid-merge collision was the HARNESS SANDBOX confining the session, not authored confinement, so clauthier's durable contribution is (a) the canonical principle, (b) isolation-AWARE loop skills that surface cross-worktree steps and ROUTE/WARN (route to weftwise's `/resolve-wt`, `/dogfood-wt`) instead of dead-ending, and (c) a harness-advocacy appendix. No weftwise source edit is required.
 
 ## Summary
 
 A `/oversee` session locked to its own worktree ran a full overseer arc fine but could not LAND it: the resolve step's merge into `main` and a fork of a new worktree off `main` are cross-worktree writes the lock refused (motivating report, `weftwise` repo: `cdocs/reports/2026-09-10-worktree-isolation-vs-overseer-guardrails.md`).
-Attribution is split, not singular. That specific mid-merge collision was the Claude Code HARNESS SANDBOX confining the session, not clauthier-authored confinement.
-A separate, ambiguous authored line did exist (`iterate`'s "contain the workstream" phrasing, which a reader could apply to the overseer session); it was interim-removed in clauthier `de34bee`, and this proposal ensures it is not restored.
+Attribution is split (see the Background NOTE); the separate ambiguous authored line (`iterate`'s "contain the workstream", which a reader could apply to the overseer session) was interim-removed in `de34bee` and must not be restored.
 
 The durable clauthier contribution is threefold: state the isolation principle canonically once, make the loop skills isolation-AWARE (detect + route/warn, never refuse), and relay the harness asks as advocacy.
 Isolation is what makes a fresh reviewer's verdict trustworthy and keeps an implementer from clobbering a sibling; the overseer's clobber-safety comes from the cooperative claim registry plus single-writer ownership, NOT from a session-wide lock.
@@ -35,8 +39,8 @@ No weftwise SOURCE edit is needed: its cross-worktree commands are legitimate an
 
 A top-level session running `/oversee`, `/iterate`, `/full-send`, `/propose-revise`, or a resolve/land/fork step must NEVER carry a worktree-isolation restriction.
 Isolation is intended to bind only nested dispatched agents.
-An ambiguous authored line risked being read as confining the overseer (interim-removed in `de34bee`); the deeper mid-merge impediment observed in the report was the harness sandbox.
-Neither should confine the overseer's legitimate cross-worktree work: landing a branch into `main`, resolving a worktree, and forking a new worktree off `main`.
+An ambiguous authored line risked being read as confining the overseer (interim-removed in `de34bee`).
+Neither authored prose nor the harness sandbox should confine the overseer's legitimate cross-worktree work: landing a branch into `main`, resolving a worktree, and forking a new worktree off `main`.
 
 Goal: make the isolation principle explicit and single-sourced, audit every authored surface for phrasing that a reader could apply to the overseer (positively re-scoping, not merely deleting), and align the loop skills with clauthier's already-designed graded + cooperative safety model.
 
@@ -85,7 +89,7 @@ Every match for `worktree|isolat|contain|sandbox` across `skills/`, `agents/`, `
 | `skills/implement/SKILL.md` | boundaries / Invocation Modes (18-28, 70-88) | dispatched vs top-level implementer; no explicit isolation language | NESTED (gap) | Add a one-line statement that the DISPATCHED implementer works in isolation (worktree + no cross-worktree writes), referencing the canonical subsection, symmetric with `reviewer.md`. The TOP-LEVEL implementer is not isolation-bound. Do NOT add isolation language that could read as binding the top-level invocation. |
 | `rules/orchestration-discipline.md` | Graded Enforcement (57-66) | states the overseer cannot be hard-locked; 3 graded layers | **CANONICAL** | Host the new "Isolation is a dispatched-agent property" subsection here. Optionally extend the Phase-5 advisory (line 66) to WARN (never refuse) on cross-worktree / `main` writes from the top-level session. |
 | `rules/oversee-arc.md` | Claim Registry (57-81) | cross-arc single-writer via `.claude/oversee/claims/` | **CANONICAL (promote)** | Promote the claim registry to the FIRST-CLASS overseer clobber-safety mechanism in prose: cross-worktree safety comes from cooperative claims + single-writer, explicitly NOT from any session-wide worktree lock. Add one sentence making that contrast. |
-| `skills/oversee/SKILL.md` | whole file | arc overseer; references cross-worktree `/oversee` as normal | CLEAN | Confirmed: nothing confines the overseer to a worktree (line 60 even treats "a SECOND top-level `/oversee` in another worktree" as normal). No edit needed beyond referencing the principle if a natural anchor exists. |
+| `skills/oversee/SKILL.md` | whole file | arc overseer; references cross-worktree `/oversee` as normal | CLEAN | Confirmed: nothing confines the overseer to a worktree; `oversee-arc.md:60` even treats "a SECOND top-level `/oversee` in another worktree" as normal. No edit needed beyond referencing the principle if a natural anchor exists. |
 | `skills/full-send/SKILL.md` | whole file | composes propose-revise + iterate as overseer | CLEAN | Confirmed: nothing confines the overseer. No edit. |
 | `skills/propose-revise/SKILL.md` | whole file | overseer loop | CLEAN | Confirmed by grep: no worktree/isolation/contain/sandbox language. No edit. |
 | `skills/oversee/template.md` L25, `rules/oversee-arc.md` L35 | per-proposal `worktree` field | CLEAN | This is per-proposal worktree TRACKING in the arc-state file, not a session lock. No edit. |
@@ -102,10 +106,10 @@ The overseer stays clobber-safe via the claim registry + single-writer ownership
 
 ### Isolation-AWARE, not isolation-BOUND, loop skills
 
-Loop skills DETECT isolation and route/WARN; they NEVER refuse or dead-end.
+Loop skills surface cross-worktree steps as explicit preconditions and route them; they NEVER refuse or dead-end, and they do NOT gate this behavior on detecting a lock.
 
-- **Detect** worktree isolation up front via a cheap read-only cross-worktree probe (e.g. attempt a read-only `git -C <main> status` / `git worktree list`; if refused, the session is locked).
-- **Route or warn**, never dead-end: if a cross-worktree step (a resolve's merge into `main`, a fork off `main`) is needed and the session is locked, surface a clear precondition ("run this land/resolve from an un-isolated `main` session") the same way skills already gate on other preconditions - turning a silent mid-merge wall into an up-front routing instruction.
+- **Surface unconditionally.** When a step is cross-worktree (a resolve's merge into `main`, a fork off `main`), the skill ALWAYS surfaces it as an explicit precondition and routes it ("run this land/resolve/fork from an un-isolated `main` session"), warning not refusing, the same way skills already gate on other preconditions. This turns a silent mid-merge wall into an up-front routing instruction.
+- **Why unconditional, not probe-gated.** A read-only cross-worktree probe tests the wrong axis: the report establishes that cross-worktree READS are allowed under the write-scoped lock, and the single observed refusal was a compound-parsing false positive, so a read probe cannot reliably detect the write confinement. A cheap probe may optionally tailor the wording, but it is NOT the trigger.
 - **Phase-5 advisory:** the unbuilt `PreToolUse` advisory in [orchestration-discipline.md](../../plugins/cdocs/rules/orchestration-discipline.md) line 66 MAY warn (never refuse) on a cross-worktree or `main` write from the top-level session, surfacing it to the overseer and judge. Warn-not-refuse keeps the overseer in control and matches the graded philosophy. Per the overseer's decision this is a SPEC-NOTE ONLY here (optional, non-blocking); the hook build is deferred to a dedicated hooks proposal.
 
 ### Downstream (weftwise) surfaces and routing
@@ -115,18 +119,17 @@ No weftwise SOURCE edit is required. Its cross-worktree commands are LEGITIMATE 
 - `/resolve-wt` (`.claude/commands/resolve-wt.md`): Step 2 (~L73-96) runs `git merge <branch>` FROM the target's own worktree, gated on `pnpm gate` exit 0; Step 3 tears down and `git branch -d`.
 - `/dogfood-wt` (`.claude/commands/dogfood-wt.md`) and `scripts/worktree.sh` `cmd_add` (~L103-149: `git worktree add -b <name> <target> <base>`, a fork off base/`main`), wrapped by `/worktree` and `/wt`.
 
-Routing example: when a locked session needs to land, the skill surfaces "run `/resolve-wt <branch>` from an un-isolated `main` session" rather than attempting the cross-worktree merge itself. The commands are correct as-is; the report's collision was the harness sandbox refusing them, not the commands.
+Routing example: when a locked session needs to land, the skill surfaces "run `/resolve-wt <branch>` from an un-isolated `main` session" rather than attempting the cross-worktree merge itself. The commands are correct as-is.
 
-The interim skill-only fix (`de34bee`) needed no `/cdocs:init` re-run downstream, because only `plugins/cdocs/rules/*.md` materialize (README "Rules Integration") and SKILL content never does, so weftwise's rules markers (v0.1.0) stayed valid. This proposal's canonical principle lands in a RULE and so propagates through the normal materialization path (a freshness-hook nudge to re-run `/cdocs:init`); see the Summary NOTE.
+This proposal's rule edit propagates downstream via the normal `/cdocs:init` materialization path, while the interim skill-only fix needed no re-init (see the Summary NOTE); no weftwise source edit either way.
 
 ## Important Design Decisions
 
 - **Single canonical statement, referenced elsewhere.** The principle is stated once in `orchestration-discipline.md` (the overseer-mode source of truth), adjacent to the existing "a hard tool-allowlist on the top-level session is not available" line (~L59) since it reinforces that same graded-enforcement point. It is referenced from `reviewer.md`, `implement/SKILL.md`, and `iterate` (a thin inline floor plus a pointer). Scattering the same claim across skills violates the project's deduplication value and invites drift.
 - **`reviewer.md` is the right home for the strong isolation language**, because the reviewer IS the canonical dispatched agent whose trustworthiness depends on isolation + freshness. The edit STRENGTHENS its framing (names the principle) rather than diluting it.
-- **Attribution is split, not singular.** The report's `/resolve-wt` mid-merge collision was the harness sandbox; a separate ambiguous authored line was interim-removed in `de34bee`. The report's 5 recommendations remain sound; clauthier's durable contribution is the canonical principle plus isolation-aware skills plus advocacy, not deleting authored confinement (already done).
+- **Durable contribution, not deletion.** The report's 5 recommendations remain sound; clauthier's contribution is the canonical principle plus isolation-aware skills plus advocacy. The authored confinement was already removed in `de34bee`.
 - **Warn, never refuse.** Every proposed enforcement touch is advisory. A refusing guard on the top-level session is exactly the failure this proposal removes; re-introducing one (even a "smart" one) would recreate the mid-merge dead-end.
 - **Phase-5 advisory is spec-note only.** The warn-not-refuse `PreToolUse` advisory is documented here as an optional spec note; the hook build is deferred to a dedicated hooks proposal, so this proposal does not block on hook implementation.
-- **Skill-only vs rule-only propagation.** The interim fix was skill-only and reached no downstream consumer (SKILL content does not materialize), so it needed no re-init. This proposal's canonical prose lands in a RULE, which materializes, so consumers pick it up via the normal `/cdocs:init` freshness path. No weftwise source edit is required either way.
 - **`footprint:` frontmatter is declared** so an `/oversee` arc reading this proposal can serialize correctly against its touched paths ([oversee-arc.md](../../plugins/cdocs/rules/oversee-arc.md) "Footprint-Overlap Serialization Heuristic" reads a proposal frontmatter `footprint:` field).
 
 ## Edge Cases / Challenging Scenarios
@@ -184,7 +187,7 @@ Phase 1 is the load-bearing core (the canonical anchor); 2-5 are guard, alignmen
 - Success: grep check 4 passes.
 
 ### Phase 5: Isolation-aware routing + advisory spec-note
-- Fold isolation-AWARE detect/route/warn guidance into the loop skills where they perform cross-worktree steps, naming the real weftwise routing targets (`/resolve-wt`, `/dogfood-wt`, `/worktree`/`/wt`) so a locked session gets an up-front precondition instead of a mid-merge dead-end.
+- Fold isolation-AWARE route/warn guidance (unconditional precondition-surfacing, not probe-gated) into the loop skills where they perform cross-worktree steps, naming the real weftwise routing targets (`/resolve-wt`, `/dogfood-wt`, `/worktree`/`/wt`) so a session gets an up-front precondition instead of a mid-merge dead-end.
 - In `orchestration-discipline.md` line 66, add a spec note that the (unbuilt) `PreToolUse` advisory MAY warn (never refuse) on cross-worktree / `main` writes from the top-level session. Documentation only; the hook build is deferred to a dedicated hooks proposal.
 - Success: routing prose names real commands; advisory is a spec note; no refusing guard introduced anywhere.
 
@@ -213,4 +216,4 @@ The three questions raised during authoring are resolved and folded above; recor
 2. **Canonical location** → the principle "isolation binds dispatched agents; the top-level overseer/session is NEVER isolation-bound" is stated ONCE in `orchestration-discipline.md`, adjacent to the "hard tool-allowlist on the top-level session is not available" line (~L59); skills carry a thin inline floor plus a reference.
 3. **Routing targets** → the `/resolve-wt` and off-`main` fork surfaces live in the `weftwise` repo (`.claude/commands/resolve-wt.md`, `.claude/commands/dogfood-wt.md`, `scripts/worktree.sh`) and are LEGITIMATE cross-worktree commands; the isolation-aware skills ROUTE to them (see "Downstream (weftwise) surfaces and routing"). No weftwise edit.
 
-One residual implementer detail (non-blocking): whether the detect/route/warn logic lives inline in each loop skill or in a shared rule both reference. Leaning shared-rule to honor deduplication, but the loop skills currently keep only thin inline floors; the implementer decides at Phase 5.
+One residual implementer detail (non-blocking): whether the unconditional route/warn logic lives inline in each loop skill or in a shared rule both reference. Leaning shared-rule to honor deduplication, but the loop skills currently keep only thin inline floors; the implementer decides at Phase 5.
