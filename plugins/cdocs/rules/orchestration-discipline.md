@@ -65,6 +65,17 @@ Three layers back the discipline:
    `propose-revise` and `full-send` have no judge and fall back to the written self-check plus the optional future hook, with no independent enforcer.
 3. **Optional `PreToolUse` advisory hook (Phase 5, not built).** A future advisory that warns on long runs of inline `Edit`/`Write`/`Bash` from the top-level session. Advisory only, since a hook cannot reliably detect overseer mode.
 
+### Isolation is a dispatched-agent property
+
+Worktree/filesystem isolation and the fresh-context freshness invariant bind DISPATCHED agents (the implementer, the reviewer), never the top-level overseer session.
+A dispatched agent is isolated so its verdict is trustworthy and it cannot clobber a sibling workstream.
+The overseer is deliberately NOT isolated: it must land branches into `main`, resolve worktrees, and fork new worktrees off `main` as normal cross-worktree work.
+Overseer clobber-safety is COOPERATIVE (the claim registry plus single-writer ownership; see [`oversee-arc.md`](./oversee-arc.md) "Claim Registry"), not a session-wide lock, consistent with the graded-not-hard enforcement above.
+
+> NOTE(claude-opus-4-8/worktree-isolation): This principle is load-bearing and MUST NOT be softened back into a session-wide containment claim.
+> Do NOT re-add "contain the workstream [in a worktree]" or any equivalent isolation restriction to an overseer/top-level skill (`iterate`, `oversee`, `full-send`, `propose-revise`); isolation binds the dispatched implementer/reviewer only, and the overseer must stay free to land, resolve, and fork.
+> This mirrors the intentional-duplication NOTE above: a well-meaning nit-fix must not delete or dilute it.
+
 ## Pillar 1b: On-Resume Liveness Reconciliation
 
 The harness notifies the overseer only when NO live children remain.
