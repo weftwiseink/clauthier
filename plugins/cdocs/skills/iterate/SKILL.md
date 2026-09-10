@@ -127,7 +127,7 @@ The overseer already pauses between turns: it dispatches one subagent, waits for
 
 The concrete point where the overseer consults the Steering Log is **Turn N.c (Decide)** — its own reasoning turn between Review and the next dispatch, where it already reads the verdict and branches. After Turn N.b (Review) resolves, the overseer at Turn N.c consults the Steering Log before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired). After Turn N.d (Judge) resolves it consults the Steering Log again before Turn (N+1).a — this is the post-judge dispatch boundary, not a second Decide turn, since the judge verdict branches directly to the next dispatch with no named Decide turn after it.
 
-A user message that arrives while a subagent is actively dispatched (mid Task call) is **queued, not injected**: the overseer never interrupts or reinjects into an in-flight subagent, since that would breach the same freshness/isolation invariant the reviewer and judge are built on. The queued message is applied at the next injection point instead.
+A user message that arrives while a subagent is actively dispatched (mid Task call) is **queued, not injected**: the overseer never interrupts or reinjects into an in-flight subagent, since that would breach the same freshness/isolation invariant the DISPATCHED reviewer and judge are built on (isolation binds the dispatched subagent, not the overseer session; see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property"). The queued message is applied at the next injection point instead.
 
 Directives are recorded in the devlog's `## Steering Log` table (see `./template.md`). The overseer appends a row the moment it notices the directive (even if application is deferred) and updates `applied_at_iteration` when it actually folds the content into a dispatch. The five `kind` values and their handling:
 
@@ -188,5 +188,5 @@ A short rationale is mandatory: the verdict alone is not auditable.
 
 ### Sandboxed-runtime trust posture
 
-The reviewer runs with full tools backed by written-instruction constraints.
+The DISPATCHED reviewer runs with full tools backed by written-instruction constraints; these constraints bind the reviewer, not the overseer session, which is never isolation-bound (see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property").
 See [`reviewer.md`](../../agents/reviewer.md) for the boundaries.
