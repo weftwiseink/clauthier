@@ -64,6 +64,7 @@ Three layers back the discipline:
    This backstop is real only because the overseer logs a thinness signal (the context-estimate and inline-work columns below) and the judge logs its own `overseer_thinness` diagnosis; absent both logged fields this layer reduces to self-policing.
    `propose-revise` and `full-send` have no judge and fall back to the written self-check plus the optional future hook, with no independent enforcer.
 3. **Optional `PreToolUse` advisory hook (Phase 5, not built).** A future advisory that warns on long runs of inline `Edit`/`Write`/`Bash` from the top-level session. Advisory only, since a hook cannot reliably detect overseer mode.
+   Spec note (documentation only; hook build deferred to a dedicated hooks proposal): the same advisory MAY also warn — never refuse — on a cross-worktree or `main` write from the top-level session, surfacing it to the overseer and judge. Warn-not-refuse keeps the overseer in control and matches the graded philosophy; a refusing guard on the top-level session is exactly the mid-merge dead-end this discipline removes.
 
 ### Isolation is a dispatched-agent property
 
@@ -71,6 +72,10 @@ Worktree/filesystem isolation and the fresh-context freshness invariant bind DIS
 A dispatched agent is isolated so its verdict is trustworthy and it cannot clobber a sibling workstream.
 The overseer is deliberately NOT isolated: it must land branches into `main`, resolve worktrees, and fork new worktrees off `main` as normal cross-worktree work.
 Overseer clobber-safety is COOPERATIVE (the claim registry plus single-writer ownership; see [`oversee-arc.md`](./oversee-arc.md) "Claim Registry"), not a session-wide lock, consistent with the graded-not-hard enforcement above.
+
+**Isolation-aware routing.** When a loop skill reaches a cross-worktree step — a resolve's merge into `main`, or a fork of a new worktree off `main` — it surfaces that step UNCONDITIONALLY as an explicit precondition and ROUTES it to the repo's real cross-worktree commands (in the weftwise source repo: `/resolve-wt`, `/dogfood-wt`, and `/worktree` / `/wt`), warning rather than refusing.
+This is not probe-gated: a read-only cross-worktree probe tests the wrong axis (cross-worktree reads are allowed even under a write-scoped lock), so the skill always surfaces the precondition up front rather than dead-ending mid-merge; a cheap probe may only tailor the wording.
+The routing target commands are legitimate and correct as-is; the loop skill drives them from an un-isolated top-level session, it never reimplements or refuses them.
 
 > NOTE(claude-opus-4-8/worktree-isolation): This principle is load-bearing and MUST NOT be softened back into a session-wide containment claim.
 > Do NOT re-add "contain the workstream [in a worktree]" or any equivalent isolation restriction to an overseer/top-level skill (`iterate`, `oversee`, `full-send`, `propose-revise`); isolation binds the dispatched implementer/reviewer only, and the overseer must stay free to land, resolve, and fork.

@@ -97,6 +97,8 @@ Per proposal at `position`:
 3. Compose: `iterate` for `implementation_ready`, `full-send` for a stub, running AS the arc overseer itself.
 4. On loop terminal, read the reconciled triple. On `implementation_accepted`, mirror `status`, set `arc_state: done`, run the Checkpoint, and advance `position`. Otherwise escalate the proposal as `blocked`.
 
+When a proposal runs in its own `worktree` (arc-state field) and a boundary reaches a cross-worktree step — landing/resolving that worktree into `main`, or forking the next proposal's worktree off `main` — the arc overseer is NOT isolation-bound and performs it as normal work, surfacing the step up front and ROUTING it to the repo's cross-worktree commands (weftwise: `/resolve-wt`, `/dogfood-wt`, `/worktree` / `/wt`), warning never refusing. See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property" (Isolation-aware routing).
+
 ## Footprint Conflict, Interleaving, and the Claim Registry
 
 Concurrency at the arc level is INTERLEAVED turns under ONE overseer, never nested overseers: a dispatched subagent cannot dispatch its own workers, so the arc overseer cannot spawn sub-overseers that each run a loop.
