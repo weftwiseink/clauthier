@@ -57,7 +57,19 @@ Parallel with Workstream B (target setup-validation propose-revise).
 | Round | Role | Dispatch | Return | Overseer context | Inline work |
 |-------|------|----------|--------|------------------|-------------|
 | 0 | overseer | investigated (Explore) + scaffolded devlog + briefed proposer | — | ~110K | devlog write |
-| 1 | proposer | /cdocs:propose (dispatched) | pending | — | — |
+| 1 | proposer | /cdocs:propose (dispatched) | review_ready; enablement spec written | ~120K | devlog edit + commit |
+
+Proposal: `cdocs/proposals/2026-09-17-graphify-lace-devcontainer-enablement.md`.
+Decision: user asked "via /iterate" -> go straight to implement-review loop; the drift
+mechanism (D1) is best resolved empirically by the implementer running `lace validate`,
+which the proposer deliberately left as a Phase-1 output. No separate propose-revise round.
+Grounded facts from proposer: `lace validate` runs the full runUp generation pipeline
+(validateOnly + skipDevcontainerUp) and regenerates `.lace/devcontainer.json` via
+generateExtendedConfig, then returns before `devcontainer up` -> so inspecting the
+regenerated file IS the D1 authority probe; declaring claude-code explicitly is idempotent.
+D3: accept single shared /var/cache/graphify index; per-worktree namespacing deferred.
+Known nits to fold into loop: BLUF ~560 chars (>500 guideline). `lace validate` needs GHCR
+network (feature metadata); `lace up` + smoke test = environment-mutating, route to user/overseer.
 
 ## Open Todos
 
