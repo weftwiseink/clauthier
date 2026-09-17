@@ -40,7 +40,16 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 1' | proposer | /cdocs:propose (dispatched, REDIRECTED) | review_ready; new proposal `mcp-tool-effectiveness-ablation.md` | ~150K | devlog edit + commit |
 | 1' | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix (cheap), direction sound | ~165K | devlog edit + commit |
 | 2' | reviser | same proposer resumed (narrow) | done; 3 must-fix + nits resolved, spine intact | ~175K | devlog edit + commit |
-| 2' | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+| 2' | reviewer | cdocs:reviewer (fresh) | ACCEPT round 2; 1 should-fix + 2 nits | ~185K | devlog edit + commit |
+| 3' | reviser | same proposer (clear accepting-round items) | pending | — | — |
+
+Review 2' (ACCEPT): `cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-r2.md`.
+All 3 round-1 blockers verified closed; reviewer set target `last_reviewed: accepted round 2`.
+Accepting-round items: [should-fix] D2 line ~170 still says "token usage is the stable axis and
+drives the verdict" — contradicts the primary-causal-axis reframe (BLUF/D3/D7/Metering); sweep to
+single voice. [nit] Investigation Requested opens with changelog framing — drop. [nit] make explicit
+whether a VOID/TASK-FAIL run emits scorecard.json (presumably yes, gate_admissible:false).
+Then finalize B -> implementation_ready.
 
 Revision 2': MF1 scorecard.json now has `trials`+`gate_admissible` (single-shot trials==1 =>
 gate_admissible false, downstream gate MUST refuse); MF2 invocation from FULL transcript
