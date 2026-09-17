@@ -99,6 +99,7 @@ deterministic edit and reports `lace validate` as blocked-on-environment for the
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-17-review-of-graphify-lace-devcontainer-enablement.md | ~135K | no | rev-1 runtime-validated; cited `git show --stat 060e392` + `lace validate --skip-metadata-validation` EXIT 0 (8 feats incl graphify+claude-code). Phases 1-3 done; Phase 4 routed to user (GHCR auth + Docker). |
 
 ## Judge Log
 
@@ -112,6 +113,8 @@ deterministic edit and reports `lace validate` as blocked-on-environment for the
 | dispatch | impl-1 (general-purpose) | .devcontainer/devcontainer.json | 2026-09-17T16:00-08:00 | Phases 1-3; may also run `lace validate` (regenerates `.lace/*`) |
 | return | impl-1 (general-purpose) | .devcontainer/devcontainer.json | 2026-09-17T16:10-08:00 | committed 060e392; D1: claude-code EXPANSION-provided (byte-identical regen, not stale); config VALID via --skip-metadata-validation; full metadata BLOCKED (GHCR 401 private weftwiseink registry) |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-graphify-lace-devcontainer-enablement.md | 2026-09-17T16:12-08:00 | review impl-1 edit vs floor; re-run lace validate |
+| return | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-graphify-lace-devcontainer-enablement.md | 2026-09-17T16:20-08:00 | ACCEPT, no must-fix; cited artifacts (review_proof confirmed) |
+| dispatch | phase4-verify (general-purpose, un-isolated) | none (env-mutating: lace up + in-container smoke test, clauthier ONLY) | 2026-09-17T16:30-08:00 | user pushed lace (GHCR unblocked) + authorized clauthier container restart; NEVER touch weftwise |
 
 ## Turn 1 notes
 
@@ -126,7 +129,22 @@ PRIVATE weftwiseink feature; ambient unauth). `--skip-metadata-validation` = EXI
 => config well-formed; full metadata fetch + `lace up` need GHCR auth (Phase 4, routed to user).
 Pre-existing `.lace/mount-assignments.json`/`port-assignments.json` mods were NOT authored by
 impl-1 (present at session start); `.lace/devcontainer.json` is gitignored. Another session's
-`browser-delegation-plugin` proposal/devlog also present in shared tree — not ours, untouched.
+`browser-delegation-plugin` proposal/devlog also present in shared tree (not ours, untouched).
+
+## Loop Terminated: ACCEPT (iteration 1)
+
+rev-1 accepted with no must-fix. In-loop deliverable (Phases 1-3) landed at commit 060e392.
+review_proof: confirmed (runtime-validated, artifacts cited).
+
+**Phase 4 now UNBLOCKED and dispatched.** User pushed lace (GHCR metadata for the private
+weftwiseink graphify feature should now fetch) and authorized restarting the clauthier lace
+container. Dispatched `phase4-verify` (un-isolated general-purpose), scoped to CLAUTHIER
+ONLY, never weftwise:
+- full `lace validate --workspace-folder .` (no skip) to confirm GHCR metadata now fetches;
+- `lace up --workspace-folder .` (rebuild, applies graphify feature);
+- in-container smoke: `graphify --version` (0.9.61), `graphify update .` producing `graph.json`
+  under `/var/cache/graphify`, `claude mcp list` shows `graphify`.
+On green, A is fully done (proposal advances to implementation_accepted). — not ours, untouched.
 
 ## Steering Log
 

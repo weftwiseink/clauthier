@@ -53,6 +53,25 @@ marked superseded/evolved once the redirected proposal exists; salvage its reusa
 Blocked pending user answer on the effectiveness dimension (what the A/B comparison measures),
 then dispatch a FRESH proposer for the redirected proposal.
 
+**RESOLVED — user's concrete design (2026-09-17, "composite"):** an on-demand CLI util /
+slash command that runs an assisted-vs-unassisted ABLATION for a given MCP tool (graphify
+first) and emits a scorecard. Mechanism (verbatim intent):
+1. One subagent GETS the tool result (graphify) and rolls out to the end of its turn (assisted arm).
+2. Write token usage + overall speed (wallclock) to a file.
+3. STASH the work (reset workspace to identical baseline).
+4. Do the same WITHOUT the tool (unassisted arm), meter again.
+5. EVALUATOR compares the two, producing a scorecard:
+   - token usage; - speed (wallclock);
+   - context gap: signed scale, +10 = tool surfaced critical info the agent would have missed,
+     -10 = tool result confused the agent / cost time or context;
+   - qualitative result assessed by the evaluator.
+Precondition (from earlier requirement): verify the assisted arm actually HAS ACCESS to and
+USES the tool, else the comparison is void (report void, not "no effect"). Reset safety: the
+shared git stash is cross-worktree-hazardous -> design reset via fresh worktree or WIP commit,
+NOT bare `git stash`. Metering source: harness already surfaces subagent_tokens + duration_ms
+in Task results. Fresh proposer dispatched for a NEW proposal; old accepted manifest proposal
+-> mark `evolved` (superseded), salvage its PASS/ABSENT/FAIL honesty taxonomy + lace findings.
+
 Review 1 (ACCEPT): `cdocs/reviews/2026-09-17-review-of-target-setup-validation-and-verification.md`.
 Reviewer set target `last_reviewed.status: accepted` round 1. Empirically confirmed lace
 invents no reachability cmd; no glob collision; cited surfaces accurate.
