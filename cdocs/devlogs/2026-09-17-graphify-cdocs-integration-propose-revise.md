@@ -36,7 +36,16 @@ unaccepted rounds. Default model tier (opus lead/judgment, sonnet search); consu
 | 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~55K | devlog edit + commit |
 | 1 | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix, 6 nits; direction sound | ~70K | devlog edit + commit |
 | 2 | reviser | same proposer resumed (revisions narrow, not extreme) | done; all 3 must-fix + 6 nits resolved, spine unchanged | ~85K | devlog edit + commit |
-| 2 | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+| 2 | reviewer | cdocs:reviewer (fresh; 1st instance mis-stopped, re-dispatched) | ACCEPT; 3 non-blocking nits | ~95K | devlog edit + commit |
+| 3 | reviser | same proposer resumed (clear accepting-round nits) | pending | — | — |
+
+Review 2 (ACCEPT): `cdocs/reviews/2026-09-17-review-of-graphify-cdocs-integration-r2.md`.
+All 3 round-1 must-fixes verified genuinely closed; spine intact. Target frontmatter set
+`last_reviewed.round: 2 / status: accepted` by reviewer. Accepting-round nits to clear:
+N1 Investigation Requested opens as a changelog (history-agnostic miss) — restate directly;
+N2 Edge Cases L161 still says CRDT guard is "caveat plus instruction", lagging hardened D3 —
+align wording; N3 (optional) Phase 1 fallback: note read/generate split also proxies the
+"reasoning/writing unmoved" half.
 
 Revision 2: all must-fix settled — F1 D1 reframed ("no model = no carve-out negotiation",
 live librarian question is warm-agent cost not tier); F3 recall gate operationalized
