@@ -73,6 +73,45 @@ network (feature metadata); `lace up` + smoke test = environment-mutating, route
 
 ## Open Todos
 
-- [ ] Proposer writes enablement proposal; capture path.
-- [ ] Get to review_ready, then /iterate.
-- [ ] Route `lace up` + smoke test to overseer/user.
+- [x] Proposer writes enablement proposal; captured.
+- [x] Get to review_ready, then /iterate.
+- [ ] Route `lace up` + smoke test to overseer/user (Phase 4, post-accept).
+
+## Iterate Loop (Turn 0 Brief)
+
+**Scope:** full proposal. Phases 1-3 (source-of-truth resolution + add graphify feature entry
++ `lace validate` green) are the in-loop deliverable; Phase 4 (`lace up` + in-container smoke
+test) is environment-mutating and routed OUT to the un-isolated overseer/user.
+
+**Verification floor:** In-loop acceptance = `.devcontainer/devcontainer.json` declares both
+`claude-code` and the `graphify:1` feature (`version: 0.9.61`, `installMcpServer: true`,
+`installGitHook: false`), and `lace validate --workspace-folder .` passes with the regenerated
+`.lace/devcontainer.json` containing both features. Failure picture: validate reports a
+malformed feature entry or unresolvable mount, OR the regenerated config drops
+`claude-code`/`graphify`. A bare GHCR metadata-fetch network error does NOT count as a config
+failure and must be distinguished (use `--skip-metadata-validation` to confirm). If the lace
+CLI or GHCR network is unavailable in the isolated worktree, the implementer lands the
+deterministic edit and reports `lace validate` as blocked-on-environment for the overseer to run.
+
+**Judge-after:** 3 (default).
+
+## Iteration Log
+
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
+|---|---|---|---|---|---|---|---|---|
+
+## Judge Log
+
+| judge_iteration | trigger | verdict | overseer_thinness | rationale | judge_path |
+|---|---|---|---|---|---|
+
+## Dispatch/Return Events
+
+| event | agent_handle | target_files | at | notes |
+|---|---|---|---|---|
+| dispatch | impl-1 (general-purpose) | .devcontainer/devcontainer.json | 2026-09-17T16:00-08:00 | Phases 1-3; may also run `lace validate` (regenerates `.lace/*`) |
+
+## Steering Log
+
+| at | kind | target | content | applied_at_iteration |
+|---|---|---|---|---|
