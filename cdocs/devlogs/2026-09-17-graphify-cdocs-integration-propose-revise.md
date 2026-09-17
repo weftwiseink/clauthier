@@ -33,6 +33,19 @@ unaccepted rounds. Default model tier (opus lead/judgment, sonnet search); consu
 | Round | Role | Dispatch | Return | Overseer context | Inline work |
 |-------|------|----------|--------|------------------|-------------|
 | 0 | overseer | scaffolded devlog + briefed proposer | — | ~40K | devlog write only |
+| 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~55K | devlog edit + commit |
+| 1 | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+
+Proposal path: `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
+
+Proposer recommendation: ship the stateless role-agnostic graph-scoping tool/MCP first
+(Bet 1), defer the durable "librarian" subagent (Bet 2), gate the librarian on
+instrumentation. Rationale: a no-model tool sidesteps the consumer-floor "no silent
+downgrade" bar; degrades cleanly cross-target; captures the review win without the larger
+resident-index bet. Librarian, if built, is a read-only shared *service* (owns no files),
+orthogonal to Pillar 3's one-per-workstream bound. Phase 1 = discriminator-first token
+instrumentation (gates everything); recall parity = hard reject gate; CRDT blind spot =
+inline "scoping AID, not guarantee" caveat + test fixture.
 
 ## Decisions Made
 
