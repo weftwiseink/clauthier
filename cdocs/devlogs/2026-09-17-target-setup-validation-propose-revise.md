@@ -41,7 +41,13 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 1' | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix (cheap), direction sound | ~165K | devlog edit + commit |
 | 2' | reviser | same proposer resumed (narrow) | done; 3 must-fix + nits resolved, spine intact | ~175K | devlog edit + commit |
 | 2' | reviewer | cdocs:reviewer (fresh) | ACCEPT round 2; 1 should-fix + 2 nits | ~185K | devlog edit + commit |
-| 3' | reviser | same proposer (clear accepting-round items) | pending | — | — |
+| 3' | reviser | same proposer (clear accepting-round items) | done; should-fix + 2 nits cleared | ~195K | devlog edit + commit |
+
+**LOOP COMPLETE — B ACCEPTED (2 review rounds after redirect).** Accepting-round items cleared:
+D2 single-voice (token usage corroborates, does NOT drive verdict; context-gap primary causal);
+Investigation Requested reframed timeless; VOID/TASK-FAIL runs emit scorecard.json w/
+gate_admissible:false. Proposal -> `status: implementation_ready`. Old manifest proposal remains
+`evolved`. Deliverable: `/cdocs:ablate` assisted-vs-unassisted ablation harness for MCP tools.
 
 Review 2' (ACCEPT): `cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-r2.md`.
 All 3 round-1 blockers verified closed; reviewer set target `last_reviewed: accepted round 2`.

@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/mcp-ablation
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
@@ -128,6 +128,8 @@ Every run resolves to exactly one logged outcome:
 - **VOID** (the ABSENT analog): the tool was unavailable or never invoked, so the treatment is absent. Logged as VOID, never as "no effect." This is the exact "absent != passed" honesty carried forward.
 - **TASK-FAIL** (the FAIL analog): one or both arms failed to complete the task. Handled explicitly (see Edge Cases): a token/speed comparison across a completion and a non-completion is not apples-to-apples, so the scorecard flags it rather than reporting a spurious token win.
 
+Every run, including VOID and TASK-FAIL, still emits a `scorecard.json` recording the `outcome` and `gate_admissible: false`, so a consumer always reads an artifact rather than inferring the run's fate from its absence; only VALID runs carry a context-gap verdict.
+
 ### The evaluator and scorecard
 
 On a VALID run, an opus evaluator subagent reads both arms' transcripts, both diffs, and both meter files, and emits a scorecard with these axes:
@@ -167,7 +169,7 @@ The refuse-on-dirty guard (Phase 1) exists only to prevent surprising a caller w
 **Recommendation: base metering on `subagent_tokens` and `duration_ms` from the dispatched agent's result payload; add no bespoke token counter.**
 
 The harness already meters dispatched subagents, so re-deriving token counts would duplicate a trusted source and risk disagreeing with it.
-Token usage is the stable axis and drives the verdict; wallclock is recorded but explicitly marked noisy, because model-latency variance makes a single arm's `duration_ms` a weak signal.
+Token usage is metered cleanly and corroborates the verdict, but does NOT drive it: the primary causal axis is the evaluator's context-gap judgment (D3), and the token delta is a joint tool-plus-path magnitude. Wallclock is recorded but explicitly marked noisy, because model-latency variance makes a single arm's `duration_ms` a weak signal.
 The scorecard states this asymmetry so a reader never over-weights a wallclock swing.
 
 ### D3: Variance - single-shot with a loud caveat first, N-trials as the eventual default
@@ -319,8 +321,7 @@ No time estimates. Dependencies explicit. Phased so the minimal harness delivers
 
 ## Investigation Requested
 
-The round-1 review blockers are resolved in-spec: the single-shot gate guard is structural on `scorecard.json` (D7), tool-invocation detection commits to transcript `tool_use` blocks with a deterministic "used" definition and abort precedence (usage precondition), and the two load-bearing capabilities are named Phase 1 preconditions with fallbacks.
-Remaining items a further round could pressure-test:
+Forward-looking items a review round could pressure-test:
 
 - **Phase 1 capability-spike outcome.** Per-subagent single-tool gating and transcript tool-id visibility are expected but unconfirmed. If either fails and its fallback is used (explicit tool-set construction; sentinel marker), confirm the fallback does not itself confound the ablation (e.g. a sentinel instruction subtly changing the assisted arm's behavior).
 - **Attribution versus path variance for v1.** Context-gap is the primary causal axis and the token delta corroborates; N-trials plus the divergence flag is the accepted v1 mitigation. Confirm whether a narrower, more-constrained representative task should be MANDATED to sharpen attribution, or left to the caller (tied to the representative-task open question).
