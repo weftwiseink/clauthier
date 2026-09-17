@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-integration
 type: devlog
 state: live
-status: wip
+status: done
 tags: [cdocs, tooling, efficiency, subagents, graphify]
 ---
 
@@ -37,7 +37,11 @@ unaccepted rounds. Default model tier (opus lead/judgment, sonnet search); consu
 | 1 | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix, 6 nits; direction sound | ~70K | devlog edit + commit |
 | 2 | reviser | same proposer resumed (revisions narrow, not extreme) | done; all 3 must-fix + 6 nits resolved, spine unchanged | ~85K | devlog edit + commit |
 | 2 | reviewer | cdocs:reviewer (fresh; 1st instance mis-stopped, re-dispatched) | ACCEPT; 3 non-blocking nits | ~95K | devlog edit + commit |
-| 3 | reviser | same proposer resumed (clear accepting-round nits) | pending | — | — |
+| 3 | reviser | same proposer resumed (clear accepting-round nits) | done; N1/N2 fixed, N3 included | ~100K | devlog edit + commit |
+
+**LOOP COMPLETE — proposal ACCEPTED.** N1 (Investigation block reframed timeless),
+N2 (Edge Cases CRDT bullet aligned to hardened D3 guard), N3 (Phase 1 fallback notes
+read/generate split proxies "reasoning/writing unmoved"). Status: accepted, 2 review rounds.
 
 Review 2 (ACCEPT): `cdocs/reviews/2026-09-17-review-of-graphify-cdocs-integration-r2.md`.
 All 3 round-1 must-fixes verified genuinely closed; spine intact. Target frontmatter set
