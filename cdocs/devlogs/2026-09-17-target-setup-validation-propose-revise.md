@@ -34,7 +34,19 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | Round | Role | Dispatch | Return | Overseer context | Inline work |
 |-------|------|----------|--------|------------------|-------------|
 | 0 | overseer | scaffolded devlog + briefed proposer | — | ~60K | devlog write |
-| 1 | proposer | /cdocs:propose (dispatched) | pending | — | — |
+| 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~75K | devlog edit + commit |
+| 1 | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+
+Proposal: `cdocs/proposals/2026-09-17-target-setup-validation-and-verification.md`
+Design: target declares verification in `cdocs/verify.toml` (groups env/smoke/test);
+cdocs owns runner + outcome taxonomy PASS/ABSENT/FAIL (ABSENT never coerced to PASS; PASS
+cites artifact). 4 failure policies (block/warn/reprovision/skip-with-note) decoupled from
+outcome. Gate1 env = precondition (Turn 0 / pre-phase); Gate2 smoke per-phase + full test
+pre-accept, maps onto iterate `review_proof`. Manifest-absent -> warn-floor (npm test, lace
+validate). 4 phases. Lace: confirmed cmds doctor|resolve-mounts|up|validate (v0.1.0); NO
+confirmed in-container health/reachability query -> left as target-declared probe (do-not-invent).
+Watch: BLUF ~510 chars (>~500 guideline); Investigation Requested = manifest fmt/location,
+block-vs-warn default, runner/overseer-thinness boundary, self-referential-verification risk.
 
 ## Decisions Made
 
