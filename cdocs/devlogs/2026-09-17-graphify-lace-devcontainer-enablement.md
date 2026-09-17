@@ -186,7 +186,18 @@ our integration point." Plus two follow-ups:
 over-mount RFP is resolved). Integration path for now is the graphify CLI (confirmed live).
 A proposal -> implementation_accepted with a NOTE deferring MCP to the lace RFP. No clauthier
 revert needed. Report will confirm whether MCP matters at all for the cdocs graph-scoping design.
-Dispatched: report-agent (clauthier report) + rfp-agent (lace repo, NOT weftwise). — not ours, untouched.
+Dispatched: report-agent (clauthier report) + rfp-agent (lace repo, NOT weftwise).
+
+**Report result** (`cdocs/reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`): CLI-SUFFICIENT.
+CLI subcommands `query`/`explain`/`path` map 1:1 to MCP tools `query_graph`/`get_node`/
+`shortest_path` over the identical tree-sitter index -> MCP is a transport wrapper, not a
+capability. The accepted design's Bet 1 is already transport-agnostic; MCP was the assumed
+vehicle, never load-bearing. Loop shape is brief-computed-up-front (not ad-hoc mid-reasoning
+queries) and subagents already hold Bash, so a thin CLI wrapper serves every scoping op.
+Narrow caveat: revisit only if Phase 3 instrumentation shows the loop wants unplanned
+mid-reasoning graph queries. => Resolving the over-mount buys no capability now; proceed
+CLI-only. Applying the recommended NOTE to the graphify-cdocs proposal (D4 softened to
+"CLI or MCP, both transports over the same index"). Confirms user's suspicion. A CLOSED CLI-first. — not ours, untouched.
 
 ## Steering Log
 
