@@ -6,6 +6,11 @@ task_list: cdocs/mcp-ablation
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-17T18:05:00-08:00
+  round: 1
 tags: [tooling, verification, testing, token_efficiency, orchestration, model_tiering]
 ---
 

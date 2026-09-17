@@ -38,7 +38,19 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 1 | reviewer | cdocs:reviewer (fresh) | ACCEPT round 1; 1 must-resolve + 4 non-blocking + 3 nits | ~90K | devlog edit + commit |
 | 2 | reviser | CANCELLED — user redirected direction | superseded | ~95K | devlog edit + commit |
 | 1' | proposer | /cdocs:propose (dispatched, REDIRECTED) | review_ready; new proposal `mcp-tool-effectiveness-ablation.md` | ~150K | devlog edit + commit |
-| 1' | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+| 1' | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix (cheap), direction sound | ~165K | devlog edit + commit |
+| 2' | reviser | same proposer resumed (narrow) | pending | — | — |
+
+Review 1' (REVISE): `cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation.md`.
+Must-fix: (1) single-shot admissibility guard missing from scorecard.json (machine) though D7
+gate consumes it -> add `trials`+`gate_admissible`, single-shot indicative-only never
+gate-consumable; (2) tool-invocation detection self-contradictory (names transcript AND payload)
+-> commit to full-transcript `tool_use` blocks, define "invoked" crisply (error calls count;
+decide aborted case); (3) two load-bearing capabilities (single-tool per-subagent gating D4;
+per-tool-call transcript visibility) asserted not de-risked -> name as Phase 1 preconditions
+with fallbacks. Verified SOUND: per-arm metering attribution, reset-safety (fresh worktrees),
+frontmatter (old proposal evolved+pointer), blinding ceiling. Nits: token-delta framing,
+worktree teardown --force, dirty-base semantics, CC-only-v1 posture, evaluator input size.
 
 Redirected proposal: `cdocs/proposals/2026-09-17-mcp-tool-effectiveness-ablation.md` (BLUF 466 chars).
 `/cdocs:ablate` skill, two arms (assisted/unassisted) each in a FRESH worktree off same base

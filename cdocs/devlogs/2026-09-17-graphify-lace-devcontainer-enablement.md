@@ -144,7 +144,33 @@ ONLY, never weftwise:
 - `lace up --workspace-folder .` (rebuild, applies graphify feature);
 - in-container smoke: `graphify --version` (0.9.61), `graphify update .` producing `graph.json`
   under `/var/cache/graphify`, `claude mcp list` shows `graphify`.
-On green, A is fully done (proposal advances to implementation_accepted). — not ours, untouched.
+On green, A is fully done (proposal advances to implementation_accepted).
+
+### Phase 4 results (phase4-verify, clauthier-only, podman)
+
+- full `lace validate` (no skip): PASS — "Validated metadata for 8 feature(s)"; GHCR private
+  graphify metadata now fetches (user pushed lace). `graphify/index -> ~/.cache/graphify`.
+- `lace up --rebuild`: PASS — container recreated (podman; lace's `containerMayBeRunning:false`
+  is a reporting quirk, container is Up). `--rebuild` needed or plain up reuses the container
+  without applying the new feature.
+- `graphify --version`: PASS — `graphify 0.9.61`; `graphify` + `graphify-mcp` at /usr/local/bin.
+- `graphify update .`: PASS — 3694 nodes / 3596 edges; graph.json (3.5MB) + report + html at
+  /var/cache/graphify.
+- `claude mcp list` shows graphify: **FAIL — registration SHADOWED.** `installMcpServer:true`
+  fired (`claude mcp add graphify -s user` wrote a valid stdio entry) but into
+  `/home/node/.claude.json` (HOME default). The claude CLI reads user scope from
+  `CLAUDE_CONFIG_DIR` = the host `~/.claude.json` BIND-MOUNTED by the claude-code feature, which
+  lacks graphify. Config-path collision, not a broken server (graphify-mcp binary works).
+
+**Verdict:** graphify CLI CONFIRMED LIVE; graphify MCP NOT live to Claude Code as-shipped.
+Root cause is deeper than the devcontainer entry: a BUILD-TIME user-scope `claude mcp add`
+cannot survive a RUNTIME host-config bind-mount that masks it. The clauthier enablement edit
+(060e392) is correct and the loop verdict (ACCEPT) stands; the MCP-reachability is a downstream
+feature/interaction issue requiring a separate fix. ESCALATED to user with options (project-scope
+`.mcp.json` clauthier-side vs producer-side lace feature fix vs CLI-only defer). A proposal
+status held at implementation_ready (NOT implementation_accepted) pending the MCP fix decision.
+
+Cross-cutting: this also gates Workstream B's assisted arm actually reaching the graphify MCP. — not ours, untouched.
 
 ## Steering Log
 
