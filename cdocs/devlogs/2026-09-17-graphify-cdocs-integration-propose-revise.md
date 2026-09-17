@@ -35,7 +35,15 @@ unaccepted rounds. Default model tier (opus lead/judgment, sonnet search); consu
 | 0 | overseer | scaffolded devlog + briefed proposer | — | ~40K | devlog write only |
 | 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~55K | devlog edit + commit |
 | 1 | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix, 6 nits; direction sound | ~70K | devlog edit + commit |
-| 2 | reviser | same proposer resumed (revisions narrow, not extreme) | pending | — | — |
+| 2 | reviser | same proposer resumed (revisions narrow, not extreme) | done; all 3 must-fix + 6 nits resolved, spine unchanged | ~85K | devlog edit + commit |
+| 2 | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+
+Revision 2: all must-fix settled — F1 D1 reframed ("no model = no carve-out negotiation",
+live librarian question is warm-agent cost not tier); F3 recall gate operationalized
+(candidate-union labeling + CRDT label from non-graph signals + noise policy by miss-class);
+F5 per-phase attribution named PRIMARY Phase 1 risk w/ mechanism + coarser fallback. Nits
+F4/F2/F6/F7(triage dropped)/F8(license re-added)/F9 all folded. Author Qs answered by
+judgment. Investigation block now lists 3 forward-looking items only.
 
 Review 1: `cdocs/reviews/2026-09-17-review-of-graphify-cdocs-integration.md`
 Must-fix: (1) consumer-floor asymmetry overstated — reframe as "no model = no carve-out

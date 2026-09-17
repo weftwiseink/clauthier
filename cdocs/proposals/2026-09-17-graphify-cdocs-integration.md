@@ -7,6 +7,11 @@ type: proposal
 state: live
 status: review_ready
 tags: [tooling, code_review, architecture, model_tiering, token_efficiency, future_work]
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-17T13:20:00-08:00
+  round: 1
 ---
 
 # Graphify integration into cdocs loops, and the librarian question
@@ -37,15 +42,16 @@ Secondary: evaluate honestly whether bundling graph access into a durable librar
 
 ## Background
 
-- **Source RFP** (weftwise repo, consumer decision trail): `weftwise:cdocs/proposals/2026-09-15-code-graph-review-plugin-rfp.md`.
+- **Source RFP** (sibling `weftwise` repo, consumer decision trail): local path `cdocs/proposals/2026-09-15-code-graph-review-plugin-rfp.md` in the sibling `weftwise` checkout. Not navigable from this repo and no canonical URL exists yet; it is a sibling-repo local path a reader opens in the adjacent checkout.
   It sets the efficiency thesis, the discriminator-first prerequisite, the recall-parity constraint, the CRDT blind spot, the librarian idea, and the engine/license diligence.
   This proposal is its clauthier-side realization: same graph substrate, the cdocs loop as consumer.
+  Carried from the RFP as a BOUND, not a forecast: the efficiency ceiling is ~10-20% of TOTAL loop burn, concentrated entirely in the context-gathering phase, with the realized figure likely below that ceiling and scaling with how much the loop over-reads today. Reasoning and code-writing tokens are untouched; do not expect scoping to move them.
 - **Sibling #3** (canvas consumer of the same graph substrate) is out of scope here; it is referenced only where the engine-agnostic adapter migration path matters.
 - **cdocs rules** this proposal builds on:
   - `plugins/cdocs/rules/model-tiering.md`: advisory tiers, consumer floor always wins. The graph-scoping's tiering claim lives or dies here.
   - `plugins/cdocs/rules/orchestration-discipline.md`, especially "Pillar 3: Durable Specialists": the resume-by-name durable-specialist pattern the librarian would instantiate, its one-per-workstream bound, and its cross-target degradation.
   - `plugins/cdocs/rules/workflow-patterns.md`: the iterate loop's four roles (overseer, implementer, reviewer, judge), each of which is a candidate graph consumer.
-- **Target surfaces** the integration touches: the `reviewer`, `judge`, and `triage` agents in `plugins/cdocs/agents/`, the implementer (a fresh `general-purpose` subagent per `/cdocs:iterate`), and the loop skills `plugins/cdocs/skills/{iterate,implement,review}/SKILL.md`.
+- **Target surfaces** the integration touches: the `reviewer` and `judge` agents in `plugins/cdocs/agents/`, the implementer (a fresh `general-purpose` subagent per `/cdocs:iterate`), and the loop skills `plugins/cdocs/skills/{iterate,implement,review}/SKILL.md`. The `triage` agent is deliberately excluded: it does frontmatter/devlog-state work (glob/filter/parse of `cdocs/**`), not code-symbol context-gathering, so it consumes no dependent set.
 
 ### Where scoping plugs in
 
@@ -97,8 +103,8 @@ Without this, every efficiency figure below is a guess and is inadmissible.
 Rationale, weighed against bundling graph access into a durable librarian from the start:
 
 - **The substrate's value is fully captured statelessly.** The precise dependent set up front, the review's core win, needs no warm context. A librarian adds a resident-index bet on TOP of the retrieval bet; conflating them means a librarian failure would sink the retrieval win it does not depend on.
-- **Model-tiering / consumer floor cuts against a librarian first.** A sonnet librarian serving opus/fable leads is exactly the search/explore downgrade that a consumer floor governs (`model-tiering.md` "Precedence"). Under weftwise's "do not silently downgrade dispatched work" floor, a sonnet librarian is forbidden until the consumer writes a named carve-out. A stateless tool has NO model, so it sidesteps the floor entirely and ships cross-consumer with no carve-out negotiation. This alone is a decisive reason to lead with the tool.
-- **The one-durable-specialist-per-workstream bound.** A librarian shared across workstreams does not fit cleanly under Pillar 3's bound: it is either a second specialist per workstream (violates the bound) or a cross-workstream shared agent the bound does not describe. The cleanest framing, if a librarian is later built, is as a read-only SHARED SERVICE, not a workstream specialist: it owns no files, so single-writer ownership (Pillar 1b) is not implicated, and it holds no workstream, so the one-per-workstream bound does not govern it. It is orthogonal to the bound, not an extension of it. But a resume-by-name librarian still consumes a standing warm-agent cost that must be earned, which is why it is gated, not assumed.
+- **Model-tiering / consumer floor: the tool needs no carve-out negotiation.** A sonnet librarian serving opus/fable leads is search/explore/research-aggregation work, which a consumer floor governs (`model-tiering.md` "Precedence"). For the named consumer this is NOT the obstacle it first appears: weftwise already ships a named "always use sonnet for search, explore, and research aggregation" carve-out above its Opus floor, and an explicit delegation of lookup work to a search-tier agent is not the silent downgrade that floor targets, so a librarian's lookups are plausibly already permitted for weftwise. The stateless tool's genuine, defensible advantage is narrower and real: having NO model, it needs no per-consumer carve-out negotiation at all and ships clean even to a consumer with NO search carve-out. So the tool wins on carve-out-free portability, not because a librarian trips a floor. The live librarian question is therefore its standing warm-agent cost, not its model tier.
+- **The one-durable-specialist-per-workstream bound.** A librarian shared across workstreams does not fit cleanly under Pillar 3's bound: it is either a second specialist per workstream (violates the bound) or a cross-workstream shared agent the bound does not describe. The cleanest framing, if a librarian is later built, is as a read-only SHARED SERVICE, not a workstream specialist: it owns no files, so single-writer ownership (Pillar 1b) is not implicated, and it holds no workstream, so the one-per-workstream bound does not govern it. It is orthogonal to the bound, not an extension of it. But a resume-by-name librarian still consumes a standing warm-agent cost that must be earned, which is why it is gated, not assumed. One shared librarian serving M workstreams does not recreate the N-parallel-specialists problem the bound targets, yet it CAN recreate the large-context problem inside a SINGLE agent: its resident context accumulates M workstreams' worth of knowledge and grows unbounded as M rises. Phase 4 must therefore test that the shared index stays bounded (eviction, per-workstream scoping, or a cap that triggers re-scoping), not merely that it cuts burn.
   > NOTE(claude-opus-4-8/code-graph/cdocs-integration): This "read-only service, not workstream specialist" framing is the load-bearing reconciliation with Pillar 3.
   > If a reviewer disagrees that a shared read-only agent escapes the one-per-workstream bound, that is the decision to litigate, and the tool-first path holds regardless.
 - **Cross-target degradation.** A librarian's value is warm resident context across turns via `SendMessage`/resume-by-name, a Claude Code primitive. On OpenCode (no `SendMessage`), Pillar 3 degrades to "fresh session from the handoff doc," which discards exactly the warm context a librarian exists to hold, so the librarian degrades to roughly its own overhead with little of its benefit. A stateless MCP tool degrades cleanly: MCP is cross-target, and every role queries it identically on either runtime.
@@ -106,11 +112,18 @@ Rationale, weighed against bundling graph access into a durable librarian from t
 
 Net: the tool captures the near-certain win with no tiering or cross-target cost; the librarian is a larger, conditional bet the instrumentation must justify.
 
-### D2: Recall parity is a hard gate, not a goal
+### D2: Recall parity is a hard gate, and the gate is itself a discriminator
 
-Any measured increase in missed dependents versus the current unscoped baseline fails the change, regardless of token savings.
+Any missed-dependent regression versus the current unscoped baseline fails the change, regardless of token savings.
 Scoping is additive over the existing sweep: on any doubt (stale index, engine error, low confidence) the role falls back to the unscoped sweep for that round.
-The test plan meters missed-dependent rate as a first-class metric alongside tokens.
+Because the whole design is discriminator-first, the gate must be measurable, not asserted. It is operationalized as three parts:
+
+- **Ground-truth labeling protocol.** For each fixture change the true dependent set is built as a labeled CANDIDATE union, then adjudicated: (1) union the graph output, a grep-recall floor (per the RFP, grep holds ~97.4% raw recall), and an `.observe`/`.subscribe` observe-site scan of the touched files; (2) opus/human-adjudicate that union to drop false positives and confirm true dependents. Crucially the CRDT label does NOT come from the graph, which is blind by construction: it comes from the observe-site scan, hardened on a small CRDT-heavy subset by (3) runtime-trace-derived coupling as the gold-standard tiebreaker. This is how a true dependent is defined for a change the graph cannot see: by the non-graph signals, never the graph itself.
+- **Corpus.** A minimum labeled corpus characterized to over-represent the hard cases the graph exists to win and the CRDT cases it cannot: barrel re-exports, aliased re-exports, multi-hop chains, and observe/subscribe-coupled changes, plus plain-import controls. A hard gate on a tiny or barrel-free fixture is noise, so the corpus is sized and its case-mix recorded before any gate reading is admissible; exact size is a Phase 1 deliverable, floored at enough per-category fixtures to yield a meaningful per-category rate.
+- **Pass rule under noise.** Recall is measured on a sample, so the gate is not naive zero-tolerance on a single fixture flip. The rule: scoped per-category recall must be >= unscoped baseline recall within the labeling protocol's confidence interval, AND there is zero tolerance for a SYSTEMATIC miss class (a whole coupling category the scoping drops, e.g. every aliased re-export). A lone ambiguous-label flip is label noise; a category regression is a real recall loss and fails.
+
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration): The gate distinguishes label noise from a recall regression by CLASS, not by raw count.
+> A per-fixture zero-tolerance rule on a noisy hand-labeled sample would be either unachievable or gamed; a per-category systematic-miss rule is the falsifiable form.
 
 ### D3: The CRDT blind spot persists and must be surfaced, not hidden
 
@@ -118,12 +131,19 @@ The graph captures barrel and reference coupling but is blind to weftwise's ~125
 The scoped-context brief must be framed to every consuming role as a scoping AID, never a related-code guarantee.
 Operationally: the brief carries the caveat inline, and roles are instructed not to narrow their related-code consideration to the graph's dependent set.
 
+The caveat and instruction alone are a SOFT, test-validated guard, not a runtime guarantee: the CRDT fixture (Test Plan) checks the behavior at test time on known cases, but a production CRDT-heavy change outside the fixture set would have only the caveat standing between it and a recall regression, and a token-pressured role is exactly the actor most likely to treat a small confident set as license to stop. The design therefore hardens the guard STRUCTURALLY, so a role cannot receive a bare small set:
+
+- The brief format never presents the dependent set as exhaustive, and always co-surfaces a "nearby `.observe`/`.subscribe` sites" signal for the touched files, so a role always sees the CRDT-coupling channel alongside the graph set.
+- A near-empty graph set on a change whose touched files carry observe/subscribe sites TRIGGERS an unscoped sweep for that round (skip-scope) instead of handing the role a small confident set. This is additive: it can only widen, never narrow, the round's context.
+
+Together these make the production guard structural (the brief cannot omit the CRDT channel) plus an escalation trigger for the worst case, with the fixture retained as the test-time check. Skip-scope never lowers the baseline, so this is the honest ceiling of the claim: it reduces, but cannot eliminate, the risk on coupling no non-graph signal catches.
+
 > WARN(claude-opus-4-8/code-graph/cdocs-integration): The failure mode to design against is a role treating a small graph dependent set as license to skip broader review.
 > On a CRDT-heavy codebase the graph can return a near-empty dependent set for a change with heavy runtime coupling. The caveat is not decoration; it is the guardrail against a recall regression that the token meter alone would not catch.
 
 ### D4: Engine choice: graphify default, MCP-direct now, adapter later
 
-graphify (Apache/MIT) is the default candidate and is pre-1.0.
+graphify (Apache/MIT, license to be re-verified under fresh diligence per the Open Questions) is the default candidate and is pre-1.0.
 Query its MCP surface directly in the first cut; keep the loop-side contract thin so migration onto the engine-agnostic adapter (RFP sibling #3) is a later surface swap.
 Treat graphify's pre-1.0 churn as an integration risk: pin a version, and keep the translation layer small enough to re-target if the engine's shape shifts.
 
@@ -149,7 +169,7 @@ Metrics are meaningless without the Phase 1 meter; every row below presumes it.
 
 - **Token accounting (primary).** Per-role, per-phase token burn on a fixed corpus of representative loops, metered before scoping lands and re-metered after. The claim under test: context-gathering-phase tokens fall for implementer, reviewer, and judge, with reasoning/writing tokens unmoved.
 - **Recall parity (hard gate).** Missed-dependent rate on a labeled fixture set (changes with known true dependent sets, including barrel/aliased/multi-hop cases). Scoped recall must be >= unscoped baseline recall. Any regression fails the change.
-- **CRDT guard.** A fixture where the graph dependent set is near-empty but real runtime coupling is heavy. Test that the consuming role still surfaces the broader coupling (caveat honored), not just the graph set.
+- **CRDT guard (structural).** A fixture where the graph dependent set is near-empty but real runtime coupling is heavy. Assert the brief co-surfaces the nearby observe/subscribe sites and never presents the set as exhaustive (D3), and that the near-empty-plus-observe-proximity trigger forces an unscoped sweep for that round. The check is at test time; the production guard is the structural brief format plus that trigger, not the caveat alone.
 - **Staleness / fallback.** Force a stale and a missing index; assert the round skip-scopes and its recall matches the unscoped baseline, and that instrumentation labels the round as fallback, not scoped.
 - **Model-tiering realization.** Re-run a subset of loops with a downgraded role model under scoping; assert recall parity holds at the lower tier (the tiering claim's evidence). Only admissible if the consumer's floor permits the downgrade or a carve-out exists.
 - **Librarian (only if Phase 4 proceeds).** Compare stateless-tool loops against librarian-served loops on the same corpus: total loop burn including the librarian's standing cost, and recall parity. The librarian passes only if it cuts total burn net of its own cost without recall loss.
@@ -173,14 +193,17 @@ No time estimates. Dependencies are explicit.
 
 ### Phase 1: Token-accounting instrumentation (gate; prerequisite for all claims)
 
-- Build a per-role, per-phase token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge and to context-gathering vs reasoning vs writing.
-- Capture the BEFORE baseline on a fixed representative corpus, including missed-dependent labels.
-- Success: a reproducible baseline exists; the context-gathering phase is isolable per role.
+- Build a per-role token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge. This part is tractable: role maps to subagent identity.
+- Attribute tokens to phase WITHIN a role's turn (context-gathering vs reasoning vs writing). This is the hard part: the three phases interleave inside a single subagent turn, so the meter attributes by observable proxy, in preference order: (1) tool-call boundaries (Read/Grep/graph-query calls and their returned payloads are context-gathering; generation between tool calls is reasoning/writing), (2) the input-vs-output (read-vs-generate) token split as a coarser proxy, (3) explicit phase markers a role emits, only if the proxies prove too lossy.
+- **PRIMARY PHASE 1 RISK: clean per-phase separation may be infeasible.** If the tool-boundary and read/generate proxies cannot cleanly isolate the context-gathering phase, the signature claim (context-gathering tokens fall while reasoning/writing are unmoved) is unfalsifiable at phase granularity. FALLBACK: drop to per-role/per-turn TOTALS plus a context-gathering PROXY (read-token volume and tool-call count per turn), and restate the efficiency claim at that coarser resolution: total per-role burn falls and the read-token proxy falls, recall held. The Verification gate then reads on the proxy, not on true per-phase attribution. This keeps the justification falsifiable at a coarser resolution rather than resting the whole design on an unvalidated fine-grained meter.
+- Capture the BEFORE baseline on the labeled corpus (D2), including missed-dependent labels.
+- Success: a reproducible per-role baseline exists AND either true per-phase attribution or the named proxy fallback is in place and documented as which.
 - Constraint: this phase adds NO scoping. It only measures. Nothing downstream is admissible until it lands.
 - Depends on: nothing. Blocks: Phases 2, 3, 4.
 
 ### Phase 2: Stateless graph-scoping tool/MCP surface
 
+- Precondition: re-verify graphify's license (expected Apache/MIT) under fresh diligence before adopting it as an in-loop dependency, per the RFP's engine-under-license item (D4, Open Questions). A license regression blocks adoption.
 - Provision a graphify index over the corpus; expose the graph query behind a thin loop-side contract (D4).
 - Produce the scoped-context brief (dependent set + AID caveat, D3) from changed symbols.
 - Wire skip-scope on stale/missing index and on engine error (D5), with fallback labeled for instrumentation.
@@ -199,7 +222,7 @@ No time estimates. Dependencies are explicit.
 ### Phase 4: Librarian evaluation (conditional; only if Phase 3 justifies it)
 
 - Only if Phase 3 shows residual re-query burn a resident index would cut.
-- Prototype the librarian as a read-only shared SERVICE (D1), not a workstream specialist; resolve the consumer-floor carve-out for its model tier before it serves any lead.
+- Prototype the librarian as a read-only shared SERVICE (D1), not a workstream specialist. Confirm the consuming project's model policy admits its tier rather than authoring a new carve-out: for weftwise the existing search/explore->sonnet carve-out plausibly already covers a librarian's lookup work (D1), making this a confirmation step; a consumer with NO search carve-out would need one. Test that the shared index stays bounded as workstream count grows (D1), not merely that it cuts burn.
 - Measure total loop burn net of the librarian's standing cost, against the Phase 3 stateless-tool baseline; verify cross-target degradation to bet 1 on a no-`SendMessage` runtime.
 - Success: the librarian cuts total burn net of its cost without recall loss, OR is explicitly declined with the metered reason recorded.
 - Depends on: Phase 3 go decision. Blocks: nothing.
@@ -212,23 +235,23 @@ No time estimates. Dependencies are explicit.
 
 ## Investigation Requested
 
-Reviewer attention requested on these specific risks:
+Round-1 review (`cdocs/reviews/2026-09-17-review-of-graphify-cdocs-integration.md`) resolved the consumer-floor framing (D1), the recall-gate operationalization (D2), and the per-phase-attribution keystone (Phase 1); those are settled in the body above, and the efficiency bound now sits plainly in Background. Remaining items a further review round could pressure-test:
 
-- **The one-per-workstream bound reconciliation (D1).** Is "read-only shared service, not workstream specialist" a sound way to place a shared librarian outside Pillar 3's one-durable-specialist-per-workstream bound, or does a resume-by-name agent that serves multiple workstreams still count against it? The tool-first recommendation holds either way, but the librarian's framing depends on this.
-- **Model-tiering / consumer-floor claim (D1).** Confirm that a stateless tool (no model) genuinely sidesteps the "no silent downgrade" floor while a sonnet librarian does not, and that this asymmetry is a fair basis for leading with the tool.
-- **Recall-parity as a hard gate (D2, D3).** Is the CRDT-fixture guard sufficient to catch a role over-trusting a near-empty graph set, or does the AID caveat need a stronger enforcement mechanism than an inline note?
-- **Efficiency bound honesty.** The ~10-20%-of-total-loop-burn ceiling is a hypothesis, concentrated in context-gathering, with the realized figure likely below it. Confirm the proposal states this as a bound, not a forecast, everywhere it appears.
+- **Per-phase attribution feasibility (Phase 1).** The proxy-based mechanism (tool-boundary and read/generate splits) is a design, not a proven meter. If a reviewer or a Phase 1 spike judges even the proxies too lossy, the coarser per-role fallback is the falsifiability floor, and the efficiency claim should be stated at that resolution from the outset.
+- **Bounded shared-librarian context (D1, Phase 4).** Whether a single shared read-only librarian can hold M workstreams' context without recreating the large-context problem inside one agent is unproven and deferred to Phase 4. Flag if it should GATE Phase 4 entry rather than be tested within it.
+- **Structural CRDT guard sufficiency (D3).** The brief-format co-surfacing plus near-empty-set trigger is stronger than a bare caveat but still cannot guarantee recall on coupling no non-graph signal catches. Confirm the additive framing (skip-scope never lowers the baseline) is the honest ceiling of the claim.
 
 ## Open Questions
 
 - **What is "lace"?** An unspecified weftwise integration target referenced by the maintainer. Not designed against here; a prerequisite for any lace-specific hook.
 - **Index provisioning model (D5).** Index-on-loop-start vs standing-service vs on-demand: deferred to Phase 3, informed by the metered cost of each.
 - **Diff-size threshold for scoping.** Below what change size does scoping cost exceed its savings? An instrumentation output, not a guess.
+- **graphify license re-verification.** The RFP requires confirming graphify's Apache/MIT license under fresh diligence before it becomes an in-loop dependency; D4 treats it as the default candidate, not settled. This is a Phase 2 precondition, not a detail.
 - **Semantic-retrieval complement.** Structural graph scoping and embedding retrieval answer different questions; whether a hybrid beats either is left to the RFP's separate report, not this proposal.
 
 ## Links
 
-- Source RFP (weftwise, consumer decision trail): `weftwise:cdocs/proposals/2026-09-15-code-graph-review-plugin-rfp.md`.
+- Source RFP: sibling-repo local path `cdocs/proposals/2026-09-15-code-graph-review-plugin-rfp.md` in the `weftwise` checkout (sibling repo, not navigable from clauthier, no canonical URL yet).
 - Model tiering: [`plugins/cdocs/rules/model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md).
 - Orchestration discipline (Pillar 3): [`plugins/cdocs/rules/orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md).
 - Workflow patterns: [`plugins/cdocs/rules/workflow-patterns.md`](../../plugins/cdocs/rules/workflow-patterns.md).
