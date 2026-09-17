@@ -110,6 +110,23 @@ deterministic edit and reports `lace validate` as blocked-on-environment for the
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | impl-1 (general-purpose) | .devcontainer/devcontainer.json | 2026-09-17T16:00-08:00 | Phases 1-3; may also run `lace validate` (regenerates `.lace/*`) |
+| return | impl-1 (general-purpose) | .devcontainer/devcontainer.json | 2026-09-17T16:10-08:00 | committed 060e392; D1: claude-code EXPANSION-provided (byte-identical regen, not stale); config VALID via --skip-metadata-validation; full metadata BLOCKED (GHCR 401 private weftwiseink registry) |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-graphify-lace-devcontainer-enablement.md | 2026-09-17T16:12-08:00 | review impl-1 edit vs floor; re-run lace validate |
+
+## Turn 1 notes
+
+impl-1 (commit 060e392): added `claude-code:1` (explicit, idempotent) + `graphify:1`
+(version 0.9.61, installMcpServer true, installGitHook false) to `.devcontainer/devcontainer.json`.
+No mount/port/containerEnv authored. D1 resolved: `claude-code` is expansion-provided by
+`lace-fundamentals` (pre-edit `lace validate` regenerated `.lace/devcontainer.json`
+byte-identical, retaining all 7 features), so a fresh `lace up` will NOT drop it.
+Phase 3: `lace validate` full = EXIT 1 at metadataValidation (GHCR 401 — graphify is a
+PRIVATE weftwiseink feature; ambient unauth). `--skip-metadata-validation` = EXIT 0
+"Validation passed", regenerated `.lace/devcontainer.json` has graphify+claude-code (8 feats).
+=> config well-formed; full metadata fetch + `lace up` need GHCR auth (Phase 4, routed to user).
+Pre-existing `.lace/mount-assignments.json`/`port-assignments.json` mods were NOT authored by
+impl-1 (present at session start); `.lace/devcontainer.json` is gitignored. Another session's
+`browser-delegation-plugin` proposal/devlog also present in shared tree — not ours, untouched.
 
 ## Steering Log
 

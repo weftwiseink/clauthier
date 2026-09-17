@@ -36,7 +36,22 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 0 | overseer | scaffolded devlog + briefed proposer | — | ~60K | devlog write |
 | 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~75K | devlog edit + commit |
 | 1 | reviewer | cdocs:reviewer (fresh) | ACCEPT round 1; 1 must-resolve + 4 non-blocking + 3 nits | ~90K | devlog edit + commit |
-| 2 | reviser | same proposer (clear accepting-round items) | pending | — | — |
+| 2 | reviser | CANCELLED — user redirected direction | superseded | ~95K | devlog edit + commit |
+
+**USER REDIRECT (2026-09-17):** The accepted declarative-manifest direction is NOT what the
+user wants. Quote: "why would we need this? Seems like the wrong direction. Verification
+should be like, a cli util or slash command that verifies our workflows get access to and use
+the expected mcp setup and they are effective based on some comparison with an unassisted
+request." New framing: an ON-DEMAND CLI util / slash command (not an in-loop per-target test
+manifest) that verifies cdocs workflows (a) have ACCESS to the expected MCP setup, (b) actually
+USE it, and (c) are EFFECTIVE vs an unassisted baseline (assisted-vs-unassisted ablation).
+This operationalizes the graphify proposal's discriminator-first "prove it helped" thesis.
+Accepting-round nit-polish on the old proposal is MOOT — do not run reviser round 2.
+The old proposal (`...-target-setup-validation-and-verification.md`, accepted R1) will be
+marked superseded/evolved once the redirected proposal exists; salvage its reusable parts
+(PASS/ABSENT/FAIL outcome taxonomy; the lace command/reachability findings).
+Blocked pending user answer on the effectiveness dimension (what the A/B comparison measures),
+then dispatch a FRESH proposer for the redirected proposal.
 
 Review 1 (ACCEPT): `cdocs/reviews/2026-09-17-review-of-target-setup-validation-and-verification.md`.
 Reviewer set target `last_reviewed.status: accepted` round 1. Empirically confirmed lace
