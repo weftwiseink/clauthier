@@ -34,7 +34,16 @@ unaccepted rounds. Default model tier (opus lead/judgment, sonnet search); consu
 |-------|------|----------|--------|------------------|-------------|
 | 0 | overseer | scaffolded devlog + briefed proposer | — | ~40K | devlog write only |
 | 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~55K | devlog edit + commit |
-| 1 | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+| 1 | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix, 6 nits; direction sound | ~70K | devlog edit + commit |
+| 2 | reviser | same proposer resumed (revisions narrow, not extreme) | pending | — | — |
+
+Review 1: `cdocs/reviews/2026-09-17-review-of-graphify-cdocs-integration.md`
+Must-fix: (1) consumer-floor asymmetry overstated — reframe as "no model = no carve-out
+negotiation," reconcile w/ weftwise's existing search/explore sonnet carve-out + Phase 4;
+(2) recall-parity hard gate not operationalized — needs ground-truth labeling protocol
+(esp. CRDT), corpus size, tolerance policy; (3) Phase 1 per-phase token attribution
+asserted not designed — name as primary Phase 1 risk + fallback. Nits 4-9 minor.
+Decision: route to same proposer (narrow revisions, affirmed direction). No fresh author.
 
 Proposal path: `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 
