@@ -145,6 +145,8 @@ Together these make the production guard structural (the brief cannot omit the C
 
 graphify (Apache/MIT, license to be re-verified under fresh diligence per the Open Questions) is the default candidate and is pre-1.0.
 Query its MCP surface directly in the first cut; keep the loop-side contract thin so migration onto the engine-agnostic adapter (RFP sibling #3) is a later surface swap.
+
+> NOTE(claude-opus-4-8/graphify-integration): The scoping surface is transport-agnostic: graphify's CLI subcommands (`query`/`explain`/`path`) map one-to-one onto the MCP tools (`query_graph`/`get_node`/`shortest_path`) over the identical tree-sitter index, so "MCP" is a transport, not a distinct capability (see [`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)). Read D4 as "engine-direct now (CLI or MCP), adapter later": the thin loop-side contract is what matters. A CLI-backed first cut is expected where the MCP is unavailable — e.g. in the clauthier lace devcontainer the graphify MCP is currently shadowed by a claude-code host-config over-mount (tracked by a lace-side RFP), while the CLI is live. Revisit an MCP transport only if Phase 3 instrumentation shows the loop needs unplanned graph queries mid-reasoning rather than a precomputed brief.
 Treat graphify's pre-1.0 churn as an integration risk: pin a version, and keep the translation layer small enough to re-target if the engine's shape shifts.
 
 ### D5: Index provisioning and staleness policy
