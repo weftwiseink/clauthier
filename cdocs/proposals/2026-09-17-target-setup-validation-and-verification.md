@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/target-verification
 type: proposal
 state: live
-status: review_ready
+status: evolved
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
@@ -15,6 +15,8 @@ tags: [tooling, verification, testing, devcontainer, cross_target, orchestration
 ---
 
 # Target setup-validation and test-verification for cdocs loops
+
+> NOTE(claude-opus-4-8/cdocs/mcp-ablation): Superseded by [`2026-09-17-mcp-tool-effectiveness-ablation.md`](./2026-09-17-mcp-tool-effectiveness-ablation.md); this proposal's PASS/ABSENT/FAIL honesty taxonomy and confirmed lace facts are salvaged there.
 
 > BLUF(claude-opus-4-8/cdocs/target-verification): A cdocs capability where the TARGET repo declares its own verification in a `cdocs/verify.toml` manifest, consumed uniformly by every loop: environment-validation as a PRECONDITION gate, test-verification as a per-phase and pre-accept gate.
 > Every check resolves to one of three LOGGED outcomes, PASS / ABSENT / FAIL, and absence is never a pass. A missing manifest degrades to a default-command floor; lace's confirmed `validate`/`doctor`/`up` are the first devcontainer adapter.

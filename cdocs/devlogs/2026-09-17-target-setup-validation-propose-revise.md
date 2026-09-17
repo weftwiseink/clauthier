@@ -37,6 +37,18 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 1 | proposer | /cdocs:propose (dispatched) | review_ready; proposal written | ~75K | devlog edit + commit |
 | 1 | reviewer | cdocs:reviewer (fresh) | ACCEPT round 1; 1 must-resolve + 4 non-blocking + 3 nits | ~90K | devlog edit + commit |
 | 2 | reviser | CANCELLED — user redirected direction | superseded | ~95K | devlog edit + commit |
+| 1' | proposer | /cdocs:propose (dispatched, REDIRECTED) | review_ready; new proposal `mcp-tool-effectiveness-ablation.md` | ~150K | devlog edit + commit |
+| 1' | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+
+Redirected proposal: `cdocs/proposals/2026-09-17-mcp-tool-effectiveness-ablation.md` (BLUF 466 chars).
+`/cdocs:ablate` skill, two arms (assisted/unassisted) each in a FRESH worktree off same base
+commit (no `git stash`); usage precondition -> VOID if tool not actually invoked; outcomes
+VALID/VOID/TASK-FAIL (salvaged PASS/ABSENT/FAIL); opus evaluator w/ partial blinding ->
+scorecard.json+.md (token delta, indicative wallclock, signed -10..+10 context-gap, qualitative).
+Variance: single-shot-caveat (Ph1-2) then N-trials default 3 (Ph3). Metering: harness payload
+subagent_tokens/duration_ms (CONFIRMED real by overseer — present in every subagent completion
+payload). Old proposal set `evolved` w/ pointer. Investigation Requested: tool-invocation
+detection robustness, path-divergence confound, evaluator blinding ceiling, single-shot admissibility.
 
 **USER REDIRECT (2026-09-17):** The accepted declarative-manifest direction is NOT what the
 user wants. Quote: "why would we need this? Seems like the wrong direction. Verification
