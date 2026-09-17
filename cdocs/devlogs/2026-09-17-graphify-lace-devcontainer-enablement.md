@@ -170,7 +170,23 @@ feature/interaction issue requiring a separate fix. ESCALATED to user with optio
 `.mcp.json` clauthier-side vs producer-side lace feature fix vs CLI-only defer). A proposal
 status held at implementation_ready (NOT implementation_accepted) pending the MCP fix decision.
 
-Cross-cutting: this also gates Workstream B's assisted arm actually reaching the graphify MCP. — not ours, untouched.
+Cross-cutting: this also gates Workstream B's assisted arm actually reaching the graphify MCP.
+
+### User decision (2026-09-17): proceed CLI-only; MCP deferred
+
+User: "proceed with cli for now. I suspect we don't really care about anything WRT the mcp for
+our integration point." Plus two follow-ups:
+1. A short `/cdocs:report` (clauthier) on whether the graphify MCP is much of a value-add over
+   the CLI for our integration point (do we even need the MCP?).
+2. An `/cdocs:rfp` filed IN THE LACE REPO on the claude-code over-mounting issue (host
+   ~/.claude.json bind-mount masking in-container `claude mcp add -s user` registrations).
+
+**A resolution:** the devcontainer enablement (060e392) is ACCEPTED and stands unchanged;
+`installMcpServer: true` is LEFT as-is (harmless while shadowed; auto-activates if/when the lace
+over-mount RFP is resolved). Integration path for now is the graphify CLI (confirmed live).
+A proposal -> implementation_accepted with a NOTE deferring MCP to the lace RFP. No clauthier
+revert needed. Report will confirm whether MCP matters at all for the cdocs graph-scoping design.
+Dispatched: report-agent (clauthier report) + rfp-agent (lace repo, NOT weftwise). — not ours, untouched.
 
 ## Steering Log
 

@@ -32,7 +32,7 @@ The mechanics are three dispatched subagents orchestrated by a thin `/cdocs:abla
 Two disciplines are load-bearing and carried from prior cdocs work.
 First, a **usage precondition**: before any comparison, the harness confirms the assisted arm both had access to AND actually invoked the tool during its rollout.
 An ablation where the treatment never happened proves nothing, so that case is reported VOID, never as a false "no effect."
-Second, **metering honesty**: token usage is the stable axis and wallclock is indicative only, so a scorecard never rests a verdict on wallclock alone.
+Second, **attribution honesty**: the evaluator's context-gap judgment is the primary CAUSAL axis; the token delta is a corroborating joint measure of tool effect plus path variance (low metering noise, but NOT low attribution noise); wallclock is indicative only. A verdict never rests on a token or wallclock delta alone.
 
 graphify is the first consumer and running example, but the harness is tool-agnostic: it takes which MCP tool and which task as parameters.
 
@@ -102,14 +102,20 @@ Per-arm metrics come from the Claude Code harness's dispatched-agent result payl
 The harness reads those directly rather than inventing instrumentation.
 The helper script normalizes them into a per-arm meter file alongside a pointer to the arm's transcript and diff.
 
-- **Token usage** is the stable, primary axis.
+- **Token usage** is metered cleanly (low metering noise), but the per-arm token DELTA is a JOINT measure of tool effect and path variance that does not decompose them (D3), so it corroborates magnitude rather than attributing cause. It is not the primary evidence of tool value.
 - **Wallclock** (`duration_ms`) is recorded but flagged inherently noisy: model-latency variance dominates it, so it is indicative, never authoritative, and never the sole basis for a verdict.
 
 ### The usage precondition (the honesty gate)
 
-Before the evaluator runs, the harness verifies the assisted arm both (a) HAD the tool available and (b) actually INVOKED it at least once during the rollout.
-Availability is known from how the arm was dispatched; invocation is confirmed from the assisted arm's transcript, by detecting a real tool-call to the named MCP tool (tool-call boundaries are visible in the result payload).
+Before the evaluator runs, the harness verifies the assisted arm both (a) HAD the tool available and (b) actually INVOKED it during the rollout.
+Availability is known from how the arm was dispatched.
+Invocation is detected from the assisted arm's FULL TRANSCRIPT (the message JSONL), by matching a `tool_use` block against the target MCP tool's id/name.
+It is NOT read from the compact result payload: only `subagent_tokens` and `duration_ms` are confirmed there, so per-tool-call boundaries cannot be assumed present in it (Phase 1 validates transcript visibility and provides a sentinel-marker fallback).
 There is no lace command that probes in-container MCP reachability, so this check is harness-level, from the transcript, by construction.
+
+**Definition of "invoked" (deterministic).** At least one `tool_use` block naming the target tool in the assisted arm's transcript counts as invoked, INCLUDING a call that returned an error: the treatment (the tool ran and returned to the agent) still occurred, and whether its result helped or hurt is exactly what the context-gap axis measures.
+The aborted / cut-off-rollout case is decided by precedence, never left to the evaluator: if NO target `tool_use` block is present the treatment never occurred, so the run is VOID regardless of why the rollout ended; if a target `tool_use` IS present but the arm did not complete the task, the run is TASK-FAIL (used but incomplete), never a silent VALID.
+VOID (no treatment) always takes precedence over TASK-FAIL.
 
 If the tool was unavailable or was available but never invoked, the treatment did not occur and the comparison is VOID.
 The harness reports that plainly and renders NO effect verdict, because an ablation without a treatment proves nothing.
@@ -149,6 +155,13 @@ This also gives the two arms genuine filesystem isolation, so the assisted arm's
 The failure it prevents: clobbering a concurrent session's uncommitted work via the shared stash stack, and cross-arm contamination via a shared working tree.
 The rejected alternatives - bare `git stash`/`pop` (shared-stack clobber) and WIP-commit-and-hard-reset in a shared tree (no cross-arm isolation, and a hard reset is destructive if the tree was not clean) - are both strictly worse here.
 
+Mechanics.
+The worktrees live under the harness scratchpad (a throwaway path), NOT as siblings of `main/`, so they never pollute the sibling-worktree namespace.
+Each arm subagent is dispatched with its pre-created worktree path as its working directory, and all of that arm's tool calls run relative to it.
+An arm leaves a DIRTY tree (its produced diff), so teardown is ordered: capture the diff first, then `git worktree remove --force` (a plain `git worktree remove` refuses a dirty tree).
+Dirty-base semantics: the arms check out the pinned COMMIT, so the ablation tests the committed base and any uncommitted work in the invoking worktree is deliberately EXCLUDED.
+The refuse-on-dirty guard (Phase 1) exists only to prevent surprising a caller who expected their WIP tested: correctness does not require it, since the committed base is used regardless. The resolution is to commit (or pass an explicit `--base`), not to fold WIP into the ablation via the stash.
+
 ### D2: Metering source - the harness result payload, not new instrumentation
 
 **Recommendation: base metering on `subagent_tokens` and `duration_ms` from the dispatched agent's result payload; add no bespoke token counter.**
@@ -162,8 +175,10 @@ The scorecard states this asymmetry so a reader never over-weights a wallclock s
 **Recommendation: ship single-shot-with-a-loud-caveat FIRST (Phases 1-2), then make N-trials aggregation the default (Phase 3), `--trials` defaulting to 3 and the scorecard reporting median plus spread.**
 
 A single A/B pair is noisy because rollouts are nondeterministic, so a single-shot scorecard MUST carry a prominent caveat that its deltas are one draw, not an estimate, and that a sign flip on a small delta is within noise.
-Relating this to the graphify proposal's noise-by-class discipline: the axes differ in stability, so they are trusted differently.
-Token usage is the stable axis and tolerates single-shot reading with a caveat; wallclock is noisy and needs aggregation before it means much; the context-gap and qualitative axes are evaluator judgments that a single strong rollout can already justify.
+A single-shot scorecard is therefore INDICATIVE-ONLY and is never admissible as a downstream gate verdict; this is enforced structurally on the machine artifact (D7), not left to prose.
+Relating this to the graphify proposal's noise-by-class discipline: the axes differ in BOTH metering noise and attribution noise, so they are trusted differently, and metering-stability is NOT attribution-stability.
+The token delta is metered cleanly but is a JOINT measure of tool effect plus path variance, so it corroborates magnitude rather than attributing cause; the primary CAUSAL axis is the evaluator's context-gap judgment, which attributes the difference to the tool's information contribution.
+Wallclock additionally carries high metering noise and needs aggregation before it means much.
 N-trials (median across trials, plus the spread) is the honest default once the harness is proven, and the spread itself becomes a reported signal: a wide spread is a finding, not a number to hide.
 Shipping single-shot first keeps Phase 1 minimal and buildable without blocking on trial orchestration.
 
@@ -196,7 +211,10 @@ Context-gap rubric (signed, `[-10, +10]`):
 
 Bias mitigation.
 Full blinding is impossible for the assisted arm, whose transcript necessarily shows the tool calls, so the mitigation is partial and honest about it: label the arms neutrally (A/B) in the meter files, have the evaluator record its qualitative read of EACH arm before it is told which arm is assisted, and fix the rubric up front so the score is anchored rather than free-floating.
+The per-arm-read-before-reveal step is close to CEREMONIAL, not meaningful blinding: the discriminating feature (the tool calls) sits in the very transcript the evaluator reads, so it can trivially infer which arm is assisted. It is retained as a cheap up-front anchor, not presented as real blinding; the genuine lever, a transcript-scrubbing pass, is deferred.
 The scorecard notes that the assisted arm is identifiable by its tool calls, so the reader knows the blind is partial.
+
+Evaluator input size: two full transcripts plus two diffs plus two meter files is a large context, so the evaluator runs against a bounded task (a fixed rubric over pointed excerpts) or a summarization pre-pass, rather than ingesting raw transcripts whole, to keep its input tractable.
 
 ### D6: Packaging - a `/cdocs:ablate` skill over a thin helper script
 
@@ -215,10 +233,13 @@ Judgment stays in the subagents; mechanics stay in the script.
 Layout per run (under a run id, e.g. a timestamped directory in the harness scratchpad, with the durable summary optionally promoted to a `/cdocs:report`):
 
 - `arm-assisted.meter.json`, `arm-unassisted.meter.json`: tokens, `duration_ms`, tool-set diff, transcript and diff pointers, tool-invocation-confirmed flag.
-- `scorecard.json`: the structured verdict (outcome VALID/VOID/TASK-FAIL, token delta, wallclock delta, context-gap integer, trials/spread).
+- `scorecard.json`: the structured verdict, carrying `outcome` (VALID/VOID/TASK-FAIL), `context_gap` (the primary causal axis, signed integer), `token_delta` and `wallclock_delta` (corroborating magnitudes, wallclock indicative), `spread` (when trials > 1), `trials` (integer), and `gate_admissible` (boolean).
 - `scorecard.md`: the human-readable summary, leading with the outcome and the caveat, then the evaluator's qualitative assessment.
 
 The structured sidecar lets a downstream gate (e.g. graphify's) consume the verdict programmatically; the markdown is for human review.
+A single-shot run (`trials == 1`) is INDICATIVE-ONLY and sets `gate_admissible: false`; only an N-trials run may set it true.
+A downstream gate MUST check `gate_admissible` and refuse a non-admissible scorecard, so the one-draw guard rides on the MACHINE-consumed artifact rather than only in the markdown prose.
+This is the structural enforcement of the single-shot admissibility decision (D3): a noisy one-draw A/B pair can never silently become a pass/fail gate verdict.
 
 ## Edge Cases / Challenging Scenarios
 
@@ -260,8 +281,12 @@ No time estimates. Dependencies explicit. Phased so the minimal harness delivers
 
 ### Phase 1: Minimal single-shot harness - safe reset + two arms + metering
 
-- Helper script: create two fresh worktrees off a pinned base commit (D1), refuse on a dirty base, tear them down on exit; never touch the stash stack.
-- Skill: pin the task prompt and base, dispatch the assisted and unassisted arms as subagents with the tool granted/withheld (D4), holding prompt/model/workspace constant.
+- **Capability spike FIRST (two load-bearing preconditions; validate before building anything else):**
+  - **(a) Per-subagent single-tool gating (D4).** Confirm the dispatch layer can grant exactly ONE named MCP tool to the assisted arm and withhold it from the unassisted arm while holding every other tool identical. Per-agent tool restriction exists, so this is expected to hold. Fallback if a single-tool withhold is not cleanly expressible: construct each arm's tool-set explicitly so it differs by exactly that one entry, or route the unassisted arm through a profile that omits the tool.
+  - **(b) Per-tool-call transcript visibility.** Confirm the assisted arm's transcript exposes `tool_use` blocks carrying the target tool's id/name (the VOID gate depends on it). Fallback if tool ids are not cleanly parseable: instruct the assisted arm to emit a sentinel marker immediately after any target-tool use and detect the marker instead - a weaker but sufficient used/not-used signal.
+  - The arms, evaluator, and trials are not built until BOTH preconditions are validated or their fallbacks are in place. If neither a direct nor a fallback path exists for (a), the harness is infeasible and the phase halts with that finding.
+- Helper script: create two fresh worktrees off a pinned base commit under the scratchpad (D1); warn-or-refuse on a dirty invoking tree (the committed base is tested, WIP is excluded); capture each diff then `git worktree remove --force` on exit; never touch the stash stack.
+- Skill: pin the task prompt and base, dispatch the assisted and unassisted arms as subagents with the tool granted/withheld (D4), each bound to its pre-created worktree as cwd, holding prompt/model/workspace constant.
 - Meter each arm from the result payload's `subagent_tokens` and `duration_ms` (D2) into per-arm meter files.
 - Implement the usage precondition: confirm the assisted arm HAD and USED the tool from its transcript; emit the VALID / VOID / TASK-FAIL outcome (salvaged taxonomy).
 - Single-shot only, with the loud noise caveat (D3). No evaluator yet: emit raw per-arm meters and the outcome.
@@ -294,19 +319,18 @@ No time estimates. Dependencies explicit. Phased so the minimal harness delivers
 
 ## Investigation Requested
 
-Items for a review round to pressure-test:
+The round-1 review blockers are resolved in-spec: the single-shot gate guard is structural on `scorecard.json` (D7), tool-invocation detection commits to transcript `tool_use` blocks with a deterministic "used" definition and abort precedence (usage precondition), and the two load-bearing capabilities are named Phase 1 preconditions with fallbacks.
+Remaining items a further round could pressure-test:
 
-- **Tool-invocation detection robustness.** The usage precondition reads the assisted arm's transcript for a real tool-call to the named MCP. Confirm the result payload reliably exposes MCP tool-call boundaries by tool id, and that a tool invoked only inside a nested/aborted path still counts as "used" (or should not). If detection is unreliable, the VOID gate weakens.
-- **Path-divergence confound versus tool effect.** Even with tool access as the only granted difference, nondeterministic path divergence can dominate the token delta. Confirm whether N-trials median-plus-spread plus the evaluator's divergence flag is sufficient, or whether a same-seed / constrained-task discipline is needed to attribute the delta to the tool rather than the path.
-- **Evaluator blinding ceiling.** The assisted arm is identifiable by its tool calls, so blinding is only partial. Confirm the per-arm-read-before-reveal mitigation plus disclosure is the honest ceiling, or whether a stronger protocol (e.g. a transcript-scrubbing pass) is worth the complexity.
-- **Single-shot admissibility.** Confirm whether a single-shot scorecard should ever be treated as a verdict a downstream gate consumes, or only as an indicative preview until N-trials runs.
+- **Phase 1 capability-spike outcome.** Per-subagent single-tool gating and transcript tool-id visibility are expected but unconfirmed. If either fails and its fallback is used (explicit tool-set construction; sentinel marker), confirm the fallback does not itself confound the ablation (e.g. a sentinel instruction subtly changing the assisted arm's behavior).
+- **Attribution versus path variance for v1.** Context-gap is the primary causal axis and the token delta corroborates; N-trials plus the divergence flag is the accepted v1 mitigation. Confirm whether a narrower, more-constrained representative task should be MANDATED to sharpen attribution, or left to the caller (tied to the representative-task open question).
 
 ## Open Questions
 
 - **In-container MCP reachability.** lace v0.1.0 has no command that probes whether an in-container MCP service is reachable, so usage is verified at the harness level from the transcript. If a later lace version adds a reachability query, the availability half of the precondition could prefer it. Do not invent a lace subcommand for this.
 - **Representative-task selection.** What makes a task "representative" for a given tool is a judgment the harness caller supplies; whether cdocs should ship a small library of canonical per-tool tasks is deferred.
 - **Standalone CLI.** Whether the harness should also be user-invokable outside a loop (a plain CLI in addition to `/cdocs:ablate`) is deferred to a follow-up if the skill form proves broadly useful.
-- **Cross-target.** The harness leans on Claude Code dispatch and the harness result payload; how it degrades on OpenCode (payload shape, worktree dispatch) is unspecified here and left for a cross-target follow-up.
+- **Cross-target posture: CC-only for v1.** The harness is deeply coupled to Claude Code dispatch, the result payload (`subagent_tokens`/`duration_ms`), and worktree-bound arm cwds. `/cdocs:ablate` is UNSUPPORTED on OpenCode (not silently degraded) until OC exposes an equivalent per-subagent token/duration payload and worktree dispatch; OC support is gated on those two capabilities and is a follow-up, not a v1 deliverable.
 
 ## Links
 

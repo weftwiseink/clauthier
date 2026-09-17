@@ -39,7 +39,16 @@ fresh `cdocs:reviewer` rounds until accept-or-escalate. AskUserQuestion after 6 
 | 2 | reviser | CANCELLED — user redirected direction | superseded | ~95K | devlog edit + commit |
 | 1' | proposer | /cdocs:propose (dispatched, REDIRECTED) | review_ready; new proposal `mcp-tool-effectiveness-ablation.md` | ~150K | devlog edit + commit |
 | 1' | reviewer | cdocs:reviewer (fresh) | REVISE: 3 must-fix (cheap), direction sound | ~165K | devlog edit + commit |
-| 2' | reviser | same proposer resumed (narrow) | pending | — | — |
+| 2' | reviser | same proposer resumed (narrow) | done; 3 must-fix + nits resolved, spine intact | ~175K | devlog edit + commit |
+| 2' | reviewer | cdocs:reviewer (fresh) | pending | — | — |
+
+Revision 2': MF1 scorecard.json now has `trials`+`gate_admissible` (single-shot trials==1 =>
+gate_admissible false, downstream gate MUST refuse); MF2 invocation from FULL transcript
+`tool_use` blocks, "invoked" = >=1 target tool_use (error counts), abort precedence
+(no call->VOID; call+incomplete->TASK-FAIL; VOID>TASK-FAIL); MF3 Phase 1 opens with capability
+spike (per-subagent single-tool gating + transcript tool-id visibility, each w/ fallback;
+infeasibility halts). Clarifications: A->never-gate@trials==1, B->any tool_use counts, C->CC-only-v1.
+Nits folded (context-gap primary causal axis; worktree --force teardown; dirty-base; blinding).
 
 Review 1' (REVISE): `cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation.md`.
 Must-fix: (1) single-shot admissibility guard missing from scorecard.json (machine) though D7
