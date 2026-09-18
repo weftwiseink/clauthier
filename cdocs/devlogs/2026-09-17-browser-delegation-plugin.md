@@ -47,3 +47,8 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 ## Outcome
 
 Proposal `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` accepted round 1. Next step (not started): `/cdocs:implement` (or `/cdocs:full-send` end-to-end) when the maintainer greenlights build — Phase 1 spikes (`@playwright/cli` SIGTRAP/isolation, browser-use GA, Playwright Healer `claude` integration) should run first since later phases gate on them.
+
+## Follow-up (maintainer questions)
+
+- **Stagehand/agent-native tools vs Playwright**: answered from Report A — Stagehand/browser-use are AI-driving *layers on top of* Playwright (CDP), not replacements; they add NL driving at the cost of a second LLM-in-the-loop and less determinism, and neither judges correctness. Maintainer's lean toward Playwright for smoke→validator→test continuity is well-founded and matches the `@playwright/cli` pick. NL drivers stay an optional fuzzy-driving complement, not default.
+- **Non-Claude delegate (Gemini flash tier) for the visual leg**: dispatched supplemental sonnet report `cdocs/reports/2026-09-17-delegate-model-comparison.md`. Key framing carried in: CC subagents run Claude only, so a non-Claude delegate can't be a plain in-harness subagent (forces BYO-key browser-use/Stagehand, direct API, or A2A — the deferred path); the visual-verdict leg (not the driving leg) is where a stronger visual model would pay off; report to verify benchmarks (no memory) and recommend keep-sonnet vs pluggable-visual-model vs multi-provider, feeding a possible proposal amendment.
