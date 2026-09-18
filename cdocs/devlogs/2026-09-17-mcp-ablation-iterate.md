@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/mcp-ablation
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [cdocs, iterate, ablation, tooling, verification, graphify]
 ---
 
@@ -103,6 +103,7 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 | dispatch | lace-infra (resumed, outside loop) | lace repo .devcontainer/devcontainer.json + container rebuild | 2026-09-18T09:05:00-08:00 | comment out sprack (maybe-deprecated) + TODO; lace up --rebuild real container |
 | return | lace-infra (outside loop) | lace repo commits d6671d1, ae6c193, c3757dd (not pushed) | 2026-09-18T09:35:00-08:00 | sprack FIXED; real lace container still blocked by 2nd pre-existing bug (node/nvm vs NPM_CONFIG_PREFIX). User → use clauthier lace container instead |
 | dispatch | e2e-runner (general-purpose) | in-container run dirs only; reports scorecards | 2026-09-18T09:45:00-08:00 | drive /cdocs:ablate in clauthier lace container; 2 lightweight probes (VALID + VOID honesty path) |
+| return | e2e-runner (general-purpose) | /tmp/ablate-e2e-host/{probeA,probeB}/* (host artifacts) | 2026-09-18T10:20:00-08:00 | E2E SUCCESS — real skill, all 3 subagents dispatched vs live graphify; VALID + VOID scorecards emitted + overseer-verified |
 
 ## Steering Log
 
@@ -119,11 +120,35 @@ warns loudly on agentId fallback. Overseer re-ran `test-ablate.sh`: **49/49 pass
 Commits `85809e4`, `751616e`, `caa3e34`. Only remaining verification is the deferred-to-followup e2e
 (live 3-subagent dispatch + graphify dogfood) inside the real lace container.
 
+**E2E DOGFOOD — CONFIRMED (overseer-verified against on-disk scorecards).** The real `/cdocs:ablate`
+skill ran end-to-end inside the clauthier lace container (`graphify 0.9.61`, `claude 2.1.274`),
+dispatching all three subagents (2 arms + opus evaluator) against LIVE graphify. No fallback; no committed
+skill files edited. Two probes, single-shot (`gate_admissible:false`, correct):
+- **Probe A = VALID** (`/tmp/ablate-e2e-host/probeA/scorecard.json`): assisted 31190 tok / unassisted
+  31031 tok (delta +159, corroborating only); `tool_invocation_confirmed:true` (5 real `graphify`
+  Bash tool_uses); **`context_gap: 0`** — HONEST: the single-file explain task was fully reconstructable
+  by reading one file, so graphify's blast-radius strength was not exercised; the evaluator scored 0 and
+  said so rather than manufacturing a positive. Metering populated from real `toolUseResult` payload.
+- **Probe B = VOID (`available_unused`)** (`/tmp/ablate-e2e-host/probeB/scorecard.json`): assisted arm
+  had graphify but never invoked it → correctly VOID, `context_gap:null`, no evaluator dispatched — the
+  "absent != no-effect" honesty path holds end to end.
+
+> FINDING(opus/cdocs/mcp-ablation, follow-up): CLI-tool WITHHOLDING is soft, not a hard capability gate.
+> The Agent/Task dispatch surface exposes no per-call `--disallowedTools`/allowlist, so the unassisted
+> arm's withhold is expressed at the PROMPT layer (dispatch prompt forbids graphify) + confirmed post-hoc
+> by `ablate.sh detect-usage`. It HELD in both probes (unassisted never called graphify), and is honestly
+> labeled in `invariants.json`, matching SKILL.md's documented fallback direction — but it relies on arm
+> compliance + post-hoc verification, not enforced denial. Follow-up: a per-arm agent definition that
+> omits Bash-graphify, or a PATH-scrubbed wrapper, for a hard withhold. (Also: minor cosmetic — the
+> `--tool` target was normalized unanchored `cli:graphify ` in A vs anchored `cli:^graphify ` in B; both
+> match correctly.)
+
 ## Completed
 
 - Turn 0 Brief written; scope, floor, and the subagent-dispatch structural constraint recorded.
-- impl-1 r1 + accepting-round fixes; rev-1 ACCEPT; overseer-verified 49/49 tests. Implementation loop
-  complete pending the e2e dogfood.
+- impl-1 r1 + accepting-round fixes; rev-1 ACCEPT; overseer-verified 49/49 unit tests.
+- E2E dogfood CONFIRMED in the clauthier lace container: VALID + VOID scorecards, overseer-verified on
+  disk. `/cdocs:ablate` works end to end in a real depending project against live graphify.
 - impl-1 round 1: `plugins/cdocs/skills/ablate/{SKILL.md, ablate.sh, test-ablate.sh}` created; 43/43 unit
   tests pass (real worktree isolation w/o stash touch; meter aggregation; VALID/VOID/TASK-FAIL fixtures;
   single-shot `gate_admissible:false`). Proposal → `implementation_wip`.
@@ -140,6 +165,12 @@ Commits `85809e4`, `751616e`, `caa3e34`. Only remaining verification is the defe
 
 ## Open Todos
 
-- [ ] impl-1 round 1; capture path.
-- [ ] Review round 1.
-- [ ] Post-loop e2e ablate test in lace devcontainer (depends on background lace-container rebuild).
+- [x] impl-1 round 1; captured.
+- [x] Review round 1 (rev-1 ACCEPT); accepting-round should-fixes cleared.
+- [x] E2E ablate test — done in the clauthier lace container (per user; real lace container blocked by 2
+  pre-existing lace infra bugs). VALID + VOID scorecards, overseer-verified.
+- [ ] FOLLOW-UP (not started; awaiting user): hard CLI-tool withhold (agent-def omission / PATH scrub) —
+  see FINDING above. Also: lace's own container needs its Dockerfile `NPM_CONFIG_PREFIX` vs node-feature
+  bug fixed before it can build (lace repo; graphify feature already committed there, not pushed).
+- [ ] Human acceptance: proposal is `implementation_ready` + e2e-verified; awaiting user sign-off to move
+  it to `implementation_accepted`.
