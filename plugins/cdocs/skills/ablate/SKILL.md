@@ -34,8 +34,9 @@ The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestr
 /cdocs:ablate --tool <mcp-tool-id> --task <spec-or-path> [--base <commit>] [--trials N] [--run-dir <dir>]
 ```
 
-- `--tool <mcp-tool-id>`: the target MCP tool, fully qualified as `mcp__<server>__<tool>` (e.g. `mcp__graphify__scope`).
-  The bare trailing tool name is also accepted; the usage check matches either form.
+- `--tool <target>`: the target capability, in EITHER form:
+  - **MCP tool name:** fully qualified as `mcp__<server>__<tool>` (e.g. `mcp__graphify__scope`), or the bare trailing name (`scope`). The usage check matches `tool_use.name`.
+  - **CLI-command signature:** `cli:<regex>` (e.g. `cli:graphify `). For a CLI-first tool (its shell-out surfaces as a `Bash` tool_use, `.name == "Bash"`), the usage check matches the regex against the `Bash` tool_use's `.input.command`. Anchor it (`cli:^graphify `) if a bare substring could match an unrelated command.
 - `--task <spec-or-path>`: the representative task, inline or a path to a task-spec file.
   One pinned prompt string is passed VERBATIM to both arms (D4).
 - `--base <commit>`: the pinned base commit both arms check out from. Defaults to `HEAD`.
@@ -85,13 +86,14 @@ On a dirty invoking tree the helper refuses by default (it tests the committed b
 
 ### Step 2: Dispatch the two arms (the ONLY difference is tool access, D4)
 
-Dispatch both arms as `general-purpose` subagents with the SAME task prompt, SAME base model, each bound to its pre-created worktree as its working directory.
-The single difference is the tool set:
+Dispatch both arms with the SAME task prompt, SAME base model, each bound to its pre-created worktree as its working directory.
+The two arms are dispatched with EXPLICIT per-arm tool allowlists that are identical except for exactly the one target entry:
 
-- **Assisted arm:** the target MCP tool IS in its tool set.
-- **Unassisted arm:** the target MCP tool is ABSENT; every other tool is identical.
+- **Assisted arm:** allowlist = the shared base tool set PLUS the target tool.
+- **Unassisted arm:** the SAME allowlist MINUS that one entry; every other tool is identical.
 
-See "Per-arm single-tool gating" below for the concrete grant/withhold mechanism.
+`general-purpose` (a fixed `tools: *` agent type) is NOT dispatchable directly for gating, because `tools: *` grants the target tool to BOTH arms and the withhold is not expressible.
+The arms are instead dispatched at the general-purpose CAPABILITY level but with a constructed allowlist: a custom per-arm agent definition, or a per-dispatch tool allowlist, whichever the platform exposes (see "Per-arm single-tool gating" below for the mechanism and the profile-omission fallback).
 Each arm rolls out to end of turn and returns its result payload (the harness surfaces `totalTokens`, `totalDurationMs`, `agentId`, `status`).
 The arm also reports whether it completed the task, in its own words; the overseer records a `--task-completed true|false` per arm from that report.
 
@@ -185,10 +187,11 @@ Building both allowlists explicitly (rather than granting `"*"` and trying to su
 - A dispatched agent's transcript is written to `<project-session-dir>/subagents/agent-<agentId-prefix>*.jsonl`, carrying `isSidechain: true`.
 - Assistant messages expose `tool_use` blocks with keys `id, input, name, type`.
 - MCP tools appear in `.name` as `mcp__<server>__<tool>` (sampled real example: `mcp__playwright__browser_click`).
+- A CLI-first tool's shell-out surfaces as a `Bash` tool_use, its invocation in `.input.command` (not in `.name`, which is `"Bash"`); `ablate.sh detect-usage --tool cli:<regex>` matches that command.
 - The Task result payload (`toolUseResult`) carries `agentId`, which resolves the transcript file (via `ablate.sh resolve-transcript`).
 
-So the VOID gate reads the assisted arm's transcript and matches `tool_use.name` against the target id: this is `ablate.sh detect-usage`, no sentinel needed.
-The sentinel-marker fallback (instruct the arm to emit a marker after any target-tool use) is documented in the proposal but is NOT required, since direct `tool_use.name` detection works.
+So the VOID gate reads the assisted arm's transcript and matches the target against `tool_use.name` (MCP) or `.input.command` (CLI): this is `ablate.sh detect-usage`, no sentinel needed for either.
+The sentinel-marker fallback (instruct the arm to emit a marker after any target-tool use) is documented in the proposal but is NOT required, since direct detection works for both MCP-name and CLI-command tools.
 
 > NOTE(claude-opus-4-8/cdocs/mcp-ablation): The metering field names differ from the proposal's placeholders.
 > The real Claude Code result payload surfaces `toolUseResult.totalTokens` and `toolUseResult.totalDurationMs` (plus `usage`, `agentId`, `status`, `totalToolUseCount`), NOT `subagent_tokens`/`duration_ms`.
@@ -244,21 +247,26 @@ A downstream gate MUST check `gate_admissible` and refuse a non-admissible score
 
 The reference wiring: graphify as the target tool on graphify's canonical win case, a "what does this change touch" context-gathering task.
 
+Because graphify is CLI-first in-container (its MCP is shadowed by the lace over-mount bug), the target is expressed as a `cli:` signature, not an `mcp__` name:
+
 ```
 /cdocs:ablate \
-  --tool mcp__graphify__scope \
+  --tool 'cli:graphify ' \
   --task "Enumerate every file, symbol, and doc the change to <module X> touches, and summarize the blast radius." \
   --base HEAD
 ```
 
+`ablate.sh detect-usage --tool 'cli:graphify '` matches the regex against a `Bash` tool_use's `.input.command`, so the usage gate has a REAL signal for graphify (no sentinel needed).
+Anchor the signature (e.g. `cli:^graphify ` or `cli:graphify (update|scope)`) if a bare `graphify ` substring could match an unrelated command.
+
 Expected, on a coherent run:
 
-1. **VALID:** the assisted arm actually invokes graphify (the transcript carries a `mcp__graphify__scope` `tool_use`), both arms complete, so a context-gap verdict is admissible.
+1. **VALID:** the assisted arm actually invokes graphify (its transcript carries a `Bash` `tool_use` whose command matches the `cli:` signature), both arms complete, so a context-gap verdict is admissible.
 2. **The token axis is populated** from the assisted and unassisted `totalTokens`, reported as a corroborating delta (graphify's claim is that scoping cuts context-gathering burn; the token delta corroborates magnitude, the context gap attributes cause).
 3. **The honesty path:** point graphify at a task that does not need it (present-but-unused) and the run reports VOID (`available_unused`), NOT a false "graphify had no effect".
 
 > NOTE(claude-opus-4-8/cdocs/mcp-ablation): graphify is exercised CLI-first in-container: its MCP is shadowed by a lace config over-mount bug, so the "assisted" grant in practice is graphify's CLI availability in the arm's container, while the tool-agnostic abstraction (the arm either has or lacks the capability) is unchanged.
-> The usage check for a CLI-shaped tool detects the CLI invocation in the transcript (a `Bash` `tool_use` running the graphify CLI) rather than an `mcp__` block; pass the CLI's invocation signature as `--tool` or use the sentinel fallback.
+> The usage check for a CLI-shaped tool matches the `cli:<regex>` signature against a `Bash` tool_use's `.input.command` (its `.name` is just `"Bash"`), which `ablate.sh detect-usage` supports directly, so no sentinel marker is needed.
 > This is the one place the "MCP tool" abstraction meets a CLI reality; the harness still measures "capability granted vs withheld".
 
 The graphify proposal ([`cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`](../../../../cdocs/proposals/2026-09-17-graphify-cdocs-integration.md)) can CONSUME this `scorecard.json` for its own token/recall gates, checking `gate_admissible` first; this skill does not re-spec graphify's internals.
