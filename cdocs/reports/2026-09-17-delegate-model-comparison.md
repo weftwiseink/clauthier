@@ -2,6 +2,9 @@
 first_authored:
   by: "@claude-sonnet-5"
   at: 2026-09-17T16:30:00-07:00
+last_edited:
+  by: "@claude-sonnet-5"
+  at: 2026-09-18T13:00:00-07:00
 task_list: cdocs/browser-delegation
 type: report
 state: live
@@ -9,88 +12,552 @@ status: wip
 tags: [research, model_tiering, browser, delegation, visual_review, benchmarks]
 ---
 
-# Non-Claude models for the browser-delegate's visual-verdict leg: an exploratory comparison
+# Model options for the browser-delegate's driving, visual-verdict, and CSS-fix legs: a benchmark-grounded comparison
 
-> BLUF: "Gemini 3 Flash" is a real, primary-verifiable model (`blog.google`, launched 2025-12-17), but it is three generations stale — the current Gemini flash-tier model as of 2026-09-17 is **Gemini 3.8 Flash** (released 2026-09-02), and any amendment citing "Gemini 3 Flash" by that exact name should be corrected to whatever is current at write time. On visual/UI benchmarks, Gemini's flash tier is directionally competitive on general multimodal understanding (MMMU Pro) and is exceptionally cheap and fast per screenshot, but **no Gemini Flash variant appears on the one verified GUI-grounding leaderboard checked (ScreenSpot-Pro)** — that leaderboard is topped by Claude Opus 4.8 and GPT-6 Astra, with no Sonnet, Haiku, or Flash-tier entries at all, so head-to-head "does a cheap Gemini model out-see a cheap Claude model on a GUI screenshot" evidence does not exist in verifiable form today. The decisive fact for this proposal is architectural, not benchmark-based: **Claude Code's `--model`/subagent `model:` field is Anthropic-locked** — pointing it at a non-Claude model requires an intercepting gateway (LiteLLM, OpenRouter, etc.) that swaps `ANTHROPIC_BASE_URL` for the whole session, not a per-subagent override — so a non-Claude visual-verdict leg cannot be "just a different subagent," it has to be a separate process the delegate's driving leg shells out to. Recommendation (reference only): keep the driving/capture leg exactly as proposed (sonnet-tier CC subagent), and treat the visual-verdict leg's model as **pluggable but not multi-provider-by-default in v1** — name the seam (a documented interface a consumer can point at Gemini via a direct API call or a BYO-key browser-use/Stagehand path) without committing to build or default to it, pending real GUI-grounding benchmark evidence for a Flash-tier model that does not currently exist in the sources checked.
+> BLUF: The first pass of this report concluded "no verified benchmark contains flash-tier or cheap models" after checking one benchmark (ScreenSpot-Pro) via two secondary aggregators.
+> That conclusion was wrong, and it was a search-breadth failure, not a real absence.
+> A wider, mostly primary-sourced search across GUI-grounding, web-agent, general multimodal, and design-fidelity/repair benchmark families finds substantial cross-model evidence including flash and open tiers, and in several cases a corrected reading changes the recommendation, not just the evidence base.
+> The single most decision-relevant finding: on **MT-Web2Code** ([arXiv:2608.03474](https://arxiv.org/abs/2608.03474), primary, 2026-08-04), a benchmark that injects a defect into a rendered page and scores an agent's localized fix against a reference, **Gemini 3.5 Flash outscores Claude 4.7 Opus on both the macro-reconstruction task (65.5 vs. 63.0) and the micro-localized-modification task (80.5 vs. 77.3)**, the task shape closest to this proposal's dimension C ("recenter a div").
+> That finding needs an immediate counterweight from **1D-Bench** ([arXiv:2602.18548](https://arxiv.org/abs/2602.18548), primary, another iterative visual-feedback UI-fix benchmark): there, **Claude Sonnet 4.5 is the best single- and multi-round performer (74.0 / 80.4)**, ahead of Gemini 3 Pro and well ahead of Qwen3-VL-235B (59.0), so dimension C's two closest-matched benchmarks disagree on direction and neither should be treated as the settled answer.
+> On GUI grounding, the **primary, actively-maintained ScreenSpot-Pro/v2 leaderboard** ([gui-agent.github.io/grounding-leaderboard](https://gui-agent.github.io/grounding-leaderboard/), fetched 2026-09-18) directly contradicts the numbers the first pass cited from secondary aggregators: it shows no Gemini, GLM, or InternVL entries at all, a generic "Claude (Computer Use)" row at 17.1%, GPT-4o at 0.8%, and dozens of cheap/open GUI-grounding *specialist* models (UI-TARS, GTA1, Holo2, UGround, Jedi, OS-Atlas) scoring 2 to 4x higher than either.
+> The prior claim of "Claude Opus 4.8 at 87.9%, GPT-6 Astra at 92.7%" on ScreenSpot-Pro could not be corroborated against this primary source and should be treated as unverified aggregator noise, not fact; see "A Correction" below.
+> On the visual-judgment leg itself, **DiffSpot** ([arXiv:2605.29615](https://arxiv.org/abs/2605.29615), primary) is the closest match to "does this render look janky," and its headline finding matters more than any single model's rank on it: the best model of ten tested catches only 40.7% of true visual defects overall and under 23% of hard-tier defects, so the capability is low-ceiling for every tier, cheap or expensive, Claude or not.
+> On driving, **HAL's Online-Mind2Web leaderboard** ([arXiv:2510.11977](https://arxiv.org/abs/2510.11977), primary infrastructure paper; per-model numbers live on HAL's own leaderboard site, not the paper's abstract) gives the cleanest same-scaffold cost/quality tradeoff found anywhere in this report: Claude Sonnet 4 scores 40.0% for a ~$1,577 eval run versus Gemini 2.0 Flash's 29.0% for ~$8.83, a roughly 180x cost gap for a 1.4x quality gap.
+> The decisive architectural fact from the first pass still stands unchanged: Claude Code's `model:` field is Anthropic-locked, so any non-Claude model requires a gateway or a direct API call from inside the delegate's own tool code, not a plain subagent swap.
+> Recommendation (reference, not decision): the evidence base has moved from "nothing to compare" to "real, benchmark-backed tradeoffs that cut in different directions depending on the exact task," which argues for a narrowly-scoped pilot (dimension C, where the two closest benchmarks disagree, is the one most worth spiking first) rather than either keeping the status quo or switching wholesale, while the harness-integration cost of any non-Claude option is unchanged and still real.
 
 ## Context / Background
 
-This report is a supplement to the accepted proposal `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, which hardcodes a sonnet-tier `browser-delegate` agent for both driving/capture and (via handoff) visual verdicts, reusing cdocs's existing R1-R6 discipline verbatim. The maintainer asked whether a non-Claude model — specifically "Gemini 3 Flash" — is worth using for the delegate, particularly the visual-judgment leg, given claims that it benchmarks well on visual tasks. This report treats that as an open, exploratory question, not a decision, and follows the same framing Report A (`2026-09-17-browser-delegation-approaches.md`) already established: the delegate has two legs — a cheap, deterministic **driving/capture leg** (navigate, click, screenshot, extract) and a judgment-heavy **visual-verdict leg** (the R1-R6 VLM-looker comparing a render to a design reference) — and only the second leg is where a stronger *visual* model plausibly pays for itself.
+This report supplements the accepted proposal `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, which hardcodes a sonnet-tier `browser-delegate` agent for both driving/capture and (via handoff) visual verdicts, reusing cdocs's existing R1-R6 discipline verbatim.
+The maintainer asked whether a non-Claude model is worth using for the delegate, and directed this revision at four explicit options and three task dimensions, because the first pass's benchmark search was too narrow to answer that question honestly.
 
-Grounding read before this report: Report A's "who holds the loop" thesis and A2A deferral, Report B's isolation/parallelization findings (not load-bearing here), the accepted proposal's sonnet-tier default and D1-D6 design decisions, and `plugins/cdocs/rules/model-tiering.md`'s Claude-centric tiering shape.
+**The four options**, on a cost/speed/quality tradeoff:
 
-## Key Findings
+1. **Opus driver + Opus judge**: current approach, costly, slow, the quality ceiling.
+2. **Sonnet driver + Sonnet judge**: cheaper, in-Claude-family, a plain CC subagent, no external integration.
+3. **Current Gemini flash tier**: cheapest, requires external tool/integration (non-Claude, not a CC subagent per the harness-integration finding below).
+4. **Open / cost-effective visual-specialist models**: Qwen-VL line, GUI-grounding specialists (UI-TARS, GTA1, Holo2, UGround, Aguvis, OS-Atlas, Jedi), and other cheap VLMs (InternVL, GLM-4.6V, Llama vision, Molmo, Pixtral).
 
-- **"Gemini 3 Flash" exists and is primary-verified, but is stale.** Google's own blog post (`blog.google/products-and-platforms/products/gemini/gemini-3-flash/`, dated 2025-12-17) confirms the launch, with a stated MMMU Pro score of 81.2% ("comparable to Gemini 3 Pro") and a SWE-bench Verified score of 78%. But `ai.google.dev/gemini-api/docs/changelog` (primary, fetched directly) shows four Flash releases *since* then in 2026: 3.5 Flash (May 19), 3.6 Flash (July 21), 3.7 Flash (August 13), and **3.8 Flash (September 2, 2026)** — the current flash-tier model as of this report's date. A third-party aggregator (`tokencostcalculators.com`, secondary) independently describes "Gemini 3 Flash Preview" as "prior-gen Flash" in its current model list, corroborating that the exact name the maintainer used is no longer the live default. Any proposal amendment should say "Gemini's current flash-tier model" or name the specific dated version, not "Gemini 3 Flash," to avoid staleness the moment it is written.
-- **No verified GUI-grounding benchmark places a Gemini Flash-tier model against Claude Sonnet or Haiku.** Two ScreenSpot-Pro leaderboard snapshots were fetched directly (`benchlm.ai/benchmarks/screenspot-pro` and `llm-stats.com/benchmarks/screenspot-pro`, both dated September 2026, both secondary aggregators not the original academic ScreenSpot-Pro authors' own site): both list only flagship-tier models (Claude Opus 4.8 at 87.9%, GPT-6 Astra at 92.7%, Gemini 3.1 Pro at 84.4%, Gemini 3 Pro at 72.7%). **Neither leaderboard contains a single Claude Sonnet, Claude Haiku, or Gemini Flash-tier entry.** This is a real evidence gap, not a finding in Gemini's favor or against it — the specific "cheap visual delegate model" comparison the maintainer is asking about is not benchmarked in any source this report could verify.
-- **The MMMU Pro (Gemini) vs. MMMU-val (Claude) numbers found are not apples-to-apples.** Gemini 3 Flash's 81.2% is on MMMU **Pro** (the harder, filtered variant); a secondary source (`vellum.ai`, not independently primary-fetched here) reported Claude Sonnet 4.5 at 77.8% on MMMU **val** (the easier original set), behind GPT-5 (84.2%) and Gemini 2.5 Pro (82.0%) on that same val set. These are different benchmark variants and cannot be compared as a same-scale number; citing them side by side without that caveat would misrepresent both models. No MMMU-Pro number for any current Claude Sonnet/Haiku model was found in this research pass.
-- **Cost per screenshot is cheap across the board and Gemini's flash tier is the cheapest of the three, but not by an order of magnitude.** Using Anthropic's own primary-verified tokenization formula (`platform.claude.com/docs/en/build-with-claude/vision`: images cost `⌈w/28⌉×⌈h/28⌉` visual tokens, capped per resolution tier) and Google's own image-understanding docs (tile-based, ~258 tokens per 768×768 tile), a single 1920×1080 screenshot costs roughly: **Claude Haiku 4.5** ≈ 1,560 tokens × $1/M input ≈ **$0.0016**; **Claude Sonnet 5** ≈ 1,560-2,691 tokens (tier-dependent) × $2/M ≈ **$0.003-0.005**; **Gemini 3.8 Flash** ≈ ~1,000-1,100 tokens (tile-formula estimate) × $0.75/M promotional rate (through 2026-12-31; $1.50/M after) ≈ **$0.0008-0.0017**. All three are fractions of a cent per screenshot; the difference between "cheapest" and "most expensive" option here is roughly 3x, not the order-of-magnitude difference that would make model choice the dominant cost lever for this leg. Latency differs more: Artificial Analysis (secondary, via search) reports Gemini 3.8 Flash at ~305-345 output tokens/sec but ~15.7s time-to-first-token for its "high" reasoning variant (it "thinks" before answering), versus Claude Haiku 4.5's sub-600ms TTFT and Claude Sonnet 5's ~0.97s TTFT (non-reasoning, high effort). For a single-verdict-per-screenshot workload, TTFT dominates wall-clock time more than output speed, which cuts against Gemini's flash tier for this specific low-output-volume use case unless its reasoning/thinking budget is turned down.
-- **Claude Code's `--model` and subagent `model:` field are Anthropic-locked by default.** Primary-fetched from `code.claude.com/docs/en/cli-reference`: `--model` accepts Claude aliases (`sonnet`, `opus`, `haiku`, `fable`) or "a model's full name," and per `code.claude.com/docs/en/sub-agents` the subagent frontmatter `model:` field documents the same alias/full-ID/`inherit` shape — all resolving to Claude models, optionally hosted on Bedrock/Vertex/Foundry (still Claude weights, different cloud). Corroborating (secondary, search-only): multiple 2026 gateway-comparison articles state plainly that "pointing the CLI at anything other than api.anthropic.com results in an authentication error," and that reaching a non-Anthropic model requires a proxy (LiteLLM, OpenRouter, Portkey, Maxim Bifrost, agentgateway) that translates the Anthropic Messages API format to the target provider and is configured via `ANTHROPIC_BASE_URL` for the **whole session**, not per-subagent. This is the single most decisive fact for this report: a non-Claude model cannot be "just a different subagent" inside the existing `browser-delegate` agent definition. It requires either (a) a session-wide gateway swap (heavyweight, affects every model call in that session, not just the delegate), or (b) the delegate's own tool code — a skill or the agent's `Bash`-invoked script — making a direct API call or shelling out to a separate process that holds its own model choice, entirely decoupled from the CC subagent mechanism.
-- **browser-use and Stagehand both already support Gemini via bring-your-own-key, confirming path (b) is real and low-friction.** Primary-fetched: `docs.browser-use.com`'s supported-models docs (via search summary, not independently re-fetched beyond the search tool's extraction) show `ChatGoogle(model="gemini-3-pro-preview")` with a `GOOGLE_API_KEY` env var, and a `ChatBrowserUse` gateway class accepting provider-prefixed IDs like `'google/gemini-3-pro'`. Stagehand's own docs (`docs.stagehand.dev/v3/configuration/models`, via search) confirm support for OpenAI/Anthropic/Google via the Vercel AI SDK, plus a Browserbase-hosted "Model Gateway" accepting strings like `"google/gemini-3-flash-preview"`. Notably, **Stagehand's own default model is Gemini 2.5 Flash-Lite** (per its docs, search-verified) — the tool most likely to be the delegate's own driving substrate already defaults to a cheap Gemini flash-tier model for its *internal* action-selection loop, which is a separate, already-solved concern from the cdocs visual-verdict leg this report is about. Neither tool is a drop-in replacement for the R1-R6 verdict discipline; both remain driving tools, per Report A's finding.
-- **This is squarely an A2A-deferral-shaped problem, per Report A's own thesis.** Report A's "who holds the loop" framing already anticipated this: an MCP server or subagent that merely gets called does not by itself relocate judgment; a *process* with its own model choice does. A non-Claude visual-verdict leg is, structurally, a small instance of exactly the "separate long-lived harness/process" architecture row in Report A's table — not literally A2A (no cross-org task lifecycle is needed for one screenshot judgment call), but the same shape: a call out to something that is not the CC subagent mechanism, holding its own loop with its own model. Report A explicitly deferred A2A as "documented future escalation, not initial architecture" for cross-harness/cross-org delegation; a single direct API call to Gemini for one image judgment is much lighter than A2A, but it is not "in-harness" either, and the proposal's session-reuse/durable-specialist machinery (Pillar 3) does not apply to it, because that machinery assumes the resumed thing is itself a Claude Code subagent.
-- **`plugins/cdocs/rules/model-tiering.md` has no multi-provider concept and would need a new axis, not just a new tier.** The rule's tiers (lead/judgment=opus, search/explore=sonnet, mechanical=haiku) are entirely Claude-model-name-keyed and describe *which Claude model*, never *which provider*. A pluggable visual-verdict leg that might resolve to Gemini would sit outside this rule's vocabulary entirely — it is not a "downgrade a tier," it is "route this call through a different vendor," which the rule does not model at all. This is worth naming as a gap in `model-tiering.md` regardless of what the browser-delegate proposal decides, since any future multi-provider work will hit the same gap.
+**The three task dimensions**, each benchmarked separately below because they are genuinely different skills:
 
-## Per-Leg Model Comparison
+- **A. Visual reasoning / quality judgment**: "does this render look janky or wrong versus a design," the verdict leg.
+- **B. Website navigation & usage**: agentic web tasks, find and click the right element, complete a flow, the driving leg.
+- **C. Visual-oriented CSS/layout correction**: given a screenshot and a reference, make the small fix, the eventual rapid review/tweak/review inner loop.
 
-### Driving/capture leg (structured browser actions: navigate, click, screenshot, extract)
+Grounding read before this revision: Report A's ("who holds the loop") thesis and A2A deferral (`2026-09-17-browser-delegation-approaches.md`), the visual-verification tool survey (`2026-08-05-visual-verification-skills-web-survey.md`), the accepted proposal's sonnet-tier default and D1-D6 design decisions, and `plugins/cdocs/rules/model-tiering.md`'s Claude-centric tiering shape.
 
-This leg's requirements are cheap and deterministic — Report A already settled this at sonnet-tier for the in-harness delegate, and this report finds no reason to revisit that. It is included here only to make the split explicit, not because a provider swap is proposed for it.
+## Current Verified Model Versions (as of 2026-09-18)
 
-| Model | Fit for driving/capture | Notes (verification status) |
-|---|---|---|
-| Claude Sonnet 5 (current default) | Good — cheap enough, fast enough, already the accepted proposal's choice | Primary-verified pricing $2/$10 per M tokens (`platform.claude.com`); no change recommended |
-| Claude Haiku 4.5 | Plausible cheaper alternative if driving-only (no verdict) work is split out further | Primary-verified pricing $1/$5 per M tokens; sub-600ms TTFT (secondary, Artificial Analysis via search) — likely a better fit than Sonnet for *pure* mechanical driving if the plugin ever wants to shave cost further, but out of scope for this report's question |
-| Gemini flash tier (any BYO-key path) | Only relevant if the whole delegate becomes non-Claude, which nothing in this report recommends | Would require the same gateway/direct-API wiring discussed below; not worth the complexity for a leg that is already cheap on sonnet-tier |
+Independently re-verified in this revision, not carried over unchecked:
 
-### Visual-verdict leg (R1-R6 VLM-looker judging a render against a reference)
+- **Gemini flash tier**: still **Gemini 3.8 Flash** (GA 2026-09-02), confirmed via Google's own live changelog (`ai.google.dev/gemini-api/docs/changelog`, primary, fetched 2026-09-18): no newer Flash release has shipped in the 16 days since.
+  Pricing independently re-verified against `ai.google.dev/gemini-api/docs/pricing` (primary): input $0.75/M, output $3.75/M (including thinking tokens) through 2026-12-31, then $1.50/M input and $7.50/M output.
+  A cheaper **Gemini 3.5 Flash-Lite** variant exists at $0.30/M input, $2.50/M output (same primary page).
+  Images are not separately itemized; they are billed as standard input/output tokens.
+- **Qwen-VL line**: **Qwen3-VL** is current (waves shipped 2025-10-15 through 2025-10-21, technical report [arXiv:2511.21631](https://arxiv.org/abs/2511.21631), 2025-11-27; official GitHub `QwenLM/Qwen3-VL`, primary).
+  Sizes: 2B, 4B, 8B, 30B-A3B (MoE), 32B, 235B-A22B (MoE), plus hosted `Qwen3-VL-Plus` and `Qwen3-VL-Flash` SKUs on Alibaba's own DashScope API.
+  NOTE(sonnet/delegate-model-comparison): Artificial Analysis (secondary, fetched 2026-09-18) reports Alibaba has flagged `Qwen3-VL-235B-A22B-Instruct` as deprecated on its own API in favor of a non-VL-branded `Qwen3.5-397B-A17B` that also accepts image/video input, suggesting Alibaba is folding vision into its mainline line rather than keeping a permanent separate flagship VL SKU. Dedicated Qwen3-VL checkpoints remain live and priced today regardless.
+  This migration goes further than one deprecated SKU: a direct fetch of `huggingface.co/Qwen/Qwen3.8-27B` (primary, confirmed real, Aug 2026) shows a natively-multimodal, non-VL-branded successor generation already exists, alongside a `Qwen3.8-Flash-Next` variant separately confirmed on an OSWorld 2.0 benchmark card (52.3% partial success, primary).
+  So as of 2026-09-18 there are two live, current answers to "what is the current Qwen-VL line": the dedicated `Qwen3-VL` checkpoints (Nov 2025, what nearly every third-party benchmark in this report actually tests, because they predate Qwen3.8) and the newer, natively-multimodal `Qwen3.8` mainline (Aug 2026, what Alibaba's own docs increasingly point new integrations toward).
+  A caution on Qwen3.8's own self-reported comparison table: its model card cites an "Opus 4.6 Max" scoring 72.7% on OSWorld-Verified, which conflicts with Claude's own independently-verified Sonnet 4.6 OSWorld-Verified figure of 78.5% (cross-validated between a secondary aggregator, vellum.ai, and Anthropic's own Sonnet 5 announcement blog).
+  A lower Claude tier should not plausibly outscore a higher tier on the same eval if both figures are apples-to-apples, so Qwen's self-reported competitor numbers on its own model card should be treated as directional marketing, not cited as a verified cross-vendor comparison.
+- **GLM/Zhipu vision line**: the task framing's assumption of "GLM-4V/GLM-4.x-V" needs a correction: the current flagship as of today is **GLM-4.6V**, which has superseded GLM-4.5V, confirmed directly on Z.ai's own live pricing page (`docs.z.ai/guides/overview/pricing`, primary, fetched 2026-09-18). GLM-4.5V remains live at a higher price.
+- **Pixtral (Mistral)**: fully retired. Pixtral 12B retired 2025-12-31, Pixtral Large retired 2026-05-31, confirmed on Mistral's own live model-overview docs (primary, fetched 2026-09-18), with zero mentions of "Pixtral" anywhere on Mistral's current pricing page. Current vision-capable Mistral replacements are Mistral Medium 3.5, Mistral Large 3, and the budget-tier Ministral 3 series. Historical Pixtral benchmark numbers below (from a 2025-era paper) describe a model line that no longer exists as a purchasable option.
+- **Molmo (Ai2)**: current version is **Molmo 2**, released 2025-12-11 (Ai2's own blog, primary), open-weight (8B and 4B Qwen3-based variants, plus a 7B Olmo-based "Molmo 2-O"). Ai2's own blog promises OpenRouter hosting "soon"; as of 2026-09-18 OpenRouter's live catalog has zero Molmo listings. Fireworks AI's model catalog does list Molmo2-4B/8B live, but exact per-token pricing could not be extracted (JS-rendered pricing table) and image-input behavior on that specific endpoint is unconfirmed.
+- **InternVL**: current is **InternVL3.5** (announced 2025-08-26, primary: `github.com/OpenGVLab/InternVL`, [arXiv:2508.18265](https://arxiv.org/abs/2508.18265)), but the only confirmed hosted endpoint found (Fireworks AI) serves the older InternVL3 generation (8B/38B/78B), not 3.5. Zero InternVL listings on OpenRouter or Together AI as of 2026-09-18.
+- **Llama vision**: a real integration trap exists here. Groq's own vision documentation (`console.groq.com/docs/vision`, primary, fetched 2026-09-18) lists only **`qwen/qwen3.6-27b` and `qwen/qwen3.8-27b`** as vision-capable on Groq, not Llama 4 Scout or Maverick, even though Llama 4's base weights support image input elsewhere (OpenRouter, Together, Fireworks). Anyone assuming "fast Llama vision via Groq" would silently get a text-only endpoint. Llama 3.2 Vision (11B/90B), still cited by some stale pricing aggregators, appears to have been delisted from both Groq's and OpenRouter's live catalogs in favor of Llama 4.
 
-| Model | Visual/UI benchmark evidence found | Cost per screenshot (verified formula, ~1920×1080) | Latency (TTFT, secondary) | Harness fit |
+## Dimension A: Visual Reasoning / Quality Judgment
+
+This dimension has no UI-specific benchmark that judges "does this render look janky."
+The closest proxies are general multimodal visual-reasoning leaderboards, plus one benchmark, DiffSpot, that comes close to the actual task.
+A second, independent research pass on this dimension found that most of these benchmarks publish their model tables as **images**, not machine-readable HTML, which is why an earlier text-only fetch pass under-reported coverage; reading the images directly (a second model call over the image bytes) recovered substantially more cheap-tier data than the first extraction attempt.
+Both extraction passes are reported below since they used different techniques and corroborate each other where they overlap.
+
+**DiffSpot** ([arXiv:2605.29615](https://arxiv.org/abs/2605.29615), primary, May 2026, independently confirmed real and matching its described methodology by a second, separate verification pass) is the closest match to the actual dimension-A task: it shows models before/after web-interface screenshots and asks them to identify observable CSS-driven differences across 13 properties and 3 difficulty tiers, with 500 no-diff pairs as a hallucination control.
+
+| Model | Overall recall | Hard-tier recall | No-diff (specificity) | Accuracy |
 |---|---|---|---|---|
-| Claude Sonnet 5 (current, hardcoded assumption in accepted proposal for the handoff) | No Sonnet-tier ScreenSpot-Pro entry found; MMMU-val figure available only for the prior generation (Sonnet 4.5: 77.8%, secondary) | ~$0.003-0.005 (primary formula) | ~0.97s (secondary) | Native — this is what the accepted proposal already assumes for the `reviewer`/R1-R6 handoff |
-| Claude Opus (current `reviewer`/`judge` tier per model-tiering.md) | **Only Claude model with a verified top-tier GUI-grounding score**: Opus 4.8 at 87.9% on ScreenSpot-Pro (primary-fetched leaderboard, though the leaderboard itself is a secondary aggregator, not the original benchmark authors) | Higher — high-res tier, ~2,691 tokens × $5/M (Opus 5) ≈ $0.0135, or Opus 4.8's own rate (not separately checked) | Not checked (opus is not TTFT-optimized; irrelevant since it's already the judgment default) | Native — already the `reviewer`/`judge` model per `model-tiering.md`; this is arguably the strongest verified evidence in this report and argues for *not* downgrading the verdict leg to any flash-tier model at all, Claude or Gemini |
-| Gemini 3.8 Flash (current flash tier; "Gemini 3 Flash" as named by the maintainer is 3 generations stale) | No ScreenSpot-Pro entry; MMMU Pro 81.2% is for the superseded "Gemini 3 Flash," not re-verified for 3.8 Flash in this pass | ~$0.0008-00017 (tile-formula estimate; not as precisely verified as Anthropic's formula) | ~15.7s TTFT reported for the "high" reasoning variant (secondary) — likely reducible with a lower thinking budget, not verified | **Not native** — requires a gateway or direct API call; cannot be a plain CC subagent (see Harness Integration below) |
-| Gemini 3.1 Pro / 3 Pro | Verified on ScreenSpot-Pro: 3.1 Pro 84.4%, 3 Pro 72.7% (same secondary leaderboard) — meaningfully better GUI-grounding evidence than any Flash-tier entry, because there simply is no Flash-tier entry | Not computed (Pro-tier pricing is higher, ~4-7x Flash per the pricing search results) | Not checked | Same integration barrier as Flash — still non-Claude |
-| GPT-5.x / GPT-6 Astra (optional candidate) | GPT-6 Astra tops the same ScreenSpot-Pro leaderboard at 92.7%, ahead of Claude Opus 4.8 | Not computed — no image-token formula for GPT models was verified in this pass | Not checked | Same integration barrier as Gemini — non-Claude, needs a gateway/direct call |
+| Gemini 3.1 Pro | 40.7% (best) | 22.7% | 98.4% | 47.2% (best) |
+| Kimi K2.5 | 36.4% | 18.6% | 87.2% | 42.2% |
+| Gemini 3 Flash | 34.4% | 18.2% | 91.4% | 40.9% |
+| Qwen3.5-VL-397B | 30.1% | 13.7% | 96.6% | 37.6% |
+| Claude Opus 4.7 | 31.2% | 21.8% | 99.6% (best) | 38.9% |
+| GPT-5.4 | 30.5% | 12.2% | 99.6% | 38.3% |
+| Qwen3-VL-235B-Thinking | 19.3% | 10.5% | 98.8% | 28.3% |
+| GLM-4.6V | 11.2% | 5.5% | 99.6% | 21.2% |
+| Qwen3-VL-235B-Instruct | 5.1% | 2.6% | 100.0% | 15.9% |
+| InternVL3.5-30B-A3B | 4.2% | 3.8% | 100.0% | 15.0% |
 
-**Reading this table plainly:** the only models with *any* verified GUI-grounding benchmark score at all are flagship-tier (Opus, GPT-6 Astra, Gemini Pro variants) — every cheap/flash-tier model in this comparison, Claude or Gemini, is running on cost and latency numbers alone with no verified visual-judgment benchmark backing it. That is not evidence Gemini's flash tier is worse than Claude's cheap tiers at this specific task; it is an absence of evidence for either, and the report should not be read as implying otherwise.
+This finding matters more than any single model's rank on it: no model of the ten tested catches even half of true visual diffs, and hard-tier recall stays below 23% for every model.
+Gemini 3 Flash edges Claude Opus 4.7 on raw recall (34.4% vs. 31.2%), but Opus is far more conservative (99.6% no-diff vs. 91.4%), meaning Opus rarely flags a defect that is not there.
+For a verdict leg whose false-positive rate matters (a hallucinated defect sends the fix loop chasing nothing), Opus's precision profile is the more relevant advantage, not raw recall.
+No Claude Sonnet, Haiku, or the current Opus 5 was tested, so this leg's closest task-matched benchmark has no verified datapoint at the tier the accepted proposal would actually use.
+The paper also finds near-zero correlation between pixel-distance magnitude and detection, a direct caution against assuming any VLM-judge will reliably flag glaring breaks just because they look visually large to a human.
 
-## Harness Integration Reality (decisive section)
+Beyond DiffSpot, general multimodal visual-reasoning benchmarks are the fallback proxy, and coverage varies sharply by extraction method.
+**A first-order finding**: several of these benchmarks' *primary leaderboard pages* are abandoned at their 2024 publication-era model roster when fetched as plain HTML, but the same benchmarks have current cheap-tier data when read from vendors' own recent model-card images (Gemini's, Qwen's, and Zhipu/GLM's own release tables).
 
-Per the maintainer's framing, this is the section that should gate the recommendation more than the benchmark tables above, because the benchmark evidence for the exact comparison asked ("cheap Gemini vs. cheap Claude on visual judgment") does not exist yet.
+| Benchmark | Primary page (HTML fetch) | Vendor model-card tables (image-read) |
+|---|---|---|
+| MMStar | `mmstar-benchmark.github.io`, stale at 2024-09-26, 18 models, zero current cheap-tier coverage | Current: see table below, sourced from Qwen's and GLM's own release cards |
+| BLINK | `zeyofu.github.io/blink`, stale at 2024-era paper roster | Current: see table below |
+| CharXiv | `princeton-nlp.github.io/CharXiv`, last updated 2024-12-25, states GPT-4.1/Qwen2.5-VL/InternVL2.5/Llama-vision/Molmo/Pixtral were "upcoming" at that time | Current: see table below |
+| VisualWebBench | `visualwebbench.github.io` + GitHub, 2024-era; detailed table is an embedded image the HTML fetch could not read | **Confirmed genuinely stale by two independent passes**, not a coverage gap: no Qwen2.5/3-VL, no GLM-4.x-V, no InternVL2.5/3, no current Gemini Flash, no current Claude, no GPT-5, no Pixtral/Molmo/Llama-vision anywhere. This is the one benchmark in this whole report where the first pass's "no cheap models" conclusion holds specifically. |
+| MathVista (mini) | `mathvista.github.io`, JS-rendered sortable table, only a 10-row fragment extractable | Current: see table below |
+| MMBench-EN (v1.1) | OpenCompass Open VLM Leaderboard, JS-rendered Gradio app, not extractable | Current: see table below |
 
-Mapping each candidate's actual wiring mechanism:
+MMMU (val), merging a secondary llm-stats.com snapshot (2026-09-18) with primary vendor-card figures (Google's Gemini 2.5 report, Qwen's own HF cards, GLM-V's own GitHub table):
 
-1. **Claude Sonnet/Haiku/Opus as a CC subagent (`model:` frontmatter field).** Native. This is the only path with zero additional infrastructure — it is what the accepted proposal already does for both legs. Primary-verified: the `model:` field's documented values (`sonnet`/`opus`/`haiku`/`fable`/full Claude model ID/`inherit`) all resolve to Claude weights.
-2. **A non-Claude model via a session-wide gateway (LiteLLM, OpenRouter, Portkey, etc.).** Technically possible but load-bearing on the *entire* Claude Code session, not scoped to one subagent: the gateway intercepts `ANTHROPIC_BASE_URL` for every model call the session makes, translating the Anthropic Messages API format to the target provider. A sophisticated gateway could in principle route different model-ID strings to different backends (Claude calls to Anthropic, a specifically-named "delegate-visual" model ID to Gemini), but this was not verified as an off-the-shelf capability in this research pass — it would need its own spike. This path also reintroduces exactly the kind of external dependency/version-pinning surface Report A already flagged as recurring friction for weftwise's Playwright MCP setup, just at the model-routing layer instead of the browser-tooling layer.
-3. **A direct API call from inside the delegate's own tool code.** The delegate agent already has `Bash`/`Read`/`Write` tools per the accepted proposal (`plugins/browser-delegate/agents/browser-delegate.md`). Nothing prevents its skill or a small script from shelling out to `curl`/a Python/Node snippet that calls the Gemini API directly with a user-supplied `GOOGLE_API_KEY`, entirely independent of what model the CC session itself is running on. This is the lightest-weight path that actually works today, verified by browser-use's and Stagehand's own BYO-key mechanics (both accept a Google API key directly, no CC involvement at all).
-4. **Via browser-use/Stagehand's BYO-key path specifically.** This only makes sense if the *driving* tool itself is browser-use or Stagehand (not `@playwright/cli`, which the accepted proposal defaults to) — in which case the visual judgment could be folded into that same tool's own model call rather than a separate step. This would be a bigger architecture change than "swap the verdict model," because it means replacing the accepted proposal's driving-tool default too. Not recommended as the reason to switch, per Report A's existing analysis that browser-use/Stagehand are driving tools, not verifiers, and introduce their own second-LLM-in-the-loop cost center.
-5. **A2A / separate process.** Report A already covers this ground; nothing here changes that conclusion. A single per-screenshot judgment call is much lighter-weight than what A2A is for (cross-org task lifecycles), so A2A is not the right vehicle even if a separate process is the right shape.
+| Model | Score | Source |
+|---|---|---|
+| Gemini 2.5 Pro | 82.0% | primary, Google's Gemini 2.5 report |
+| Gemini 2.5 Flash | 79.7% | primary, same report (cross-validates exactly against the secondary llm-stats.com figure) |
+| Claude 4 Opus | 76.5% | secondary, Google-reported in the same report |
+| Claude 3.7 Sonnet | 75.0% | secondary, llm-stats.com |
+| Claude 4 Sonnet | 74.4% | secondary, Google-reported |
+| Qwen3-VL-235B-A22B-Instruct | 78.7% | primary, Qwen's own HF card |
+| Qwen3-VL-32B / 30B-A3B / 8B | 76.0% / 74.2% / 69.6% | primary, Qwen3-VL GitHub |
+| GLM-4.6V / GLM-4.5V | 76.0% / 75.4% | primary, GLM-V GitHub |
+| Qwen2.5-VL 72B / 7B | 70.2% / 58.6% | primary, Qwen2.5-VL report |
+| GPT-4o | 72.2% (secondary) / 69.1% (Qwen-reported) | mixed |
+| Gemini 2.0 Flash | 69.3% | primary |
+| Pixtral-12B (CoT) | 52.5% | primary, Mistral's own card |
 
-**Tying back to Report A's "who holds the loop" thesis:** paths 3 and 4 both mean the visual-verdict leg's model choice is decided by a *tool the delegate calls*, not by the CC harness's own model-selection surface — the delegate (or a downstream skill) becomes the one "holding the loop" for that one judgment call, exactly the same distinction Report A drew between an MCP server the lead calls directly (no delegation) versus a subagent that is the actual caller (real delegation). Here it inverts: the CC subagent mechanism is the thing that *cannot* reach Gemini on its own, so reaching it requires stepping one level below the subagent abstraction into a plain API call the subagent's tool code makes. That is a real, low-complexity path — but it is a new integration surface this proposal does not currently have (no direct-API-call convention exists anywhere in the accepted proposal or in `plugins/cdocs/rules/*`), and it needs its own key-management and fallback story before an amendment could respect it.
+Claude Haiku, Claude Sonnet 4.5+/Opus 4.5+, InternVL, and Molmo are absent from every MMMU row found by either extraction method.
+
+MMMU-Pro, merging the same two extraction methods:
+
+| Model | Score | Source |
+|---|---|---|
+| Gemini 3.5 Flash | 83.6% (rank 1 among tracked) | secondary, llm-stats.com |
+| Gemini 3 Flash | 81.2% | secondary |
+| Qwen3-VL-235B-Thinking | 69.3% | **cross-validated exactly**, appears independently in both a secondary llm-stats.com snapshot and a primary GLM-V GitHub comparison table |
+| Qwen3-VL-235B-Instruct | 68.1% | primary, Qwen HF |
+| GLM-4.6V / GLM-4.5V | 66.0% / 65.2% | primary, GLM-V GitHub |
+| Claude Opus 4.6 | 77.3% | secondary; cross-validates against Anthropic's own Opus 4.6 system card (73.9% no tools, 77.3% with an image-cropping tool) |
+| Claude Sonnet 4.6 | 75.6% | secondary |
+| Claude Opus 4.1 | 60.7% | secondary, Qwen-reported |
+| Claude 4 Sonnet | 56.1% | secondary, Qwen-reported |
+| Qwen2.5-VL 72B / 7B | 51.1% / 38.3% | primary |
+
+MathVista (mini):
+
+| Model | Score | Source |
+|---|---|---|
+| GLM-4.6V / GLM-4.5V | 85.2% / 84.6% | primary, GLM-V GitHub |
+| Qwen3-VL-235B-Instruct / 32B / 30B-A3B | 84.9% / 83.8% / 80.1% | primary, Qwen |
+| Gemini 2.5 Pro | 77.7% | secondary, Qwen-reported |
+| Claude Opus 4.1 | 74.5% | secondary |
+| Claude 4 Sonnet | 72.4% | secondary |
+| Qwen2.5-VL 72B | 74.8% | primary |
+| Claude 3.5 Sonnet | 67.7% | secondary |
+| Pixtral-12B (CoT) | 58.0% | primary, Mistral |
+
+MMBench-EN (v1.1):
+
+| Model | Score | Source |
+|---|---|---|
+| Qwen3-VL-235B-Thinking | 90.6% | secondary, Qwen-reported |
+| Qwen3-VL 32B / 30B-A3B / 8B | 88.9% / 87.0% / 85.0% | primary |
+| GLM-4.6V / GLM-4.5V | 88.8% / 88.2% | primary |
+| Qwen2.5-VL-72B | 88.6% | secondary |
+| GPT-4o | 83.4% | secondary |
+| Claude 3.5 Sonnet | 82.6% | secondary |
+| Claude 4 Sonnet | 82.4% | secondary |
+
+MMStar:
+
+| Model | Score | Source |
+|---|---|---|
+| Qwen3-VL-235B-Instruct / 32B | 78.4% / 77.7% | primary |
+| Gemini 2.5 Pro | 78.5% | secondary |
+| GLM-4.6V / GLM-4.5V | 75.9% / 75.3% | primary |
+| Claude Opus 4.1 | 71.0% | secondary |
+| Qwen2.5-VL-72B | 70.8% | primary |
+| Claude 4 Sonnet | 67.4% | secondary |
+
+BLINK (val):
+
+| Model | Score | Source |
+|---|---|---|
+| Qwen3-VL-235B-Instruct | 70.7% | primary |
+| Gemini 2.5 Pro | 70.0% | secondary |
+| GPT-4o | 68.0% | secondary |
+| GLM-4.6V | 65.5% | primary |
+| Qwen2.5-VL-72B | 64.4% | primary |
+| Claude Opus 4.1 | 62.9% | secondary |
+| Claude 4 Sonnet | 59.9% | secondary |
+
+CharXiv (RQ = reasoning, DQ = descriptive):
+
+| Model | RQ | DQ | Source |
+|---|---|---|---|
+| Qwen3-VL-235B-Thinking | 66.1% | - | secondary |
+| Gemini 2.5 Pro | 62.9% | - | secondary |
+| GLM-4.6V | 63.2% | - | primary |
+| Qwen3-VL-235B-Instruct | 62.1% | - | primary |
+| Claude 4 Sonnet | 60.9% | 87.8% | secondary |
+| Claude Opus 4.1 | 60.2% | - | secondary |
+| Qwen2.5-VL-72B | 49.7% | 87.4% | primary |
+
+> NOTE(sonnet/delegate-model-comparison): "Claude Opus 4.6," "Claude Sonnet 4.6," and several GPT-5.x sub-variant names on these tables are past this session's knowledge cutoff (January 2026) and could not be independently confirmed to exist beyond the aggregators/vendor cards citing them; the Opus 4.6 MMMU-Pro figure's cross-validation against Anthropic's own system card is the strongest evidence any of these newer names are being used consistently, not fabricated by one source. A separate aggregator (benchlm.ai, its own "AA-MMMU-Pro" re-run) additionally listed "GPT-6 Astra" (86.9%) and "Claude Mythos" variants that could **not** be verified anywhere else and are treated as likely unreliable content on a low-quality aggregator, not fact. Any figure carrying an unfamiliar model name in this report is flagged this way rather than silently included.
+
+**Reading dimension A plainly**: on general visual reasoning, cheap-tier models are not absent, they are heavily benchmarked and roughly at parity with each other across MMMU/MMMU-Pro/MMBench/MMStar/BLINK/CharXiv: Gemini's flash tier, Qwen3-VL at the 30B-A3B/32B sizes, and GLM-4.5V/4.6V all land within a few points of one another and of GPT-5-mini-class models.
+Claude's generalist line appears in these tables mostly at Opus/Sonnet tier; Claude Haiku is near-totally absent from every general multimodal-reasoning leaderboard checked, because it shipped text-first, so "cheap Claude for the verdict leg" has almost no published visual-reasoning evidence at all, while "cheap non-Claude for the verdict leg" is comparatively well-evidenced on this general-reasoning proxy.
+The caveat that matters most, though, is DiffSpot's: MMMU-family benchmarks are academic exam-style visual reasoning, not "does this UI look broken," and DiffSpot's low ceiling for every tier is the more honest signal for the actual verdict task this dimension is meant to stand in for.
+
+**An informal but relevant reliability caveat on using any single cheap model as the fidelity judge**: an informal, non-peer-reviewed project (`github.com/CAPTH69/mllm-ui-judge`, explicitly self-described as informal, not a benchmark) reports that Claude 4.5 Sonnet used as a visual-UI judge correlates with human raters on average (3.65 vs. 3.82 on its own scale) but shows measurable position bias in roughly two of three pairwise comparisons and run-to-run instability.
+This is directional, not a rigorous benchmark result, but it reinforces DiffSpot's finding from a different angle: even a capable generalist model is not a reliable single-pass fidelity judge, which argues for keeping an ensemble-looker or Opus-tier judge per the existing R1-R6 discipline rather than routing the verdict leg through one cheap-tier call regardless of provider.
+
+## Dimension B: Website Navigation & Usage
+
+### B1. GUI Grounding / Element-Clicking
+
+This is where the first pass's search-breadth failure was most consequential, and where this revision found the clearest primary-sourced correction.
+
+**A Correction to the first pass's ScreenSpot-Pro claim.** The first pass cited "Claude Opus 4.8 at 87.9%, GPT-6 Astra at 92.7%, Gemini 3.1 Pro at 84.4%, Gemini 3 Pro at 72.7%" from two secondary aggregators (benlm.ai, llm-stats.com).
+This revision fetched the **primary, actively-maintained ScreenSpot-Pro leaderboard directly** (`gui-agent.github.io/grounding-leaderboard`, backed by `raw.githubusercontent.com/GUI-Agent/grounding-leaderboard/main/results/screenspot_pro.json`, last commit 2026-09-18, the same day as this fetch).
+That primary JSON contains **none of those four model names or scores**.
+It shows instead: a single generic "Claude (Computer Use)" row at 17.1%, GPT-4o at 0.8%, GPT5-minimal at 18.5%, and no Gemini, GLM, or InternVL entries of any kind.
+The board is instead dominated by GUI-grounding specialist models: Holo2-235B-A22B (70.6%), GTA1-32B (63.6%), UI-TARS-1.5 (61.6%), GTA1-Qwen2.5VL-72B (58.4%).
+This is a direct, dated conflict between the primary maintained leaderboard and the secondary aggregators the first pass relied on exclusively.
+The prior report's specific numbers should be treated as unverifiable against the primary source and not repeated as fact; this revision could not determine which source is stale or mistaken, only that they disagree substantially and the primary GitHub-hosted leaderboard is the more authoritative one to trust going forward.
+
+ScreenSpot-Pro, primary leaderboard, full relevant rows (overall accuracy, fetched 2026-09-18):
+
+| Model | Score | Family |
+|---|---|---|
+| Claude (Computer Use), version unspecified in the leaderboard's own metadata | 17.1% | Claude |
+| GPT-4o | 0.8% | GPT |
+| GPT5-minimal (resized) | 18.5% | GPT |
+| Qwen2.5-VL-3B-Instruct | 16.1% | Qwen |
+| Qwen2.5-VL-7B-Instruct | 26.8% | Qwen |
+| Qwen2.5-VL-32B-Instruct | 48.0% | Qwen |
+| Qwen2.5-VL-72B-Instruct | 53.3% | Qwen |
+| UI-TARS-1.5 | 61.6% | specialist |
+| GTA1-32B | 63.6% | specialist |
+| Holo2-235B-A22B (Agentic) | 70.6% | specialist, top of board |
+| UGround-v1-72B | 34.5% | specialist |
+| Aguvis-7B | 22.9% | specialist |
+| OS-Atlas-7B | 18.9% | specialist |
+| ShowUI-2B | 7.7% | specialist |
+
+Gemini (any tier), GLM, InternVL, Llama vision, Molmo, and Pixtral are confirmed absent by direct substring search of every key in the raw JSON.
+
+**ScreenSpot-v2** (same primary repo, `results/screenspot_v2.json`) tells the same story more starkly: GPT-4o scores 20.1%, Qwen2.5-VL-7B-Instruct scores 86.5%, and open GUI-grounding specialists dominate the top of the board (UI-Venus-72B 95.3%, Holo2-30B-A3B 94.9%, Holo1.5-72B 94.4%). Claude and Gemini are entirely absent from this leaderboard's keys.
+
+**UI-Vision** ([arXiv:2503.15661](https://arxiv.org/abs/2503.15661), primary, revised 2025-05-06) is the single strongest counter-example to "no flash-tier coverage exists," because it directly names and scores Gemini's flash tier:
+
+| Model | Element Grounding (Basic) | Layout Grounding IoU |
+|---|---|---|
+| Gemini-Flash-2.0 | 0.45% | 28.3 |
+| Gemini-1.5-Pro | 0.79% | 30.8 |
+| GPT-4o | 1.58% | 20.0 |
+| Claude-3.5-Sonnet | 5.08% | 22.4 |
+| Claude-3.7-Sonnet | 9.48% | 17.6 |
+| UI-TARS-72B | 31.4% (best on Basic) | not reported |
+
+Gemini's flash tier is near the bottom on click-level element grounding but is the second-best model tested on layout-region grounding (28.3 IoU, close behind its own Pro tier's 30.8 and ahead of GPT-4o's 20.0). Claude's generalist models improve version over version (3.5 to 3.7 Sonnet roughly doubles on element grounding) but remain dramatically outclassed by open specialist models built on cheap backbones.
+
+**OSWorld-G** ([arXiv:2505.13227](https://arxiv.org/abs/2505.13227), primary, v3 2025-10-24) tests Gemini-2.5-Pro (45.2%) but has **no Flash-tier Gemini row at all** in its own Table 5, confirmed by direct fetch of the full table twice. Qwen2.5-VL is tested across 3B/7B/32B (27.3% to 46.5%), and the benchmark's own specialist model, Jedi (built on a UI-TARS/Qwen backbone), scores 50.9% (3B) to 54.1% (7B), beating every generalist model tested at a fraction of the parameter count.
+
+**The throughline across all four GUI-grounding benchmarks checked:**
+GUI-grounding specialist models, most built on cheap open (often Qwen-VL) backbones in the 2B-72B range, are the actual strongest candidates for option 4's "cost-effective visual specialist," not Qwen-VL, InternVL, or GLM used generically.
+They consistently beat both Claude's and Gemini's generalist tiers, cheap or expensive, by wide margins on the specific "click the right pixel" task.
+
+### B2. Web / Computer Agent Tasks
+
+This benchmark family splits cleanly along a methodological line that matters for a fair comparison: **raw grounding/action accuracy** (a single-step classification, closer to isolating the base model) versus **full agent-scaffold success rate** (a multi-step tool-call loop, where the harness quality can dominate the underlying model's contribution).
+
+**Raw-grounding benchmarks** (Mind2Web, Multimodal-Mind2Web/SeeAct, VisualWebArena) predate current cheap-tier models entirely; their primary papers (2023-2024) test only GPT-4/GPT-3.5/Gemini-Pro-1.0 and contain zero Claude, zero Flash-tier, zero Qwen-VL entries. This is a genuine, confirmed absence, not a search failure, because the benchmarks are simply older than the models in question.
+
+**Full-scaffold benchmarks** show a much more mixed and interesting picture:
+
+| Benchmark | Primary/official source | Flash/cheap-tier finding |
+|---|---|---|
+| **AndroidWorld** | Official Google Sheets leaderboard linked from `github.com/google-research/android_world`; table content cross-checked via a secondary mirror (benchmarklist.com) since the live Sheet could not be rendered directly | **Gemini 3 Flash and Gemini 3 Flash-Lite are tied for #1 at 97.4%** on the mirrored table (dated 2026-05-27), ahead of Claude+Gemini-Pro combos at 94.8%. Qwen3.8-27B (81.9%) and Qwen2.5-VL-72B (76.7%) also appear. This is the strongest single counter-example found to "no benchmark contains flash-tier models," though the exact primary Sheet numbers need a direct re-check since WebFetch could not render the live Google Sheet itself. |
+| **WebArena / WorkArena** | The original WebArena paper's own Google Sheets leaderboard has none, but a second, independently-checked source corrects this: the actively-maintained **ServiceNow BrowserGym leaderboard** (`huggingface.co/spaces/ServiceNow/browsergym-leaderboard`, primary raw per-run JSON) runs the same benchmark names with current models | The original paper is Pro-tier/frontier-only, as the first pass found. But BrowserGym's live leaderboard has real cross-tier entries: WebArena's GenericAgent-Claude-3.7-Sonnet scores 44.6%, Claude-3.5-Sonnet 36.2%, GPT-4o 31.4%, and an open combo (A3-Qwen3.5-9B) 42.1%. WorkArena-L1 shows IpaziaHPA-Gemini-3-flash-preview at 90.3% (a rare primary Gemini-flash web-agent datapoint, though on a custom AXTree agent rather than the GenericAgent scaffold, so not harness-matched with the other rows), GenericAgent-GPT-5 79.1%, Claude-4-Sonnet 63.3%, Claude-3.5-Sonnet 56.4%. **The conclusion "this benchmark family lacks Claude/Gemini-Flash/Qwen entries" is true only of the original 2023-era papers, not of the actively-maintained leaderboard running the same benchmark name today**, an important distinction for any future search in this family. |
+| **OSWorld** | Primary paper ([arXiv:2404.07972](https://arxiv.org/abs/2404.07972)) and XLang Lab's own "OSWorld-Verified" blog snapshot | The curated, officially-verified snapshot does not include Flash/Haiku/mini-tier scores (Claude 4 Sonnet 43.9%, UI-TARS 40.0%, o3 9-23%). Two different secondary aggregators (steel.dev, llm-stats.com) both claim to show Flash/Haiku/mini-tier scores, but they **disagree with each other** on which models are even present, and llm-stats.com explicitly labels its own OSWorld-Verified table "Unverified, 24 self-reported, 0 verified." This is the clearest case in this whole research pass where "no verified benchmark contains flash-tier models" is defensible for the *curated primary* leaderboard specifically, while being false for the wider, self-reported aggregator ecosystem around the same benchmark name. |
+| **OSWorld-MCP** | [arXiv:2510.24563](https://arxiv.org/abs/2510.24563), primary, Oct 2025, independently confirmed real and topic-matching by a separate verification pass | This is the best primary source pairing Claude Sonnet directly against Qwen-VL on the same computer-use task set (15 steps, GUI-only vs. GUI + MCP tools): see table below. |
+| **WebVoyager** | Original paper ([arXiv:2401.13919](https://arxiv.org/abs/2401.13919)) plus a secondary aggregator (steel.dev) | No Flash/Haiku/mini tier anywhere. Notably, the paper itself documents a strong judge-bias effect: a model's own score jumps 8+ points when it grades its own trajectories, a real methodological confound worth flagging for any future in-house VLM-judge comparison. |
+| **Online-Mind2Web** | Official OSU NLP HuggingFace Space, raw CSV fetched directly (primary) | No Flash/Haiku/mini/Qwen-VL tier in the official CSV. Best tracked entry is "Gemini 2.5 Computer Use" (a Pro-class agent) at 69.0% average success. |
+| **HAL Online-Mind2Web** | Princeton's Holistic Agent Leaderboard ([arXiv:2510.11977](https://arxiv.org/abs/2510.11977) for the general HAL infrastructure, independently confirmed real; the per-model Online-Mind2Web numbers themselves live on HAL's own leaderboard site rather than being restated in the paper's abstract text) | The single cleanest same-scaffold cost/quality tradeoff found in this whole report: see table below. |
+| **TheAgentCompany** | [arXiv:2412.14161](https://arxiv.org/abs/2412.14161), primary, Table 1 | Gemini-2.0-Flash 11.4% task success at $0.6/task, Claude-3.7-Sonnet 26.3% at $4.1/task, Gemini-2.5-Pro 30.3% at $4.2/task, Qwen-2.5-72B 5.7% at $1.5/task. Independent corroboration, from a fully primary source, of the same cheap-but-weaker tradeoff HAL's numbers show below. |
+| **WebBench (Halluminate)** | Official leaderboard (`webbench.ai`), fetched directly | Only 5 entries total, all frontier-tier. The project's own GitHub README explicitly lists Claude 4, Operator O3, UI-TARS, and Mariner as "planned" future evaluations, meaning cheap-tier coverage is not merely unreported, it has not been run yet. |
+
+**HAL Online-Mind2Web**, same two agent scaffolds (Browser-Use, SeeAct) applied to the same live-web task set, with total eval-run cost reported:
+
+| Scaffold | Model | Accuracy | Run cost |
+|---|---|---|---|
+| SeeAct | GPT-5 Medium | 42.33% | $171.07 |
+| Browser-Use | Claude Sonnet 4 | 40.00% | $1,577.26 |
+| Browser-Use | Claude-3.7 Sonnet High | 39.33% | $1,151.88 |
+| Browser-Use | Claude-3.7 Sonnet | 38.33% | $926.48 |
+| Browser-Use | GPT-4.1 | 36.33% | $236.62 |
+| Browser-Use | DeepSeek V3 | 32.33% | $214.74 |
+| Browser-Use | Gemini 2.0 Flash | 29.00% | $8.83 |
+| SeeAct | Gemini 2.0 Flash | 26.67% | $5.03 |
+
+Gemini Flash buys roughly 70-75% of Claude Sonnet's task success at well under 1% of the run cost on this eval, the clearest statement of the cost/quality tradeoff found anywhere in this report.
+No Claude Haiku and no Qwen-VL entry exists on this leaderboard.
+
+**OSWorld-MCP**, computer-use tasks at 15 steps, GUI-only versus GUI plus MCP tools:
+
+| Model | GUI-only | + MCP tools |
+|---|---|---|
+| Agent-S2.5 (framework) | 36.7% | 42.1% |
+| Claude 4 Sonnet | 30.2% | 35.3% |
+| Seed1.5-VL | 27.9% | 32.0% |
+| Qwen3-VL | 25.4% | 31.3% |
+| Gemini-2.5-Pro | 7.4% | 20.5% |
+| OpenAI o3 | 8.3% | 20.4% |
+| Qwen2.5-VL | 11.4% | 13.1% |
+
+At 50 steps Claude 4 Sonnet reaches 40.1% -> 43.3%.
+Claude Sonnet leads the single models here, Qwen3-VL is a real step up from Qwen2.5-VL and lands just behind Sonnet, and the Gemini entry tested is the Pro tier (no Flash tested in this paper) and underperforms both.
+
+**Reading dimension B2 plainly**: the maintainer's instinct that common benchmarks cover cheap tiers is correct for AndroidWorld, for WebArena/WorkArena once the actively-maintained BrowserGym leaderboard is checked instead of just the original papers, and for HAL's Online-Mind2Web and OSWorld-MCP specifically.
+The first pass's caution was closer to right for VisualWebArena, WebVoyager, the official Online-Mind2Web CSV, and WebBench specifically.
+OSWorld sits in between: real cheap-tier data exists but only in self-reported, mutually-contradicting aggregator form, not in the curated primary leaderboard.
+Across every full-scaffold benchmark with real cheap-tier data (HAL, OSWorld-MCP, TheAgentCompany), the same pattern holds: Claude leads on raw quality, Gemini Flash trails by a modest margin at a dramatically lower cost, and Qwen-VL sits behind both as an autonomous driver even though it grounds well (see B1).
+
+## Dimension C: Visual-Oriented CSS/Layout Correction
+
+This is the dimension the first pass never searched at all, and it turned up the single most decision-relevant data point in this whole revision.
+
+| Benchmark | Source (primary, fetched directly) | Task shape | Cheap/flash-tier finding |
+|---|---|---|---|
+| **Design2Code** | [arXiv:2403.03163](https://arxiv.org/abs/2403.03163), 2024-03 | Whole-page generation from a design image, not a targeted fix | Predates current cheap tiers entirely: GPT-4o (Block-Match 93.0, CLIP 90.4), Claude 3 Opus (90.2 / 87.0), Gemini 1.0 Pro (80.2 / 84.4). No Flash tier, no Sonnet/Haiku, no Qwen-VL. Useful only as a historical whole-page baseline, not for the narrow fix task. |
+| **Vision2Web** | [arXiv:2603.26648](https://arxiv.org/abs/2603.26648), primary, 2026-07-20, Tsinghua/Zhipu AI | Hierarchical: static page, interactive frontend, and full-stack generation from a design prototype, scored via Visual Score + Functional Score under two coding-agent frameworks (Claude Code, OpenHands) | **Gemini-3-Flash-Preview is directly named and scored**: Static avg 47.8, Frontend VS/FS 25.9/38.4, Full-Stack VS/FS 7.7/17.2, consistently behind Claude-Opus-4.5 (Static 53.4, Frontend 46.5/66.7, Full-Stack 38.4/57.6) and Claude-Sonnet-4.5 on the harder interactive/full-stack levels. This is whole-application generation, not a targeted CSS fix, so it is a partial proxy for dimension C at best. |
+| **DesignBench** | [arXiv:2506.06251](https://arxiv.org/abs/2506.06251), primary, revised 2026-03-15 | Explicitly includes a **repair** task category alongside generation and edit, across React/Vue/Angular/vanilla, 900 samples, 6 issue categories: this is the closest primary match to "given a screenshot and a reference, make the small fix" | On the repair task's MLLM Score (0-10): Claude-3.7 leads (6.79-7.18 across frameworks), GPT-4o and Gemini-2.0 close behind (~5.9-7.3), **Pixtral-124B is competitive with frontier models (6.46-6.96)** despite being a since-retired mid-size model, Qwen-72B is reasonable (5.64-6.89), while cheap/small variants collapse: Qwen-7B scores 0.0-3.86, Llama-11B scores 2.75-5.79. Compilation success rate tells a similar story: frontier and mid-size models compile reliably (0.93-1.0 except on vanilla HTML/CSS), the smallest models are not separately reported at this stage. |
+| **1D-Bench** | [arXiv:2602.18548](https://arxiv.org/abs/2602.18548), primary, July 2026, independently confirmed real and matching its described "iterative UI code generation with visual feedback" methodology by a second verification pass | An agent iterates on UI code using visual feedback to converge on a target render; Final Score = visual similarity x render success rate, across single- and multi-round attempts | The direct counterweight to MT-Web2Code below: see table below. |
+| **MT-Web2Code** | [arXiv:2608.03474](https://arxiv.org/abs/2608.03474), primary, 2026-08-04 | The most direct match found for dimension C: a "Reverse-Corruption Trajectory Engine" injects a defect into a rendered page, then scores an agent's macro-level regional reconstruction and micro-level localized modification against the original, on layout/element/text/color/spacing sub-scores plus a target-region-fidelity-vs.-collateral-damage composite (`S_inbox`/`S_outbox`) | The most Gemini-favorable result of this whole report. See table below. |
+| **Figma2Code** | [arXiv:2604.13648](https://arxiv.org/abs/2604.13648), ICLR 2026, primary | Design-fidelity Visual Evaluation Score (VES) for a design-to-code task | GPT-5 0.8405, Gemini 2.5 Pro 0.8110, Grok4 0.7997, Claude Opus 4.1 0.7761, GPT-4o 0.7405, **Qwen2.5-VL 0.6516 (near bottom)**. This corroborates DesignBench's ordering: Qwen-VL underperforms Claude/GPT/Gemini specifically on design fidelity, even though it grounds GUI elements well (see B1). |
+
+**1D-Bench full results:**
+
+| Model | Single-round final | Multi-round final | Render success |
+|---|---|---|---|
+| Claude Sonnet 4.5 | 74.0 (best single-round) | 80.4 (best multi-round) | 90.9% -> 97.7% |
+| Gemini 3 Pro | 79.6 (best raw similarity single-round) | 79.5 | 100% -> 97.7% |
+| GPT-5.2 | 49.8 | 79.1 | 63.6% -> 93.2% |
+| Qwen3-VL-235B | 59.0 | 61.9 | 94.7% -> 97.4% |
+| GLM-4.6V | 3.7 | 5.2 | 6.8% -> 6.8% |
+
+Claude Sonnet 4.5 is the best final performer across both rounds, Qwen3-VL-235B is reliable at rendering (94.7% success) but visually mediocre (59.0), and GLM-4.6V illustrates the open-model failure mode of "looks plausible when it renders but almost never builds" (6.8% render success).
+No Opus and no Gemini Flash tier were tested on 1D-Bench, a real gap for options 1 and 3 on this specific leg.
+This directly contradicts MT-Web2Code's headline direction: on 1D-Bench, Claude Sonnet beats every Gemini tier tested; on MT-Web2Code, Gemini's flash tier beats Claude's Opus tier.
+Both are primary, both are recent (2026), and both are structurally close to the "recenter a div" task.
+The honest reading is that dimension C's outcome is benchmark-dependent, not settled in either direction, and a real pilot (not another literature search) is the only way to resolve which one better predicts this proposal's actual workload.
+
+**MT-Web2Code full results** (13 frontier coding agents, primary source, 2026-08-04):
+
+Macro-level regional reconstruction (rebuild a larger region from scratch):
+
+| Model | Score |
+|---|---|
+| **Gemini-3.5-Flash** | **65.5** (best of all 13) |
+| Kimi-K2.6 | 63.7 |
+| Claude-4.7-Opus | 63.0 |
+| Qwen3.5-Plus | 62.8 |
+| Gemini-3.1-Flash-Lite | 58.8 |
+| GPT-5.4 | 57.3 |
+| GLM-5V-Turbo | 54.6 |
+| Gemini-3.1-Pro-Preview | 50.3 |
+| Qwen3-VL-Plus | 37.3 |
+| GLM-4.6V | 35.9 |
+| Qwen3-VL-Flash | 10.0 (worst) |
+
+Micro-level localized modification (the "recenter a div"-shaped task):
+
+| Model | Score |
+|---|---|
+| Doubao-Seed-2.0-Pro | 83.5 (best) |
+| Qwen3.5-Plus | 83.3 |
+| GPT-5.4 | 82.1 |
+| Gemini-3.1-Pro-Preview | 82.1 |
+| GLM-5V-Turbo | 80.6 |
+| **Gemini-3.5-Flash** | **80.5** |
+| Gemini-3.1-Flash-Lite | 78.9 |
+| **Claude-4.7-Opus** | **77.3** |
+| Qwen3-VL-Plus | 75.8 |
+| Kimi-K2.6 | 75.3 |
+| Qwen3-VL-Flash | 35.6 (worst) |
+
+The paper's own stated finding corroborates this reading directly: "lightweight models in the Gemini series outperform some larger models, such as Claude-4.7-Opus and Gemini-3.1-Pro-Preview" on the macro task.
+**Gemini's flash tier beats Claude's current top-tier Opus model on both sub-tasks of the one benchmark that most directly matches this proposal's dimension C.**
+This is a primary-sourced, dated, specific result, not an inference from a general-reasoning proxy.
+
+Two important qualifiers on this finding:
+
+- "Claude-4.7-Opus" and "GPT-5.4" are model names this session could not independently confirm exist beyond this paper's own usage (knowledge cutoff January 2026); the paper itself is the only source for these names in this report, and it is the most directly-relevant primary source available, so it is used as-is with this caveat stated rather than discarded.
+- `Qwen3-VL-Flash`, the cheapest Qwen entry, is the single worst performer on both tasks (10.0 and 35.6), a sharp contrast to Gemini's flash tier leading or near-leading.
+  "Flash-tier" is not a uniform quality class across providers; Gemini's flash tier and Qwen's flash tier land at opposite ends of this specific benchmark.
+
+Two additional design-fidelity benchmarks exist (**WebCode2M**, [arXiv:2404.06369](https://arxiv.org/abs/2404.06369), a 2.56M-instance training dataset with a `WebCoder` baseline and `TreeBLEU` metric, and **Interaction2Code**, [arXiv:2411.03292](https://arxiv.org/abs/2411.03292), ASE 2025, 127 pages/374 interactions focused on a ten-category interaction-failure taxonomy) but neither publishes a broad, current cross-model leaderboard suitable for this comparison; they are noted for completeness and as candidates for a future, deeper pass if dimension C evidence needs to be extended further.
+
+**Reading dimension C plainly**: this dimension now has two benchmarks built almost exactly for the proposal's own "recenter a div" framing, and they disagree.
+MT-Web2Code shows Gemini's current flash tier beating Claude's current top-tier Opus model on both task shapes tested.
+1D-Bench shows Claude Sonnet 4.5 beating every Gemini tier tested, including Gemini 3 Pro, on the same iterative-visual-fix task shape.
+DesignBench's narrower repair task and Figma2Code's design-fidelity score both land closer to 1D-Bench's ordering (Claude ahead, Qwen-VL behind, small open models collapsing).
+Taken together, three of the four closest-matched benchmarks favor Claude and one (MT-Web2Code) favors Gemini's flash tier by a wide margin; the honest synthesis is that Claude is the safer default on current evidence, but MT-Web2Code's result is too large and too directly on-task to dismiss, and is the strongest single reason in this whole report to run a real pilot rather than settle the question from benchmarks alone.
+
+## Cost
+
+Verified 2026-09-18 unless noted, all figures per million tokens, input/output:
+
+| Model | Input | Output | Image handling | Source |
+|---|---|---|---|---|
+| Claude Sonnet 5 | $2 | $10 | Standard token formula (`platform.claude.com`) | primary, carried from first pass, spot-checked stable |
+| Claude Haiku 4.5 | $1 | $5 | Same formula | primary, carried from first pass |
+| Claude Opus (current judge tier) | higher, ~$5/M+ range, not separately re-verified this pass | n/a | Same formula | primary (first pass), not re-checked |
+| Gemini 3.8 Flash | $0.75 (through 2026-12-31, then $1.50) | $3.75 (through 2026-12-31, then $7.50) | Billed as standard tokens, no separate image line item | primary, `ai.google.dev/gemini-api/docs/pricing`, re-verified this pass |
+| Gemini 3.5 Flash-Lite | $0.30 | $2.50 | Same | primary, same page |
+| Qwen3-VL-Flash (DashScope, 0-32K context) | $0.05 | $0.40 | Tile-based, not independently re-derived this pass | primary, Alibaba Cloud Model Studio pricing page |
+| Qwen3-VL-Plus (DashScope, 0-32K context) | $0.20 | $1.60 | Same | primary, same page |
+| Qwen3-VL-235B-A22B-Instruct (via OpenRouter) | $0.21 | $1.90 | Confirmed image input | secondary marketplace, corroborates DashScope order-of-magnitude |
+| GLM-4.6V | $0.30 | $0.90 | Confirmed image input | primary, `docs.z.ai/guides/overview/pricing`, cross-checked exactly against OpenRouter's mirror |
+| GLM-4.6V-FlashX | $0.04 | $0.40 | Confirmed image input | primary, same page |
+| Llama 4 Scout (OpenRouter, not Groq) | $0.10 | $0.30 | Confirmed image input on OpenRouter/Together/Fireworks | secondary marketplace; **not available with vision on Groq specifically**, see Llama vision trap above |
+| Pixtral | retired, no longer purchasable | n/a | n/a | primary, Mistral's own docs |
+| InternVL3 (Fireworks) | not found (JS-rendered pricing page) | n/a | image support on this endpoint unconfirmed | gap, flagged explicitly rather than guessed |
+| Molmo2 (Fireworks) | not found (JS-rendered pricing page) | n/a | image support on this endpoint unconfirmed | gap, flagged explicitly rather than guessed |
+| GUI-grounding specialists (UI-TARS, GTA1, Holo2, UGround, Jedi) | no standardized hosted pricing found; these are largely open-weight models evaluated in their own papers, not consistently offered as metered APIs | n/a | N/A | gap: strongest dimension-B performers have the weakest verified cost data |
+
+**Reading cost plainly**: every option here is a fraction of a cent per screenshot at typical resolutions.
+The spread between cheapest (Qwen3-VL-Flash or GLM-4.6V-FlashX, both under $0.10/M input) and most expensive (Claude Opus) is roughly 50-100x on paper, but at realistic per-call token volumes (a few thousand tokens per screenshot judgment) this is still fractions of a cent versus a few cents, not a cost that should dominate the decision on its own.
+Cost is a much weaker discriminator than the benchmark evidence above for a single-screenshot verdict or fix call; the HAL Online-Mind2Web run-cost figures in dimension B2 show the lever can matter far more once a workload involves many agentic turns rather than one judgment call.
+
+## Speed / Latency
+
+Figures below are secondary (Artificial Analysis, via search/fetch, not independently re-derived) except where marked; treat as directional, not exact:
+
+| Model | Output tok/s | Time-to-first-token | Source |
+|---|---|---|---|
+| Claude Haiku 4.5 | not re-checked this pass | sub-600ms (first pass finding) | secondary, carried over |
+| Claude Sonnet 5 | not re-checked this pass | ~0.97s (first pass finding) | secondary, carried over |
+| Gemini 3.8 Flash ("high" reasoning variant) | ~305-345 | ~15.7s | secondary, carried over from first pass, not re-verified this revision |
+| Qwen3-VL-235B-A22B-Instruct (Alibaba's own API) | 49.9 | ~2.61s | secondary, Artificial Analysis, fetched this pass |
+| Qwen3.5-397B-A17B (Alibaba's vision-capable successor line) | 80.9 | ~2.10s | secondary, same source |
+| Groq-hosted text models (context only, not vision-capable on Groq) | 286-944 | 0.75-0.83s | secondary, Artificial Analysis; included only to show Groq's hardware speed ceiling, since no vision model on Groq is confirmed this fast |
+
+**Reading speed plainly**: Gemini's flash tier's long TTFT (when its "high" reasoning/thinking mode is engaged) is a genuine latency concern for a single-verdict-per-screenshot workload, as the first pass found.
+Qwen3-VL's Alibaba-hosted TTFT (~2.6s) sits between Claude Sonnet's ~1s and Gemini Flash's ~15.7s.
+No fast, confirmed-vision-capable, sub-second-TTFT open/cheap option was found in this pass; the closest candidate (Groq) does not host a confirmed vision-capable model as of 2026-09-18.
+
+## Synthesis: Option x Dimension
+
+Quality read is a synthesis of the tables above, not a new score; "n/e" means no task-matched evidence was found in this pass.
+
+| Option | A. Visual judgment | B. Web navigation | C. CSS/layout fix | Cost | Speed | Harness fit |
+|---|---|---|---|---|---|---|
+| **1. Opus driver + Opus judge** | Best precision on the closest task-matched benchmark: DiffSpot's Claude Opus 4.7 has the field's best specificity (99.6% no-diff), meaning it rarely hallucinates a defect, even though its raw recall (31.2%) trails Gemini's flash tier slightly; strongest verified generalist reasoning otherwise | Not separately isolated in the grounding or full-scaffold benchmarks checked (Claude entries are mostly Sonnet-tier); presumed strong by extension of general capability, unverified directly | No confirmed-current-Opus datapoint on 1D-Bench or MT-Web2Code (both test Sonnet or an unconfirmed "Claude-4.7-Opus" name); Opus leads Vision2Web's whole-application generation task, a weaker C proxy | Highest of all options | Not latency-optimized, irrelevant for a judgment-only call | Native, zero integration cost |
+| **2. Sonnet driver + Sonnet judge** | No DiffSpot datapoint at all for any Sonnet version, a real gap; present on MMMU-Pro (secondary) in the 75-77% range, mid-pack; the mllm-ui-judge informal check found even Sonnet-tier single-pass judging is run-to-run unstable | Best or near-best single generalist model on every full-scaffold benchmark with real cheap-tier data: HAL Online-Mind2Web (40.0% at ~$1,577/run), OSWorld-MCP (30.2%->35.3%), BrowserGym WebArena (44.6%); scores 17.1% on primary ScreenSpot-Pro grounding specifically, near the bottom among all models tested there, far behind GUI-grounding specialists | **Claude Sonnet 4.5 is the best single- and multi-round performer on 1D-Bench (74.0/80.4)**, beating every Gemini tier tested there; loses to Gemini's flash tier on MT-Web2Code's two tasks (tested against an unconfirmed "Claude-4.7-Opus" name, not Sonnet, on that specific benchmark) | Cheap, in-family | ~1s TTFT, adequate | Native, zero integration cost, the only option requiring no gateway or direct-API work |
+| **3. Current Gemini flash tier (3.8 Flash / 3.5 Flash)** | Tops the MMMU-Pro aggregator among tracked models and edges Claude Opus on DiffSpot's raw recall (34.4% vs. 31.2%), but with much worse specificity (91.4% vs. 99.6% no-diff), a worse false-positive profile for a verdict leg | Present and scored on UI-Vision (competitive on layout grounding, weak on element grounding), AndroidWorld (tied #1 on one aggregator-mirrored snapshot), and BrowserGym's WorkArena-L1 (90.3%, though on a non-harness-matched custom agent); trails Claude by a modest margin at dramatically lower cost on HAL Online-Mind2Web (29.0% at ~$8.83/run) and TheAgentCompany; absent from ScreenSpot-Pro/v2 and OSWorld-G entirely, and only Pro-tier (no Flash) was tested on OSWorld-MCP | **Wins outright over an unconfirmed "Claude-4.7-Opus" name on MT-Web2Code's macro and micro tasks**, but **loses to Claude Sonnet 4.5 on 1D-Bench**, a directly contradicting result on an equally close task shape | Cheapest generalist option, ~$0.75-3.75/M; ~180x cheaper than Claude Sonnet per HAL's run-cost figures | Long TTFT (~15.7s) in its reasoning-heavy mode is a real per-call latency cost | Not native; requires a gateway or direct API call from the delegate's own tool code |
+| **4. Open/specialist models (Qwen-VL, Qwen3.8, UI-TARS/GTA1/Holo2/Jedi, GLM-4.6V, others)** | Qwen2.5/3-VL present on MMMU/MMMU-Pro/MMBench/MMStar/BLINK/CharXiv, roughly at parity with Gemini's flash tier and GLM-4.5V/4.6V at the 30B-A3B/32B sizes; DiffSpot places Qwen3-VL-235B-Thinking and InternVL3.5 near the bottom of the field | **Dominant on pure grounding**: GUI-grounding specialists (UI-TARS-1.5, GTA1-32B, Holo2-235B, Jedi) beat every generalist model, cheap or expensive, Claude or Gemini, on every GUI-grounding benchmark checked, often by 2-4x, but Qwen3-VL itself trails Claude Sonnet as an autonomous multi-step driver on OSWorld-MCP (31.3% vs. 35.3%) | Mixed and generally weak: Qwen3-VL-Flash is the *worst* performer on MT-Web2Code (both tasks) and Qwen3-VL-235B is mediocre on 1D-Bench (59.0); Figma2Code and DesignBench both independently confirm Qwen-VL underperforms Claude/GPT/Gemini on design fidelity specifically, even though it grounds elements well | Cheapest by far for the GUI-grounding specialists (small open models, though hosted metered pricing is largely unverified); Qwen3-VL and GLM-4.6V are verified cheap | Alibaba's own Qwen3-VL-Plus API reports ~2.6s TTFT; specialist-model latency not separately benchmarked in this pass | Not native for any of these; same gateway/direct-API requirement as option 3, and GUI specialists in particular have no standardized hosted API found |
 
 ## Recommendations (reference for a possible proposal amendment, not a decision)
 
-1. **Do not change the driving/capture leg.** Nothing in this research surfaces a reason to move it off sonnet-tier or off `@playwright/cli`; Gemini's own driving-tool ecosystem (Stagehand defaulting to Gemini Flash-Lite) already validates "cheap flash-tier model for driving" as a reasonable pattern, but the accepted proposal already achieves an equivalent cost profile with Claude Sonnet without adding a second provider.
-2. **Do not hardcode a provider swap for the visual-verdict leg in v1**, because the specific benchmark evidence the maintainer's question hinges on (a cheap Gemini model outperforming Claude at GUI-screenshot judgment specifically, not general multimodal understanding) does not exist in verifiable form today. The strongest verified visual-judgment evidence found in this report favors **Claude Opus** (87.9% ScreenSpot-Pro), which is already the `reviewer`/`judge` model per `model-tiering.md` — an argument for *not* downgrading the verdict leg to any flash-tier model, Claude or Gemini, more than an argument for switching providers.
-3. **If the maintainer wants optionality anyway, make only the visual-verdict leg's model pluggable, not the whole delegate.** Concretely, this would mean: (a) a documented interface in `toolset-selection.md` (or a new `rules/verdict-model-selection.md`) describing the direct-API-call path (option 3 above) as the sanctioned mechanism for a non-Claude verdict model, explicitly not the session-wide-gateway path; (b) a config surface (e.g., an env var or devlog-scoped setting naming a verdict-model override) that the `reviewer`/verdict-handoff skill checks before defaulting to the in-harness Claude judge; (c) explicit key management (the consumer supplies their own `GOOGLE_API_KEY` or equivalent — this plugin does not manage third-party credentials); (d) an explicit fallback (if the override is unset, unreachable, or the key is missing, fall back to the existing Claude `reviewer`/R1-R6 path, never silently skip the verdict).
-4. **Full multi-provider (option "go multi-provider" in the task framing) is not warranted by current evidence** and would strain `model-tiering.md`'s current single-provider vocabulary; treat it as a Phase-5-style deferred item (mirroring the accepted proposal's own deferral pattern for the fixer persona and A2A), gated on either (a) a real GUI-grounding benchmark appearing that shows a flash-tier non-Claude model materially outperforming Claude Opus specifically, or (b) a maintainer decision that optionality itself (not benchmark superiority) is the goal.
-5. **Correct "Gemini 3 Flash" to the actual current model name wherever this finding gets folded into a proposal amendment.** By the time any amendment is written, `gemini-3.8-flash` may itself be superseded (four Flash releases happened between Gemini 3 Flash's December 2025 launch and this report's September 2026 write date, roughly one every 5-7 weeks) — an amendment should either name the currently-shipping model at write time or describe "Gemini's current flash tier" generically and defer the exact name to implementation time, to avoid baking in a stale model name the way this task's original framing did.
+1. **Do not treat "no evidence exists" as the reason to keep the status quo any longer.**
+   The evidence base changed materially in this revision.
+   Retire that framing from any future amendment.
+
+2. **Dimension C (the CSS-fix leg) has the largest single benchmark-backed argument in this whole report for piloting a non-Claude model, but it is not a settled recommendation:**
+   MT-Web2Code shows Gemini's current flash tier beating an unconfirmed "Claude-4.7-Opus" name on both of its task shapes, one of which (localized modification) is a close structural match to "recenter a div."
+   1D-Bench, an equally close task shape, shows the opposite: Claude Sonnet 4.5 beats every Gemini tier tested, including Gemini 3 Pro.
+   DesignBench and Figma2Code both lean toward 1D-Bench's ordering.
+   Given three of four close-matched benchmarks favor Claude and one favors Gemini by a wide margin, this is the leg most worth a real, narrowly-scoped pilot to resolve empirically, not a benchmark-settled case for switching, and not a benchmark-settled case for staying either.
+
+3. **Dimension B (driving/navigation) now has a stronger, more specific recommendation than "keep sonnet":**
+   The actual highest-value cheap-tier candidate for pure grounding is not a generalist model at all, it is a GUI-grounding specialist (UI-TARS, GTA1, Holo2, Jedi, UGround), which dominates every grounding benchmark checked by a wide margin over both Claude's and Gemini's generalist tiers.
+   But grounding is not the same as autonomous multi-step driving: on OSWorld-MCP, Qwen3-VL (the best-grounding open generalist) still trails Claude Sonnet as a full agent (31.3% vs. 35.3%), and HAL's Online-Mind2Web and TheAgentCompany both show Claude Sonnet leading Gemini's flash tier on full-scaffold task success, just at a much higher cost (roughly 180x on HAL's specific run).
+   None of the GUI-grounding specialists were part of the accepted proposal's option space; adding one as a grounding *helper* alongside a generalist driver, rather than as a drop-in autonomous driver replacement, is the shape this evidence actually supports, and is a bigger architectural change than a model swap (most ship as open weights without standardized hosted APIs), so this is flagged as a research item, not a drop-in recommendation.
+
+4. **Dimension A (the general verdict/judgment leg) has a real task-matched benchmark now (DiffSpot), and its headline finding is that the whole capability is low-ceiling for every tier:**
+   No model of ten tested catches even half of true visual defects, and hard-tier recall stays below 23% universally, so no cheap model is a safe upgrade on raw capability.
+   Claude Opus's advantage on DiffSpot is precision (99.6% no-diff, the field's best), not recall, meaning it is the least likely to send a fix loop chasing a hallucinated defect, which matters more for an automated loop than raw catch-rate.
+   MMMU-Pro, the general-reasoning proxy, favors Gemini's flash tier among tracked models, but DiffSpot is the more direct evidence and it does not support downgrading the verdict leg to any flash-tier model, Claude or otherwise; an informal reliability check (mllm-ui-judge) additionally found even Sonnet-tier single-pass judging to be run-to-run unstable, reinforcing DiffSpot's caution and arguing for an ensemble-looker or Opus-tier judge over any single cheap-tier call.
+   This remains the leg where Claude Opus's harness-native, zero-integration-cost position is hardest to displace on current evidence.
+
+5. **The harness-integration barrier (Report's decisive section, unchanged) still gates all of this.**
+   Every option 3 or 4 candidate requires the same non-native integration path described below: a session-wide gateway or a direct API call from the delegate's own tool code.
+   That cost does not disappear because the benchmark evidence improved; it is now a cost worth paying for dimension C specifically, on current evidence, more clearly than it was when the first pass found no evidence at all.
+
+6. **Correct any prior citation of "Claude Opus 4.8 at 87.9%, GPT-6 Astra at 92.7%" on ScreenSpot-Pro.**
+   This revision could not corroborate those figures against the primary, actively-maintained leaderboard, which contains neither model name.
+   Cite the primary leaderboard ([gui-agent.github.io/grounding-leaderboard](https://gui-agent.github.io/grounding-leaderboard/)) going forward, and treat that specific secondary-aggregator claim as retracted.
+
+7. **If a pilot ships, scope it to dimension C first** (the strongest evidence), gate it behind the same fallback discipline the first pass already recommended (env-var override, explicit key management, silent-fallback-never on failure), and treat dimensions A and B as follow-on spikes rather than bundling all three into one amendment.
+
+## Harness Integration Reality (decisive section, unchanged from the first pass, re-affirmed)
+
+This section's substance is unchanged; it is reproduced here because it still gates every recommendation above.
+
+1. **Claude Sonnet/Haiku/Opus as a CC subagent (`model:` frontmatter field).** Native, zero additional infrastructure. Primary-verified: the `model:` field's documented values (`sonnet`/`opus`/`haiku`/`fable`/full Claude model ID/`inherit`) all resolve to Claude weights, per [the Claude Code sub-agents documentation](https://code.claude.com/docs/en/sub-agents).
+2. **A non-Claude model via a session-wide gateway** (LiteLLM, OpenRouter, Portkey, etc.). Technically possible but load-bearing on the entire session's `ANTHROPIC_BASE_URL`, not scoped to one subagent. Not verified as an off-the-shelf per-model-ID routing capability.
+3. **A direct API call from inside the delegate's own tool code.** The lightest-weight path that works today. The delegate already has `Bash`/`Read`/`Write` tools; nothing prevents a skill or script from shelling out to a Gemini, Qwen, or GLM API call with a user-supplied key, entirely independent of the CC session's own model.
+4. **Via a browser-automation tool's own BYO-key path** (browser-use, Stagehand). Only relevant if the driving tool itself changes; a bigger architecture change than a model swap.
+5. **A2A / separate process.** Report A's existing analysis stands; a single per-screenshot or per-fix judgment call is much lighter-weight than what A2A is designed for.
+
+Path 3 remains the lightest-weight, most concretely actionable mechanism for any option-3 or option-4 pilot, exactly as the first pass found.
 
 ## Open Questions a Proposal Amendment Must Resolve
 
-- Is optionality on the verdict-model leg actually wanted for cost/speed reasons, or because of a genuine (currently unverified) accuracy edge? These call for different designs: a cost/speed-motivated override needs only a fallback path; an accuracy-motivated one needs the maintainer to accept running an *unverified* model choice on the one leg cdocs treats as its highest-trust judgment layer.
-- If a verdict-model override ships, does it replace the `reviewer`/judge agent's opus-class judgment entirely for that call, or run *alongside* it as a second opinion (ensemble looker, per the R1-R6 discipline's existing ensemble-looker concept)? An ensemble framing sidesteps the "is Gemini as good as Opus" question by never requiring it to be a strict replacement.
-- Who supplies and manages the non-Claude API key (`GOOGLE_API_KEY` or equivalent) — the plugin, the consumer's own environment, or a per-devlog setting — and what happens to a `review_proof` artifact whose verdict came from a non-Claude model if that key later becomes invalid or is rotated?
-- Should `plugins/cdocs/rules/model-tiering.md` gain a documented "provider" axis (not just a "tier" axis) now, independent of whether this specific browser-delegate amendment uses it, since this report is not the first place a multi-provider question will surface?
-- Is there an actual academic/first-party ScreenSpot-Pro (or equivalent) result for any Claude Sonnet, Claude Haiku, or Gemini Flash-tier model that this research pass missed by only checking two secondary aggregator leaderboards? A primary-source check against the original ScreenSpot-Pro authors' own leaderboard (`gui-agent.github.io/grounding-leaderboard/`, listed in search results but not fetched in this pass) is the natural next verification step before any amendment leans on "no Flash-tier benchmark exists" as a settled fact.
+- MT-Web2Code and 1D-Bench disagree on dimension C's headline direction; is it worth commissioning a small in-house probe (a handful of real "recenter a div"-shaped tasks, scored the way this proposal actually cares about) rather than trying to resolve the disagreement from more literature?
+- Is a GUI-grounding specialist model (UI-TARS, GTA1, Holo2, Jedi, UGround) worth a standalone research spike as a grounding *helper* for the driving leg (not a drop-in autonomous-driver replacement, since Qwen3-VL itself still trails Claude Sonnet on OSWorld-MCP's full-agent task), given how decisively specialists outperform every generalist tier on pure grounding? Most ship open-weight without a standardized metered API; what would self-hosting or a third-party hosting arrangement cost and add operationally?
+- Who owns re-verifying the primary ScreenSpot-Pro leaderboard's ongoing disagreement with secondary aggregators, given the leaderboard is actively updated (last commit the same day as this report's research pass) and today's numbers may already be stale by the time an amendment is written?
+- Does `plugins/cdocs/rules/model-tiering.md` need a "provider" axis now, given this report found genuine, primary-sourced quality wins for a non-Claude model on at least one task-matched benchmark (MT-Web2Code), even though a comparably-matched benchmark (1D-Bench) shows the opposite?
+- What is the actual cost and latency of self-hosting or third-party-hosting a GUI-grounding specialist model, since none of the strongest dimension-B grounding performers have verified hosted pricing in this report?
+- No benchmark checked isolates "a cheap model used specifically as the fidelity judge against a design reference" as its own task; DiffSpot is the closest proxy but was not run against any current Claude Sonnet, Claude Haiku, or Opus 5. Is a small in-house DiffSpot-style probe against the tiers this proposal would actually use worth commissioning to close this gap directly?
+- Alibaba's vision-language flagship is migrating from dedicated `Qwen3-VL` checkpoints toward a natively-multimodal `Qwen3.8` mainline; if a Qwen-based option is ever piloted, which generation should it target, given third-party benchmarks in this report almost entirely test the older, still-live `Qwen3-VL` line?
 
 ## Prior Art in This Corpus
 
-- [Delegation architectures report](2026-09-17-browser-delegation-approaches.md): the "who holds the loop" thesis this report applies to the model-provider question, and the A2A-deferral reasoning this report's harness-integration section extends.
+- [Delegation architectures report](2026-09-17-browser-delegation-approaches.md): the "who holds the loop" thesis this report's harness-integration section extends, and the A2A-deferral reasoning it reuses.
 - [Isolation and parallelization report](2026-09-17-browser-isolation-parallelization.md): not directly load-bearing here, cited for completeness of the arc.
 - [`cdocs/proposals/2026-09-17-browser-delegation-plugin.md`](../proposals/2026-09-17-browser-delegation-plugin.md): the accepted proposal this report may amend; its sonnet-tier default (D2) and verdict-handoff design (D6) are the baseline this report evaluates against.
-- `plugins/cdocs/rules/model-tiering.md`: the Claude-centric tiering shape this report finds has no "provider" axis, only a "tier" axis.
+- `plugins/cdocs/rules/model-tiering.md`: the Claude-centric tiering shape this report finds may need a provider axis, not just a tier axis, given the dimension-C finding above.
 
 ## Verification Notes
 
-Primary-fetched and directly quoted/derived in this report: Google's Gemini API changelog and pricing pages (`ai.google.dev`), Google's Gemini 3 Flash announcement (`blog.google`), Anthropic's models-overview and vision/tokenization docs (`platform.claude.com`), Claude Code's CLI reference and sub-agents docs (`code.claude.com`), and Google's image-understanding tokenization docs. Secondary/aggregator-sourced and flagged inline throughout: ScreenSpot-Pro leaderboard snapshots (`benchlm.ai`, `llm-stats.com`), Artificial Analysis latency/throughput figures (via search summary, not independently re-fetched), MMMU-val figures for Claude Sonnet 4.5 (`vellum.ai`, via search), browser-use and Stagehand supported-model details (via search summaries of their own docs, not independently re-fetched page-by-page), and gateway/non-Anthropic-model integration claims (multiple 2026 practitioner articles, corroborating but not independently primary-verified beyond Claude Code's own CLI reference, which was primary-fetched and is the load-bearing source for that finding).
+**Primary, fetched directly in this revision:**
+- Google's Gemini API changelog and pricing pages (`ai.google.dev`), and Google's Gemini 2.5 report for MMMU/MMMU-Pro figures.
+- Mistral's model-overview docs confirming Pixtral's retirement (`docs.mistral.ai`).
+- Z.ai's pricing page confirming GLM-4.6V is current (`docs.z.ai`), plus GLM-V's own GitHub comparison tables.
+- Alibaba Cloud Model Studio's DashScope pricing page for Qwen3-VL, Qwen's own HF cards and GitHub for Qwen3-VL and Qwen2.5-VL benchmark tables, and a direct fetch of `huggingface.co/Qwen/Qwen3.8-27B` confirming the natively-multimodal Qwen3.8 successor generation.
+- Groq's own vision documentation confirming the Llama-vision integration trap (`console.groq.com/docs/vision`).
+- Ai2's Molmo 2 announcement (`allenai.org/blog/molmo2`).
+- The official, actively-maintained ScreenSpot-Pro/v2 leaderboard and its raw GitHub JSON (`gui-agent.github.io`, `raw.githubusercontent.com/GUI-Agent/grounding-leaderboard`), independently re-fetched and cross-validated exactly against a second pull.
+- The original ScreenSpot/SeeClick paper ([arXiv:2401.10935](https://arxiv.org/abs/2401.10935)), the UI-Vision paper ([arXiv:2503.15661](https://arxiv.org/abs/2503.15661)), and the OSWorld-G paper and project page ([arXiv:2505.13227](https://arxiv.org/abs/2505.13227), `osworld-grounding.github.io`).
+- OSWorld-MCP ([arXiv:2510.24563](https://arxiv.org/abs/2510.24563)) and the ServiceNow BrowserGym leaderboard's raw JSON (`huggingface.co/spaces/ServiceNow/browsergym-leaderboard`).
+- TheAgentCompany ([arXiv:2412.14161](https://arxiv.org/abs/2412.14161)), the GUI-World and GUICourse papers, and the WebArena, VisualWebArena, Mind2Web, SeeAct, WebVoyager, and AndroidWorld original papers.
+- The official Online-Mind2Web HuggingFace Space CSV, and HAL's general infrastructure paper ([arXiv:2510.11977](https://arxiv.org/abs/2510.11977)) plus its own leaderboard site for the per-model Online-Mind2Web figures.
+- XLang Lab's OSWorld-Verified blog snapshot, and the official WebBench leaderboard (`webbench.ai`).
+- MMStar's, BLINK's, and CharXiv's official leaderboard pages.
+- DiffSpot ([arXiv:2605.29615](https://arxiv.org/abs/2605.29615)), 1D-Bench ([arXiv:2602.18548](https://arxiv.org/abs/2602.18548)), and Figma2Code ([arXiv:2604.13648](https://arxiv.org/abs/2604.13648)).
+- The Design2Code, Vision2Web, DesignBench, and MT-Web2Code papers on arXiv, all fetched via their HTML rendering directly.
+
+Seven of the report's more exotic arXiv IDs (DiffSpot, 1D-Bench, HAL, OSWorld-MCP, DesignBench, UI-Vision, and the Qwen3-VL technical report) were independently spot-checked for authenticity by a separate verification pass that fetched each paper's own `arxiv.org/abs/...` page directly.
+All seven matched their described content, with two minor citation-precision notes rather than any fabrication finding: HAL's abstract does not itself name "Online-Mind2Web," and UI-Vision's abstract alone does not confirm the specific Claude/Gemini row numbers, which come from the paper's full tables.
+
+**Secondary/aggregator, flagged inline throughout and not treated as sole evidence for any headline claim:**
+- llm-stats.com's MMMU, MMMU-Pro, and OSWorld-Verified tables.
+- benchlm.ai's "AA-MMMU-Pro" re-run, flagged for containing unverifiable model names.
+- Artificial Analysis latency/throughput figures for Qwen3-VL and Gemini Flash.
+- steel.dev's mirrors of the WebVoyager and OSWorld leaderboards.
+- A benchmarklist.com mirror of AndroidWorld's official Google Sheet, used because the live Sheet itself could not be rendered.
+- vellum.ai's independently-tracked Claude Sonnet 4.6 OSWorld-Verified figure, used to cross-check and flag Qwen3.8's self-reported "Opus 4.6 Max" comparison number as unreliable.
+- `github.com/CAPTH69/mllm-ui-judge`, explicitly self-described as an informal, non-peer-reviewed project, cited only as a directional reliability caveat, not as benchmark evidence.
+
+**Explicitly retracted from the first pass:**
+The claim that ScreenSpot-Pro shows "Claude Opus 4.8 at 87.9%, GPT-6 Astra at 92.7%, Gemini 3.1 Pro at 84.4%, Gemini 3 Pro at 72.7%."
+This revision's direct fetch of the primary, actively-maintained leaderboard, independently re-confirmed twice, contains none of these model names or scores.
+See "A Correction" under Dimension B1.
+
+**Known gaps, stated rather than papered over:**
+- VisualWebBench's primary page embeds its detailed table as an image and is confirmed genuinely stale by two independent passes, the one benchmark in this report where that is true.
+- InternVL3.5's and Molmo 2's only confirmed hosted endpoint (Fireworks AI) has unconfirmed image-input behavior and no extractable per-token pricing.
+- No GUI-grounding specialist model (UI-TARS, GTA1, Holo2, UGround, Jedi) has verified standardized hosted pricing despite being the strongest performers found on dimension B1.
+- No DiffSpot or comparably task-matched dimension-A benchmark has been run against any current Claude Sonnet, Claude Haiku, or Opus 5.
+- Dimension C's two closest-matched benchmarks (MT-Web2Code, 1D-Bench) disagree on direction, and this report could not resolve which one better predicts the proposal's actual workload from literature alone.
