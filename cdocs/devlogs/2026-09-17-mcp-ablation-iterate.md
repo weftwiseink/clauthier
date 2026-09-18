@@ -69,9 +69,16 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 > (lace commits `ae6c193` + `d6671d1` bash-history side-fix; NOT pushed); claude-code confirmed
 > expansion-provided by lace-fundamentals; `lace validate` passes; graphify 0.9.61 CLI verified against
 > lace source (537 nodes) in an EQUIVALENT throwaway container.
-> **BLOCKER:** `lace up --rebuild` fails on a PRE-EXISTING, graphify-unrelated `sprack` local-feature
-> fetch bug (present since sprack integration `6dad97e`) — the REAL lace container cannot build until
-> that lace bug is fixed. Left untouched (out of graphify scope). e2e container path escalated to user.
+> **BLOCKER 1 (sprack):** `lace up --rebuild` failed on a PRE-EXISTING `sprack` local-feature fetch bug.
+> RESOLVED per user: sprack commented out w/ maybe-deprecated TODO (lace commit `c3757dd`, not pushed);
+> `lace validate` passes (graphify+claude-code retained, no sprack).
+> **BLOCKER 2 (node/nvm):** with sprack gone, the build progressed past feature-fetch and image-build
+> start, then FAILED installing the transitive `ghcr.io/devcontainers/features/node` feature: nvm
+> refuses to run because lace's `.devcontainer/Dockerfile:77` sets
+> `ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global`. Pre-existing, independent of graphify+sprack.
+> Subagent STOPPED (did not edit the Dockerfile — ENV may be load-bearing for lace's npm-global). REAL
+> lace container still does not build. graphify 0.9.61 + claude 2.1.275 already PROVEN in an equivalent
+> container (same base+pins, lace source → 537 nodes/1661 edges). e2e execution-env decision → user.
 
 ## Iteration Log
 
@@ -94,11 +101,14 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 | return | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-impl-r1.md | 2026-09-18T09:00:00-08:00 | ACCEPT round 1; 1 load-bearing should-fix (graphify CLI-first detection) + 2 should-fix + 2 nits |
 | dispatch | impl-1 (resumed) | plugins/cdocs/skills/ablate/{SKILL.md,ablate.sh}, proposal frontmatter | 2026-09-18T09:05:00-08:00 | clear accepting-round should-fixes; graphify CLI `.input.command` detection |
 | dispatch | lace-infra (resumed, outside loop) | lace repo .devcontainer/devcontainer.json + container rebuild | 2026-09-18T09:05:00-08:00 | comment out sprack (maybe-deprecated) + TODO; lace up --rebuild real container |
+| return | lace-infra (outside loop) | lace repo commits d6671d1, ae6c193, c3757dd (not pushed) | 2026-09-18T09:35:00-08:00 | sprack FIXED; real lace container still blocked by 2nd pre-existing bug (node/nvm vs NPM_CONFIG_PREFIX). User → use clauthier lace container instead |
+| dispatch | e2e-runner (general-purpose) | in-container run dirs only; reports scorecards | 2026-09-18T09:45:00-08:00 | drive /cdocs:ablate in clauthier lace container; 2 lightweight probes (VALID + VOID honesty path) |
 
 ## Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
+| 2026-09-18T09:40:00-08:00 | steer-implementer | e2e-runner | User: use the WORKING clauthier lace container for the e2e (not the real lace container, blocked by 2 pre-existing lace infra bugs). It has graphify + claude-code + the clauthier repo (so cdocs/ablate skill is present). | e2e |
 
 **LOOP ACCEPTED (round 1) — accepting-round should-fixes cleared.** impl-1 resolved all four:
 (S1, load-bearing) graphify CLI-first usage detection via a `cli:<regex>` `--tool` form matching a Bash
