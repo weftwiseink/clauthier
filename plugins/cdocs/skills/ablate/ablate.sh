@@ -108,6 +108,13 @@ cmd_resolve_transcript() {
     done
   fi
   if [ -z "$hit" ]; then
+    # Newest-sidechain fallback. If a NON-EMPTY agentId was given but did not resolve, warn LOUDLY:
+    # binding the wrong arm's transcript would silently corrupt the usage gate.
+    if [ -n "$id" ]; then
+      echo "ablate: WARN: agentId '$id' did not resolve to a transcript under $sub;" \
+           "falling back to the NEWEST sidechain transcript, which MAY be the wrong arm." \
+           "Verify the resolved path before trusting the usage gate." >&2
+    fi
     hit="$(ls -1t "$sub"/agent-*.jsonl 2>/dev/null | head -1 || true)"
   fi
   [ -n "$hit" ] || die "resolve-transcript: no transcript found for agent '$id' under $sub"
@@ -116,9 +123,17 @@ cmd_resolve_transcript() {
 
 # ==========================================================================================
 # detect-usage (the honesty gate's mechanical half): does the transcript contain at least one
-# `tool_use` block naming the target tool? An errored call still counts as INVOKED (the treatment
-# occurred). Matches the exact tool id, and also a bare tool name against the mcp__<server>__<tool>
-# form so callers may pass either the fully-qualified id or the trailing tool name.
+# `tool_use` block for the target tool? An errored call still counts as INVOKED (the treatment
+# occurred, presence not result). --tool expresses EITHER form:
+#   - MCP tool name:      "mcp__graphify__scope" (or a bare trailing name "scope"). Matched
+#                         against tool_use `.name` == $tool or endswith("__" + $tool).
+#   - CLI-command sig:    "cli:<regex>" (e.g. "cli:graphify "). graphify is CLI-first (its MCP is
+#                         shadowed by the lace over-mount bug), so its shell-out surfaces as a
+#                         `Bash` tool_use whose command lives in `.input.command`, NOT in `.name`
+#                         (which is just "Bash"). The `cli:` prefix matches the regex against a
+#                         Bash tool_use's `.input.command`, so a CLI-shaped tool has a real,
+#                         non-sentinel usage signal. The regex is applied verbatim (anchor it if
+#                         a bare command name could match a substring of an unrelated command).
 # Prints "used" or "unused"; exit 0 either way (the caller/decide branches on the string).
 # ==========================================================================================
 cmd_detect_usage() {
@@ -128,11 +143,23 @@ cmd_detect_usage() {
   [ -n "$tool" ] || die "detect-usage: --tool required"
   [ -f "$t" ] || die "detect-usage: transcript not found: $t"
   local n
-  n="$(jq -r --arg tool "$tool" '
-        select(.type=="assistant")
-        | .message.content[]? | select(.type=="tool_use") | .name
-        | select(. == $tool or endswith("__" + $tool))
-      ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "${tool#cli:}" != "$tool" ]; then
+    # CLI-command signature: match the regex against a Bash tool_use's .input.command.
+    local sig="${tool#cli:}"
+    [ -n "$sig" ] || die "detect-usage: empty cli: signature"
+    n="$(jq -r --arg sig "$sig" '
+          select(.type=="assistant")
+          | .message.content[]? | select(.type=="tool_use") | select(.name=="Bash")
+          | (.input.command // "") | select(test($sig))
+        ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
+  else
+    # MCP tool name (fully-qualified or bare trailing name).
+    n="$(jq -r --arg tool "$tool" '
+          select(.type=="assistant")
+          | .message.content[]? | select(.type=="tool_use") | .name
+          | select(. == $tool or endswith("__" + $tool))
+        ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
+  fi
   if [ "${n:-0}" -gt 0 ]; then echo "used"; else echo "unused"; fi
 }
 
@@ -201,6 +228,23 @@ cmd_decide() {
   local am="${A[assisted]:-}" um="${A[unassisted]:-}"
   [ -f "$am" ] || die "decide: --assisted meter not found: $am"
   [ -f "$um" ] || die "decide: --unassisted meter not found: $um"
+
+  # Null-completion guard: a MISSING task_completed must not silently read as completed and mask a
+  # TASK-FAIL. It is only load-bearing when the run is NOT VOID (VOID ignores completion by
+  # precedence), so refuse only when completion would actually decide VALID-vs-TASK-FAIL.
+  local void_now
+  void_now="$(jq -rn --slurpfile a "$am" --slurpfile u "$um" '
+    ($a[0].tool_granted != true) or ($a[0].tool_invocation_confirmed != true)')"
+  if [ "$void_now" != "true" ]; then
+    local ac uc
+    ac="$(jq -r '.task_completed' "$am")"; uc="$(jq -r '.task_completed' "$um")"
+    if [ "$ac" = "null" ] || [ "$uc" = "null" ]; then
+      die "decide: task_completed is unset for an arm (assisted=$ac unassisted=$uc) on a non-VOID
+     run; the completion signal is required to distinguish VALID from TASK-FAIL. Record each arm's
+     completion via meter --task-completed true|false (SKILL Step 2)."
+    fi
+  fi
+
   jq -n --slurpfile a "$am" --slurpfile u "$um" '
     $a[0] as $A | $u[0] as $U
     | ($A.tool_granted == true) as $granted

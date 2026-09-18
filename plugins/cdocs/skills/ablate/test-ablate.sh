@@ -111,6 +111,25 @@ check "detect-usage: target unused" "$(bash "$SH" detect-usage --transcript "$SC
 # bare-name match against mcp__server__tool form
 check "detect-usage: bare-name match" "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_used.jsonl" --tool scope)" "used"
 
+# --- CLI-first detection (graphify is CLI-first: shell-out surfaces as a Bash tool_use) ---
+# fixture: a Bash tool_use running the graphify CLI (the assisted-arm treatment for a CLI tool)
+cat > "$SCRATCH/tx_cli_used.jsonl" <<'JSON'
+{"type":"user","message":{"content":"go"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"graphify update --scope src/","description":"scope"}}]}}
+JSON
+# fixture: a Bash tool_use running SOMETHING ELSE (graphify never invoked -> unused/VOID)
+cat > "$SCRATCH/tx_cli_unused.jsonl" <<'JSON'
+{"type":"user","message":{"content":"go"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"rg -n foo src/","description":"grep"}}]}}
+JSON
+check "detect-usage CLI: graphify invoked -> used"  "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_used.jsonl"   --tool 'cli:graphify ')" "used"
+check "detect-usage CLI: other command -> unused"   "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_unused.jsonl" --tool 'cli:graphify ')" "unused"
+# a CLI signature must NOT be satisfied by a Bash call to an unrelated command
+check "detect-usage CLI: no false-positive on Bash" "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_used.jsonl" --tool 'cli:graphify ')" "unused"
+# regex form of the signature works too
+check "detect-usage CLI: regex signature"           "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_used.jsonl" --tool 'cli:graphify (update|scope)')" "used"
+
 mk_meter(){ # arm granted invoked completed -> file
   local f="$SCRATCH/m_$1_$RANDOM.json"
   jq -n --arg arm "$1" --argjson g "$2" --arg inv "$3" --argjson c "$4" \
@@ -135,6 +154,17 @@ check "TASK-FAIL: used but incomplete" "$(bash "$SH" decide --assisted "$AD" --u
 # Case E: VOID PRECEDENCE over TASK-FAIL: unused AND incomplete -> must be VOID, not TASK-FAIL
 AE=$(mk_meter assisted true unused false)
 check "VOID precedence over TASK-FAIL" "$(bash "$SH" decide --assisted "$AE" --unassisted "$UV" | jq -r '.outcome')" "VOID"
+
+# --- null-completion guard (nit): a MISSING completion flag must not silently pass as completed ---
+AN=$(jq -n '{arm:"assisted", tool_granted:true, tokens:1, duration_ms:1, task_completed:null, tool_invocation_confirmed:true}' > "$SCRATCH/an.json"; echo "$SCRATCH/an.json")
+UN=$(jq -n '{arm:"unassisted", tool_granted:false, tokens:1, duration_ms:1, task_completed:null, tool_invocation_confirmed:null}' > "$SCRATCH/un.json"; echo "$SCRATCH/un.json")
+UNC=$(mk_meter unassisted true "" true)
+# non-VOID run (granted+used) with null completion -> REFUSE (exit != 0)
+bash "$SH" decide --assisted "$AN" --unassisted "$UNC" >/dev/null 2>&1
+check "null completion on non-VOID run REFUSED (exit)" "$?" "1"
+# VOID run (tool unavailable) still resolves despite null completion (completion irrelevant by precedence)
+AUV=$(jq -n '{arm:"assisted", tool_granted:false, tokens:1, duration_ms:1, task_completed:null, tool_invocation_confirmed:false}' > "$SCRATCH/auv.json"; echo "$SCRATCH/auv.json")
+check "null completion tolerated on VOID run" "$(bash "$SH" decide --assisted "$AUV" --unassisted "$UN" 2>/dev/null | jq -r '.outcome')" "VOID"
 
 echo
 echo "=== TEST 4: scorecard single-shot gate_admissible guard ==="
