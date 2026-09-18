@@ -65,10 +65,19 @@ A background subagent is adding the graphify feature to the **lace repo's own** 
 rebuilding it, to serve as the "depending project" for the post-loop e2e ablate test. Tracked outside
 this loop; the e2e test depends on BOTH the loop's accepted skill AND that container.
 
+> RESULT(2026-09-17): graphify feature ADDED + committed to lace's `.devcontainer/devcontainer.json`
+> (lace commits `ae6c193` + `d6671d1` bash-history side-fix; NOT pushed); claude-code confirmed
+> expansion-provided by lace-fundamentals; `lace validate` passes; graphify 0.9.61 CLI verified against
+> lace source (537 nodes) in an EQUIVALENT throwaway container.
+> **BLOCKER:** `lace up --rebuild` fails on a PRE-EXISTING, graphify-unrelated `sprack` local-feature
+> fetch bug (present since sprack integration `6dad97e`) — the REAL lace container cannot build until
+> that lace bug is fixed. Left untouched (out of graphify scope). e2e container path escalated to user.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-impl-r1.md | ~95K (10% inline) | no | 43/43 tests re-run+cited by reviewer; live 3-subagent dispatch is deferred-to-followup to e2e; accepting-round should-fixes to clear (graphify CLI-first detection is load-bearing for e2e) |
 
 ## Judge Log
 
@@ -82,6 +91,9 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 | dispatch | impl-1 (general-purpose) | plugins/cdocs/skills/ablate/*, scripts/ablate/* (new) | 2026-09-17T20:00:00-08:00 | Phases 1,2 + Phase 4 reference invocation |
 | return | impl-1 (general-purpose) | plugins/cdocs/skills/ablate/{SKILL.md,ablate.sh,test-ablate.sh} | 2026-09-17T20:10:00-08:00 | 43/43 unit tests pass; proposal → implementation_wip; deferred parts named |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-impl-r1.md | 2026-09-17T20:11:00-08:00 | re-run tests; verify meter field names + no bare stash + thinness |
+| return | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-impl-r1.md | 2026-09-18T09:00:00-08:00 | ACCEPT round 1; 1 load-bearing should-fix (graphify CLI-first detection) + 2 should-fix + 2 nits |
+| dispatch | impl-1 (resumed) | plugins/cdocs/skills/ablate/{SKILL.md,ablate.sh}, proposal frontmatter | 2026-09-18T09:05:00-08:00 | clear accepting-round should-fixes; graphify CLI `.input.command` detection |
+| dispatch | lace-infra (resumed, outside loop) | lace repo .devcontainer/devcontainer.json + container rebuild | 2026-09-18T09:05:00-08:00 | comment out sprack (maybe-deprecated) + TODO; lace up --rebuild real container |
 
 ## Steering Log
 
