@@ -100,9 +100,20 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 
+**LOOP ACCEPTED (round 1) — accepting-round should-fixes cleared.** impl-1 resolved all four:
+(S1, load-bearing) graphify CLI-first usage detection via a `cli:<regex>` `--tool` form matching a Bash
+`tool_use` `.input.command` — the e2e usage gate now works; (S2) dispatch wording reconciled with
+single-tool-allowlist gating; (S3) proposal status reverted to spec-valid `implementation_ready`
+(no wip enum exists); (nits) `decide` refuses null-completion on non-VOID runs, `resolve-transcript`
+warns loudly on agentId fallback. Overseer re-ran `test-ablate.sh`: **49/49 pass**, no worktree leak.
+Commits `85809e4`, `751616e`, `caa3e34`. Only remaining verification is the deferred-to-followup e2e
+(live 3-subagent dispatch + graphify dogfood) inside the real lace container.
+
 ## Completed
 
 - Turn 0 Brief written; scope, floor, and the subagent-dispatch structural constraint recorded.
+- impl-1 r1 + accepting-round fixes; rev-1 ACCEPT; overseer-verified 49/49 tests. Implementation loop
+  complete pending the e2e dogfood.
 - impl-1 round 1: `plugins/cdocs/skills/ablate/{SKILL.md, ablate.sh, test-ablate.sh}` created; 43/43 unit
   tests pass (real worktree isolation w/o stash touch; meter aggregation; VALID/VOID/TASK-FAIL fixtures;
   single-shot `gate_admissible:false`). Proposal → `implementation_wip`.
