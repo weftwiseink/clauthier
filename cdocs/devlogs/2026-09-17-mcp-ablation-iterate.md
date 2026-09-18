@@ -80,6 +80,8 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | impl-1 (general-purpose) | plugins/cdocs/skills/ablate/*, scripts/ablate/* (new) | 2026-09-17T20:00:00-08:00 | Phases 1,2 + Phase 4 reference invocation |
+| return | impl-1 (general-purpose) | plugins/cdocs/skills/ablate/{SKILL.md,ablate.sh,test-ablate.sh} | 2026-09-17T20:10:00-08:00 | 43/43 unit tests pass; proposal → implementation_wip; deferred parts named |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-09-17-review-of-mcp-tool-effectiveness-ablation-impl-r1.md | 2026-09-17T20:11:00-08:00 | re-run tests; verify meter field names + no bare stash + thinness |
 
 ## Steering Log
 
@@ -89,6 +91,14 @@ this loop; the e2e test depends on BOTH the loop's accepted skill AND that conta
 ## Completed
 
 - Turn 0 Brief written; scope, floor, and the subagent-dispatch structural constraint recorded.
+- impl-1 round 1: `plugins/cdocs/skills/ablate/{SKILL.md, ablate.sh, test-ablate.sh}` created; 43/43 unit
+  tests pass (real worktree isolation w/o stash touch; meter aggregation; VALID/VOID/TASK-FAIL fixtures;
+  single-shot `gate_admissible:false`). Proposal → `implementation_wip`.
+
+> NOTE(opus/cdocs/mcp-ablation): impl-1 deviation from proposal wording — the real result payload uses
+> `toolUseResult.totalTokens`/`totalDurationMs`, NOT `subagent_tokens`/`duration_ms` (those are the
+> notification-surface names; both surfaces exist). Meter reader targets the real names and aliases the
+> placeholders. Confirmed only from persisted transcripts; live-dispatch nesting deferred to e2e.
 
 ## Decisions Made
 
