@@ -9,6 +9,11 @@ task_list: cdocs/browser-delegation
 type: report
 state: live
 status: wip
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-4-8"
+  at: 2026-09-18T08:22:50-07:00
+  round: 1
 tags: [research, model_tiering, browser, delegation, visual_review, benchmarks]
 ---
 
