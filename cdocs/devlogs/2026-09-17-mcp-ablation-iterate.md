@@ -139,9 +139,18 @@ skill files edited. Two probes, single-shot (`gate_admissible:false`, correct):
 > by `ablate.sh detect-usage`. It HELD in both probes (unassisted never called graphify), and is honestly
 > labeled in `invariants.json`, matching SKILL.md's documented fallback direction — but it relies on arm
 > compliance + post-hoc verification, not enforced denial. Follow-up: a per-arm agent definition that
-> omits Bash-graphify, or a PATH-scrubbed wrapper, for a hard withhold. (Also: minor cosmetic — the
-> `--tool` target was normalized unanchored `cli:graphify ` in A vs anchored `cli:^graphify ` in B; both
-> match correctly.)
+> omits Bash-graphify, or a PATH-scrubbed wrapper, for a hard withhold.
+
+> BUGS SURFACED BY THE E2E (the dogfood earned its keep):
+> 1. **jq reserved-word `label` (FIXED, `4f9b353`)** — `cmd_meter` bound `--arg label`/`$label`, a compile
+>    error under the container's jq 1.6 (`label` is reserved for `label/break`), breaking every meter call.
+>    Host jq tolerated it, so the 49/49 unit tests missed it. Renamed to `$armlabel`; 49/49 still pass.
+> 2. **`cli:^` anchor false-VOID (OPEN, docs-only `62ee9a5`)** — worktree arms prefix commands with
+>    `cd <worktree> && …`, so a `^`-anchored `cli:^graphify ` matches the leading `cd`, not `graphify`, and
+>    `detect-usage` falsely returns `unused` → a FALSE VOID on a run where the tool WAS used (the exact
+>    dishonesty the harness exists to prevent). Neither probe was corrupted (A used the unanchored form; B
+>    genuinely never invoked graphify), but this needs a CODE fix (strip the `cd …&&` prefix / anchor at a
+>    command boundary in `detect-usage`), not just the current SKILL.md warning. Recommended top follow-up.
 
 ## Completed
 
