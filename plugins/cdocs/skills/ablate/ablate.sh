@@ -181,7 +181,7 @@ cmd_meter() {
 
   jq \
     --arg arm "$arm" \
-    --arg label "${A[label]:-}" \
+    --arg armlabel "${A[label]:-}" \
     --arg tool "${A[tool]:-}" \
     --arg granted "${A[tool-granted]:-}" \
     --arg transcript "${A[transcript]:-}" \
@@ -193,7 +193,7 @@ cmd_meter() {
     (if has("toolUseResult") then .toolUseResult else . end) as $r
     | {
         arm: $arm,
-        arm_label: (if $label=="" then (if $arm=="assisted" then "A" else "B" end) else $label end),
+        arm_label: (if $armlabel=="" then (if $arm=="assisted" then "A" else "B" end) else $armlabel end),
         tool: $tool,
         tool_granted: ($granted=="true" or $granted=="1"),
         tokens: ($r.totalTokens // $r.subagent_tokens // null),
