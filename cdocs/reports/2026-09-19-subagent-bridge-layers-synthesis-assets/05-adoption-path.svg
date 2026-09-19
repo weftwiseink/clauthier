@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 528" width="880" height="528" role="img" aria-label="Five adoption stages from native-only to optional protocol facades, each entered through a gate of experiments.">
+<title>Staged adoption path</title>
+<defs><marker id="a-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#566070"/></marker><marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c53030"/></marker><marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fdb"/></marker><marker id="a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f8a4c"/></marker><marker id="a-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker></defs>
+<rect width="880" height="528" fill="#fbfbfd"/>
+<text x="16" y="26" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="start" fill="#1f2430">Staged adoption: each stage is entered through an experiment gate</text>
+<polyline points="16,50 864,50" fill="none" stroke="#566070" stroke-width="1.2" marker-end="url(#a-gray)"/>
+<text x="16" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#566070">less code, less risk</text>
+<text x="864" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#566070">more code, more capability</text>
+<rect x="20" y="64" width="140" height="250" rx="8" fill="#e1f4e8" stroke="#1f8a4c" stroke-width="1.3"/>
+<text x="90.0" y="88" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">0. Native only</text>
+<text x="90.0" y="106" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">Cost: none</text>
+<line x1="30" y1="116" x2="150" y2="116" stroke="#b5bcc9" stroke-width="1"/>
+<text x="28" y="138" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- effort variants as</text>
+<text x="28" y="158" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  separate agents</text>
+<text x="28" y="178" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- hook: deny Agent</text>
+<text x="28" y="198" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  spawns w/o model</text>
+<text x="28" y="218" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- served-model check</text>
+<text x="28" y="238" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  on installed CC (E0)</text>
+<text x="28" y="258" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- variants check (E6)</text>
+<polyline points="160,189.0 195,189.0" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polygon points="177.5,174.0 192.5,189.0 177.5,204.0 162.5,189.0" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="177.5" y="193.0" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#1f2430">G1</text>
+<rect x="195" y="64" width="140" height="250" rx="8" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="265.0" y="88" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">1. Shimless MVP</text>
+<text x="265.0" y="106" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">Cost: no code</text>
+<line x1="205" y1="116" x2="325" y2="116" stroke="#b5bcc9" stroke-width="1"/>
+<text x="203" y="138" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- acpx via Bash +</text>
+<text x="203" y="158" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  Monitor (NDJSON)</text>
+<text x="203" y="178" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- named sessions</text>
+<text x="203" y="198" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- approve-all inside</text>
+<text x="203" y="218" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  read-only sandbox</text>
+<text x="203" y="238" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- second opinions,</text>
+<text x="203" y="258" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  review tasks</text>
+<polyline points="335,189.0 370,189.0" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polygon points="352.5,174.0 367.5,189.0 352.5,204.0 337.5,189.0" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="352.5" y="193.0" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#1f2430">G2</text>
+<rect x="370" y="64" width="140" height="250" rx="8" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="440.0" y="88" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">2. MCP shim</text>
+<text x="440.0" y="106" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">Cost: shim (est.)</text>
+<line x1="380" y1="116" x2="500" y2="116" stroke="#b5bcc9" stroke-width="1"/>
+<text x="378" y="138" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- delegate / send /</text>
+<text x="378" y="158" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  cancel / status /</text>
+<text x="378" y="178" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  answer tools</text>
+<text x="378" y="198" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- role files, cap,</text>
+<text x="378" y="218" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  untrusted label</text>
+<text x="378" y="238" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- worktree per job</text>
+<text x="378" y="258" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- elicitation relay</text>
+<polyline points="510,189.0 545,189.0" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polygon points="527.5,174.0 542.5,189.0 527.5,204.0 512.5,189.0" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="527.5" y="193.0" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#1f2430">G3</text>
+<rect x="545" y="64" width="140" height="250" rx="8" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="615.0" y="88" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">3. OpenCode</text>
+<text x="615.0" y="106" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">Cost: HTTP client</text>
+<line x1="555" y1="116" x2="675" y2="116" stroke="#b5bcc9" stroke-width="1"/>
+<text x="553" y="138" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- HTTP + SSE shim</text>
+<text x="553" y="158" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  on a warm server</text>
+<text x="553" y="178" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- prompt_async, abort,</text>
+<text x="553" y="198" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  permission endpoint</text>
+<text x="553" y="218" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- one agent definition</text>
+<text x="553" y="238" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  per effort level</text>
+<text x="553" y="258" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- many providers</text>
+<polyline points="685,189.0 720,189.0" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polygon points="702.5,174.0 717.5,189.0 702.5,204.0 687.5,189.0" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="702.5" y="193.0" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#1f2430">G4</text>
+<rect x="720" y="64" width="140" height="250" rx="8" fill="#eef1f7" stroke="#7c879a" stroke-width="1.3"/>
+<text x="790.0" y="88" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">4. Optional</text>
+<text x="790.0" y="106" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">Cost: high, fragile</text>
+<line x1="730" y1="116" x2="850" y2="116" stroke="#b5bcc9" stroke-width="1"/>
+<text x="728" y="138" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- codex app-server for</text>
+<text x="728" y="158" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  exact per-turn effort</text>
+<text x="728" y="178" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- A2A facade if a</text>
+<text x="728" y="198" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  network boundary</text>
+<text x="728" y="218" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  is needed</text>
+<text x="728" y="238" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">- channel plugin</text>
+<text x="728" y="258" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#1f2430">  (research preview)</text>
+<text x="16" y="334" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="start" fill="#566070">Exit gates</text>
+<rect x="16" y="342" width="204" height="84" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="118.0" y="365.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" fill="#1f2430">G1 to stage 1</text>
+<text x="118.0" y="380.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">A task class where a non-Claude</text>
+<text x="118.0" y="394.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">model has a demonstrated</text>
+<text x="118.0" y="409.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">advantage; else stay at 0</text>
+<polyline points="177.5,204.0 177.5,328 118.0,328 118.0,342" fill="none" stroke="#b7791f" stroke-width="1.2" stroke-dasharray="6 4"/>
+<rect x="230" y="342" width="204" height="84" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="332.0" y="365.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" fill="#1f2430">G2 to stage 2</text>
+<text x="332.0" y="380.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">E3: two concurrent acpx</text>
+<text x="332.0" y="394.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">sessions behave; approve-all is</text>
+<text x="332.0" y="409.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">too coarse for wanted tasks</text>
+<polyline points="352.5,204.0 352.5,328 332.0,328 332.0,342" fill="none" stroke="#b7791f" stroke-width="1.2" stroke-dasharray="6 4"/>
+<rect x="444" y="342" width="204" height="84" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="546.0" y="365.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" fill="#1f2430">G3 to stage 3</text>
+<text x="546.0" y="380.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">E1 cancel propagation and E2</text>
+<text x="546.0" y="394.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">elicitation relay pass; else</text>
+<text x="546.0" y="409.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">stay read-only at stage 1</text>
+<polyline points="527.5,204.0 527.5,328 546.0,328 546.0,342" fill="none" stroke="#b7791f" stroke-width="1.2" stroke-dasharray="6 4"/>
+<rect x="658" y="342" width="204" height="84" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="760.0" y="365.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" text-anchor="middle" fill="#1f2430">G4 to stage 4</text>
+<text x="760.0" y="380.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">E4 busy-session, E5 message</text>
+<text x="760.0" y="394.925" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">effort; channels leave preview</text>
+<text x="760.0" y="409.425" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#1f2430">or a network boundary needed</text>
+<polyline points="702.5,204.0 702.5,328 760.0,328 760.0,342" fill="none" stroke="#b7791f" stroke-width="1.2" stroke-dasharray="6 4"/>
+<rect x="16" y="442" width="848" height="52" rx="6" fill="#ffffff" stroke="#7c879a" stroke-width="1.3"/>
+<text x="28" y="462" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">E0 served model on CC 2.1.278. E1 CC-to-shim cancel. E2 mid-call elicitation. E3 acpx concurrency.</text>
+<text x="28" y="482" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">E4 prompt_async on busy session. E5 per-message effort in OpenCode. E6 effort variants honored natively.</text>
+</svg>

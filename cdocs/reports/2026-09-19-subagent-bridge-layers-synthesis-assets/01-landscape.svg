@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 620" width="880" height="620" role="img" aria-label="Claude Code delegates through proxy, MCP shim over ACP, A2A, OpenCode or codex app-server, CLI subprocess, or an SDK program; proxy and SDK edges carry TOS or billing risk.">
+<title>Bridge approach landscape</title>
+<defs><marker id="a-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#566070"/></marker><marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c53030"/></marker><marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fdb"/></marker><marker id="a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f8a4c"/></marker><marker id="a-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker></defs>
+<rect width="880" height="620" fill="#fbfbfd"/>
+<text x="16" y="26" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="start" fill="#1f2430">Bridge approaches from Claude Code to target harnesses</text>
+<text x="16" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" text-anchor="start" fill="#566070">Orchestrator</text>
+<text x="190" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" text-anchor="start" fill="#566070">Approach</text>
+<text x="450" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" text-anchor="start" fill="#566070">Protocol / server</text>
+<text x="690" y="44" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" text-anchor="start" fill="#566070">Target</text>
+<rect x="16" y="54" width="110" height="420" rx="6" fill="#e3edff" stroke="#2f6fdb" stroke-width="1.3"/>
+<text x="71.0" y="207.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2430">Claude Code</text>
+<text x="71.0" y="222.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">orchestrator</text>
+<text x="71.0" y="237.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430"></text>
+<text x="71.0" y="252.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">subscription auth,</text>
+<text x="71.0" y="267.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">unmodified binary</text>
+<text x="71.0" y="282.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430"></text>
+<text x="71.0" y="297.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">per-call model,</text>
+<text x="71.0" y="312.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">effort via agent</text>
+<text x="71.0" y="327.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">variants</text>
+<rect x="190" y="54" width="200" height="56" rx="6" fill="#eef1f7" stroke="#7c879a" stroke-width="1.3"/>
+<text x="290.0" y="70.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">A. Proxy</text>
+<text x="290.0" y="85.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">CCR / LiteLLM</text>
+<text x="290.0" y="100.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">ANTHROPIC_BASE_URL</text>
+<rect x="690" y="54" width="174" height="56" rx="6" fill="#fde6e6" stroke="#c53030" stroke-width="1.3"/>
+<text x="777.0" y="70.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#1f2430">Any model via gateway</text>
+<text x="777.0" y="85.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">inside CC harness</text>
+<text x="777.0" y="100.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">API billing</text>
+<polyline points="126,82 190,82" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polyline points="390,82 690,82" fill="none" stroke="#c53030" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#a-red)"/>
+<text x="540" y="76" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#c53030">TOS: unsupported for non-Claude</text>
+<rect x="190" y="122" width="200" height="284" rx="6" fill="#e3edff" stroke="#2f6fdb" stroke-width="1.3"/>
+<text x="290.0" y="200.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">B. MCP shim</text>
+<text x="290.0" y="215.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430"></text>
+<text x="290.0" y="230.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">delegate, send, cancel,</text>
+<text x="290.0" y="245.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">status, answer</text>
+<text x="290.0" y="260.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430"></text>
+<text x="290.0" y="275.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">front door for the</text>
+<text x="290.0" y="290.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">protocol backends</text>
+<text x="290.0" y="305.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430"></text>
+<text x="290.0" y="320.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">CC has no ACP, A2A</text>
+<text x="290.0" y="335.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">or MCP Tasks client</text>
+<polyline points="126,264 190,264" fill="none" stroke="#2f6fdb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<rect x="450" y="122" width="180" height="56" rx="6" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="540.0" y="146.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">C. ACP client</text>
+<text x="540.0" y="161.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">acpx, JSON-RPC stdio</text>
+<polyline points="390,150 450,150" fill="none" stroke="#2f6fdb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<rect x="690" y="122" width="174" height="56" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="777.0" y="138.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Codex, Gemini CLI,</text>
+<text x="777.0" y="153.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Goose, Cline, Copilot</text>
+<text x="777.0" y="168.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Claude adapter: TOS gray</text>
+<polyline points="630,150 690,150" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<rect x="450" y="198" width="180" height="56" rx="6" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="540.0" y="222.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">C. A2A facade</text>
+<text x="540.0" y="237.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">a2acode: ACP to A2A</text>
+<polyline points="390,226 450,226" fill="none" stroke="#2f6fdb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<rect x="690" y="198" width="174" height="56" rx="6" fill="#e1f4e8" stroke="#1f8a4c" stroke-width="1.3"/>
+<text x="777.0" y="214.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">A2A agents</text>
+<text x="777.0" y="229.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">remote or local</text>
+<text x="777.0" y="244.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">(no CC client)</text>
+<polyline points="630,226 690,226" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<rect x="450" y="274" width="180" height="56" rx="6" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="540.0" y="298.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">OpenCode serve</text>
+<text x="540.0" y="313.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">HTTP + SSE</text>
+<polyline points="390,302 450,302" fill="none" stroke="#2f6fdb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<rect x="690" y="274" width="174" height="56" rx="6" fill="#e1f4e8" stroke="#1f8a4c" stroke-width="1.3"/>
+<text x="777.0" y="290.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">75+ providers</text>
+<text x="777.0" y="305.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Claude: API key only</text>
+<text x="777.0" y="320.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">own auth per vendor</text>
+<polyline points="630,302 690,302" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<rect x="450" y="350" width="180" height="56" rx="6" fill="#ece6fb" stroke="#6b46c1" stroke-width="1.3"/>
+<text x="540.0" y="374.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">codex app-server</text>
+<text x="540.0" y="389.35" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">JSON-RPC stdio</text>
+<polyline points="390,378 450,378" fill="none" stroke="#2f6fdb" stroke-width="1.6" marker-end="url(#a-blue)"/>
+<rect x="690" y="350" width="174" height="56" rx="6" fill="#e1f4e8" stroke="#1f8a4c" stroke-width="1.3"/>
+<text x="777.0" y="366.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Codex (OpenAI)</text>
+<text x="777.0" y="381.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">ChatGPT sub or API key</text>
+<text x="777.0" y="396.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">per-turn model, effort</text>
+<polyline points="630,378 690,378" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<rect x="190" y="422" width="200" height="56" rx="6" fill="#eef1f7" stroke="#7c879a" stroke-width="1.3"/>
+<text x="290.0" y="438.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">D. CLI subprocess</text>
+<text x="290.0" y="453.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Bash + Monitor</text>
+<text x="290.0" y="468.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">codex exec, gemini -p</text>
+<polyline points="126,450 190,450" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<polyline points="390,450 690,450" fill="none" stroke="#566070" stroke-width="1.6" marker-end="url(#a-gray)"/>
+<text x="540" y="444" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#566070">one-shot, no relay</text>
+<rect x="690" y="422" width="174" height="56" rx="6" fill="#e1f4e8" stroke="#1f8a4c" stroke-width="1.3"/>
+<text x="777.0" y="438.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#1f2430">Vendor CLIs</text>
+<text x="777.0" y="453.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">no steering</text>
+<text x="777.0" y="468.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">permissions: bypass</text>
+<rect x="190" y="500" width="200" height="56" rx="6" fill="#eef1f7" stroke="#7c879a" stroke-width="1.3"/>
+<text x="290.0" y="516.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2430">E. SDK program</text>
+<text x="290.0" y="531.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">Agent SDK or vendor SDK</text>
+<text x="290.0" y="546.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">replaces CC as orchestrator</text>
+<polyline points="390,528 690,528" fill="none" stroke="#c53030" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#a-red)"/>
+<text x="540" y="522" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#c53030">plan auth on SDK: TOS gray</text>
+<rect x="690" y="500" width="174" height="56" rx="6" fill="#eef1f7" stroke="#7c879a" stroke-width="1.3"/>
+<text x="777.0" y="516.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#1f2430">Any harness</text>
+<text x="777.0" y="531.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">own agent loop</text>
+<text x="777.0" y="546.85" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f2430">CC hooks/UI unused</text>
+<rect x="16" y="576" width="848" height="32" rx="6" fill="#ffffff" stroke="#7c879a" stroke-width="1.3"/>
+<polyline points="30,592 66,592" fill="none" stroke="#c53030" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="72" y="596" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">TOS or billing risk</text>
+<polyline points="210,592 246,592" fill="none" stroke="#2f6fdb" stroke-width="1.6"/>
+<text x="252" y="596" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">CC-side MCP path</text>
+<polyline points="380,592 416,592" fill="none" stroke="#566070" stroke-width="1.6"/>
+<text x="422" y="596" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">non-Claude traffic on vendor auth</text>
+<rect x="650" y="584" width="16" height="16" rx="6" fill="#fdf0d5" stroke="#b7791f" stroke-width="1.3"/>
+<text x="672" y="596" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f2430">Claude adapter on plan auth</text>
+</svg>
