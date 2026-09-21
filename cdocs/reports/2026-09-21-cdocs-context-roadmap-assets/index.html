@@ -1,0 +1,456 @@
+<title>Cdocs Context Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f6f4; --surface:#ffffff; --ink:#111c19; --ink2:#48544f; --muted:#7a8781; --line:#d5dcd8; --grid:#e6ebe8;
+  --accent:#0d6b5b; --accent-soft:#dcefe9;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s7:#4a3aa7; --gray:#8b9791;
+  --warn:#8a5a00; --warn-soft:#fbefd0;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0e1513; --surface:#151e1b; --ink:#eaf0ed; --ink2:#b4c0ba; --muted:#83918b; --line:#2b3733; --grid:#1f2a26;
+  --accent:#4fc4ac; --accent-soft:#16332d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s7:#9085e9; --gray:#71807a;
+  --warn:#e3b04a; --warn-soft:#2f2612;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1513; --surface:#151e1b; --ink:#eaf0ed; --ink2:#b4c0ba; --muted:#83918b; --line:#2b3733; --grid:#1f2a26;
+  --accent:#4fc4ac; --accent-soft:#16332d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s7:#9085e9; --gray:#71807a;
+  --warn:#e3b04a; --warn-soft:#2f2612;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);padding-inline:16px;padding-block:28px 64px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.1;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:21px;margin:0 0 4px;text-wrap:balance;letter-spacing:-.005em}
+h3{font-size:14px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+p{margin:0 0 10px;max-width:72ch}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.bluf{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);padding:16px 18px;border-radius:4px;max-width:none}
+.bluf p:last-child{margin:0}
+.caveat{background:var(--warn-soft);color:var(--ink);border:1px solid var(--line);padding:10px 14px;border-radius:4px;font-size:13.5px}
+.caveat b{color:var(--warn)}
+section>.sub{color:var(--ink2);margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:22px}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px 14px 10px}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+.wide{overflow-x:auto}
+.wide svg{min-width:640px}
+figcaption{font-size:13px;color:var(--ink2);margin-top:8px;max-width:80ch}
+figcaption .src,.src{font:12px var(--mono);color:var(--muted)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--grid)}
+th{font:500 11.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);background:var(--bg);position:sticky;top:0;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);white-space:nowrap}
+td.id{font:500 12px var(--mono);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:500 11px var(--mono);padding:1px 7px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.pill.hi{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.pill.lo{color:var(--muted)}
+.mini{min-width:560px}
+.t{font:12px var(--sans);fill:var(--ink2)}
+.tb{font:600 12px var(--sans);fill:var(--ink)}
+.v{font:500 12px var(--mono);fill:var(--ink)}
+.sm{font:11px var(--sans);fill:var(--muted)}
+.ax{stroke:var(--line);stroke-width:1;fill:none}
+.gr{stroke:var(--grid);stroke-width:1}
+.box{fill:var(--surface);stroke:var(--ink2);stroke-width:1.25}
+.boxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.arr{stroke:var(--ink2);stroke-width:1.5;fill:none}
+.arrd{stroke:var(--ink2);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+.phase{fill:var(--bg)}
+ul.tight{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+ul.tight li{max-width:90ch}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.ph{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px}
+.ph h3{color:var(--accent);margin-bottom:2px}
+.ph .who{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.ph dl{margin:0;font-size:13px}
+.ph dt{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin-top:8px}
+.ph dd{margin:2px 0 0}
+code{font:12.5px var(--mono);background:var(--grid);padding:0 4px;border-radius:2px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">clauthier · cdocs · 2026-09-21</div>
+  <h1>Cdocs context roadmap</h1>
+  <div class="bluf">
+    <p><b>BLUF.</b> Over 7 days of weftwise work, <b>~96% of tokens were cache-read</b> (re-sent context: 3.94B vs 21.6M output). Dispatched <code>general-purpose</code> subagents were 64.9% of the $3,152 spend, and the <b>implementer alone was 48.3%</b>, invisible in <code>usage.db</code> because it dispatches with a bare <code>subagent_type</code>.</p>
+    <p>Fixes fall on four axes: <b>label</b> roles at dispatch, <b>persist</b> orientation outside the context window (chat record + devlog v2), <b>share</b> retrieval across agents (cache + graphify), and <b>cap</b> per-agent context (cap-and-reseed), with cheap-tier routing in parallel. Cap-and-reseed hard-depends on persist and share.</p>
+  </div>
+  <p class="caveat" style="margin-top:14px"><b>Scope caveat.</b> One 7-day window (2026-09-12 to 09-20), weftwise only, dominated by loro-repo propose/implement loops (top 2 of ~40 sessions ≈ 75% of read intake). The role mix is workload-dependent; implementer dominance is a hypothesis about an implement-heavy week, not a certified structure. Do not over-index on it: a re-measurement checkpoint is on the roadmap. Token counts for reads are approximations (chars ÷ 4).</p>
+  <p class="src">Sources: <b>[SPEND]</b> 2026-09-20-token-spend-by-role · <b>[READ]</b> 2026-09-20-read-source-attribution · <b>[DEVLOG]</b> 2026-09-19-devlog-methodology-value (all in <code>cdocs/reports/</code>)</p>
+</header>
+
+<section>
+  <h2>1. Where the money goes</h2>
+  <p class="sub">Attribution by semantic role, then by model. Hatched bars are roles recovered by classifying 170 <code>general-purpose</code> dispatch prompts (100% coverage); solid bars are raw <code>agent_type</code> buckets.</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 740 318" role="img" aria-label="Horizontal bar chart of share of weekly USD spend by role: implementer 48.3 percent, reviewer 16.4, overseer 15.2, proposer 7.4, debugging 4.8, orphaned 2.6, docs 2.1, reviewer-like 1.3, research 0.9, Explore 0.8.">
+      <defs>
+        <pattern id="hO" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:var(--s2)"/><rect width="2" height="6" style="fill:var(--surface)"/></pattern>
+        <pattern id="hB" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:var(--s1)"/><rect width="2" height="6" style="fill:var(--surface)"/></pattern>
+      </defs>
+      <g class="gr"><line x1="250" y1="6" x2="250" y2="270"/><line x1="325" y1="6" x2="325" y2="270"/><line x1="400" y1="6" x2="400" y2="270"/><line x1="475" y1="6" x2="475" y2="270"/><line x1="550" y1="6" x2="550" y2="270"/><line x1="625" y1="6" x2="625" y2="270"/></g>
+      <g class="sm" text-anchor="middle"><text x="250" y="288">0%</text><text x="325" y="288">10%</text><text x="400" y="288">20%</text><text x="475" y="288">30%</text><text x="550" y="288">40%</text><text x="625" y="288">50%</text></g>
+      <text class="sm" x="250" y="308">Share of $3,152 weekly USD (bars to scale)</text>
+      <g class="t" text-anchor="end">
+        <text x="240" y="21">Implementer (gp, hatched)</text>
+        <text x="240" y="47">Reviewer (cdocs:reviewer)</text>
+        <text x="240" y="73">Overseer / top-level</text>
+        <text x="240" y="99">Proposer (gp, hatched)</text>
+        <text x="240" y="125">Debugging/spike (gp, hatched)</text>
+        <text x="240" y="151">Orphaned agent-id</text>
+        <text x="240" y="177">Docs/report authoring (gp)</text>
+        <text x="240" y="203">Reviewer-like (gp)</text>
+        <text x="240" y="229">Research/explore (gp)</text>
+        <text x="240" y="255">Explore agent type</text>
+      </g>
+      <rect x="250" y="8" width="362.2" height="20" style="fill:url(#hO)"/>
+<rect x="250" y="34" width="123.0" height="20" style="fill:var(--s1)"/>
+<rect x="250" y="60" width="114.0" height="20" style="fill:var(--s1)"/>
+<rect x="250" y="86" width="55.5" height="20" style="fill:url(#hB)"/>
+<rect x="250" y="112" width="36.0" height="20" style="fill:url(#hB)"/>
+<rect x="250" y="138" width="19.5" height="20" style="fill:var(--gray)"/>
+<rect x="250" y="164" width="15.8" height="20" style="fill:url(#hB)"/>
+<rect x="250" y="190" width="9.8" height="20" style="fill:url(#hB)"/>
+<rect x="250" y="216" width="6.8" height="20" style="fill:url(#hB)"/>
+<rect x="250" y="242" width="6.0" height="20" style="fill:var(--s1)"/>
+<g class="v">
+<text x="618.2" y="23">48.3% · $1,522</text>
+<text x="379.0" y="49">16.4% · $518</text>
+<text x="370.0" y="75">15.2% · $480</text>
+<text x="311.5" y="101">7.4% · $234</text>
+<text x="292.0" y="127">4.8% · $151</text>
+<text x="275.5" y="153">2.6% · $83</text>
+<text x="271.8" y="179">2.1% · $67</text>
+<text x="265.8" y="205">1.3% · $40</text>
+<text x="262.8" y="231">0.9% · $29</text>
+<text x="262.0" y="257">0.8% · $25</text>
+</g>
+    </svg>
+    </div>
+    <figcaption>Implementer work is roughly 3× the reviewer and 3× the overseer. A <code>cdocs:*</code>-only dashboard sees 16.5% of real spend. Residual ≈0.2% (nit-fix, misc, other gp) not drawn. <span class="src">[SPEND] Spend by role; Implementer vs proposer split</span></figcaption>
+  </figure>
+  <div class="grid2" style="margin-top:22px">
+    <div>
+      <h3>Model mix (USD, weftwise, 7d)</h3>
+      <div class="tw"><table>
+        <tr><th>Model</th><th class="n">Turns</th><th class="n">USD</th><th class="n">% USD</th></tr>
+        <tr><td>claude-opus-4-8</td><td class="n">15,761</td><td class="n">$2,827</td><td class="n">89.7%</td></tr>
+        <tr><td>claude-fable-5-1</td><td class="n">661</td><td class="n">$229</td><td class="n">7.3%</td></tr>
+        <tr><td>claude-sonnet-5</td><td class="n">1,981</td><td class="n">$88</td><td class="n">2.8%</td></tr>
+        <tr><td>claude-opus-5</td><td class="n">44</td><td class="n">$7</td><td class="n">0.2%</td></tr>
+        <tr><td>claude-haiku-4-5</td><td class="n">57</td><td class="n">$0.89</td><td class="n">0.03%</td></tr>
+      </table></div>
+      <p class="src" style="margin-top:6px">[SPEND] Model mix. Fable 7.3% is intentional (maintainer requested Fable rounds); do not “correct” to the Opus floor.</p>
+    </div>
+    <div>
+      <h3>Agents by dispatch type</h3>
+      <div class="tw"><table>
+        <tr><th>Bucket</th><th class="n">Agents</th><th class="n">Cache-read</th><th class="n">USD</th></tr>
+        <tr><td>general-purpose</td><td class="n">170</td><td class="n">2.69B</td><td class="n">$2,045</td></tr>
+        <tr><td>cdocs:reviewer</td><td class="n">150</td><td class="n">502M</td><td class="n">$518</td></tr>
+        <tr><td>Top-level (14 sessions)</td><td class="n">n/a</td><td class="n">586M</td><td class="n">$480</td></tr>
+        <tr><td>Orphaned agent-id</td><td class="n">11</td><td class="n">133M</td><td class="n">$83</td></tr>
+        <tr><td>Explore</td><td class="n">35</td><td class="n">23M</td><td class="n">$25</td></tr>
+      </table></div>
+      <p class="src" style="margin-top:6px">[SPEND] Spend by role. Zero activity: triage, judge, Plan, claude/fork.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>2. Retrieval is the bill</h2>
+  <p class="sub">Every byte read once is re-sent on later turns. Generation and even intake are slivers next to re-sent context.</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 740 200" role="img" aria-label="Linear bars of weekly tokens: cache-read 3.94 billion fills the width; cache-creation 113 million, output 21.6 million and one-time intake 13.2 million are slivers.">
+      <g class="t" text-anchor="end">
+        <text x="150" y="27">Cache-read (re-sent)</text>
+        <text x="150" y="67">Cache-creation</text>
+        <text x="150" y="107">Output (generated)</text>
+        <text x="150" y="147">Read intake (one-time)</text>
+      </g>
+      <rect x="160" y="10" width="440" height="24" style="fill:var(--s1)"/>
+      <rect x="160" y="50" width="12.6" height="24" style="fill:var(--gray)"/>
+      <rect x="160" y="90" width="2.4" height="24" style="fill:var(--s2)"/>
+      <rect x="160" y="130" width="2" height="24" style="fill:var(--s4)"/>
+      <g class="v">
+        <text x="610" y="27">3.94B</text>
+        <text x="182" y="67">113M (2.9%)</text>
+        <text x="172" y="107">21.6M (0.55%)</text>
+        <text x="172" y="147">13.2M (0.33%)</text>
+      </g>
+      <line x1="160" y1="170" x2="600" y2="170" class="ax"/>
+      <text class="sm" x="160" y="190">Linear scale, 440 px = 3.94B tokens. Slivers are drawn at true width (min 2 px).</text>
+    </svg>
+    </div>
+    <figcaption>Intake 13.17M → cache-read 3.94B is <b>≈ 1 : 299</b>: each intake token is re-sent across ~299 later turns on average. Cache-read is ~180× output. For the gp bucket cache-read is ≈ $1,347 of $2,045. <span class="src">[READ] Amplification; [SPEND] Key insights 1</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3. What gets read</h2>
+  <p class="sub">One-time intake by source (≈13.2M approx-tokens; subagents carry ~95%). Whole-file <code>Read</code> is 63% of volume from 4,022 calls.</p>
+  <div class="grid2">
+  <figure>
+    <svg viewBox="0 0 440 232" role="img" aria-label="Bars of read intake share by source: codebase 54.7 percent, Bash output 28.5, logs and devlogs 9.3, Playwright DOM 3.5, tool scaffolding 3.3, web 0.7.">
+      <g class="t" text-anchor="end">
+        <text x="150" y="24">Codebase reads</text>
+        <text x="150" y="60">Bash output</text>
+        <text x="150" y="96">Logs / devlogs</text>
+        <text x="150" y="132">Playwright DOM</text>
+        <text x="150" y="168">Tool scaffolding</text>
+        <text x="150" y="204">Web fetch/search</text>
+      </g>
+      <rect x="160" y="8" width="191.4" height="22" style="fill:var(--s2)"/>
+      <rect x="160" y="44" width="99.9" height="22" style="fill:var(--s1)"/>
+      <rect x="160" y="80" width="32.6" height="22" style="fill:var(--s1)"/>
+      <rect x="160" y="116" width="12.2" height="22" style="fill:var(--gray)"/>
+      <rect x="160" y="152" width="11.5" height="22" style="fill:var(--gray)"/>
+      <rect x="160" y="188" width="2.5" height="22" style="fill:var(--gray)"/>
+      <g class="v">
+        <text x="358" y="24">54.7%</text><text x="266" y="60">28.5%</text><text x="198" y="96">9.3%</text>
+        <text x="178" y="132">3.5%</text><text x="177" y="168">3.3%</text><text x="169" y="204">0.7%</text>
+      </g>
+      <text class="sm" x="160" y="228">3.5 px per point</text>
+    </svg>
+    <figcaption>Codebase file reads dominate (7.20M tok); Bash is death-by-a-thousand-cuts (9,581 results, mean 390). The logs/devlogs bucket is 89.3% devlogs, only 5.5% literal <code>*.log</code>. <span class="src">[READ] Read volume by source; drill</span></figcaption>
+  </figure>
+  <div>
+    <h3>Mean tokens per result, by tool</h3>
+    <div class="tw"><table>
+      <tr><th>Tool</th><th class="n">Calls</th><th class="n">% intake</th><th class="n">Mean tok</th></tr>
+      <tr><td>Read</td><td class="n">4,022</td><td class="n">63.1%</td><td class="n">2,066</td></tr>
+      <tr><td>Bash</td><td class="n">9,928</td><td class="n">29.4%</td><td class="n">390</td></tr>
+      <tr><td>browser_snapshot</td><td class="n">101</td><td class="n">1.8%</td><td class="n">2,349</td></tr>
+      <tr><td>Artifact</td><td class="n">45</td><td class="n">0.73%</td><td class="n">2,142</td></tr>
+      <tr><td>browser_evaluate</td><td class="n">403</td><td class="n">0.75%</td><td class="n">247</td></tr>
+      <tr><td>WebSearch</td><td class="n">69</td><td class="n">0.36%</td><td class="n">697</td></tr>
+      <tr><td>Edit</td><td class="n">3,763</td><td class="n">1.4%</td><td class="n">49</td></tr>
+    </table></div>
+    <p class="src" style="margin-top:6px">[READ] Tool distribution. Top 15 single results are all whole-file Reads, 15.1K–17.7K tok each. Devlog whole-file reads: median 3,385, max 14,860; two devlogs were read 10 and 21 times.</p>
+  </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. Why re-reads happen</h2>
+  <p class="sub">~4.7–5.0M whole-file Read tokens (~70% of whole-file-read volume) are re-reads. At true context granularity (one <code>.jsonl</code> = one window) the cause is structural.</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 740 150" role="img" aria-label="Stacked bar of reread waste root cause: 97.4 percent cross-agent cold reads, 2.2 percent same-context reread, 0.33 percent compaction eviction, 0.05 percent edit then verify.">
+      <rect x="20" y="20" width="640" height="30" style="fill:var(--s2)"/>
+      <rect x="662" y="20" width="14" height="30" style="fill:var(--s1)"/>
+      <rect x="678" y="20" width="3" height="30" style="fill:var(--s4)"/>
+      <rect x="683" y="20" width="2" height="30" style="fill:var(--s7)"/>
+      <text class="tb" x="30" y="40" style="fill:#111c19">97.4% cross-agent: a fresh subagent or later session reads the file cold</text>
+      <g class="arr"><path d="M669 50 V78 H560"/><path d="M680 50 V104 H560"/><path d="M684 50 V128 H560"/></g>
+      <g class="t" text-anchor="end">
+        <text x="552" y="82">2.2% one context re-reading itself</text>
+        <text x="552" y="108">0.33% compaction eviction</text>
+        <text x="552" y="132">0.05% edit-then-verify</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption>The waste is a fresh context that was <i>never populated</i>, not one that lost content. So “don’t re-read” discipline addresses &lt;0.4%; a summary re-orients but cannot supply file content for a reviewer that must inspect it. Worst file: <code>loro_repo.ts</code>, 45 whole reads across 3 sessions, ~97% cross-agent. <span class="src">[READ] Reread waste; [SPEND] Workstream 3</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>5. Warm-implementer context (schematic)</h2>
+  <p class="sub">A durable implementer re-bills its whole transcript as cache-read each turn. Measured: top implementer 924 turns, 18 rounds, per-round peak 155k → 966k, alone 11.3% of week cache-read; the 46 implementers are 54.8%; corr(rounds, carried context) = 0.89.</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 740 290" role="img" aria-label="Schematic: carried context climbs linearly to 966k tokens near the 1M ceiling; a cap-and-reseed policy at 500k resets to about 150k; a 0.2M cap would reset almost every round.">
+      <rect x="60" y="110" width="640" height="40" style="fill:var(--accent-soft)"/>
+      <g class="gr"><line x1="60" y1="30" x2="700" y2="30"/><line x1="60" y1="70" x2="700" y2="70"/><line x1="60" y1="110" x2="700" y2="110"/><line x1="60" y1="150" x2="700" y2="150"/><line x1="60" y1="190" x2="700" y2="190"/></g>
+      <line x1="60" y1="30" x2="60" y2="230" class="ax"/><line x1="60" y1="230" x2="700" y2="230" class="ax"/>
+      <g class="sm" text-anchor="end"><text x="54" y="34">1M</text><text x="54" y="74">0.8M</text><text x="54" y="114">0.6M</text><text x="54" y="154">0.4M</text><text x="54" y="194">0.2M</text><text x="54" y="234">0</text></g>
+      <g class="sm" text-anchor="middle"><text x="60" y="248">round 1</text><text x="380" y="248">round ~9</text><text x="700" y="248">round 18</text></g>
+      <line x1="60" y1="30" x2="700" y2="30" style="stroke:var(--s2);stroke-width:1.5;stroke-dasharray:6 4"/>
+      <text class="t" x="66" y="24" style="fill:var(--s2)">~1M window ceiling: lossy auto-compaction</text>
+      <line x1="60" y1="190" x2="700" y2="190" style="stroke:var(--s7);stroke-width:1.5;stroke-dasharray:2 3"/>
+      <text class="t" x="696" y="184" style="fill:var(--s7);stroke:var(--surface);stroke-width:4;paint-order:stroke" text-anchor="end">0.2M tentative cap: reseeds ~every round</text>
+      <polyline points="60,199 700,37" fill="none" style="stroke:var(--s2);stroke-width:2.5"/>
+      <polyline points="60,199 332,130 332,200 607,130 607,200 700,176" fill="none" style="stroke:var(--s1);stroke-width:2.5"/>
+      <circle cx="700" cy="37" r="4" style="fill:var(--s2)"/><circle cx="60" cy="199" r="4" style="fill:var(--s1)"/>
+      <text class="v" x="700" y="58" text-anchor="end">966k</text>
+      <text class="v" x="66" y="216">155k</text>
+      <text class="tb" x="200" y="82" style="fill:var(--s2)">Carry indefinitely (orange)</text>
+      <text class="tb" x="345" y="222" style="fill:var(--s1)">Cap at ~0.5M, reseed (blue)</text>
+      <text class="t" x="66" y="126" style="fill:var(--ink)">0.4–0.6M suggested cap band</text>
+      <text class="sm" x="60" y="274">SCHEMATIC, not data. Endpoints 155k and 966k are measured per-round peaks; the path between is linear interpolation; reseed floor ~150k is assumed.</text>
+    </svg>
+    </div>
+    <figcaption>Fresh-every-round overpays re-briefing; indefinite carry pays the sawtooth and ends lossy. The 0.2M starting value in [SPEND] sits near the fresh-every-round extreme because round-1 peak is already 155k, so start nearer 0.4–0.6M and A/B carry-cost vs re-brief-cost once durable summaries make re-briefing cheap. <span class="src">[SPEND] Workstream 4; Follow-up 3</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>6. Architecture: which layer attacks which cost</h2>
+  <p class="sub">Move long-lived context out of re-sent windows into durable documents plus cheap, scoped retrieval.</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 780 440" role="img" aria-label="Each measured cost mechanism on the left is attacked by a layer on the right; a durable-documents substrate under the layers is a hard dependency of cap-and-reseed.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink2)"/></marker></defs>
+      <text class="sm" x="10" y="14">MEASURED COST</text><text class="sm" x="440" y="14">LAYER THAT ATTACKS IT</text>
+      <g>
+        <rect class="box" x="10" y="24" width="320" height="52"/><text class="tb" x="20" y="44">Tier price of low-signal context</text><text class="t" x="20" y="63">Opus 89.7% of USD; overseer 586M cache-read</text>
+        <rect class="box" x="10" y="94" width="320" height="52"/><text class="tb" x="20" y="114">Bash logspam intake</text><text class="t" x="20" y="133">28.5% of intake, 9,581 results, then re-sent</text>
+        <rect class="box" x="10" y="164" width="320" height="52"/><text class="tb" x="20" y="184">Whole-file codebase reads</text><text class="t" x="20" y="203">54.7% of intake, mean 2,066 tok</text>
+        <rect class="box" x="10" y="234" width="320" height="52"/><text class="tb" x="20" y="254">Cross-agent cold reads</text><text class="t" x="20" y="273">97.4% of ~70% reread share</text>
+        <rect class="box" x="10" y="304" width="320" height="52"/><text class="tb" x="20" y="324">Per-turn re-send in one agent</text><text class="t" x="20" y="343">implementers = 54.8% of cache-read</text>
+      </g>
+      <g>
+        <rect class="boxa" x="440" y="24" width="330" height="52"/><text class="tb" x="450" y="44">Model tiering (Sonnet overseer + advisor)</text><text class="t" x="450" y="63">~2.5× cheaper per token (Opus 4.8 → Sonnet 5)</text>
+        <rect class="boxa" x="440" y="94" width="330" height="52"/><text class="tb" x="450" y="114">Haiku Bash wrapper + PostToolUse truncate</text><text class="t" x="450" y="133">eviction at subagent return; zero-LLM trim</text>
+        <rect class="boxa" x="440" y="164" width="330" height="52"/><text class="tb" x="450" y="184">Graphify symbol/span retrieval</text><text class="t" x="450" y="203">cheapens each cold read, does not dedupe</text>
+        <rect class="boxa" x="440" y="234" width="330" height="52"/><text class="tb" x="450" y="254">Shared retrieval cache (WS3)</text><text class="t" x="450" y="273">agent B reuses what agent A already read</text>
+        <rect class="boxa" x="440" y="304" width="330" height="52"/><text class="tb" x="450" y="324">Cap-and-reseed (WS4)</text><text class="t" x="450" y="343">bounds resident context per agent leg</text>
+      </g>
+      <g class="arr" style="marker-end:url(#ah)">
+        <line x1="332" y1="50" x2="438" y2="50" marker-end="url(#ah)"/><line x1="332" y1="120" x2="438" y2="120" marker-end="url(#ah)"/><line x1="332" y1="190" x2="438" y2="190" marker-end="url(#ah)"/><line x1="332" y1="260" x2="438" y2="260" marker-end="url(#ah)"/><line x1="332" y1="330" x2="438" y2="330" marker-end="url(#ah)"/>
+      </g>
+      <g class="sm" text-anchor="middle"><text x="385" y="44">price</text><text x="385" y="114">evict</text><text x="385" y="184">scope</text><text x="385" y="254">share</text><text x="385" y="324">bound</text></g>
+      <path class="arrd" d="M605 394 V358" marker-end="url(#ah)"/>
+      <text class="sm" x="612" y="381">hard dependency</text>
+      <rect class="boxa" x="440" y="394" width="330" height="38" style="stroke-dasharray:0"/><text class="tb" x="450" y="411">Durable docs substrate (WS1)</text><text class="t" x="450" y="426">devlog v2 + chat record + dense turn summary</text>
+      <text class="t" x="10" y="416">Substrate re-orients any fresh agent;</text><text class="t" x="10" y="432">retrieval supplies the actual file content.</text>
+    </svg>
+    </div>
+    <figcaption>Substrate (summaries, pagination) and retrieval (cache, graphify) are complementary axes: a reviewer that must inspect a file needs real content, which a summary cannot supply. A fresh leg with neither is amnesiac and re-creates the cross-agent waste. <span class="src">[SPEND] Proposed workstreams 1–4</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>7. Dependency map and phasing</h2>
+  <p class="sub">Solid arrows: hard dependencies on the critical path. Dashed bars: gated on a spike. Letter in each bar: effort S/M/L (my estimate).</p>
+  <figure>
+    <div class="wide">
+    <svg viewBox="0 0 780 420" role="img" aria-label="Roadmap across four phases: critical path P0 labeling, P1 chat record and devlog management, P2 graphify and shared cache, P3 cap-and-reseed; parallel lanes for baseline dashboard, upstream filings, haiku bash wrapper, compaction fix, Playwright subagent, and a spike-gated Sonnet overseer.">
+      <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink2)"/></marker></defs>
+      <g class="phase"><rect x="200" y="0" width="140" height="404"/><rect x="480" y="0" width="140" height="404"/></g>
+      <g class="tb" text-anchor="middle"><text x="270" y="18">P0 quick wins</text><text x="410" y="18">P1 substrate</text><text x="550" y="18">P2 retrieval</text><text x="690" y="18">P3 loop control</text></g>
+      <text class="sm" x="10" y="18">CRITICAL PATH</text>
+      <g class="t">
+        <text x="10" y="50">Dispatch labels (impl/proposer)</text>
+        <text x="10" y="86">Chat record + devlog v2</text>
+        <text x="10" y="122">Graphify + shared cache</text>
+        <text x="10" y="158">Cap-and-reseed</text>
+      </g>
+      <line x1="10" y1="176" x2="770" y2="176" class="gr"/><text class="sm" x="10" y="192">PARALLEL / LOW DEPENDENCY</text>
+      <g class="t">
+        <text x="10" y="222">Baseline dashboard + re-measure</text>
+        <text x="10" y="254">Upstream claude-usage filings</text>
+        <text x="10" y="286">Haiku Bash wrap + PostToolUse hook</text>
+        <text x="10" y="318">Compaction restores from devlog</text>
+        <text x="10" y="350">Sonnet Playwright/frontend agent</text>
+        <text x="10" y="382">Sonnet overseer + Opus advisor</text>
+      </g>
+      <g style="fill:var(--accent);stroke:none">
+        <rect x="206" y="34" width="128" height="22" rx="2"/><rect x="346" y="70" width="128" height="22" rx="2"/><rect x="486" y="106" width="128" height="22" rx="2"/><rect x="626" y="142" width="128" height="22" rx="2"/>
+      </g>
+      <g class="v" text-anchor="middle" style="fill:var(--surface)"><text x="270" y="50" style="fill:var(--surface)">S</text><text x="410" y="86" style="fill:var(--surface)">M–L</text><text x="550" y="122" style="fill:var(--surface)">L</text><text x="690" y="158" style="fill:var(--surface)">M</text></g>
+      <g class="arr" style="marker-end:url(#ah2)">
+        <path d="M334 45 H340 V81 H344" marker-end="url(#ah2)"/><path d="M474 81 H480 V117 H484" marker-end="url(#ah2)"/><path d="M614 117 H620 V153 H624" marker-end="url(#ah2)"/>
+      </g>
+      <g style="fill:var(--s1)">
+        <rect x="206" y="208" width="128" height="22" rx="2"/><rect x="206" y="240" width="90" height="22" rx="2"/><rect x="246" y="272" width="190" height="22" rx="2"/><rect x="286" y="304" width="110" height="22" rx="2"/><rect x="366" y="336" width="108" height="22" rx="2"/>
+      </g>
+      <g style="fill:none;stroke:var(--s7);stroke-width:2;stroke-dasharray:5 3">
+        <rect x="546" y="368" width="68" height="22" rx="2"/><rect x="626" y="368" width="128" height="22" rx="2"/>
+      </g>
+            <g style="fill:var(--ink)"><path d="M550 219 l7 7 l-7 7 l-7 -7z"/><path d="M754 219 l7 7 l-7 7 l-7 -7z"/></g>
+      <g class="v" text-anchor="middle"><text x="270" y="224" style="fill:var(--surface)">M</text><text x="251" y="256" style="fill:var(--surface)">S</text><text x="341" y="288" style="fill:var(--surface)">S–M</text><text x="341" y="320" style="fill:var(--surface)">S</text><text x="420" y="352" style="fill:var(--surface)">M</text><text x="580" y="384">spike</text><text x="690" y="384">adopt? M</text></g>
+      <text class="sm" x="562" y="222">re-measure ◆ (P2, P3 end)</text>
+      <text class="sm" x="10" y="414">◆ = re-measurement checkpoint (P2 end, P3 end). Sonnet overseer adoption is gated on the spike and on a model-tiering.md revision; the judge and advisor stay Opus.</text>
+    </svg>
+    </div>
+    <figcaption>Cap-and-reseed (P3) also needs graphify and the shared cache from P2. The prompt-cache reuse and TTL check ride with P2. Phases are an ordering, not calendar dates. <span class="src">Derived from [SPEND] Workstreams 1–4, Action items 1–6; [READ] Recommendations 1–5</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>8. Idea inventory</h2>
+  <p class="sub">Your ordering first (0, 1, 2, then the tail), then additions from the reports and from review. Effort and priority are proposals; evidence strength reflects what the source reports actually measured.</p>
+  <div class="tw"><table class="mini" style="min-width:1080px">
+    <tr><th>ID</th><th>Idea</th><th>Source</th><th>Cost lever</th><th>Evidence</th><th>Effort</th><th>Depends on</th><th>RFP</th><th>Pri</th></tr>
+    <tr><td class="id">I0</td><td><b>Subagent labeling.</b> Add <code>plugins/cdocs/agents/implementer.md</code> and <code>proposer.md</code> (same tools as general-purpose); dispatch as <code>cdocs:implementer</code>/<code>cdocs:proposer</code> at iterate <code>SKILL.md</code> line 74 and propose-revise line 46. <code>full-send</code>/<code>oversee</code> inherit. Zero ongoing cost.</td><td>[SPEND] Action 1, Follow-up 1</td><td>Attribution (enables all measurement)</td><td><span class="pill hi">strong</span> 170/170 classified; root cause pinned</td><td>S</td><td>none</td><td>RFP-1</td><td><span class="pill hi">P0</span></td></tr>
+    <tr><td class="id">I1a</td><td><b>High-level chat record.</b> Append-only user-message log written on send (UserPromptSubmit hook), plus dense per-turn agent summary, plus <i>retrieval-usefulness notes</i> (e.g. “this graphify query gave the right context”) so later legs replay what worked. Survives compaction.</td><td>[SPEND] WS1; [DEVLOG] hybrid</td><td>Orientation without transcript re-reads; enables I2</td><td><span class="pill">medium</span> field-backed, not measured here</td><td>M</td><td>none (notes benefit from A2)</td><td>RFP-2</td><td><span class="pill hi">P1</span></td></tr>
+    <tr><td class="id">I1b</td><td><b>Devlog management v2.</b> Wiki-like sectioned devlogs (index + per-phase/concern files); size cap ~10–15KB, split at ~5 rounds with standalone BLUF; compaction restores from the devlog instead of re-summarizing (Pillar 2 wording).</td><td>[DEVLOG] Recs 2–3; [READ] Rec 4; [SPEND] Action 6</td><td>Devlogs = 8.2% of intake; 10× and 21× whole re-reads</td><td><span class="pill">medium</span> 45KB logs observed; effect unmeasured</td><td>M</td><td>I0 for measurement</td><td>RFP-3</td><td><span class="pill hi">P1</span></td></tr>
+    <tr><td class="id">I2</td><td><b>Cap-and-reseed and new-context setup.</b> When resident context crosses a cutoff, checkpoint to summary and dispatch a fresh leg seeded from summary + graphify. Start ~0.4–0.6M (0.2M would reseed every 1–2 rounds); A/B against carry.</td><td>[SPEND] WS4</td><td>Per-turn re-send: implementers 54.8% of cache-read</td><td><span class="pill">medium</span> corr 0.89; cutoff untuned</td><td>M</td><td><b>I1a, I1b, A2</b> (hard)</td><td>RFP-5</td><td><span class="pill hi">P3</span></td></tr>
+    <tr><td class="id">I3</td><td><b>Haiku Bash wrapper</b> (convention: run, return salient extract) <b>+ PostToolUse truncation hook</b> (<code>updatedToolOutput</code>, CC v2.1.121+). No native auto-routing exists.</td><td>[READ] Rec 3; [SPEND] Action 5</td><td>28.5% of intake, then ~299× re-sent</td><td><span class="pill">medium</span> mechanism verified; savings unmeasured</td><td>S–M</td><td>none</td><td>RFP-6</td><td><span class="pill hi">P0–1</span></td></tr>
+    <tr><td class="id">I4</td><td><b>Sonnet Playwright / frontend-tweaks subagent.</b> DOM snapshots die inside the subagent; cheaper and faster.</td><td>[SPEND] WS2</td><td>Playwright 3.5% of intake; snapshot mean 2,349 tok</td><td><span class="pill lo">weak-medium</span> small share</td><td>S</td><td>none</td><td>RFP-6</td><td><span class="pill">P1</span></td></tr>
+    <tr><td class="id">I5</td><td><b>Sonnet-high /oversee + on-call Opus advisor</b> (fork-style consult; judge stays Opus). Spike must measure escalation reliability and routing/dispatch regression.</td><td>[SPEND] Directional proposal, Action 4</td><td>Overseer bucket 15.2%; ~2.5× per-token cut</td><td><span class="pill lo">weak</span> hypothesis</td><td>M (spike) + M</td><td>I6 revision; A5 baseline</td><td>RFP-7</td><td><span class="pill">P3, gated</span></td></tr>
+    <tr><td class="id">I6</td><td><b>Revise <code>model-tiering.md</code></b> (Lead/Overseer tier currently opus-class; judge <code>model: opus</code>) only if the I5 spike passes.</td><td>[SPEND] Directional proposal</td><td>Tier price</td><td><span class="pill lo">weak</span></td><td>S</td><td>I5 spike</td><td>RFP-7</td><td><span class="pill">P3, gated</span></td></tr>
+    <tr><td class="id">A1</td><td><b>Shared retrieval cache across agents/sessions</b> (WS3). Largest concentrated lever; NOT subsumed by I1a.</td><td>[SPEND] WS3; [READ] Reread drill</td><td>97.4% cross-agent reread; ~4.7–5.0M tok</td><td><span class="pill hi">strong</span> observational</td><td>L</td><td>A2 (complementary)</td><td>RFP-4</td><td><span class="pill hi">P2</span></td></tr>
+    <tr><td class="id">A2</td><td><b>Graphify-scoped retrieval prototype</b> for review and implementation.</td><td>[READ] Rec 1; [SPEND] Action 2</td><td>Codebase reads 54.7%; 50% cut ≈ 3.6M intake (report’s scenario)</td><td><span class="pill hi">strong</span> on target; integration status unverified</td><td>L</td><td>graphify integration</td><td>RFP-4</td><td><span class="pill hi">P2</span></td></tr>
+    <tr><td class="id">A3</td><td><b>Prompt-cache reuse across loop turns</b>; verify cache TTL versus real gaps between implementer turns.</td><td>[READ] Rec 2a</td><td>1:299 amplification</td><td><span class="pill lo">unverified</span> TTL not checked in reports</td><td>S–M</td><td>none</td><td>RFP-4</td><td><span class="pill">P2</span></td></tr>
+    <tr><td class="id">A4</td><td><b>Upstream claude-usage bugs:</b> <code>agents.total_tokens</code> 210×–1045× low (NULL in 4,277/5,647 rows); orphaned agent-ids (642 turns, $83).</td><td>[SPEND] Granularity gaps, Action 3</td><td>Measurement integrity</td><td><span class="pill hi">strong</span> measured</td><td>S</td><td>none</td><td>RFP-1</td><td><span class="pill hi">P0</span></td></tr>
+    <tr><td class="id">A5</td><td><b>Measurement harness + baseline dashboard</b> with semantic-role buckets from <code>turns</code>, not <code>agents.total_tokens</code>; reuse <code>cdocs:ablate</code> for A/B runs.</td><td>[SPEND] Method; Insight 3</td><td>Makes every other item verifiable</td><td><span class="pill hi">strong</span> methodology exists</td><td>M</td><td>I0</td><td>RFP-1</td><td><span class="pill hi">P0</span></td></tr>
+    <tr><td class="id">A6</td><td><b>Re-measurement checkpoint</b> on a different workload window (proposal- or debug-heavy).</td><td>[SPEND] Caveats</td><td>Guards against tuning to one week</td><td><span class="pill hi">strong</span> caveat stated</td><td>S</td><td>A5</td><td>RFP-1</td><td><span class="pill">P2, P3</span></td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>9. Proposed RFPs</h2>
+  <div class="tw"><table style="min-width:760px">
+    <tr><th>RFP</th><th>One-line scope</th><th>Covers</th><th>Phase</th></tr>
+    <tr><td class="id">RFP-1</td><td><b>Role telemetry and dispatch labeling.</b> Semantic agent types, baseline dashboard, upstream bug filings, re-measurement.</td><td>I0, A4, A5, A6</td><td>P0</td></tr>
+    <tr><td class="id">RFP-2</td><td><b>Execution-context record.</b> Append-only user-message log, dense per-turn summary, retrieval-usefulness notes, page-turning affordance.</td><td>I1a</td><td>P1</td></tr>
+    <tr><td class="id">RFP-3</td><td><b>Devlog management v2.</b> Sectioned layout, size caps and splits, compaction-restores-from-devlog, section-scoped reads.</td><td>I1b</td><td>P1</td></tr>
+    <tr><td class="id">RFP-4</td><td><b>Shared retrieval layer.</b> Graphify-scoped retrieval, cross-agent read cache, prompt-cache reuse and TTL audit.</td><td>A1, A2, A3</td><td>P2</td></tr>
+    <tr><td class="id">RFP-5</td><td><b>Loop context control.</b> Cap-and-reseed policy, fresh-leg seeding, cutoff A/B.</td><td>I2</td><td>P3</td></tr>
+    <tr><td class="id">RFP-6</td><td><b>Tool-output hygiene and cheap-tier routing.</b> Haiku Bash wrapper, PostToolUse truncation, Sonnet Playwright/frontend subagent.</td><td>I3, I4</td><td>P0–P1</td></tr>
+    <tr><td class="id">RFP-7</td><td><b>Sonnet overseer + Opus advisor.</b> Spike design, escalation-reliability and routing-regression metrics, tiering rule revision.</td><td>I5, I6</td><td>P3 (gated)</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>10. Phase exit criteria</h2>
+  <p class="sub">Each phase is measured against the [SPEND]/[READ] baselines, on the same query method (<code>turns</code> table, weftwise, 7-day window).</p>
+  <div class="phases">
+    <div class="ph"><h3>P0 · Quick wins</h3><div class="who">RFP-1, RFP-6 (start)</div><dl>
+      <dt>Exit</dt><dd>New implementer/proposer rows appear as <code>cdocs:implementer</code>/<code>cdocs:proposer</code>; dashboard reproduces the $3,152 role table; upstream issues filed.</dd>
+      <dt>Baseline</dt><dd>gp bucket 64.9%; cdocs:* dashboard sees 16.5%; orphans 2.6%.</dd></dl></div>
+    <div class="ph"><h3>P1 · Durable substrate</h3><div class="who">RFP-2, RFP-3, RFP-6</div><dl>
+      <dt>Exit</dt><dd>A post-compaction instance lists prior user messages from the record; devlogs over the cap trigger a split; Bash logspam routed through wrapper or hook.</dd>
+      <dt>Baseline</dt><dd>Devlogs 8.2% of intake; max reads 10× and 21×; Bash 28.5% of intake.</dd></dl></div>
+    <div class="ph"><h3>P2 · Retrieval/caching</h3><div class="who">RFP-4</div><dl>
+      <dt>Exit</dt><dd>Whole-file Read share and reread tokens fall on a comparable workload; TTL audit documented. Re-measure ◆.</dd>
+      <dt>Baseline</dt><dd>Codebase 54.7% of intake; Read mean 2,066 tok; ~4.7–5.0M reread tok (~70%).</dd></dl></div>
+    <div class="ph"><h3>P3 · Loop control + tiering</h3><div class="who">RFP-5, RFP-7</div><dl>
+      <dt>Exit</dt><dd>Cutoff chosen by A/B (carry vs re-brief); overseer spike verdict recorded; re-measure ◆.</dd>
+      <dt>Baseline</dt><dd>Implementers 54.8% of cache-read (top one 11.3%); overseer $480 / 586M cache-read.</dd></dl></div>
+  </div>
+</section>
+
+<section>
+  <h2>11. Open questions and risks</h2>
+  <ul class="tight">
+    <li><b>Chat-record capture.</b> A UserPromptSubmit hook is the likely mechanism for append-on-send; needs confirmation that it fires for every input path and how it behaves in subagents. Verbatim history may carry sensitive content, so decide storage location, gitignore default and retention.</li>
+    <li><b>Record vs devlog overlap.</b> [DEVLOG] warns against a third summarization layer. The chat record must stay orientation-only (what was asked and done) and defer decisions and evidence to the devlog.</li>
+    <li><b>Graphify status.</b> A2, A1 and I2 all lean on it; the reports say “in progress”, not shipped. Treat as a dependency to verify before P2 scoping.</li>
+    <li><b>Sonnet overseer escalation.</b> Untested. The spike must measure when it consults the advisor and routing/dispatch regressions, not only cost.</li>
+    <li><b>Cap cutoff.</b> 0.2M is tentative and probably too low; unmeasurable until re-briefing is cheap. Sequence I1 → A2 → I2.</li>
+    <li><b>Single-window bias.</b> Implementer dominance may not hold in proposal- or debug-heavy weeks. Re-measure before over-tuning.</li>
+    <li><b>Amplification is not per-source.</b> The projected cache-read split by source assumes uniform amplification; it is illustrative only.</li>
+    <li><b>Intentional Fable usage.</b> 7.3% Fable is a maintainer decision; tiering work must not “correct” it.</li>
+    <li><b>Estimates.</b> Effort sizes here are proposals; Fable-5.1 cache-write pricing is an estimate in [SPEND]; read tokens are chars ÷ 4.</li>
+  </ul>
+</section>
+</main>
