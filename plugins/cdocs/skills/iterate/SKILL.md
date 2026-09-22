@@ -40,7 +40,7 @@ Code and cdocs should be committed early and often.
 ## Roles
 
 - **Overseer**: top-level agent, restricted to orchestration; owns dispatch, freshness, termination.
-- **Implementer**: fresh `general-purpose` subagent dispatched with `/cdocs:implement --dispatched`; executes the proposal and self-verifies before reporting done.
+- **Implementer**: fresh `cdocs:implementer` subagent dispatched with `/cdocs:implement --dispatched`; executes the proposal and self-verifies before reporting done.
 - **Reviewer**: fresh `cdocs:reviewer` subagent each iteration; reads the implementer's output with fresh context, inspects the live system, produces a review document with a verdict.
 - **Judge**: fresh `cdocs:judge` subagent invoked to assess loop *meta-health*; reads the iteration log and recent reviews, not source. Returns `{continue, rotate-implementer, escalate}` with a short rationale.
 
@@ -71,7 +71,7 @@ Prefer appending to the most recent devlog whose `task_list` matches the proposa
 
 ### Turn N.a (Implement)
 
-Dispatch the implementer via Task with `subagent_type: "general-purpose"` and a prompt that follows `/cdocs:implement --dispatched` conventions, including the proposal path and goals for this iterate session (scope, verification floor, prior review path if any).
+Dispatch the implementer via Task with `subagent_type: "cdocs:implementer"` and a prompt that follows `/cdocs:implement --dispatched` conventions, including the proposal path and goals for this iterate session (scope, verification floor, prior review path if any).
 
 `--dispatched` mode suppresses subagent dispatch and routes investigation requests back to the overseer via `## Investigation Requested` blocks; see `/cdocs:implement` Invocation Modes for the schema.
 
