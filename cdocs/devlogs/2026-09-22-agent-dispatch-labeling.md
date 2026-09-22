@@ -83,6 +83,8 @@ Implementer and reviewer this round use the OLD `general-purpose`/`"reviewer"` s
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | impl-1 (general-purpose) | `plugins/cdocs/agents/implementer.md`, `plugins/cdocs/agents/proposer.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/skills/propose-revise/SKILL.md`, `plugins/cdocs/skills/iterate/template.md`, `plugins/cdocs/rules/workflow-patterns.md`, `plugins/cdocs/README.md`, `scripts/build-opencode.ts` (read/verify only unless proposal requires a change), this devlog's `## Changes Made` table and an `### Implementer Notes` subsection only (overseer owns Iteration/Judge/Dispatch/Steering tables) | 2026-09-22T10:50:00-07:00 | Turn 1.a: full-proposal implementation, all 4 phases |
+| return | impl-1 (general-purpose) | n/a | 2026-09-22T11:05:00-07:00 | Implemented all 4 phases across 7 commits (`2987f74`, `21ea8cc`, `ae91a18`, `815655f`, `5cad16a`, `9ea3d77`, `1b070a3`). Chose model:-field option B (omit) per Phase-1 empirical gate: `inherit` broke the OC build (unmapped-alias warning + invalid emitted value), omission is OC-clean and the exact behavioral match for `general-purpose`'s no-pin state. `npm run build:cdocs` -> 6 agents, no warnings. Proposal left at `implementation_wip`. |
+| dispatch | rev-1 (cdocs:reviewer) | none (read-only; may only Edit target proposal's `last_reviewed` field per reviewer constraints) | 2026-09-22T11:06:00-07:00 | Turn 1.b: review the implementation |
 
 ### Steering Log
 
