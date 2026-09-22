@@ -44,6 +44,42 @@ This session runs both loops in overseer mode per `orchestration-discipline.md`:
 | `plugins/cdocs/agents/implementer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:implement`, Startup rule-reading pattern. A later `/cdocs:iterate` loop creates it. |
 | `plugins/cdocs/agents/proposer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:propose`, Startup rule-reading pattern; also serves the reviser role. A later `/cdocs:iterate` loop creates it. |
 
+## Propose-Revise Phase: Result
+
+Proposal `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` accepted round 1 (`cdocs/reviews/2026-09-22-review-of-label-implementer-proposer-agents.md`), 4 non-blocking nits folded round 2 (commit `333d8a8`).
+Overseer transitioned proposal `status: review_ready` -> `implementation_ready` (trivial frontmatter edit, done inline per `/cdocs:iterate`'s dispatch-carve-out for single-line edits).
+Proceeding to `/cdocs:iterate`.
+
+## Iterate Phase
+
+### Turn 0 (Brief)
+
+Scope: full proposal (all 4 implementation phases: create `plugins/cdocs/agents/implementer.md` and `proposer.md`; relabel the two dispatch sites in `iterate/SKILL.md` and `propose-revise/SKILL.md`; update illustrative handles and prose in `iterate/template.md` and `workflow-patterns.md`; update `README.md`'s agent-list and OC-agent-count spots; verify `build-opencode.ts` OC output including the `model:` field per the proposal's A/B/C gate).
+Verification floor: config/doc-only change with no runtime service to exercise; verification is static (grep-based confirmation that no remaining `subagent_type: "general-purpose"` literal or prose reference to the old implementer/proposer roles survives at the two dispatch sites, that the new agent files parse as valid frontmatter, and that `npm run build:cdocs` succeeds and the OC agent count/model-field behavior matches the proposal's Phase 4 criteria). Concrete failure-picture: a `grep -rn 'subagent_type: "general-purpose"' plugins/cdocs/skills/iterate/SKILL.md` or the `propose-revise` prose line still matching after the change, or `build:cdocs` erroring/warning unexpectedly, would mean the fix did not land.
+`--judge-after` defaults to 3 (not overridden).
+
+Implementer and reviewer this round use the OLD `general-purpose`/`"reviewer"` subagent types, since the new `cdocs:implementer`/`cdocs:proposer` types being created by this very loop do not exist yet (bootstrap constraint, per task instructions).
+
+### Iteration Log
+
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
+|---|---|---|---|---|---|---|---|---|
+
+### Judge Log
+
+| judge_iteration | trigger | verdict | overseer_thinness | rationale | judge_path |
+|---|---|---|---|---|---|
+
+### Dispatch/Return Events
+
+| event | agent_handle | target_files | at | notes |
+|---|---|---|---|---|
+
+### Steering Log
+
+| at | kind | target | content | applied_at_iteration |
+|---|---|---|---|---|
+
 ## Verification
 
 (pending)

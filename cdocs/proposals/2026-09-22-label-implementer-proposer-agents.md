@@ -5,7 +5,7 @@ first_authored:
 task_list: meta/agent-dispatch-labeling
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
