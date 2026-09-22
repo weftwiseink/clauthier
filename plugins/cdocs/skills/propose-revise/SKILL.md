@@ -43,6 +43,6 @@ Unless stated explicitly by the user, cdocs docs should be committed early and o
 ## Roles
 
 - **Overseer**: top-level agent, restricted to orchestration; owns dispatch, freshness, termination.
-- **Proposer**: fresh initial `general-purpose` subagent dispatched with `/cdocs:propose`; executes the proposal and self-verifies before reporting done.
+- **Proposer**: fresh initial `cdocs:proposer` subagent dispatched with `/cdocs:propose`; executes the proposal and self-verifies before reporting done.
 - **Reviewer**: fresh `cdocs:reviewer` subagent each iteration; reads the proposal's output with fresh context and produces a review document with a verdict.
-- **Reviser**: subagents dispatched with `/cdocs:propose` to make requested revisions. May be fresh
+- **Reviser**: `cdocs:proposer` subagent dispatched with `/cdocs:propose` to make requested revisions. Reuses the `cdocs:proposer` type (same skill, same tools, same proposal-authoring activity as the initial proposer); whether it is fresh or the prior warm proposer is the overseer's per-dispatch context-freshness call (see "ON REVISION"), orthogonal to the agent type.
