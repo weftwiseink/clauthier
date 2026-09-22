@@ -101,7 +101,7 @@ The `opencode-rules` plugin is not required: rules fall back to `.claude/rules/`
 
 ### Agent path resolution
 
-Agents (`nit-fix`, `triage`, `reviewer`, `judge`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
+Agents (`nit-fix`, `triage`, `reviewer`, `judge`, `implementer`, `proposer`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
 This is experimental belt-and-suspenders alongside the `/cdocs:init` materialization path.
 
 ### When CC #14200 Lands
@@ -167,7 +167,7 @@ Users who prefer to deploy CC plugins directly to their OC config directory (`~/
 |---------|-----------|-------|
 | Skills | Full | All 11 skills work as-is via `.opencode/skills/` or `.claude/skills/` |
 | Rules | Full | Loaded via `.claude/rules/` (OC reads this natively) |
-| Agents | Full | 4 agents converted to OC frontmatter format |
+| Agents | Full | 6 agents converted to OC frontmatter format |
 | Hooks (frontmatter validation) | Full | Ported as `tool.execute.after` handler in TypeScript |
 | Hooks (path restriction) | Not available | OC events lack agent identity; cannot scope to cdocs subagents |
 | Hooks (rule injection) | Not needed | OC reads `.claude/rules/` natively |
