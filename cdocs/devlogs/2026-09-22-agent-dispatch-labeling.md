@@ -43,6 +43,14 @@ This session runs both loops in overseer mode per `orchestration-discipline.md`:
 | `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` | New proposal specifying the implementer/proposer dispatch-labeling fix (status: review_ready, accepted round 1). Round 2 folded 4 accepting-round review nits. |
 | `plugins/cdocs/agents/implementer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:implement`, Startup rule-reading pattern. A later `/cdocs:iterate` loop creates it. |
 | `plugins/cdocs/agents/proposer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:propose`, Startup rule-reading pattern; also serves the reviser role. A later `/cdocs:iterate` loop creates it. |
+| `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` | Iterate phase: status `implementation_ready` -> `implementation_wip`. |
+| `plugins/cdocs/agents/implementer.md` | Iterate phase: CREATED. `tools: "*"`, no `model:` pin (see Implementer Notes A/B/C decision, supersedes the SPEC-ONLY `model: inherit` row above), preloads `cdocs:implement`, relative-then-fallback Startup pattern, dispatched-mode constraints. |
+| `plugins/cdocs/agents/proposer.md` | Iterate phase: CREATED. `tools: "*"`, no `model:` pin (supersedes SPEC-ONLY row above), preloads `cdocs:propose`, Startup pattern; serves both proposer and reviser roles. |
+| `plugins/cdocs/skills/iterate/SKILL.md` | Iterate phase: Turn N.a literal `subagent_type: "general-purpose"` -> `"cdocs:implementer"`; Roles Implementer prose relabeled. |
+| `plugins/cdocs/skills/propose-revise/SKILL.md` | Iterate phase: Proposer/Reviser prose relabeled to `cdocs:proposer` (no literal existed); completed the truncated Reviser line with the reuse rationale. |
+| `plugins/cdocs/rules/workflow-patterns.md` | Iterate phase: Iterative Implementation Loop Implementer role relabeled to `cdocs:implementer`. |
+| `plugins/cdocs/skills/iterate/template.md` | Iterate phase: illustrative `impl-1 (general-purpose)` handles -> `impl-1 (cdocs:implementer)` (3 spots). |
+| `plugins/cdocs/README.md` | Iterate phase: agent path-resolution list adds `implementer`, `proposer`; OC support table converted-agent count `4` -> `6`. |
 
 ## Propose-Revise Phase: Result
 
@@ -74,12 +82,87 @@ Implementer and reviewer this round use the OLD `general-purpose`/`"reviewer"` s
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
+| dispatch | impl-1 (general-purpose) | `plugins/cdocs/agents/implementer.md`, `plugins/cdocs/agents/proposer.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/skills/propose-revise/SKILL.md`, `plugins/cdocs/skills/iterate/template.md`, `plugins/cdocs/rules/workflow-patterns.md`, `plugins/cdocs/README.md`, `scripts/build-opencode.ts` (read/verify only unless proposal requires a change), this devlog's `## Changes Made` table and an `### Implementer Notes` subsection only (overseer owns Iteration/Judge/Dispatch/Steering tables) | 2026-09-22T10:50:00-07:00 | Turn 1.a: full-proposal implementation, all 4 phases |
 
 ### Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 
+### Implementer Notes
+
+Turn 1 implementer (dispatched). Implemented all four phases of the proposal. Small focused commits, one logical change each.
+
+**`model:` field A/B/C decision: chose (B) omit `model:` entirely.**
+
+The proposal left this an empirical Phase 1 gate. The two decision inputs it names:
+
+1. *Does a per-dispatch `-m`/`-f` override still win?* This input is only material to options that ship a pin (A `inherit`, C `inherit`+MODEL_MAP). Under (B) there is no agent-file pin at all, so the dispatch-time/floor model governs entirely: that is by definition identical to `general-purpose`'s current no-pin behavior, which is exactly what a labeling-only change must preserve. The `reviewer.md` precedent (pins `model: opus` yet is still subject to `iterate`'s `-m` for review rounds) confirms the Task/Agent dispatch contract the proposal states: a per-dispatch model override takes precedence over an agent file's `model:` default. With (B) there is simply nothing to override. I could not run a live `-m` dispatch to measure `turns.model` because a dispatched subagent cannot dispatch subagents (`Task` unavailable); that live model-DB check is `deferred-to-followup` per the proposal's Verification Methodology (self-referential change, runs as a separate top-level invocation).
+
+2. *OpenCode build cleanliness (this I ran empirically).* Building with `model: inherit` produced, for BOTH new agents:
+   ```
+   Warning: Unknown model alias "inherit" — passing through as-is
+   ```
+   and emitted a literal `model: inherit` line into the OC agent (`build/cdocs/opencode/agents/implementer.md:4:model: inherit`), which is not a valid OC `provider/model` path. Switching to omission rebuilt with NO warning and NO model line (verified: `grep '^model:'` on both OC outputs returns nothing). Option (C) — ship `inherit` + extend `MODEL_MAP` — was rejected: `inherit` has no concrete OC model to map to (OC's "inherit" IS omission), so (C) would be a needless `build-opencode.ts` code change to reproduce what (B) gets for free, against the repo's deduplication/simplicity preference.
+
+Decision: (B) omission is the exact behavioral match for `general-purpose`'s no-pin state AND the OC-clean outcome, with zero code change. To prevent the omission reading as an oversight (the proposal's stated worry, since all four existing named agents carry a `model:` field), I added a 3-line YAML comment above `description:` documenting the deliberate no-pin intent. The comment is inert to both parsers: CC/YAML treats `#` as a comment, and `build-opencode.ts`'s `parseFrontmatter` regex (`^(\w[\w-]*?):`) does not match a `#` line, so it neither sets `cc.model` nor emits an OC model line (confirmed by the clean build).
+
+**Path-restriction-hook trap (respected).** Did NOT add `implementer`/`proposer` to `validate-cdocs-edit-path.sh`'s `CDOCS_AGENTS` allowlist (still `"triage nit-fix reviewer"`, file unmodified). Confining the implementer to `cdocs/` would break its repo-wide edit job; confining the proposer would be a new restriction `general-purpose` lacks today. Both out of this labeling scope.
+
+**`tools: "*"` OC parity note (pre-existing, not a regression).** The `tools: "*"` frontmatter maps to `read/edit/write/bash: false` in the OC output and emits `Warning: Unknown CC tool ""*""`. This is pre-existing behavior shared by `reviewer.md` (which also uses `tools: "*"`); the new agents' OC frontmatter is byte-shape-identical to reviewer's apart from the (correctly absent) model line. Fixing the converter's `*`-handling is out of scope for this labeling change.
+
+**No deviations from the proposal's spec** beyond the (B)-over-(A) model call the proposal explicitly delegated to this Phase 1 gate, and completing the truncated Reviser line in `propose-revise/SKILL.md` (it ended mid-sentence at "May be fresh" with no newline; I finished it with the reuse rationale from the proposal's Important Design Decisions).
+
 ## Verification
 
-(pending)
+Static verification (config/doc-only change, no runtime service; live dispatch + `usage.db` model/agent_type check is `deferred-to-followup` as a separate top-level invocation per the proposal's Verification Methodology, since a dispatched subagent cannot dispatch a live `/cdocs:iterate` turn).
+
+**1. Dispatch-site literals/prose no longer name `general-purpose` for these roles:**
+
+```
+$ grep -rn 'subagent_type: "general-purpose"' plugins/cdocs/skills/iterate/SKILL.md
+$ echo "exit=$?"
+exit=1        # no match
+
+$ grep -n 'general-purpose' plugins/cdocs/skills/propose-revise/SKILL.md
+$ echo "exit=$?"
+exit=1        # no match
+
+$ grep -n 'general-purpose' plugins/cdocs/skills/full-send/SKILL.md plugins/cdocs/skills/oversee/SKILL.md
+$ echo "exit=$?"
+exit=1        # no match — composition-check finding holds, no edits needed
+```
+
+Remaining `general-purpose` references across the plugin (audited, all intentional/unrelated): the new `implementer.md`/`proposer.md` prose documenting the catch-all they replace, and `ablate/SKILL.md` (an unrelated tool-gating discussion, not an implementer/proposer/reviser dispatch).
+
+**2. New agent files exist with valid frontmatter and the Startup pattern:**
+
+```
+$ node -e "...frontmatter block match..." # implementer / proposer
+implementer frontmatter block OK
+proposer frontmatter block OK
+```
+
+Both mirror `reviewer.md`: `name`, no `model:` pin, `description`, `tools: "*"`, `skills:` (`cdocs:implement` / `cdocs:propose`), `color` (`blue` / `cyan`), and a `## Startup` section with the relative-then-`plugins/cdocs/rules/*.md`-fallback rule-reading plus the SessionStart-hook NOTE.
+
+**3. OpenCode build picks up both agents cleanly (count 6, no model warning):**
+
+```
+$ npm run build:cdocs
+  Converting 6 agents...
+  Agents converted: 6
+$ ls build/cdocs/opencode/agents/ | grep -E 'implementer|proposer'
+implementer.md
+proposer.md
+$ grep -n '^model:' build/cdocs/opencode/agents/implementer.md build/cdocs/opencode/agents/proposer.md
+(no output — OC-clean, no model line)
+```
+
+**4. Path-restriction hook untouched (trap respected):**
+
+```
+$ grep -n 'CDOCS_AGENTS=' plugins/cdocs/hooks/validate-cdocs-edit-path.sh
+16:CDOCS_AGENTS="triage nit-fix reviewer"
+$ git status --porcelain plugins/cdocs/hooks/validate-cdocs-edit-path.sh
+(no output — unmodified)
+```
