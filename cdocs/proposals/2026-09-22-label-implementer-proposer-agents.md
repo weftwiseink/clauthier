@@ -6,13 +6,18 @@ task_list: meta/agent-dispatch-labeling
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-8"
+  at: 2026-09-22T10:43:26-07:00
+  round: 1
 tags: [meta, tooling, cost, orchestration, agent-dispatch]
 ---
 
 # Label Implementer and Proposer Subagents at Dispatch
 
-> BLUF(claude-opus-4-8/agent-dispatch-labeling): Add `plugins/cdocs/agents/implementer.md` and `proposer.md` (same `tools: "*"` allowlist as `general-purpose`, no model pin), then switch the two dispatch sites in `/cdocs:iterate` and `/cdocs:propose-revise` from `subagent_type: "general-purpose"` to `"cdocs:implementer"` / `"cdocs:proposer"`.
-> This is a labeling-only change so the usage DB self-classifies the two highest-cost roles (48.3% and 7.4% of a measured week); it changes no capability, permission, or model policy.
+> BLUF(claude-opus-4-8/agent-dispatch-labeling): Add `plugins/cdocs/agents/implementer.md` and `proposer.md` (same `tools: "*"` allowlist as `general-purpose`, no model pin), then relabel the implementer and proposer dispatches in `/cdocs:iterate` and `/cdocs:propose-revise` from `general-purpose` to `cdocs:implementer` / `cdocs:proposer`.
+> This is a labeling-only change so the usage DB self-classifies the implementer and proposer roles, together 55.7% of a measured week (implementer 48.3%, the single largest role that week; proposer 7.4%, the smaller of the two roles conflated into `general-purpose`, not the second-highest role overall); it changes no capability, permission, or model policy.
 > The reviser reuses `cdocs:proposer` (same skill, same work); `full-send`/`oversee` inherit the fix by composition and need no edits.
 
 ## Summary
@@ -53,7 +58,7 @@ This proposal does not re-derive those numbers; it specifies the mechanical fix 
 **In scope:**
 
 - Create `plugins/cdocs/agents/implementer.md` and `plugins/cdocs/agents/proposer.md`.
-- Change the two dispatch lines to `subagent_type: "cdocs:implementer"` / `"cdocs:proposer"`.
+- Relabel the implementer dispatch to `cdocs:implementer` (a literal `subagent_type:` in `iterate`) and the proposer/reviser dispatch to `cdocs:proposer` (prose role descriptions in `propose-revise`; see the Dispatch-line changes NOTE).
 - Update role descriptions and doc counts that name `general-purpose` or the agent count, for consistency.
 
 **Out of scope (do NOT touch):**
@@ -126,7 +131,12 @@ The agent body should NOT restate the skill's methodology; it points at the prel
 
 ### Dispatch-line changes
 
-- `iterate/SKILL.md` line ~74: `subagent_type: "general-purpose"` becomes `subagent_type: "cdocs:implementer"`.
+> NOTE(claude-opus-4-8/agent-dispatch-labeling): Only `iterate/SKILL.md` line ~74 is a literal `subagent_type: "general-purpose"` string.
+> `propose-revise/SKILL.md` contains NO `subagent_type` literal anywhere (grep-confirmed): its proposer and reviser "dispatches" are prose role descriptions the overseer reads and acts on, so relabeling that prose is what steers the dispatched `subagent_type`.
+> The `iterate/SKILL.md` line ~43 and `workflow-patterns.md` line ~32 changes are likewise prose role descriptions.
+> An implementer executing Phase 2 should not hunt for a `subagent_type` literal in `propose-revise`: there is none to change, only the prose.
+
+- `iterate/SKILL.md` line ~74: `subagent_type: "general-purpose"` becomes `subagent_type: "cdocs:implementer"` (the one literal dispatch string).
 - `iterate/SKILL.md` line ~43 (Roles): "fresh `general-purpose` subagent" becomes "fresh `cdocs:implementer` subagent."
 - `propose-revise/SKILL.md` line ~46 (Proposer role): "fresh initial `general-purpose` subagent dispatched with `/cdocs:propose`" becomes "fresh initial `cdocs:proposer` subagent dispatched with `/cdocs:propose`."
 - `propose-revise/SKILL.md` line ~48 (Reviser role): note that the reviser also dispatches as `cdocs:proposer` (see Important Design Decisions).
@@ -166,17 +176,26 @@ How the model resolves is governed by the Task dispatch contract: a per-dispatch
 This is why `reviewer.md` can pin `model: opus` yet still be subject to `iterate`'s `-m` for review rounds: the pin is the default, the `-m` override wins.
 
 Given that, the new agents should default to deferring rather than pinning.
-`model: inherit` makes the default equal to the dispatching overseer's model, which under a consumer floor equals the floor: this reproduces today's observed behavior (implementers on the Opus floor) and, per `model-tiering.md`'s "consumer floor wins" precedence, lets the plugin ship without encoding a tier decision.
+`model: inherit` makes the default equal to the dispatching overseer's model.
+Under a consumer floor with no `-m` override (the weftwise case the report measured) that equals the floor, matching the observed Opus-floor behavior.
+That equivalence is conditional, not general: `inherit` (defer to the overseer's model) and omission (no pin at all) are semantically distinct and coincide only under a floor with no override.
+In a floorless install with no `-m` they can diverge, and omission, not `inherit`, is the exact behavioral match for `general-purpose`'s current no-pin state.
 When the overseer passes `-m`/`-f`, that dispatch-time model overrides `inherit`.
 
-An explicit `inherit` is preferred over omitting the field entirely: all four existing named agents carry an explicit `model:`, and `inherit` documents the intent ("deliberately not pinned; defer to floor/dispatch") rather than reading as an oversight.
+`inherit` is nonetheless the recommended STARTING choice: per `model-tiering.md`'s "consumer floor wins" precedence, deferring to the overseer's model lets the plugin ship without encoding a tier decision, and an explicit field (all four existing named agents carry one) documents the intent ("deliberately not pinned; defer to floor/dispatch") rather than reading as an oversight.
+The Phase 1 gate revisits this empirically (see the closing note below and the OpenCode model-field concern in Edge Cases), and omission is the ready fallback.
 
 > NOTE(claude-opus-4-8/agent-dispatch-labeling): Why not match `reviewer`/`judge` and pin `model: opus`?
 > Because implementer/proposer sit under the loop skills' explicit `-m`/`-f` model-selection surface and have no fixed tier today.
 > Per `model-tiering.md`, their work is neither the mechanical/deterministic tier (no clean pass/fail rubric) nor the lead/overseer/judgment adjudication tier (that tier is the overseer, reviewer, and judge, not the dispatched worker doing the open-ended build/write).
 > The rule does not cleanly name a tier for "the dispatched worker executing open-ended implementation or authoring," so `inherit` (defer to floor/dispatch) is the honest default rather than a guessed pin.
 
-The implementation phase must empirically confirm that `model: inherit` yields dispatch-governed selection in the target Claude Code version (see Verification Methodology); if it does not behave as expected, fall back to omitting the field.
+The Phase 1 gate empirically confirms that `model: inherit` yields dispatch-governed selection in the target Claude Code version (see Verification Methodology) and checks the OpenCode build's handling of the shipped value (see Edge Cases).
+It resolves among three options:
+(A) ship `inherit` with the empirical `-m`-override gate passing (the current plan);
+(B) omit `model:` entirely, which is the exact behavioral match for `general-purpose`'s no-pin state AND the OC-clean outcome (see Edge Cases);
+(C) ship `inherit` and add it to `build-opencode.ts`'s `MODEL_MAP`.
+Omission (B) is the fallback if `inherit` does not honor an `-m` override or its emitted OpenCode `model:` value proves invalid.
 
 ### Same tool allowlist (`tools: "*"`)
 
@@ -188,7 +207,7 @@ This is a labeling change, not a capability change: narrowing the tool surface w
 - **The path-restriction hook must NOT confine the new agents.** `plugins/cdocs/hooks/validate-cdocs-edit-path.sh` blocks edits outside `cdocs/(devlogs|proposals|reviews|reports)/` for any agent whose `agent_type` is in its `CDOCS_AGENTS="triage nit-fix reviewer"` allowlist, and its own comment (lines 8-9) instructs "When adding new cdocs agents ... also add their name to the CDOCS_AGENTS allowlist." Following that instruction here would be a bug: the implementer's entire job is editing source files repo-wide, so confining it to `cdocs/` breaks it. The proposer only writes under `cdocs/proposals/`, but confining it is a NEW restriction the current `general-purpose` proposer does not have, which is a capability change outside this labeling scope. Do NOT add `implementer` or `proposer` to `CDOCS_AGENTS`. This hook is CC-only (the README lists OC path-restriction as "Not available"), so it is the only file to consider.
 - **`inherit` does not resolve to dispatch-time selection in the target CC version.** If empirically `model: inherit` pins to the overseer's model in a way that ignores an `-m` override, the loop skills' `-m`/`-f` for these roles would silently no-op. Mitigation: the model-interaction check is a gating step in Phase 1; fall back to omitting `model:` if `inherit` misbehaves.
 - **In-flight and historical data.** The change is not retroactive: existing `usage.db` rows keep `agent_type: general-purpose`. Any dashboard must still handle the pre-change history (the report already reconstructs it heuristically). This is expected, not a regression.
-- **OpenCode build.** `scripts/build-opencode.ts` reads agent files dynamically (`readdirSync(AGENTS_DIR)`, count via `agentFiles.length`); it has no hardcoded agent list or count, so the two new files are picked up automatically with no code change. The README's prose count ("4 agents converted to OC frontmatter format", line ~170) IS hardcoded and must be updated to 6.
+- **OpenCode build, two separate dimensions.** (a) List/count: `scripts/build-opencode.ts` reads agent files dynamically (`readdirSync(AGENTS_DIR)`, count via `agentFiles.length`), so it has no hardcoded agent list or count and the two new files are picked up with no code change. The README's prose count ("4 agents converted to OC frontmatter format", line ~170) IS hardcoded and must be updated to 6. This no-code-change confirmation is scoped to the list/count dimension ONLY. (b) Model-field mapping (a separate, still-open concern): the converter's `MODEL_MAP` (lines ~57-60) covers only `haiku`/`sonnet`/`opus`. `model: inherit` is an unmapped alias, so the converter falls through to the `|| cc.model` branch (line ~180), prints `Warning: Unknown model alias "inherit" — passing through as-is` (lines ~181-183), and emits a literal `model: inherit` into the OC agent (line ~184) of unverified OC-side validity. Omitting `model:` is the OC-clean outcome: line ~179 guards `if (cc.model)`, so omission emits no model line and no warning. This makes omission strictly cleaner for OC than `inherit`, and it is an input to the Phase 1 inherit-vs-omit decision (options B and C in Important Design Decisions).
 - **`color` collisions.** Existing agents use purple/red/yellow/green. Pick two distinct unused colors for the new agents; a duplicate color is cosmetic only, not a failure.
 - **Template example handles.** `iterate/template.md` shows illustrative handles like `impl-1 (general-purpose)`. These are examples, not dispatch code, but should be updated to `impl-1 (cdocs:implementer)` so the docs match the real dispatch type (template.md line ~33 explicitly says the parenthetical is "the subagent type").
 
@@ -237,13 +256,13 @@ Small, mostly-independent phases. Phase 1 (agent files) has no dependency; Phase
 - Role descriptions: `iterate/SKILL.md` line ~43, `propose-revise/SKILL.md` lines ~46-48 (including the Reviser note that it dispatches as `cdocs:proposer`), `workflow-patterns.md` line ~32.
 - `README.md`: line ~104 (agent relative-path list currently "`nit-fix`, `triage`, `reviewer`, `judge`") adds `implementer` and `proposer`; line ~170 OC-support table count "4 agents" becomes 6.
 - `iterate/template.md`: update illustrative handles from `general-purpose` to `cdocs:implementer` (lines ~33, ~52, ~72).
-- `scripts/build-opencode.ts`: confirmed no hardcoded agent list or count; no code change needed (the dynamic `readdirSync` count picks up the new files). Included here only to record the confirmation.
+- `scripts/build-opencode.ts`: confirmed no hardcoded agent list or count, so no code change is needed for the new files to be picked up (dynamic `readdirSync`). This confirmation is scoped to the list/count dimension ONLY; the separate `model:`-field mapping interaction (an unmapped `inherit` alias) is an open concern tracked in Edge Cases and resolved at the Phase 1 gate, not here.
 - `validate-cdocs-edit-path.sh`: do NOT add `implementer` or `proposer` to `CDOCS_AGENTS` (see Edge Cases). The hook's maintenance comment invites it, but confining these roles is a capability change out of scope. No edit to this file.
 - Success: no stray `general-purpose` reference for these roles remains except where illustrating history; the README count reads 6.
 
 ### Phase 4: Verification and OC build
 
 - Run the Verification Methodology in full (static, live-dispatch + DB read, model-interaction).
-- Run `npm run build:cdocs` and confirm the two new agents appear in `build/cdocs/opencode/agents/` and the converted-agent count is 6.
+- Run `npm run build:cdocs` and confirm the two new agents appear in `build/cdocs/opencode/agents/`, the converted-agent count is 6, and the build handles the shipped `model:` value cleanly. If `inherit` shipped, verify the emitted OC agent's `model:` line is valid OC-side, or observe the `Unknown model alias "inherit"` warning and decide per the Phase 1 inherit-vs-omit gate; if `model:` was omitted, confirm no model line and no warning are emitted.
 - Record the deferred smoke-test evidence (this change is self-referential; its runtime check runs as a separate top-level invocation).
-- Success: `usage.db` self-classifies the two roles; OC build emits both agents; capability and model behavior match intent.
+- Success: `usage.db` self-classifies the two roles; OC build emits both agents with a clean (or consciously-accepted) `model:` value; capability and model behavior match intent.

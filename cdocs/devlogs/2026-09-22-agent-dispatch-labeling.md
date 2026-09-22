@@ -34,12 +34,13 @@ This session runs both loops in overseer mode per `orchestration-discipline.md`:
 | round | proposer/reviser | reviewer | verdict | notes |
 |---|---|---|---|---|
 | 1 | @claude-opus-4-8 (proposer) | n/a (self-review) | review_ready | Authored proposal; self-review added the path-restriction-hook trap (do not confine implementer/proposer) as an edge case + Phase 3 constraint. Reviser reuses `cdocs:proposer`; new agents use `model: inherit` (no pin); full-send/oversee confirmed to inherit the fix by composition (no own dispatch). |
+| 2 | @claude-opus-4-8 (reviser) | n/a (nit-fold, accepted round 1) | accepted-with-nits-folded | Folded 4 non-blocking review nits: BLUF cost-role framing (proposer 7.4% is smaller of the two conflated roles, not 2nd overall); clarified only `iterate` line 74 is a literal `subagent_type`, `propose-revise` is prose; softened `model: inherit` "reproduces today" claim (omission is the exact no-pin match) and added the OC `MODEL_MAP` unmapped-`inherit` concern with A/B/C Phase 1 gate options. |
 
 ## Changes Made
 
 | File | Description |
 |---|---|
-| `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` | New proposal specifying the implementer/proposer dispatch-labeling fix (status: review_ready). |
+| `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` | New proposal specifying the implementer/proposer dispatch-labeling fix (status: review_ready, accepted round 1). Round 2 folded 4 accepting-round review nits. |
 | `plugins/cdocs/agents/implementer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:implement`, Startup rule-reading pattern. A later `/cdocs:iterate` loop creates it. |
 | `plugins/cdocs/agents/proposer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:propose`, Startup rule-reading pattern; also serves the reviser role. A later `/cdocs:iterate` loop creates it. |
 
