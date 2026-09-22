@@ -29,7 +29,7 @@ The skill is a peer to `/cdocs:implement` and `/cdocs:review`: it composes them,
 The loop has four roles:
 
 - **Overseer**: the top-level session agent, restricted to orchestration for the duration of the loop.
-- **Implementer**: a fresh `general-purpose` subagent that follows `/cdocs:implement` conventions for one iteration.
+- **Implementer**: a fresh `cdocs:implementer` subagent that follows `/cdocs:implement` conventions for one iteration.
 - **Reviewer**: a fresh `reviewer` agent that inspects the live system, not just the diff.
 - **Judge**: a fresh `judge` agent that assesses loop meta-health (continue, rotate, or escalate) after `--judge-after` Revise verdicts.
 

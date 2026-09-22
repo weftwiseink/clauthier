@@ -30,7 +30,7 @@ Copy the four H2 sections below into the devlog body verbatim, then append a row
 **Iteration Log**
 
 - `iteration`: integer, starting at 1, monotonic per loop.
-- `implementer`: synthetic per-loop handle (`impl-N`) plus the subagent type in parentheses, e.g. `impl-1 (general-purpose)`.
+- `implementer`: synthetic per-loop handle (`impl-N`) plus the subagent type in parentheses, e.g. `impl-1 (cdocs:implementer)`.
   The handle increments when the judge returns `rotate-implementer`; it stays the same across continuing iterations.
 - `reviewer`: synthetic per-loop handle (`rev-N`) plus the subagent type in parentheses, e.g. `rev-2 (cdocs:reviewer)`.
   Reviewers are fresh every iteration: `rev-N` increments every row.
@@ -49,7 +49,7 @@ Example row:
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
-| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | ~120K (10% inline) | no | cards not rendering; Playwright excerpt inlined in review |
+| 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | ~120K (10% inline) | no | cards not rendering; Playwright excerpt inlined in review |
 
 **Judge Log**
 
@@ -69,7 +69,7 @@ Example row:
 Records each child dispatch and return so a resumed overseer can reconcile liveness and file-ownership from the log rather than from in-window recollection (see `SKILL.md` "On-Resume Reconciliation").
 
 - `event`: one of `dispatch`, `return`.
-- `agent_handle`: the child's per-loop handle, e.g. `impl-1 (general-purpose)` or `rev-2 (cdocs:reviewer)`.
+- `agent_handle`: the child's per-loop handle, e.g. `impl-1 (cdocs:implementer)` or `rev-2 (cdocs:reviewer)`.
 - `target_files`: the file paths this child will `Write`/`Edit` (its ownership claim), so a second concurrent writer against the same path can be detected before dispatch.
   `n/a` for a read-only child (e.g. the judge).
 - `at`: ISO 8601 timestamp of the event.
