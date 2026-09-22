@@ -5,7 +5,12 @@ first_authored:
 task_list: meta/agent-dispatch-labeling
 type: devlog
 state: live
-status: wip
+status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-4-8"
+  at: 2026-09-22T11:20:00-07:00
+  round: 1
 tags: [meta, tooling, cost, orchestration, agent-dispatch]
 ---
 
@@ -72,6 +77,7 @@ Implementer and reviewer this round use the OLD `general-purpose`/`"reviewer"` s
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (general-purpose) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-22-review-of-agent-dispatch-labeling-implementation.md | ~85K (small devlog table edits only) | no | All 11 scrutiny points passed; reviewer independently re-ran `npm run build:cdocs` and greps rather than trusting implementer's report. Two non-blocking findings, neither gates accept: (a) commit `1b070a3` swept an overseer-owned Dispatch/Return Events row in alongside implementer content (commit-boundary blur, not a content breach; overseer commits its own table rows separately going forward); (b) pre-existing out-of-scope finding, `iterate/SKILL.md:83` still dispatches `subagent_type: "reviewer"` not `cdocs:reviewer` (confirmed via `git log -S` to predate this proposal, not introduced by it) - worth a separate future one-line follow-up, not part of this proposal's scope. |
 
 ### Judge Log
 
@@ -85,6 +91,7 @@ Implementer and reviewer this round use the OLD `general-purpose`/`"reviewer"` s
 | dispatch | impl-1 (general-purpose) | `plugins/cdocs/agents/implementer.md`, `plugins/cdocs/agents/proposer.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/skills/propose-revise/SKILL.md`, `plugins/cdocs/skills/iterate/template.md`, `plugins/cdocs/rules/workflow-patterns.md`, `plugins/cdocs/README.md`, `scripts/build-opencode.ts` (read/verify only unless proposal requires a change), this devlog's `## Changes Made` table and an `### Implementer Notes` subsection only (overseer owns Iteration/Judge/Dispatch/Steering tables) | 2026-09-22T10:50:00-07:00 | Turn 1.a: full-proposal implementation, all 4 phases |
 | return | impl-1 (general-purpose) | n/a | 2026-09-22T11:05:00-07:00 | Implemented all 4 phases across 7 commits (`2987f74`, `21ea8cc`, `ae91a18`, `815655f`, `5cad16a`, `9ea3d77`, `1b070a3`). Chose model:-field option B (omit) per Phase-1 empirical gate: `inherit` broke the OC build (unmapped-alias warning + invalid emitted value), omission is OC-clean and the exact behavioral match for `general-purpose`'s no-pin state. `npm run build:cdocs` -> 6 agents, no warnings. Proposal left at `implementation_wip`. |
 | dispatch | rev-1 (cdocs:reviewer) | none (read-only; may only Edit target proposal's `last_reviewed` field per reviewer constraints) | 2026-09-22T11:06:00-07:00 | Turn 1.b: review the implementation |
+| return | rev-1 (cdocs:reviewer) | n/a | 2026-09-22T11:20:00-07:00 | Verdict: accept, round 1. Independently reproduced `npm run build:cdocs` and all greps rather than trusting implementer's report. Devlog `last_reviewed` set to accepted round 1 by rev-1 itself. |
 
 ### Steering Log
 
@@ -168,3 +175,21 @@ $ grep -n 'CDOCS_AGENTS=' plugins/cdocs/hooks/validate-cdocs-edit-path.sh
 $ git status --porcelain plugins/cdocs/hooks/validate-cdocs-edit-path.sh
 (no output — unmodified)
 ```
+
+## Loop Verdict and Termination
+
+`/cdocs:iterate` terminates at Turn 1: **Accept**.
+rev-1's review is `confirmed` (independently reproduced `npm run build:cdocs` and every grep rather than trusting the implementer's report); no revise/reject signal; judge not invoked (single accepting iteration, well under `--judge-after 3`).
+
+Per `/cdocs:implement`'s Status Transitions convention, only the human user sets `status: implementation_accepted`.
+This overseer session is an agent, not the human, so the proposal is left at `status: implementation_wip` (its correct in-flight state; the implementation is done and agent-reviewed-accepted, but final human acceptance is a separate, deliberate step this loop does not take on the human's behalf).
+The devlog's own `status` moves to `review_ready`: the work (implementation) is statement-of-work-complete and has passed its agent review; it is now ready for the human to review and, if satisfied, flip the proposal to `implementation_accepted`.
+
+Two follow-ups surfaced during review, both explicitly out of this proposal's scope, logged here so they are not lost:
+
+1. `plugins/cdocs/skills/iterate/SKILL.md` Turn N.b still dispatches `subagent_type: "reviewer"` (not `cdocs:reviewer`), confirmed pre-existing via `git log -S` (predates this proposal). The `cdocs:reviewer` agent type already exists and works (this very loop dispatched it), so this is a one-line follow-up fix, not a new-agent-file task. Not fixed here: outside this proposal's exact scope (implementer/proposer/reviser only).
+2. Commit `1b070a3` (impl-1) swept an overseer-owned `## Dispatch/Return Events` row in alongside the implementer's own Notes/Verification content: a commit-boundary blur (the content itself was overseer-authored and correctly placed), not a single-writer violation. Noted as a process reminder: the overseer should commit its own table-row edits in its own commits rather than leaving them staged for a concurrently-working implementer to sweep up.
+
+## Verification (usage-DB self-classification, deferred)
+
+The proposal's own Verification Methodology defers the live `usage.db.agents.agent_type` self-classification check to a separate top-level invocation, since neither a dispatched implementer nor a dispatched reviewer can run a live `/cdocs:iterate`/`/cdocs:propose-revise` Task dispatch from within a subagent (`Task` is unavailable inside subagents). The NEXT real `/cdocs:iterate` or `/cdocs:propose-revise` invocation on any proposal will naturally exercise this: its implementer/proposer dispatch will populate `agents.agent_type` as `cdocs:implementer`/`cdocs:proposer` and be checkable via the same `node:sqlite` query methodology `cdocs/reports/2026-09-20-token-spend-by-role.md` used. `[deferred-to-followup]`
