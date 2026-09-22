@@ -33,11 +33,15 @@ This session runs both loops in overseer mode per `orchestration-discipline.md`:
 
 | round | proposer/reviser | reviewer | verdict | notes |
 |---|---|---|---|---|
+| 1 | @claude-opus-4-8 (proposer) | n/a (self-review) | review_ready | Authored proposal; self-review added the path-restriction-hook trap (do not confine implementer/proposer) as an edge case + Phase 3 constraint. Reviser reuses `cdocs:proposer`; new agents use `model: inherit` (no pin); full-send/oversee confirmed to inherit the fix by composition (no own dispatch). |
 
 ## Changes Made
 
 | File | Description |
 |---|---|
+| `cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md` | New proposal specifying the implementer/proposer dispatch-labeling fix (status: review_ready). |
+| `plugins/cdocs/agents/implementer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:implement`, Startup rule-reading pattern. A later `/cdocs:iterate` loop creates it. |
+| `plugins/cdocs/agents/proposer.md` | SPEC ONLY (not yet created): `tools: "*"`, `model: inherit`, preloads `cdocs:propose`, Startup rule-reading pattern; also serves the reviser role. A later `/cdocs:iterate` loop creates it. |
 
 ## Verification
 
