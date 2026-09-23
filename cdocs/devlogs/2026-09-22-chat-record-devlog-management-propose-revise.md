@@ -149,3 +149,19 @@ Verdict: **accept**.
 **No new blocking issues from the large revision pass.** Five non-blocking nits recorded as action items (surfaced, not applied - reviewer edits only `last_reviewed`): (1) "stop events fire in subagents with agent_id" conflates `Stop`/`SubagentStop` (only `PostToolUse` carries it among Phase-1 events); (2) fold round-1 Run A raw log into the `_verify` file so the guard-justifying evidence is co-located; (3) Phase-3 sketch under-specifies `PreToolUse`-prompt→`SubagentStart` correlation (`agent_transcript_path` is only on `SubagentStop`), add to gating canary (c); (4) run-3 fixture generator not reproduced; (5) `NotebookEdit` `PostToolUse` assumed by analogy, not canaried/tested.
 
 Recommend advancing the proposal to `status: implementation_ready`.
+
+## Round 2: nit fold-in and close (fable-5-1, warm proposer)
+
+Loop terminates here on **Accept** (round-2 review `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management-r2.md`, commit `74db42b`).
+Per this loop's convention the accepting round's five non-blocking nits were resolved before closing, and the proposal is now `status: implementation_ready` (precedent: `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`), ready for a future `/cdocs:iterate` pass.
+
+Nits applied:
+(1) `agent_id`-guard invariant reworded: defensive on all seven events, `PostToolUse` is the only Phase-1 event that carries `agent_id` in practice; plain `Stop` is top-level-only and `SubagentStop` is unregistered.
+(2) Round-1 review Run A's raw log (subagent `PostToolUse` with `agent_id`) and Run B's slash-command result folded into `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md` as their own section, co-located with the seven proposer runs.
+(3) Phase-3 sketch: `@dispatch`-body sourcing stated as unsettled (`PreToolUse` has the prompt but no `agent_id`; `SubagentStart` has `agent_id` but no prompt or transcript path; only `SubagentStop` has the transcript path); gating canary (c) now also asks how the `PreToolUse` prompt is correlated to its `SubagentStart`, choosing between eager correlation and lazy write-at-`SubagentStop`.
+(4) Run-3 fixture generator (seeded Python) reproduced in the `_verify` artifact, with a note that fixture content is not load-bearing for the auto-compaction claim.
+(5) `NotebookEdit` stated as an assumption by analogy to `Edit`/`Write` (not canaried) in the hook contract, and a `NotebookEdit` scenario added to the Phase-1 hook tests to confirm it.
+
+Final state: proposal `implementation_ready`, `last_reviewed: accepted`, round 2.
+Not done in this loop, by design: no implementation; the interactive TUI `/compact` check and the two Phase-3 gating canaries remain for the implementer.
+This proposer dispatch is complete.
