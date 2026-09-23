@@ -36,6 +36,12 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 2. **Strategic question, explicit section requested**: does this system, fully built, actually obviate the need for Anthropic's native auto-compaction entirely (proactive cap-and-reseed means compaction never has to run cold), or does compaction remain an unavoidable safety net regardless? Reviewer asked for a recommendation, not just acknowledgment.
 3. **Reopened as a genuine open question, not blocking round 1**: should chat-record-like capture extend to subagent/inner-loop contexts, not just the overseer, given the mechanism's actual goal (context orientation for agents/subagents) doesn't stop at the human-conversation boundary? For a subagent, "upstream input" is the overseer's dispatch prompt rather than a literal human turn — summarized-per-level applied recursively (per point 1) is the natural shape if so. Reviewer asked to assess whether this is a real Phase-2/3 scope question worth flagging, or whether scratchpoint (for durable specialists) already covers this need, making a separate subagent-chat-record redundant.
 
+## Maintainer decisions on the review's three questions (2026-09-23)
+
+1. **Commit policy: (b) committed by default, no redaction pass in this proposal.** Exposure accepted and documented, not mitigated here. General redaction/secret-scanning scoped out to a separate future workstream: `cdocs/proposals/2026-09-23-chat-record-redaction-scanning-rfp.md` (RFP stub, not elaborated).
+2. **Subagent reads in `files=`: (a) exclude via `agent_id` guard**, confirmed — fixes the reviewer's independently-found bug (`PostToolUse` firing inside subagents). BUT the maintainer flagged a strong forward-looking implication while answering: this makes them confident nested chat records will be wanted soon, scoped **per-workstream** (one per set of proposer/reviewer/implementer working the same task_list), not just per-individual-agent — "so much of the point is context preservation for a workstream." This elevates the review's Phase-3 "subagent chronology" item from a hedge to a likely-near-term need, with a specific scoping unit (workstream, not agent) that the review's sketch didn't specify.
+3. **Phase-2 A/B third arm: (a) add `/clear`-plus-reseed now**, confirmed — three-arm A/B (carry-indefinitely, cap-and-reseed-from-scratchpoint, `/clear`-plus-reseed) in Phase 2.
+
 ## Round log
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
