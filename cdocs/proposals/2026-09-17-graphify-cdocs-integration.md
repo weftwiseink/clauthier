@@ -5,7 +5,7 @@ first_authored:
 task_list: code-graph/cdocs-integration
 type: proposal
 state: live
-status: implementation_ready
+status: review_ready
 tags: [tooling, code_review, architecture, model_tiering, token_efficiency, future_work]
 last_reviewed:
   status: accepted
@@ -16,8 +16,11 @@ last_reviewed:
 
 # Graphify integration into cdocs loops, and the librarian question
 
-> BLUF(claude-opus-4-8/code-graph/cdocs-integration): Integrate a pre-indexed code-graph engine (graphify) into cdocs loops as a stateless, cross-target scoping tool that hands the implementer, reviewer, and judge a change's true dependent set up front, cutting speculative read sweeps and enabling tighter model-tiering.
-> Ship the plain tool FIRST, DEFER the "librarian" subagent; gated discriminator-first with recall parity as a hard gate: a token win that misses a dependent is a regression.
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (Bet 1 as core, librarian deferred/conditional, recall parity as a hard gate, the CRDT blind-spot honesty) is intact.
+> WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it and Phase 1 shrinks to a coarse per-role meter); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0. Restructured toward a green-lightable FIRST INCREMENT (Phase 1 + Phase 2).
+
+> BLUF(claude-opus-4-8/code-graph/cdocs-integration): Integrate a pre-indexed code-graph engine (graphify, Apache-2.0, CLI-backed) into cdocs loops as a stateless, cross-target scoping surface that hands the implementer, reviewer, and judge a change's true MULTI-FILE dependent set up front, cutting speculative read sweeps and enabling tighter model-tiering.
+> Ship a FIRST INCREMENT: a coarse per-role baseline meter (with the per-task "does scoping pay" verdict DELEGATED to the accepted `/cdocs:ablate` harness) plus a reviewer-first, CLI-backed scoping surface. DEFER roll-across-roles, the librarian, and the adapter. Recall parity is a hard gate: a token win that misses a dependent is a regression.
 
 ## Summary
 
@@ -31,6 +34,9 @@ This proposal makes two separable bets and phases them apart so the second can b
 2. **A durable "librarian" sonnet subagent** (orchestration-discipline Pillar 3) that would hold codebase knowledge and answer leads' lookups cheaply. This is packaging on top of bet 1, and this proposal recommends deferring it until instrumentation justifies it.
 
 Three disciplines carry from the source RFP and are non-negotiable: a metered token baseline before any efficiency claim (discriminator-first), recall parity (a token win that misses one more dependent is a regression), and the CRDT blind spot (the graph is a scoping AID, never a related-code guarantee).
+
+The shippable FIRST INCREMENT is Phase 1 (a coarse per-role baseline meter, with the per-task "does scoping pay" causal verdict DELEGATED to the accepted `/cdocs:ablate` harness rather than inferred from a fragile per-phase meter) plus Phase 2 (a reviewer-first, CLI-backed scoping surface).
+Roll-across-roles (Phase 3), the librarian (Phase 4), and the adapter (Phase 5) are explicitly-deferred later increments, each gated on the one before it, so the maintainer can green-light full-sending just the first increment.
 
 > NOTE(claude-opus-4-8/code-graph/cdocs-integration): This is a NEW clauthier proposal, not an in-place elaboration of the source RFP.
 > The RFP is the weftwise-side consumer decision trail; clauthier/cdocs is where the plugin, agent, and skill surfaces actually change.
@@ -205,6 +211,11 @@ The loop is its own test harness: run the real `/cdocs:iterate` loop on the fixt
 Phased so the librarian (Phase 4) can be dropped entirely if Phase 3 instrumentation shows the stateless tool suffices.
 No time estimates. Dependencies are explicit.
 
+**FIRST INCREMENT (green-lightable on its own): Phase 1 + Phase 2.**
+The coarse per-role baseline meter (Phase 1, with the per-task causal verdict delegated to `/cdocs:ablate`) plus a reviewer-first, CLI-backed scoping surface (Phase 2).
+This is the shippable slice: it establishes the live baseline and puts a correct dependent-set brief in front of the RFP's original consumer, with recall parity gated and no dependence on the roll-out, the librarian, or the adapter.
+Phases 3 to 5 are explicitly-deferred LATER increments, each gated on the one before it; the maintainer can full-send just the first increment.
+
 ### Phase 1: Coarse token-accounting baseline (gate; prerequisite for all claims)
 
 - Build a COARSE per-role token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge. This is tractable: role maps to subagent identity, and the dispatched-agent result payload already surfaces per-subagent tokens (the `/cdocs:ablate` harness reads the same source, so this reuses a proven metering path).
@@ -224,6 +235,8 @@ No time estimates. Dependencies are explicit.
 - Integrate into ONE role first (reviewer, the RFP's original consumer) behind a flag.
 - Success: reviewer receives a correct dependent set on a fresh index and falls back cleanly otherwise; briefs carry the caveat.
 - Depends on: Phase 1. Blocks: Phase 3.
+
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration): FIRST-INCREMENT BOUNDARY. Phases 1 to 2 above are the green-lightable slice; Phases 3 to 5 below are deferred later increments, each gated on the one before it.
 
 ### Phase 3: Roll scoping across roles + measure (the discriminator gate)
 
