@@ -6,6 +6,11 @@ task_list: meta/token-spend-attribution
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-fable-5-1"
+  at: 2026-09-23T10:01:09-07:00
+  round: 1
 tags: [meta, tooling, cost, hooks, context-management, agents, haiku]
 ---
 
