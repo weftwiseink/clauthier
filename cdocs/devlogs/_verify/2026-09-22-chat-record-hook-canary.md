@@ -4,6 +4,7 @@ first_authored:
   at: 2026-09-23T09:05:00-07:00
 task_list: meta/chat-record-devlog-management
 type: devlog
+part_of: cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md
 state: live
 status: done
 tags: [verification, hooks, chat_record, runtime_validated]
@@ -11,7 +12,9 @@ tags: [verification, hooks, chat_record, runtime_validated]
 
 # Verification Artifact: Chat-Record Hook Canary (Claude Code 2.1.280)
 
-> BLUF(fable-5-1/chat-record-devlog-management): Seven sandboxed headless runs on 2026-09-22 (Claude Code 2.1.280, `--model haiku`) show every hook the chat-record proposal depends on firing with the payload fields it relies on: `SessionStart` (startup and compact), `UserPromptSubmit`, `Stop`, `SubagentStart`/`SubagentStop`, `PostToolUse` on Read/Edit, `PreCompact` and `PostCompact` on both manual and auto compaction, and `SessionEnd`.
+> NOTE(fable-5-1/chat-record-devlog-management): Evidence for [`2026-09-22-chat-record-devlog-management-propose-revise.md`](../2026-09-22-chat-record-devlog-management-propose-revise.md); see its `## Evidence` list for siblings.
+
+> BLUF(fable-5-1/chat-record-devlog-management): Eight sandboxed headless runs (seven on 2026-09-22, one on 2026-09-23; Claude Code 2.1.280, `--model haiku`) show every hook the chat-record proposal depends on firing with the payload fields it relies on: `SessionStart` (startup and compact), `UserPromptSubmit`, `Stop` (including a one-shot `decision: block` reminder bounded by `stop_hook_active`), `SubagentStart`/`SubagentStop`, `PostToolUse` on Read/Edit, `PreCompact` and `PostCompact` on both manual and auto compaction, and `SessionEnd`.
 > This file is the reproducible record behind Phase 0 of [`2026-09-22-chat-record-devlog-management.md`](../../proposals/2026-09-22-chat-record-devlog-management.md): per run, the `settings.json`, the exact command, the stream-json input where used, the canary-log lines, and the model's printed result.
 > Paths are elided: `<SANDBOX>` is a session scratchpad directory; `transcript_path` values are dropped.
 
@@ -361,6 +364,47 @@ Raw log as recorded in [`2026-09-22-review-of-chat-record-devlog-management.md`]
 Two facts: `UserPromptSubmit` fired once (the subagent's prompt did not fire it, on the foreground path as well as run 5's background path), and `PostToolUse` fired for the subagent's `Read` with `agent_id` and `agent_type` set, which the hooks reference documents ("When a subagent calls a tool, tool events such as `PreToolUse` and `PostToolUse` fire the same configured hooks as in the main conversation, and the input carries the `agent_id` and `agent_type`", https://code.claude.com/docs/en/hooks.md).
 This is the single most load-bearing scoping fact in the proposal and the reason the hook contract's first invariant is the `agent_id` guard.
 The same review's Run B (`claude -p "/echo hello-world"` with a project command `.claude/commands/echo.md`) logged `UserPromptSubmit` with `prompt="/echo hello-world"` and `Stop` with `lam="SKILL_RAN hello-world"`: slash-command turns are captured as the raw invocation string.
+
+## Run 8 (2026-09-23): `Stop` returning `decision: block` once, bounded by `stop_hook_active`
+
+Purpose: confirm the mechanism behind the chat-record bullet reminder: a `Stop` hook may refuse the first stop of a turn with a reason, the agent then acts on the reason, and the second `Stop` arrives with `stop_hook_active=true` so the hook can stand down.
+
+Recorder (`canary8.sh`):
+
+```bash
+#!/usr/bin/env bash
+# Stop hook: if no bullet marker file exists and this is the first Stop, block once with a reason; log every event.
+IN="$(cat)"; ACTIVE=$(printf '%s' "$IN" | jq -r '.stop_hook_active'); LAM=$(printf '%s' "$IN" | jq -r '.last_assistant_message' | head -c 160)
+printf '{"event":"Stop","stop_hook_active":%s,"marker_exists":%s,"lam":%s,"at":"%s"}\n' "$ACTIVE" "$([ -f "$CANARY_MARK" ] && echo true || echo false)" "$(printf '%s' "$LAM" | jq -R .)" "$(date -Is)" >> "$CANARY_LOG"
+if [ ! -f "$CANARY_MARK" ] && [ "$ACTIVE" = "false" ]; then
+  printf '{"decision":"block","reason":"Before you finish this turn, run exactly this Bash command and then reply with the single word: noted\\n\\n  touch %s\\n"}\n' "$CANARY_MARK"
+fi
+exit 0
+```
+
+`settings.json`:
+
+```json
+{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"CANARY_LOG=<SANDBOX>/canary8.log CANARY_MARK=<SANDBOX>/proj8/.bullet-written <SANDBOX>/canary8.sh","timeout":10}]}]}}
+```
+
+Command:
+
+```bash
+CLAUDE_CONFIG_DIR=<SANDBOX>/cfg8 claude -p "Reply with exactly the word: first" \
+  --model haiku --permission-mode bypassPermissions --output-format stream-json --verbose
+```
+
+Canary log:
+
+```
+{"event":"Stop","stop_hook_active":false,"marker_exists":false,"lam":"first","at":"2026-09-23T10:48:19-07:00"}
+{"event":"Stop","stop_hook_active":true,"marker_exists":true,"lam":"noted","at":"2026-09-23T10:48:23-07:00"}
+```
+
+Stream: assistant texts `first` then `noted`; one `tool_use` (`Bash`: `touch <SANDBOX>/proj8/.bullet-written`); result `{"result":"noted","num_turns":3}`; the marker file exists afterwards.
+Observations: the block was honored, the agent performed the requested action and finished with the requested word, the second `Stop` carried `stop_hook_active=true` and the hook stayed silent, and the whole detour cost one extra short turn.
+A first attempt of this run failed with `Failed to authenticate: OAuth session expired` because the sandbox's copied `.credentials.json` had gone stale overnight; re-copying from `~/.claude/` fixed it, which is worth knowing for anyone re-running the recipe a day later.
 
 ## Not exercised
 
