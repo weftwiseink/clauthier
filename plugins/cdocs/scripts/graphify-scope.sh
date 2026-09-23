@@ -66,6 +66,11 @@ skip() {
   exit 0
 }
 
+# mtime <file>: epoch modification time, portable across GNU (`stat -c %Y`) and BSD/macOS
+# (`stat -f %m`). Prints 0 if neither works, so staleness degrades to "not stale" rather than
+# silently disabling off-GNU. (Linux devcontainer is the target; this is a small guard.)
+mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0; }
+
 # =============================================================================================
 # THE THIN TRANSLATION LAYER -- the ONLY graphify-shape-coupled code (D4).
 # A later swap onto the MCP transport or an engine-agnostic adapter touches ONLY the four
@@ -106,25 +111,38 @@ resolve_graph_path() {
   return 0
 }
 
-# graphify_symbols_for_file <graph> <file-basename>: run `explain` and print the symbol labels the
-# file DEFINES (the `[contains]` connections). Returns non-zero ONLY on an engine error (nonzero
-# exit); an empty/absent-node result is a legitimately empty symbol list (exit 0, no output).
-# NOTE: `explain` truncates its connection list ("... and N more"), so a file with very many
-# symbols may under-list; that is a best-effort AID limit, additive-safe (never a recall guarantee).
+# graphify_symbols_for_file <graph> <file-basename> [report-path]: run `explain` and print the symbol
+# labels the file DEFINES (the `[contains]` connections). Returns non-zero ONLY on an engine error
+# (nonzero exit); an empty/absent-node result is a legitimately empty symbol list (exit 0, no output)
+# -- that is the NORMAL unknown-target path (real graphify prints "No node matching '...' found." and
+# still exits 0), never an error.
+# TRUNCATION: real `explain` caps its connection list (~20) with a `... and N more` trailer, so a
+# god-node file may under-list its `[contains]` symbols. When that trailer is present AND $GS_TRUNC_FILE
+# is set, the file (report-path, default basename) is appended there so the brief can warn the round.
 graphify_symbols_for_file() {
-  local graph="$1" base="$2" raw rc
+  local graph="$1" base="$2" report="${3:-$2}" raw rc
   if raw="$(graphify explain "$base" --graph "$graph" 2>/dev/null)"; then rc=0; else rc=$?; fi
   [ "$rc" -eq 0 ] || return "$rc"
-  # `  --> <label> [contains] [EXTRACTED] <path>:L<n>`  -> extract <label>
+  if [ -n "${GS_TRUNC_FILE:-}" ] && printf '%s' "$raw" | grep -qE '\.\.\. and [0-9]+ more'; then
+    echo "$report" >> "$GS_TRUNC_FILE"
+  fi
+  # Only real connection lines (`  --> <label> [contains] ...`, or `<--` incoming) parse; the leading
+  # arrow anchor rejects annotation/prose lines that merely mention `[contains]`.
   printf '%s\n' "$raw" \
-    | awk -F' \\[contains\\]' '/\[contains\]/ { sub(/^[[:space:]]*--> /,"",$1); if ($1!="") print $1 }' \
+    | awk '
+        /(-->|<--)[ \t].*\[contains\]/ {
+          line = $0
+          sub(/^.*(-->|<--)[ \t]+/, "", line)     # drop everything up to and including the arrow
+          sub(/[ \t]+\[contains\].*$/, "", line)   # drop from the [contains] relation onward
+          if (line != "") print line
+        }' \
     | sort -u || true
 }
 
 # graphify_affected_paths <graph> <symbol>: run `affected` (reverse traversal) and print the
 # dependent file paths (the `<path>` in `- <label> [<rel>] <path>:L<n>` lines), deduped. The empty
-# case prints exactly "No affected nodes found." and yields no paths. Returns non-zero on engine
-# error only.
+# case prints exactly "No affected nodes found." and yields no paths -- the NORMAL unknown/leaf path
+# (real graphify still exits 0). Returns non-zero on an engine error only.
 graphify_affected_paths() {
   local graph="$1" sym="$2" raw rc
   if raw="$(graphify affected "$sym" --graph "$graph" 2>/dev/null)"; then rc=0; else rc=$?; fi
@@ -147,7 +165,8 @@ graphify_dependents() {
   if [ "$mode" = "files" ]; then
     for t in "$@"; do
       base="$(basename "$t")"
-      if syms="$(graphify_symbols_for_file "$graph" "$base")"; then rc=0; else rc=$?; fi
+      # pass the ORIGINAL path ($t) as the report label so a truncation warning names the real file.
+      if syms="$(graphify_symbols_for_file "$graph" "$base" "$t")"; then rc=0; else rc=$?; fi
       [ "$rc" -eq 0 ] || return "$rc"
       [ -n "$syms" ] || continue
       while IFS= read -r sym; do [ -n "$sym" ] && symbols+=("$sym"); done <<< "$syms"
@@ -228,10 +247,10 @@ cmd_brief() {
   [ -n "$graph" ] && [ -f "$graph" ] || skip "skip-scope" "missing-index"
   # Staleness: any changed file NEWER than the resolved graph means it predates the change (D5).
   local idx_mtime fmt
-  idx_mtime="$(stat -c %Y "$graph" 2>/dev/null || echo 0)"
+  idx_mtime="$(mtime "$graph")"
   for f in "${changed[@]}"; do
     [ -f "$f" ] || continue
-    fmt="$(stat -c %Y "$f" 2>/dev/null || echo 0)"
+    fmt="$(mtime "$f")"
     if [ "$fmt" -gt "$idx_mtime" ]; then skip "skip-scope" "stale-index"; fi
   done
 
@@ -243,9 +262,15 @@ cmd_brief() {
     # shellcheck disable=SC2206
     targets=(${A[symbols]})
   fi
+  # Truncation channel: graphify_symbols_for_file appends any file whose `explain` output hit the
+  # ~20-connection cap here (survives the command-substitution subshell because it is a real file).
+  GS_TRUNC_FILE="$(mktemp "${TMPDIR:-/tmp}/gscope-trunc.XXXXXX")"
+  trap 'rm -f "$GS_TRUNC_FILE"' EXIT
   # Capture inside an `if` so `set -e` does not kill us before we read the engine's exit code.
   if deps="$(graphify_dependents "$graph" "$mode" "${targets[@]}")"; then rc=0; else rc=$?; fi
   [ "$rc" -eq 0 ] || skip "skip-scope" "engine-error"
+  local truncated=""
+  [ -s "$GS_TRUNC_FILE" ] && truncated="$(sort -u "$GS_TRUNC_FILE")"
 
   # dependent set = engine files MINUS the round's own changed files (inputs are not "dependents")
   local dep_list=()
@@ -281,6 +306,13 @@ cmd_brief() {
   echo "SCOPE-STATUS: scoped"
   echo "SCOPE-DEP-COUNT: $dep_count"
   echo "SCOPE-OBSERVE-COUNT: $site_count"
+  # One machine-greppable marker per file whose explain output was truncated at the connection cap.
+  if [ -n "$truncated" ]; then
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      echo "SCOPE-TRUNCATED: $f (dependents may be under-listed; widen via graphify explain/affected on its symbols)"
+    done <<< "$truncated"
+  fi
   echo
   echo "SCOPED-CONTEXT BRIEF (graphify-resolved; an AID, never a completeness guarantee)"
   echo "==============================================================================="
@@ -290,6 +322,14 @@ cmd_brief() {
   echo
   echo "Resolved dependent set ($dep_count file(s), graph-derived, NOT exhaustive):"
   for f in "${dep_list[@]}"; do echo "  - $f"; done
+  if [ -n "$truncated" ]; then
+    echo
+    echo "  WARNING (truncation): graphify explain truncated its connection list for the file(s) below,"
+    echo "  so some of their defined symbols -- and the dependents of those symbols -- may be UNDER-LISTED"
+    echo "  in the set above. Do not treat the set as broad for these; widen with graphify explain/affected"
+    echo "  on their symbols before relying on it:"
+    while IFS= read -r f; do [ -n "$f" ] && echo "    - $f"; done <<< "$truncated"
+  fi
   echo
   echo "CRDT observe/subscribe channel (D3 structural guard -- the graph is BLIND to this coupling):"
   if [ "$site_count" -gt 0 ]; then
