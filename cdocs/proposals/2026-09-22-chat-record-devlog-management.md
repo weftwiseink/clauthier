@@ -17,11 +17,12 @@ tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-m
 # Chat Record, Scratchpoint, and Semantic Devlog Splitting
 
 > BLUF(fable-5-1/chat-record-devlog-management): Build both layers.
-> A per-session, `@speaker:`-delimited **chat record** under `cdocs/_chat/` is an append-only action log: user turns and compaction summaries are hook-captured verbatim, and each agent turn contributes **one compact agent-authored bullet per action item** (with a hook-supplied list of files it read or edited), never a reply dump; a rolling agent-written **`## Scratchpoint`** block in the devlog is the current-state snapshot, including a one-line **gist per file touched** so a sibling agent can decide whether to re-read.
-> The two are complementary by shape (chronological terse log vs. replace-in-place snapshot), not by granularity.
+> A per-session, `@speaker:`-delimited **chat record** under `cdocs/_chat/` is an append-only gist record: user turns and compaction summaries are hook-captured verbatim, and an agent turn adds an entry only when the agent judges something worth a successor knowing (a retrieval query that proved useful, a high-salience file, an opened follow-up), as a few terse notes with a hook-supplied list of files touched; most turns add nothing, and no action log is kept.
+> A rolling agent-written **`## Scratchpoint`** block in the devlog is the current-state snapshot, including a one-line **gist per file touched** so a sibling agent can decide whether to re-read.
+> The two are complementary by shape (chronological record of curated notes vs. replace-in-place snapshot), not by granularity.
 > Delivery across compaction is `/compact <steering>` first, with `PreCompact`, `SessionStart(compact)`, and `PostCompact` hooks as a second layer.
 > Devlogs split at **closed-concern boundaries** into `-<concern>` chunk files with the root devlog as index, never at a byte count.
-> A Phase-0 canary (seven sandboxed runs, evidence in [`_verify/2026-09-22-chat-record-hook-canary.md`](../devlogs/_verify/2026-09-22-chat-record-hook-canary.md)) confirmed every hook this design needs fires on Claude Code 2.1.280 headless, including `PostCompact`, which the research report assumed did not exist.
+> A Phase-0 canary (eight sandboxed runs, evidence in the loop devlog's [`-canary` chunk](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise-canary.md)) confirmed every hook this design needs fires on Claude Code 2.1.280 headless, including `PostCompact`, which the research report assumed did not exist.
 > The system makes the compaction summary's quality irrelevant to resumption and compaction rare; it does not prevent native auto-compaction in the top-level session.
 
 ## Summary
@@ -33,15 +34,16 @@ Three artifacts, each with exactly one write path:
 
 | Artifact | Author | Cadence | Location |
 |---|---|---|---|
-| Chat record | hook (user turns, session and compaction lines, mechanical) plus the agent (its own turn bullets, via `chat-record.sh note`); all appends go through the one script | every user turn; one compact bullet block per agent turn that did work (with a hook-supplied `files=` list of paths read or edited that turn); every compaction | `cdocs/_chat/YYYY-MM-DD-<sid8>.md`, one file per session |
+| Chat record | hook (user turns, session and compaction lines, mechanical) plus the agent (its own gist notes, via `chat-record.sh note`); all appends go through the one script | every user turn; every compaction; an agent entry only on a turn where something was gist-worthy (with a hook-supplied `files=` list of paths read or edited that turn), so most turns add none | `cdocs/_chat/YYYY-MM-DD-<sid8>.md`, one file per session |
 | Scratchpoint | the overseer or a durable specialist (agent) | every state-changing turn, replaced in place; carries a `files:` gist list (one line per important file: what it was useful for) | `## Scratchpoint` block in the devlog that agent owns |
 | Devlog chunks | the devlog's author (agent) | at a handoff boundary when a concern has closed | `cdocs/devlogs/YYYY-MM-DD-<root>-<concern>.md`, root becomes index |
 
-The chat record generalizes nothing that exists; it fills the gap the read-source report names ("`/compact` does not preserve full user history") and, for agent turns, is a terse changelog of what was done in order, not a transcript.
+The chat record generalizes nothing that exists; it fills the gap the read-source report names ("`/compact` does not preserve full user history") and, for agent turns, is a chronological record of the few things a future reader should know, not a transcript and not a changelog.
 
-> NOTE(fable-5-1/chat-record-devlog-management): Round 1 of this proposal's review loop had agent turns captured verbatim by a `Stop` hook (`last_assistant_message`), on the reasoning that a summary would duplicate the Scratchpoint.
-> The maintainer reversed that (2026-09-23): an entry should be "not much more than a bullet point per action item".
-> The duplication concern is resolved by shape, in the opposite direction: the chat record is a chronological action log and the Scratchpoint is a current-state snapshot, and both are agent-authored; the `Stop` hook reminds and backfills, it never supplies content.
+> NOTE(fable-5-1/chat-record-devlog-management): This proposal's review loop moved the agent-turn content twice.
+> Round 1 captured `last_assistant_message` verbatim by hook; round 3 replaced that with one agent-written bullet per action item.
+> The maintainer corrected both (2026-09-23): "bullet point" was directional, not a per-action mandate, and "absolutely no commit records"; the record is a high-level gist in which the model decides what is worth noting from a turn, and a routine turn correctly notes nothing.
+> The duplication concern from round 1 is resolved by shape: the chat record is a chronological record of curated notes, the Scratchpoint is a current-state snapshot, both are agent-authored, and no hook supplies content.
 The scratchpoint generalizes the per-turn `overseer_thinness` columns in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md) (same per-turn, agent-authored, judge-observable pattern) with one deliberate change of storage shape: replace-in-place rather than additive append, because chronology now lives in the chat record and an append-only per-turn log would recreate the devlog-bloat failure mode.
 
 > NOTE(fable-5-1/chat-record-devlog-management): The chat-record report treated `PostCompact` as an open feature request ([#14258](https://github.com/anthropics/claude-code/issues/14258)) and treated a `PreCompact` reliability gap on manual `/compact` ([#13572](https://github.com/anthropics/claude-code/issues/13572)) as a reason to keep hooks secondary.
@@ -99,10 +101,10 @@ sequenceDiagram
     A-->>H: PostToolUse Read|Edit|Write (per call)
     H->>H: buffer path in per-session turn file
     A->>DL: replace ## Scratchpoint incl. files: gists (every state-changing turn)
-    A->>H: chat-record.sh note <record> "- bullet per action" (last action of the turn)
-    H->>CR: append @<model>: block (agent bullets, files= from buffer)
+    A->>H: chat-record.sh note <record> "- query/read/follow-up ..." (only when gist-worthy)
+    H->>CR: append @<model>: entry (agent notes, files= from buffer)
     A-->>H: Stop (turn end)
-    H->>H: bullet present for this prompt? else block once, then placeholder gap=1
+    H->>H: clear buffer; count quiet working turns (nudge on the next prompt after 5)
     Note over A: /compact <steering> at task-unit boundary (primary delivery)
     A-->>H: PreCompact
     H->>CR: append @session: compact-begin line
@@ -181,18 +183,24 @@ Speakers:
 |---|---|---|
 | `@user` | `UserPromptSubmit` with a human prompt | the prompt, verbatim |
 | `@harness` | `UserPromptSubmit` whose prompt is a harness envelope (see Edge Cases) | the prompt, verbatim |
-| `@<model-short>` (e.g. `@opus-4-8`, `@fable-5-1`, `@haiku-4-5`) | the agent, via `chat-record.sh note`, as the last action of a turn that did work | one bullet per action item (below); never a reply |
-| `@<model-short>` with `gap=1` | `Stop`, only when the agent wrote no bullet after one reminder | empty; the header's `files=` is the only content |
+| `@<model-short>` (e.g. `@opus-4-8`, `@fable-5-1`, `@haiku-4-5`) | the agent, via `chat-record.sh note`, on a turn where it judges something gist-worthy happened | a few terse notes in the named categories (below); never a reply, never an action log |
 | `@compact` | `PostCompact` | `compact_summary`, verbatim |
 | `@session` | `SessionStart`, `PreCompact`, `SessionEnd` | empty; the header's metadata is the content |
 
 `<model-short>` is the model id with the `claude-` prefix and any trailing `-YYYYMMDD` stripped: `claude-haiku-4-5-20251001` becomes `haiku-4-5`, `claude-opus-4-8` becomes `opus-4-8`.
 The agent passes its own speaker (`note --as fable-5-1`); when omitted, the script uses the `model` field cached from the most recent `SessionStart(source=compact)` payload, then the transcript's last `assistant` `message.model`, then `assistant`.
 
-**Agent bullet blocks.** The body of a `@<model-short>` block is one to a handful of bullets, each `- <verb> <object>[: <why or outcome>]`, one per action item the turn performed: `- read hooks.json, inject-rules.ts: copying the SessionStart emit shape`, `- edited chat-record.sh: added agent_id guard`, `- ran hook tests: 6/6 green`, `- dispatched rev-2 (cdocs:reviewer) on the proposal`, `- committed 8986747`.
-Each bullet stays under about 120 characters; a turn that only answered a question and used no tool writes nothing.
-Reasoning, tool output, file contents, and the agent's user-facing reply are never written here; the reply is what the user already saw, and the record's job is orientation, not transcript.
-Reads that matter for a successor go in the Scratchpoint's `files:` gist list, not in extra bullets.
+**Agent gist entries.** An entry is written only when the agent, exercising judgment at the end of a turn, decides something happened that a future reader or agent would be materially worse off not knowing.
+The body is one to three terse notes (one line each, under about 120 characters), in these categories, with an optional category prefix so entries are greppable:
+
+- `query:` a retrieval or search query that turned out useful and what it surfaced, for example `query: graphify query "hook events" surfaced the PostCompact matcher table; reuse before grepping the binary`.
+  This is the oldest idea in this roadmap: the "this graphify query was useful for context" note that the token-spend report's workstream 1 asks a dense per-turn record to carry ([`2026-09-20-token-spend-by-role.md`](../reports/2026-09-20-token-spend-by-role.md), "Dense per-turn agent summary ... the most important points"), and that the context roadmap carried into RFP-2.
+- `read:` a high-salience file a successor should read, and why, for example `read: plugins/cdocs/hooks/inject-rules.ts: the additionalContext emit shape every new hook copies`.
+- `follow-up:` an opened thread to revisit later, for example `follow-up: interactive TUI /compact path still unverified; needs a real-session check before Phase 1 ships`.
+
+Anything outside those categories earns a note only if leaving it out would send a successor down a path the author already closed.
+What is never written: routine actions of any kind (commits, ordinary edits, test runs, dispatches), reasoning, tool output, file contents, or the agent's user-facing reply; a turn that did plenty of work but nothing gist-worthy writes nothing, and that is the expected outcome for most turns.
+The `read:` note and the Scratchpoint's `files:` gist list overlap on purpose and differ in lifetime: the Scratchpoint line is current-state awareness that rolls into the next handoff, the chat-record note is the durable, chronological trace of when and why a file became salient.
 Slash-command turns are captured as the raw invocation string (`/cdocs:propose-revise --first-round ...`), not the expanded skill body, which is short and exact; built-in `/compact` fires no `UserPromptSubmit` at all and is represented by the `compact-begin` line instead.
 
 Header metadata, all optional after the timestamp: `n=<ordinal of this speaker's blocks in the file>`, `p=<first 8 hex of prompt_id>` (correlates a `@user` block with its `@<model>` reply), `files="<list>"` on `@<model>` blocks (below), `trigger=manual|auto` on `@compact` and `compact-begin`, `source=startup|resume|compact|clear` and `reason=` on `@session`, `instructions="<custom_instructions>"` on `compact-begin` when `/compact <text>` was used.
@@ -207,7 +215,7 @@ Reads that bypass the `Read` tool (a `cat` inside `Bash`, a haiku-wrapper dispat
 The path field is `tool_input.file_path`, or `tool_input.notebook_path` for `NotebookEdit`.
 `NotebookEdit` is in the matcher by analogy to `Edit`/`Write`; the canary exercised `Read` and `Edit` only, so its `PostToolUse` firing and field name are an assumption the Phase-1 tests must confirm, not a verified fact.
 
-Example (a composite assembled from Phase-0 runs 2, 4, and 7, since no single run wired every event; bodies abbreviated):
+Example (session, compaction, and user lines are a composite of Phase-0 runs 2 and 4; the agent entry is illustrative, written as this proposal's own author would have noted that stretch of work; bodies abbreviated):
 
 ```
 @session: 2026-09-22T18:24:38-07:00 start source=startup cwd=/tmp/.../proj4
@@ -215,9 +223,10 @@ Example (a composite assembled from Phase-0 runs 2, 4, and 7, since no single ru
 @user: 2026-09-22T18:24:39-07:00 n=1 p=407cc386
 Reply with exactly the word: alpha
 
-@haiku-4-5: 2026-09-22T18:24:40-07:00 p=407cc386 files="r:a.txt,rw:b.txt"
-- read a.txt, b.txt: locating the beta line
-- edited b.txt: beta -> gamma
+@fable-5-1: 2026-09-22T18:24:40-07:00 p=407cc386 files="r:plugins/cdocs/hooks/inject-rules.ts,r:plugins/cdocs/README.md"
+- query: `strings claude.exe | grep -E "PreCompact|PostCompact"` lists every hook event on 2.1.280; PostCompact exists
+- read: plugins/cdocs/README.md "Sandbox testing notes": the credential-copy recipe every headless canary needs
+- follow-up: interactive TUI /compact path unverified; check in a real session before Phase 1 ships
 
 @session: 2026-09-22T18:24:40-07:00 compact-begin trigger=manual
 
@@ -233,7 +242,7 @@ WITHOUT using any tools: list every string of the form MARKER_<WORD>_<DIGITS> ..
 #### Hook contract: `plugins/cdocs/hooks/chat-record.sh`
 
 One bash script with two entry modes: hook mode, dispatched by event name as its first argument and registered in `hooks.json` under seven events; and `note` mode, invoked by the agent from `Bash` as `chat-record.sh note [--as <speaker>] <record-path> "<bullets>"`.
-`note` appends a `@<model-short>` block: header timestamp, `p=` from the current prompt id (stashed per session by `UserPromptSubmit` in `<session_id>.prompt`; the session id is recovered from the record's first-line `sid=`), `files=` from the turn buffer, and the bullets as body after the escape pass.
+`note` appends a `@<model-short>` entry: header timestamp, `p=` from the current prompt id (stashed per session by `UserPromptSubmit` in `<session_id>.prompt`; the session id is recovered from the record's first-line `sid=`), `files=` from the turn buffer, and the notes as body after the escape pass.
 The agent knows `<record-path>` because the hook announces it on the first prompt and after every compaction, and the devlog's `## Chat Record` section repeats it.
 Bash plus `jq`, not `tsx`: `UserPromptSubmit` runs on the critical path of every prompt and `npx tsx` startup is measurable, while the existing shell hooks show the pattern.
 
@@ -242,7 +251,8 @@ Bash plus `jq`, not `tsx`: `UserPromptSubmit` runs on the critical path of every
 | `SessionStart` | (all) | `@session ... start source=<source>`; creates the file on first event | on `source=startup\|resume`: `additionalContext` naming the chat-record path. On `source=compact`: the post-compaction reseed pointer (below) |
 | `UserPromptSubmit` | (all) | `@user` or `@harness` block | nothing (never `decision: block`) |
 | `PostToolUse` | `Read\|Edit\|Write\|NotebookEdit\|Bash\|Agent` | nothing in the record; for the four file tools appends `<mode>:<path>` to a per-session turn buffer at `${XDG_RUNTIME_DIR:-/tmp}/cdocs-chat/<session_id>.turn`, and when the path matches `cdocs/devlogs/*.md` and the tool is `Edit` or `Write`, also records it as the session's active devlog in `<session_id>.devlog`; for `Bash` and `Agent` only marks the turn as having acted (`<session_id>.acted`) | nothing |
-| `Stop` | (all) | nothing when the turn did no work (empty buffer and no `acted` mark) or when a `@<model>` block with this turn's `p=` already exists; otherwise, on the first `Stop` (`stop_hook_active=false`) nothing yet; on the second (`stop_hook_active=true`) a placeholder `@<model-short>: <ts> p=<pid8> files="..." gap=1` with an empty body. Clears the turn buffer and `acted` mark in every case | on the first `Stop` of a working turn with no bullet: `{"decision":"block","reason":"Write your chat-record bullets for this turn: chat-record.sh note <record> \"- ...\" (one bullet per action item), then finish."}` (verified, Phase 0 run 8); never on the second |
+| `Stop` | (all) | nothing in the record. Bookkeeping only: if the turn did work (non-empty buffer or `acted` mark) and no `@<model>` entry with this turn's `p=` exists, increments `<session_id>.quiet`; if an entry exists, resets it to 0; clears the turn buffer and `acted` mark in every case | nothing, ever (never `decision: block`) |
+| `UserPromptSubmit` (second duty) | (all) | as above | when `<session_id>.quiet` has reached 5: one `additionalContext` line, "Five working turns since your last chat-record entry; if any of them surfaced a useful query, a high-salience file, or an opened follow-up, note it now with `chat-record.sh note <record path> ...`; if not, nothing is owed," then resets the counter so the question is asked at most once per five quiet turns |
 | `PreCompact` | `manual\|auto` | `@session ... compact-begin trigger= instructions=` | the pre-compaction nudge (below) |
 | `PostCompact` | (all) | `@compact` block from `compact_summary` | nothing |
 | `SessionEnd` | (all) | `@session ... end reason=<reason>` | nothing |
@@ -250,28 +260,30 @@ Bash plus `jq`, not `tsx`: `UserPromptSubmit` runs on the critical path of every
 Invariants:
 
 - **`agent_id` guard, first thing on every event.** If the payload carries `agent_id`, exit 0 before any read or write.
-  The guard is defensive on all seven registered events, but the load-bearing case is `PostToolUse`: it is the only Phase-1 event that carries `agent_id` in practice, because tool events fire inside dispatched subagents with `agent_id` and `agent_type` set (hooks reference; round-1 review Run A, reproduced in the `_verify` artifact), while plain `Stop` fires only for the top-level agent (`agent_id: null`, run 5) and a subagent's turn end is `SubagentStop`, which Phase 1 does not register.
+  The guard is defensive on all seven registered events, but the load-bearing case is `PostToolUse`: it is the only Phase-1 event that carries `agent_id` in practice, because tool events fire inside dispatched subagents with `agent_id` and `agent_type` set (hooks reference; round-1 review Run A, reproduced in the loop devlog's `-canary` chunk), while plain `Stop` fires only for the top-level agent (`agent_id: null`, run 5) and a subagent's turn end is `SubagentStop`, which Phase 1 does not register.
   Without the guard an overseer turn that dispatched a reviewer would end with `files="r:<everything the reviewer read>"`.
   This guard is also what makes the chat record top-level-only.
 - Always exit 0; a chat-record failure never blocks or slows the user.
   Errors go to stderr only.
-  The one deliberate exception is the `Stop` reminder: `decision: block` is returned at most once per turn, only for a turn that did work and has no bullet, and only while `stop_hook_active` is false, so the harness's own loop guard bounds it to a single extra short turn.
-  It is never returned when `CDOCS_CHAT_RECORD=off`, when `jq` is missing, or when the record file cannot be found.
+  No event ever returns `decision: block`; the only prompt the hook makes about agent entries is the quiet-turns `additionalContext` line on `UserPromptSubmit`, which is advisory, non-blocking, and suppressed when `CDOCS_CHAT_RECORD=off`, when `jq` is missing, or when the record file cannot be found.
 - No `cdocs/` directory under `cwd`, or `CDOCS_CHAT_RECORD=off`: exit silently before any write, mirroring `inject-rules.ts`.
 - Appends use `>>` (`O_APPEND`) with the whole block written in one `printf`, so concurrent events (a `Stop` racing a `SessionEnd`) interleave at block granularity, not mid-line.
 - `chat-record.sh` is the chat record's only write path.
-  Two authors (the hook for user, session, and compaction blocks; the agent for its own bullets) share one append routine (a single `printf` under `>>`), so blocks never interleave mid-line and no `Edit`-style rewrite ever races an append.
+  Two authors (the hook for user, session, and compaction blocks; the agent for its own gist entries) share one append routine (a single `printf` under `>>`), so blocks never interleave mid-line and no `Edit`-style rewrite ever races an append.
   Agents read chat records (`tail`, `Read` with an offset) and never `Edit` or `Write` them; a cdocs subagent cannot even path-wise (`_chat/` is outside the edit-path allowlist), and the rule text says so for the main session.
-- `last_assistant_message` is never written to the record.
-  `Stop` reads it only to decide nothing; the reminder and the placeholder are keyed on the presence of a `p=<pid8>` bullet block, not on the message.
+- `last_assistant_message` is never written to the record and never read by the hook; `Stop`'s bookkeeping is keyed on the buffer, the `acted` mark, and the presence of a `p=<pid8>` entry.
 - Only the top-level agent calls `note` in Phases 1 and 2; dispatched legs do not (their briefs say so), and Phase 3's per-workstream sketch is where leg chronology enters.
 
 Pre-compaction nudge (`PreCompact` `additionalContext`, under 500 bytes):
 
-> Compaction imminent (trigger=auto). Durable state: `<devlog>` (`## Scratchpoint` and the latest Completed/Decisions Made/Open Todos handoff) and `<chat record>` (N user turns, M agent bullet blocks). Preserve the Scratchpoint and handoff verbatim in the summary; drop tool outputs and file contents, they are re-readable.
+> Compaction imminent (trigger=auto). Durable state: `<devlog>` (`## Scratchpoint` and the latest Completed/Decisions Made/Open Todos handoff) and `<chat record>` (N user turns, M gist entries). Preserve the Scratchpoint and handoff verbatim in the summary; drop tool outputs and file contents, they are re-readable.
 
-**When the agent forgets its bullet.** The answer is fixed, in three steps, and the third is deliberately not a reply dump: (1) on the first `Stop` of a turn that did work and has no `p=<pid8>` bullet block, the hook returns `decision: block` with the reminder above, which makes the agent finish the turn by writing its bullets (Phase-0 run 8 shows the harness honoring the block and re-firing `Stop` with `stop_hook_active=true` after the agent complied); (2) if the second `Stop` still finds no block, the hook appends a placeholder `@<model-short>: <ts> p=<pid8> files="..." gap=1` with an empty body and lets the turn end; (3) the gap is then accepted as a gap.
-The placeholder is better than nothing because `files=` is real, mechanically true information and `gap=1` makes the omission greppable (the judge counts gaps since the last handoff; two or more is `overseer_thinness: signal_missing`), and a truncated `last_assistant_message` is rejected as the fallback because it is the reply-dump shape the maintainer ruled out and would leave the record with two incompatible block shapes.
+**When a turn adds no entry.** Under the gist model the absence of an entry is not evidence of a lapse: a turn can edit, test, commit, and dispatch and still have nothing a successor needs, and that silence is the correct output.
+So no per-turn enforcer is possible without corrupting the record, and the round-3 mechanism (block the first `Stop` of any working turn without an entry, then write a `gap=1` placeholder) is dropped entirely: a block would coerce non-gists into existence, and a placeholder would mark correct silence as a defect.
+What remains is one weak, narrow check: after five consecutive working turns with no entry, the next `UserPromptSubmit` carries a single advisory line asking whether any of those turns surfaced a useful query, a salient file, or an open follow-up, and stating that nothing is owed if not; the counter then resets so the question recurs at most every five quiet turns.
+Five is chosen to sit inside the Pillar 2 handoff cadence (every 3 to 5 iterations), so the check fires roughly once per task unit and lands at the moment the agent is already reflecting for its Scratchpoint.
+The `Stop`-block mechanism stays verified (run 8) and documented, because the Phase-3 `/cdocs:compact` skill may want it for a different purpose (making sure a checkpoint is written before a user-typed compaction); it is not used for entries.
+The record is therefore sparse by design: closer to a highlights reel than a log, and a run of quiet turns is read as "nothing to know", not as a gap.
 
 Post-compaction reseed pointer (`SessionStart` with `source=compact`, `additionalContext`, under 500 bytes):
 
@@ -316,7 +328,7 @@ A single `## Scratchpoint` H2 section in the devlog the agent owns, replaced in 
 
 - as_of: 2026-09-22T18:40:11-07:00 ctx: ~140K (10% inline)
 - now: wiring PreCompact nudge; hook writes but additionalContext not yet confirmed interactively
-- since_handoff: PostCompact exists on 2.1.280 and carries compact_summary; Stop can block once (stop_hook_active bounds it), so the bullet reminder is enforceable
+- since_handoff: PostCompact exists on 2.1.280 and carries compact_summary; Stop can block once (run 8) but that is not used for entries
 - open: interactive /compact check (#13572); model id when transcript is stale
 - next: run interactive canary, then commit hooks.json entry
 - files:
@@ -335,10 +347,10 @@ At each handoff the current `files:` list rolls into the handoff's Completed sub
 Writers: the overseer of any loop (`iterate`, `propose-revise`, `full-send`, `oversee`) and any Pillar-3 durable specialist, in the devlog it owns; a specialist that owns no devlog writes to the file its dispatch brief names.
 Not writers: one-shot dispatched legs (their returned summary is their checkpoint, per the chat-record report).
 
-Relationship to the chat record's agent bullets, stated plainly: different shapes, not the same job at two granularities.
-The chat record's `@<model>` blocks are an append-only chronological action log ("what was done, in order"); the Scratchpoint is a bounded, replace-in-place snapshot ("where am I right now").
-Both are agent-authored and both are terse, which is exactly why they do not duplicate: an action bullet is never restated as state, and a state line is never restated as history.
-A post-compaction reader takes the Scratchpoint first and the last few bullet blocks second.
+Relationship to the chat record's agent entries, stated plainly: different shapes, not the same job at two granularities.
+The chat record's `@<model>` entries are an append-only chronological record of curated notes ("what a successor should know, in the order it was learned": useful queries, salient files, open follow-ups); the Scratchpoint is a bounded, replace-in-place snapshot ("where am I right now": current subtask, facts since the handoff, open threads, next action).
+Both are agent-authored, both are judgment-bearing, and both are terse; they do not duplicate because a note is never restated as state and a state line is never restated as history, and because the Scratchpoint is overwritten while the record accumulates, so the same salient file may appear once in each with different lifetimes (the Scratchpoint line dies at the next handoff, the note persists).
+A post-compaction reader takes the Scratchpoint first and the last few entries second.
 
 Relationship to the existing thinness columns, stated plainly: this generalizes that pattern.
 The columns are the per-turn, agent-written, judge-observable precedent; the Scratchpoint carries the same `ctx` estimate plus actual working state, outside the iterate loop as well as inside it.
@@ -347,14 +359,9 @@ The one deviation from the precedent is storage shape: replace-in-place, not add
 
 The index devlog also carries a two-line `## Chat Record` section: the path the hook announced (which is also the `<record-path>` argument the agent passes to `note`), and the `@user` ordinal at the last handoff (so a resuming reader knows which tail to read).
 
-### Evidence files: `_verify/` and `_judge/` are a genre, linked like chunks
-
-Raw reproducible evidence (exact `settings.json`, command lines, log lines, fixture generators) and long judge rationales are not devlog narrative, and inlining them as chunks would recreate the append-only bloat that splitting exists to prevent; the existing `cdocs/devlogs/_verify/` and `cdocs/devlogs/_judge/` subdirectories stay as their own genre.
-What changes is discoverability: an evidence file must be reachable by walking from its workstream's devlog, not only by knowing its path.
-Two rules, the same ones chunks follow: (i) every `_verify/` or `_judge/` file carries `part_of: cdocs/devlogs/<owning-devlog>.md` in its frontmatter and a first-line `> NOTE(author/workstream): Evidence for [<owning devlog>](<path>).` backlink; (ii) the owning devlog's index carries an `## Evidence` list adjacent to `## Chunks`, one line per file: path, and what it proves or decides.
-`## Evidence` is a list rather than rows in the `## Chunks` table because the read-when semantics differ: a chunk is a closed narrative concern you read to follow the story, an evidence file is opened only when you need the raw shape behind a claim.
-`/cdocs:status` and `/cdocs:triage` group by `part_of` regardless of genre.
-This proposal's own canary artifact ([`_verify/2026-09-22-chat-record-hook-canary.md`](../devlogs/_verify/2026-09-22-chat-record-hook-canary.md)) is the first instance, linked from the loop devlog's `## Evidence` section.
+**Evidence lives in the devlog's `## Verification` section.** Raw reproducible evidence (exact `settings.json`, command lines, log lines, fixture generators) goes where the devlog skill already puts it, the `## Verification` section that predates this proposal; when that section outgrows the root it is a landed verification campaign, which is a closed concern, and it splits as a standard `-<concern>` chunk (`-verification`, `-canary`) with `part_of`, the backlink NOTE, and a `## Chunks` row like any other.
+No evidence-specific directory or index exists.
+This proposal's own canary evidence is the first instance: [`2026-09-22-chat-record-devlog-management-propose-revise-canary.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise-canary.md), a chunk of the loop devlog.
 
 ### Devlog splitting at closed-concern boundaries
 
@@ -370,7 +377,7 @@ Two agents applying this test to the same devlog get the same answer, which is w
 Everything belonging to a concern moves with it: its Implementation Notes, Debugging Process, Changes Made rows, Verification evidence, and Iteration Log rows for a finished sub-loop.
 Rows in shared tables (Changes Made, Verification) move with the concern that produced them; a row that belongs to two concerns stays in the root.
 Open concerns and live tables (Iteration Log, Judge Log, Dispatch/Return Events, Steering Log for the active loop) stay in the root.
-If no concern has closed, do not split: a large live section beats an arbitrary cut; instead move bulky pasted evidence to `cdocs/devlogs/_verify/` as the repo already does.
+If no concern has closed, do not split: a large live section beats an arbitrary cut; keep pasted evidence in the `## Verification` section and split that section as its own chunk once the campaign it records has landed.
 
 **Naming.** Chunk files are flat siblings: `cdocs/devlogs/YYYY-MM-DD-<root-slug>-<concern-slug>.md`, sharing the root's date prefix so chunks sort adjacent to their root (the existing `2026-09-01-overseer-alignment-phase{1..4}.md` precedent), with `first_authored.at` carrying the chunk's real creation time.
 Concern slugs name the concern, not a number: `-phase2-hooks`, `-canary`, `-iterate-r1-r5`, `-debug-transcript-lag`.
@@ -412,31 +419,31 @@ The `read this when` column is the navigation contract: a resuming agent reads t
 9. **Committed by default, no redaction, explicit-path staging.** Untracked durable state does not cross worktrees or sessions.
    The three leak channels (pastes, assistant bodies, compaction summaries) are named in the `WARN` and accepted by maintainer decision; redaction is a separate workstream ([`2026-09-23-chat-record-redaction-scanning-rfp.md`](2026-09-23-chat-record-redaction-scanning-rfp.md)).
    The always-dirty tree is handled by protocol (overseer stages by explicit path at handoff; dispatched agents never stage `_chat/`), not by gitignoring.
-10. **Agent turns are agent-authored bullets, one per action item; `Stop` reminds and backfills, never supplies content.** A hook can only capture raw text, and raw text (even just the final reply) is the wrong shape for orientation; the compact action bullet is judgment-bearing, so it is skill-and-convention work like devlog maintenance.
-    The `Stop` hook makes the convention stick with one `decision: block` reminder per working turn (verified) and a `gap=1` placeholder after that, so a lapse is visible and bounded rather than silent.
-    Tool calls, thinking, tool results, and the user-facing reply are deliberately not captured: they are the re-readable bulk compaction should drop, and the reply is what the user already saw.
-    (Reverses round 1's judgment call to capture `last_assistant_message` verbatim; see the NOTE in the Summary.)
-11. **The gist log is split into a mechanical half and a judgment half, and claims only awareness.** The hook's `files=` list is exhaustive and free but knows nothing about relevance; the agent's `files:` gists know relevance but can forget a file.
+10. **Agent entries are judgment-driven gist notes, sparse by design; no hook supplies or coerces content.** A hook can only capture raw text, and raw text (even just the final reply) is the wrong shape for orientation; deciding what from a turn is worth a successor's attention is judgment, so it is skill-and-convention work like devlog maintenance, and the correct output for most turns is nothing.
+    Because silence is usually correct, there is no per-turn enforcer: the only prompt is an advisory question after five quiet working turns.
+    Routine actions, tool calls, thinking, tool results, and the user-facing reply are deliberately not captured: actions are what git and the devlog already record, and the rest is the re-readable bulk compaction should drop.
+    (Reverses round 1's verbatim capture and round 3's one-bullet-per-action convention; see the NOTE in the Summary.)
+11. **The gist log is split into a mechanical half and a judgment half, and claims only awareness.** The hook's `files=` list is free and mechanically true for any turn that produced an entry, but knows nothing about relevance and covers no quiet turn; the agent's `files:` gists and `read:` notes know relevance but can forget a file; the raw transcript remains the exhaustive fallback, per the devlog-value report's recommendation 5.
     Together they answer "was it read, and what was it for" for a sibling agent, which is the half of the dropped shared-cache idea the redundancy-check report found cheap and valuable.
     The other half (content reuse without a re-read) is out of scope and unclaimed; the read-source report's transcript-granularity re-read measurement is the instrument to re-run after Phase 2 if anyone wants to check that the 97.4% figure moves (the report predicts it will not, materially).
 
 ## Edge Cases / Challenging Scenarios
 
-- **Harness-generated prompts fire `UserPromptSubmit`.** Canary run 5 showed a background subagent's completion notification arrived as a second `UserPromptSubmit` with no human input; its prompt begins `<task-notification>` / `<task-id>...` (see the `_verify` artifact).
+- **Harness-generated prompts fire `UserPromptSubmit`.** Canary run 5 showed a background subagent's completion notification arrived as a second `UserPromptSubmit` with no human input; its prompt begins `<task-notification>` / `<task-id>...` (see the loop devlog's `-canary` chunk).
   The payload has no field distinguishing it, so the hook classifies by shape: a prompt whose first non-blank token is an opening tag from a known harness set (`<task-notification`, `<system-reminder`, and whatever the Phase-1 implementer observes) is `@harness`; anything else, including a human pasting HTML, is `@user`.
   Allowlist, not "starts with `<`", to avoid mislabeling humans.
 - **Slash commands.** A user-defined or plugin command fires `UserPromptSubmit` with the raw invocation string and is recorded as such; built-in `/compact` fires none (run 2) and is represented by `compact-begin`; `/clear` and `/resume` side effects on `UserPromptSubmit` and `session_id` are a Phase-1 verification item.
 - **Body content that looks like a header.** A user pasting a chat record (whose very first line is `@user: ...`), or an assistant quoting one, is handled by the backslash escape; round-trip is a Phase-1 unit test with adversarial input (a prompt whose first line matches `HEADER_RE`, headers inside fences, lines starting with `\@`, empty bodies, a multi-line `instructions=` value, a `files=` path containing `"`, CRLF input).
 - **Transcript lag on `Stop`.** Observed: the first `Stop` of a session found no assistant entry in the transcript and the second found the previous turn's.
   Nothing content-bearing is transcript-derived any more; only the fallback model id is, and the agent normally passes its own speaker to `note`.
-- **Agent writes bullets, then keeps working in the same turn.** The rule is "last action of the turn"; if `note` is called again for the same `p=`, a second block is appended and the reader tolerates several blocks per prompt.
-  `files=` on each block reflects the buffer at that moment, so the later block carries the later reads.
-- **The `Stop` reminder in headless or AFK sessions.** The block costs one extra short turn (run 8: three turns total for a one-word prompt); `stop_hook_active` bounds it to one, and a session that cannot comply (no `jq`, record missing) is never blocked because the hook exits before the check.
+- **Agent writes an entry, then keeps working in the same turn.** The convention is to note at the end of the turn; if `note` is called again for the same `p=`, a second entry is appended and the reader tolerates several per prompt.
+  `files=` on each entry reflects the buffer at that moment, so the later entry carries the later reads.
+- **The quiet-turns question in headless or AFK sessions.** It is one advisory line on a prompt the harness was delivering anyway; it never blocks, never adds a turn, and is suppressed when the hook cannot locate the record.
 - **`--resume` and `/clear`.** Resume keeps `session_id` and appends to the same file with a `@session ... start source=resume` line.
   `/clear` fires `SessionStart` with `source=clear`; whether the id changes is a Phase-1 verification item; either way the record is correct (same file continues, or a new one starts).
 - **Two sessions on one checkout.** Per-session files never collide, and the active-devlog pointer is per session (runtime-dir file keyed by `session_id`), so the nudge names the right devlog; only the third-tier mtime fallback can cross sessions, and the nudge text always includes "the devlog you own".
-- **Turns with no work, and tool-only turns.** A turn that used no tool (a pure answer) needs no bullet: `Stop` neither blocks nor writes a placeholder, and just clears the buffer.
-  A turn that did work but ended with no user-facing text still owes a bullet, and the reminder/placeholder path applies unchanged, because the trigger is the `acted` mark and the buffer, not the message.
+- **Turns with no work, working turns with nothing to note, and tool-only turns.** None owes an entry.
+  A pure-answer turn is not counted as quiet (no buffer, no `acted` mark); a working turn with nothing gist-worthy is counted as quiet and is otherwise the expected case; a tool-only turn with no user-facing text is treated exactly like any other working turn, because nothing in the design reads the message.
 - **Stale turn buffer.** A crash between `PostToolUse` and `Stop` leaves a buffer behind; the next `SessionStart` for that session id truncates it, and `SessionEnd` removes it.
   Buffers live outside the repo (`$XDG_RUNTIME_DIR`), so nothing stale is ever committed.
 - **Files touched outside the `Read`/`Edit` tools, or inside a subagent.** A `cat` in `Bash` or a `Glob`/`Grep` hit produces no matching event; a subagent's `Read` produces one that the `agent_id` guard drops.
@@ -445,7 +452,7 @@ The `read this when` column is the navigation contract: a resuming agent reads t
   No cap: truncation would defeat "lossless by construction".
 - **Hook timeout or `jq` missing.** Timeout 5s on every entry; the script checks for `jq` and exits 0 silently without it, printing one stderr line.
 - **Not a cdocs project.** No `cdocs/` under `cwd`: silent exit, no directory created.
-- **Devlog with no closed concern at 20KB.** Do not split; move evidence to `_verify/`, tighten prose, and note in the Scratchpoint that a split is pending the next phase close.
+- **Devlog with no closed concern at 20KB.** Do not split; tighten prose, move landed verification evidence into a `-verification` chunk via the standard split (a landed campaign is a closed concern even when the phase around it is not), and note in the Scratchpoint that a further split is pending the next phase close.
 - **Chunk needed while a sub-loop's tables are still live.** Only rows for finished rounds move; the live table stays in the root with a one-line pointer to the chunk holding earlier rows.
 - **OpenCode and other targets.** The hook is Claude-Code-only; `build-opencode.ts` does not port it (no equivalent event surface is assumed).
   Rule and skill text (scratchpoint, splitting, steering string) delivers to OpenCode via `/cdocs:init` unchanged; where a target lacks `/compact`, Pillar 2's existing degradation ("start a fresh session from the handoff") now also says "and the chat record if one exists".
@@ -455,9 +462,10 @@ The `read this when` column is the navigation contract: a resuming agent reads t
 **Phase 1, hook tests (`plugins/cdocs/hooks/tests/chat-record.test.sh`):**
 
 - Headless sandbox run per the README recipe (sandboxed `CLAUDE_CONFIG_DIR` with copied credentials, out-of-repo `cwd` containing an empty `cdocs/`, `--model haiku`, never `--bare`), asserting after each scenario on the produced `cdocs/_chat/*.md`:
-  - single prompt that instructs the model to read a file and then call `chat-record.sh note <record> "- read a.txt: canary"`: one `@session start`, one `@user` (verbatim prompt), one `@<model>` block whose body is exactly `- read a.txt: canary` and whose header carries `p=` matching the `@user` block and `files="r:a.txt"`, one `@session end`; the `--include-hook-events` stream shows a single `Stop` with no `decision`.
-  - single prompt that reads a file and is told not to write a note: two `Stop` events (the first with `decision: block` in its `hook_response`, the second with `stop_hook_active=true`), then a placeholder `@<model>` header with `gap=1` and `files="r:a.txt"` and an empty body; `last_assistant_message` text appears nowhere in the record.
-  - single prompt with no tool use: one `Stop`, no block, no placeholder.
+  - single prompt that instructs the model to read a file and then call `chat-record.sh note <record> "- read: a.txt: canary fixture"`: one `@session start`, one `@user` (verbatim prompt), one `@<model>` entry whose body is exactly `- read: a.txt: canary fixture` and whose header carries `p=` matching the `@user` block and `files="r:a.txt"`, one `@session end`; the `--include-hook-events` stream shows a single `Stop` with no `decision`.
+  - single prompt that reads a file and writes no note: one `Stop` with no `decision`, no `@<model>` entry of any kind, `<session_id>.quiet` equals 1, and `last_assistant_message` text appears nowhere in the record.
+  - six stream-json prompts that each read a file and write no note: the sixth `UserPromptSubmit` `hook_response` carries the quiet-turns `additionalContext` line and the first five do not; `<session_id>.quiet` is 0 afterwards; no `Stop` ever carries a `decision`.
+  - single prompt with no tool use: one `Stop`, `<session_id>.quiet` unchanged.
   - manual compaction via `--input-format stream-json` with a `/compact` message: `compact-begin trigger=manual` then `@compact trigger=manual` with a non-empty body, in that order.
   - auto compaction via `--autocompact 100000` and ~100K tokens of `Read`s: at least one `compact-begin trigger=auto` / `@compact trigger=auto` pair.
   - `Agent` dispatch: exactly one `@user` block (the subagent's prompt is absent).
@@ -517,7 +525,7 @@ For the scratchpoint and splitting, verification is the A/B and the split dry-ru
 ### Phase 0: hook canary (done in this environment, 2026-09-22, Claude Code 2.1.280)
 
 Prerequisite the brief required before Phase 1: confirm the hooks this design needs actually fire and behave, given three separate hook gaps surfaced in one session (`PostToolUse updatedToolOutput` and `PreToolUse updatedInput` dead for built-in Bash, and the then-open [#13572](https://github.com/anthropics/claude-code/issues/13572)).
-Eight headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku` (seven on 2026-09-22, one on 2026-09-23 for the `Stop` reminder); per-run `settings.json`, exact commands, stream-json inputs, canary-log lines, and model results are in [`cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md`](../devlogs/_verify/2026-09-22-chat-record-hook-canary.md), and the round-1 review independently re-derived every row and added two runs of its own ([`2026-09-22-review-of-chat-record-devlog-management.md`](../reviews/2026-09-22-review-of-chat-record-devlog-management.md), "Independent Verification"):
+Eight headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku` (seven on 2026-09-22, one on 2026-09-23 for the `Stop` block mechanism); per-run `settings.json`, exact commands, stream-json inputs, canary-log lines, and model results are in the loop devlog's `-canary` chunk, [`2026-09-22-chat-record-devlog-management-propose-revise-canary.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise-canary.md), and the round-1 review independently re-derived every row and added two runs of its own ([`2026-09-22-review-of-chat-record-devlog-management.md`](../reviews/2026-09-22-review-of-chat-record-devlog-management.md), "Independent Verification"):
 
 | Hook | How triggered | Fired | Payload facts relied on |
 |---|---|---|---|
@@ -535,7 +543,7 @@ Eight headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku` (sev
 | `SessionStart` (compact) | both compaction paths | yes, between `PreCompact` and `PostCompact` | `source=compact`, `model`; `additionalContext` visible to the model after compaction |
 | `PostCompact` (manual and auto) | both | yes | `trigger`, `compact_summary` (full summary text); `additionalContext` visible to the model after compaction |
 | `SessionEnd` | process exit | yes | `reason` |
-| `Stop` returning `decision: block` once | run 8 (2026-09-23): hook blocks while `stop_hook_active=false` and a marker file is absent | yes: the agent ran the requested command, a second `Stop` fired with `stop_hook_active=true`, the hook stayed silent, three turns total | the basis for the bullet reminder and its one-retry bound |
+| `Stop` returning `decision: block` once | run 8 (2026-09-23): hook blocks while `stop_hook_active=false` and a marker file is absent | yes: the agent ran the requested command, a second `Stop` fired with `stop_hook_active=true`, the hook stayed silent, three turns total | available and bounded; not used for gist entries (round 4), kept as an option for Phase 3's `/cdocs:compact` checkpoint |
 
 Result: **confirmed working** for every hook Phase 1 uses.
 `PreCompact` `additionalContext` was also visible post-compaction (marker listed by the model); whether it arrived via the summarizer's input or by direct injection was not distinguished and does not matter for the nudge.
@@ -546,16 +554,16 @@ Not verified: the interactive TUI `/compact` path (Phase 1 manual check), and be
 
 Deliverables:
 
-1. `plugins/cdocs/hooks/chat-record.sh` implementing the hook contract above, `agent_id` guard first, plus the `note` entry mode; `hooks.json` entries for `SessionStart`, `UserPromptSubmit`, `PostToolUse` (matcher `Read|Edit|Write|NotebookEdit|Bash|Agent`, path from `file_path` or `notebook_path`), `Stop` (timeout 10s, the only event that may return `decision: block`), `PreCompact`, `PostCompact`, `SessionEnd` (timeouts 5s); the per-session `.turn`, `.acted`, `.prompt`, `.devlog`, and `.model` files in the runtime dir.
+1. `plugins/cdocs/hooks/chat-record.sh` implementing the hook contract above, `agent_id` guard first, plus the `note` entry mode; `hooks.json` entries for `SessionStart`, `UserPromptSubmit`, `PostToolUse` (matcher `Read|Edit|Write|NotebookEdit|Bash|Agent`, path from `file_path` or `notebook_path`), `Stop`, `PreCompact`, `PostCompact`, `SessionEnd` (timeouts 5s; no event returns `decision: block`); the per-session `.turn`, `.acted`, `.quiet`, `.prompt`, `.devlog`, and `.model` files in the runtime dir.
 2. `plugins/cdocs/hooks/tests/chat-record.test.sh` per the Test Plan, plus the grammar round-trip fixture.
 3. `/cdocs:init` scaffolds `cdocs/_chat/` with a one-paragraph `README.md` (what it is, hook-written, do not edit, opt-outs).
 4. `frontmatter-spec.md`: one line under "Media" noting `cdocs/_chat/` as hook-written, frontmatter-free, like `_media/`; `plugins/cdocs/README.md` "Hooks" gains the seven entries and the opt-outs.
-5. `orchestration-discipline.md` Pillar 2: the steering string and who types it, the commit protocol (overseer stages devlog and chat record by explicit path at handoff; dispatched agents never stage `cdocs/_chat/`), the Pillar 1 carve-out sentence ("devlog and chat-record commits are bookkeeping commits, not the code commits Pillar 1 routes to subagents"), "after any compaction Read the Scratchpoint, handoff, and chat-record tail", the bullet rule (the overseer ends every turn that did work by calling `chat-record.sh note <record> "- ..."`, one bullet per action item, and expects one `Stop` reminder if it forgets), and the rule that agents never `Edit` or `Write` `cdocs/_chat/`.
-6. `plugins/cdocs/skills/devlog/SKILL.md`: `## Chat Record` pointer section with the `note` command; chat records are quoted only inside fences; the `## Evidence` list and the `part_of`-plus-backlink rule for `_verify/` and `_judge/` files.
+5. `orchestration-discipline.md` Pillar 2: the steering string and who types it, the commit protocol (overseer stages devlog and chat record by explicit path at handoff; dispatched agents never stage `cdocs/_chat/`), the Pillar 1 carve-out sentence ("devlog and chat-record commits are bookkeeping commits, not the code commits Pillar 1 routes to subagents"), "after any compaction Read the Scratchpoint, handoff, and chat-record tail", the gist rule (at the end of a turn the overseer asks whether it learned a useful query, a salient file, or opened a follow-up, and if so calls `chat-record.sh note <record> "- query|read|follow-up: ..."`; routine actions are never noted and most turns note nothing), and the rule that agents never `Edit` or `Write` `cdocs/_chat/`.
+6. `plugins/cdocs/skills/devlog/SKILL.md`: `## Chat Record` pointer section with the `note` command and the three note categories; chat records are quoted only inside fences; the `## Verification` section is the evidence home, split as a standard chunk when large.
 7. Interactive `/compact` check, plus `/clear` and `/resume` behavior, recorded in the devlog.
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
-Success criteria: all hook tests green, including the subagent-`Read`, slash-command, note, forgot-note, and no-work scenarios; a real session in this repo produces a committed `cdocs/_chat/` file whose `@user` blocks match what was typed, whose `@<model>` blocks are bullets the agent wrote (no reply text anywhere), with at most one `gap=1` block per ten working turns, and whose `files=` lists contain no file a dispatched agent read; the interactive check shows both compaction blocks.
+Success criteria: all hook tests green, including the subagent-`Read`, slash-command, note, quiet-turns, and no-work scenarios; a real session in this repo produces a committed `cdocs/_chat/` file whose `@user` blocks match what was typed, whose `@<model>` entries are sparse gist notes in the named categories (no reply text, no commit or routine-edit notes anywhere), and whose `files=` lists contain no file a dispatched agent read; the interactive check shows both compaction blocks.
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; never emit `decision: block` from any chat-record event.
 
@@ -568,7 +576,7 @@ Deliverables:
 1. `orchestration-discipline.md`: a "Scratchpoint" subsection under Pillar 2 with the block format (including the `files:` gist list and its awareness-only framing), writer set, cadence, and the judge-observable staleness rule; the handoff format's Completed subsection gains the gist one-liners for files touched; Pillar 3 says durable specialists keep one in the devlog they own.
 2. `plugins/cdocs/skills/devlog/template.md` gains `## Scratchpoint` and `## Chat Record`; `iterate`, `propose-revise`, `full-send`, `oversee`, and `implement` skills reference the rule (one line each, no restating); `agents/implementer.md` tells a warm implementer to maintain it.
 3. `plugins/cdocs/skills/devlog/SKILL.md`: "Splitting a devlog" section with the trigger, the three-part closure test, the move-every-closed-concern and ~3KB-merge rules, naming, the Chunks table, chunk frontmatter (`status: done`, `part_of`) and backlink; Pillar 2's handoff step adds "check size; if past ~12KB, split every closed concern".
-4. `frontmatter-spec.md`: optional `part_of` for chunks and for `_verify/`/`_judge/` evidence files; `triage` and `status` skills group by it and flag an evidence file whose owning devlog lacks a matching `## Evidence` line; `agents/judge.md` gains the Scratchpoint-staleness and chat-record-gap conditions for `overseer_thinness: signal_missing`.
+4. `frontmatter-spec.md`: optional `part_of` for chunks; `triage` and `status` skills group by it; `agents/judge.md` gains the Scratchpoint-staleness condition for `overseer_thinness: signal_missing`.
 5. The three-arm resumption-quality A/B and the split dry-run from the Test Plan, results in the devlog.
 
 Success criteria: A/B arm 2 wins or ties arm 1 on all three workstreams, and the arm-3 result is recorded as the `/cdocs:compact` decision input; the split dry-run answers each task question with at most one chunk opened; `cdocs-validate-frontmatter.sh` accepts chunk files unchanged.

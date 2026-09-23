@@ -10,12 +10,13 @@ status: done
 tags: [verification, hooks, chat_record, runtime_validated]
 ---
 
-# Verification Artifact: Chat-Record Hook Canary (Claude Code 2.1.280)
+# Chat-Record Hook Canary (Claude Code 2.1.280): Verification Chunk
 
-> NOTE(fable-5-1/chat-record-devlog-management): Evidence for [`2026-09-22-chat-record-devlog-management-propose-revise.md`](../2026-09-22-chat-record-devlog-management-propose-revise.md); see its `## Evidence` list for siblings.
+> NOTE(fable-5-1/chat-record-devlog-management): Chunk of [`2026-09-22-chat-record-devlog-management-propose-revise.md`](2026-09-22-chat-record-devlog-management-propose-revise.md); see its Chunks table for siblings.
+> This is the loop devlog's `## Verification` evidence, split out as a closed-concern chunk because it is ~400 lines of raw settings, commands, and log lines.
 
-> BLUF(fable-5-1/chat-record-devlog-management): Eight sandboxed headless runs (seven on 2026-09-22, one on 2026-09-23; Claude Code 2.1.280, `--model haiku`) show every hook the chat-record proposal depends on firing with the payload fields it relies on: `SessionStart` (startup and compact), `UserPromptSubmit`, `Stop` (including a one-shot `decision: block` reminder bounded by `stop_hook_active`), `SubagentStart`/`SubagentStop`, `PostToolUse` on Read/Edit, `PreCompact` and `PostCompact` on both manual and auto compaction, and `SessionEnd`.
-> This file is the reproducible record behind Phase 0 of [`2026-09-22-chat-record-devlog-management.md`](../../proposals/2026-09-22-chat-record-devlog-management.md): per run, the `settings.json`, the exact command, the stream-json input where used, the canary-log lines, and the model's printed result.
+> BLUF(fable-5-1/chat-record-devlog-management): Eight sandboxed headless runs (seven on 2026-09-22, one on 2026-09-23; Claude Code 2.1.280, `--model haiku`) show every hook the chat-record proposal depends on firing with the payload fields it relies on: `SessionStart` (startup and compact), `UserPromptSubmit`, `Stop` (including the one-shot `decision: block` mechanism bounded by `stop_hook_active`, which the proposal records as available but does not use for gist entries), `SubagentStart`/`SubagentStop`, `PostToolUse` on Read/Edit, `PreCompact` and `PostCompact` on both manual and auto compaction, and `SessionEnd`.
+> This file is the reproducible record behind Phase 0 of [`2026-09-22-chat-record-devlog-management.md`](../proposals/2026-09-22-chat-record-devlog-management.md): per run, the `settings.json`, the exact command, the stream-json input where used, the canary-log lines, and the model's printed result.
 > Paths are elided: `<SANDBOX>` is a session scratchpad directory; `transcript_path` values are dropped.
 
 ## Common setup
@@ -351,7 +352,7 @@ The `agent_id` behavior is covered by the round-1 review's Run A, reproduced nex
 
 Run by the round-1 reviewer on 2026-09-22 (Claude Code 2.1.280, `--model haiku`, sandboxed `CLAUDE_CONFIG_DIR` at `<SANDBOX>/rv/`) with a recorder that logs `agent_id`/`agent_type` on every event; hooks on `UserPromptSubmit`, `PostToolUse` matcher `Read|Edit|Write`, `Stop`, `SubagentStart`, `SubagentStop`.
 Scenario: a foreground `Agent` dispatch whose subagent `Read`s `./a.txt` and replies `sub-ok`; the parent then replies `parent-ok`.
-Raw log as recorded in [`2026-09-22-review-of-chat-record-devlog-management.md`](../../reviews/2026-09-22-review-of-chat-record-devlog-management.md), "Independent Verification":
+Raw log as recorded in [`2026-09-22-review-of-chat-record-devlog-management.md`](../reviews/2026-09-22-review-of-chat-record-devlog-management.md), "Independent Verification":
 
 ```
 {"ev":"UserPromptSubmit","agent_id":null,"agent_type":null,...,"sid":"eb26e17e"}
