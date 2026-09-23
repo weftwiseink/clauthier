@@ -90,9 +90,13 @@ The recommendation (see Important Design Decisions) is to build bet 1 first and 
 
 ### Discriminator-first instrumentation (gates everything)
 
-A per-role, per-phase token meter for the loop, landed BEFORE either bet, and re-metered after.
-It attributes tokens to role (overseer/implementer/reviewer/judge) and phase (context-gathering vs reasoning vs writing) so the "context-gathering phase" the scoping targets is isolated and measurable.
-Without this, every efficiency figure below is a guess and is inadmissible.
+The discriminator is split across two instruments with a clear division of labor, so the fragile fine-grained meter is off the critical path:
+
+- **Per-task causal verdict: the `/cdocs:ablate` harness (DELEGATED).** "Does scoping actually pay for this task?" is answered by the accepted, e2e-verified ablation harness ([`2026-09-17-mcp-tool-effectiveness-ablation.md`](./2026-09-17-mcp-tool-effectiveness-ablation.md)), which runs graphify-as-tool against the counterfactual of not having it on a representative scoping task and emits a signed context-gap verdict with a token corroborator. This proposal CONSUMES that instrument for the causal "did it help" discriminator rather than building a bespoke per-phase attribution meter to infer it.
+- **Live per-role baseline burn: the Phase 1 coarse meter (owned here).** A COARSE per-role token meter (per-role totals plus a context-gathering read-token proxy and tool-call count), landed BEFORE either bet and re-metered after, to track live baseline burn per role across a real loop. It deliberately does NOT attempt per-phase attribution (see Phase 1): that fine-grained interleaved-phase meter was the design's fragile point and is dropped from the critical path.
+
+Together: the ablation harness supplies the per-task causal "scoping pays" verdict on dependent-set task shapes; the Phase 1 coarse meter supplies the live per-role baseline the rolled-out loop (Phase 3) is measured against.
+Without at least these two, every efficiency figure below is a guess and is inadmissible.
 
 ## Important Design Decisions
 
@@ -169,7 +173,7 @@ The staleness contract is fixed now: stale or missing means skip-scope for that 
 
 Metrics are meaningless without the Phase 1 meter; every row below presumes it.
 
-- **Token accounting (primary).** Per-role, per-phase token burn on a fixed corpus of representative loops, metered before scoping lands and re-metered after. The claim under test: context-gathering-phase tokens fall for implementer, reviewer, and judge, with reasoning/writing tokens unmoved.
+- **Token accounting (primary).** Two instruments (see Discriminator-first instrumentation). Live COARSE per-role burn on a fixed corpus of representative loops, metered before scoping lands and re-metered after: the claim under test is that total per-role burn and the read-token (context-gathering) proxy fall for implementer, reviewer, and judge while the generate-token (reasoning/writing) proxy holds. The per-task causal "scoping pays" verdict is DELEGATED to the `/cdocs:ablate` harness run on dependent-set task shapes, not inferred from a per-phase meter.
 - **Recall parity (hard gate).** Missed-dependent rate on a labeled fixture set (changes with known true dependent sets, including barrel/aliased/multi-hop cases). Scoped recall must be >= unscoped baseline recall. Any regression fails the change.
 - **CRDT guard (structural).** A fixture where the graph dependent set is near-empty but real runtime coupling is heavy. Assert the brief co-surfaces the nearby observe/subscribe sites and never presents the set as exhaustive (D3), and that the near-empty-plus-observe-proximity trigger forces an unscoped sweep for that round. The check is at test time; the production guard is the structural brief format plus that trigger, not the caveat alone.
 - **Staleness / fallback.** Force a stale and a missing index; assert the round skip-scopes and its recall matches the unscoped baseline, and that instrumentation labels the round as fallback, not scoped.
@@ -180,26 +184,26 @@ Metrics are meaningless without the Phase 1 meter; every row below presumes it.
 
 The loop is its own test harness: run the real `/cdocs:iterate` loop on the fixture corpus and read the metered output, do not simulate.
 
-1. Land Phase 1 instrumentation and capture the BEFORE baseline on the corpus (per-role, per-phase tokens; missed-dependent rate).
+1. Land Phase 1 coarse instrumentation and capture the BEFORE baseline on the corpus (per-role totals + read/generate proxy; missed-dependent rate). The per-task causal "did scoping help" verdict is supplied by `/cdocs:ablate` on dependent-set (multi-file) task shapes, not by this meter.
 2. Land the scoping tool behind a flag; run the SAME corpus with scoping on and off; diff the metered tokens and recall.
 3. Gate: the change is admissible only if context-gathering tokens fall AND recall holds. A token win with any recall loss is rejected (D2).
 4. For the librarian (if reached), repeat the before/after against the stateless-tool baseline, charging the librarian's standing cost to its column.
 
-> NOTE(claude-opus-4-8/code-graph/cdocs-integration): There is no established cdocs token-accounting convention today.
-> Phase 1 builds it. If it proves broadly useful beyond this proposal, factor it out via a follow-up; do not over-generalize it here.
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration): The causal "did the tool help" convention now exists as the accepted, e2e-verified `/cdocs:ablate` harness; this proposal CONSUMES it rather than rebuilding it.
+> Phase 1 adds only the complementary LIVE per-role baseline meter (coarse). If that coarse meter proves broadly useful beyond this proposal, factor it out via a follow-up; do not over-generalize it here, and do not resurrect the dropped per-phase attribution meter on the critical path.
 
 ## Implementation Phases
 
 Phased so the librarian (Phase 4) can be dropped entirely if Phase 3 instrumentation shows the stateless tool suffices.
 No time estimates. Dependencies are explicit.
 
-### Phase 1: Token-accounting instrumentation (gate; prerequisite for all claims)
+### Phase 1: Coarse token-accounting baseline (gate; prerequisite for all claims)
 
-- Build a per-role token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge. This part is tractable: role maps to subagent identity.
-- Attribute tokens to phase WITHIN a role's turn (context-gathering vs reasoning vs writing). This is the hard part: the three phases interleave inside a single subagent turn, so the meter attributes by observable proxy, in preference order: (1) tool-call boundaries (Read/Grep/graph-query calls and their returned payloads are context-gathering; generation between tool calls is reasoning/writing), (2) the input-vs-output (read-vs-generate) token split as a coarser proxy, (3) explicit phase markers a role emits, only if the proxies prove too lossy.
-- **PRIMARY PHASE 1 RISK: clean per-phase separation may be infeasible.** If the tool-boundary and read/generate proxies cannot cleanly isolate the context-gathering phase, the signature claim (context-gathering tokens fall while reasoning/writing are unmoved) is unfalsifiable at phase granularity. FALLBACK: drop to per-role/per-turn TOTALS plus a context-gathering PROXY (read-token volume and tool-call count per turn), and restate the efficiency claim at that coarser resolution: total per-role burn falls and the read-token proxy falls, recall held. The read-vs-generate split also proxies the OTHER half of the claim, that reasoning/writing tokens are unmoved (generate-token volume roughly steady), so both sides stay measurable at the coarser resolution. The Verification gate then reads on the proxy, not on true per-phase attribution. This keeps the justification falsifiable at a coarser resolution rather than resting the whole design on an unvalidated fine-grained meter.
+- Build a COARSE per-role token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge. This is tractable: role maps to subagent identity, and the dispatched-agent result payload already surfaces per-subagent tokens (the `/cdocs:ablate` harness reads the same source, so this reuses a proven metering path).
+- Resolution is per-role TOTALS plus a context-gathering PROXY: read-token volume and tool-call count per turn (context-gathering reads) versus generate-token volume (reasoning/writing, expected unmoved). The efficiency claim is stated at THIS resolution: total per-role burn falls and the read-token proxy falls while the generate proxy holds, recall held.
+- Per-phase attribution is explicitly OUT of Phase 1's critical path. The interleaved-phase meter (tool-boundary / read-vs-generate attribution WITHIN a single turn) was the design's fragile point; the "did scoping actually help" causal question it existed to answer is DELEGATED to the `/cdocs:ablate` harness (see Discriminator-first instrumentation), which answers it per-task by A/B rather than by inference. Nothing downstream depends on true per-phase attribution; a later phase may add finer resolution, but it must not be resurrected onto the critical path.
 - Capture the BEFORE baseline on the labeled corpus (D2), including missed-dependent labels.
-- Success: a reproducible per-role baseline exists AND either true per-phase attribution or the named proxy fallback is in place and documented as which.
+- Success: a reproducible coarse per-role baseline plus the read/generate proxy exists on the corpus.
 - Constraint: this phase adds NO scoping. It only measures. Nothing downstream is admissible until it lands.
 - Depends on: nothing. Blocks: Phases 2, 3, 4.
 
@@ -239,7 +243,7 @@ No time estimates. Dependencies are explicit.
 
 Forward-looking items a review round could pressure-test:
 
-- **Per-phase attribution feasibility (Phase 1).** The proxy-based mechanism (tool-boundary and read/generate splits) is a design, not a proven meter. If a reviewer or a Phase 1 spike judges even the proxies too lossy, the coarser per-role fallback is the falsifiability floor, and the efficiency claim should be stated at that resolution from the outset.
+- **Coarse-meter sufficiency (Phase 1).** Per-phase attribution is dropped from the critical path: the coarse per-role meter plus the read/generate proxy is the plan of record, and the per-task causal verdict is delegated to `/cdocs:ablate`. Confirm the coarse resolution plus the ablation harness together carry the efficiency claim, and that no downstream gate silently reintroduces a dependence on true per-phase attribution.
 - **Bounded shared-librarian context (D1, Phase 4).** Whether a single shared read-only librarian can hold M workstreams' context without recreating the large-context problem inside one agent is unproven and deferred to Phase 4. Flag if it should GATE Phase 4 entry rather than be tested within it.
 - **Structural CRDT guard sufficiency (D3).** The brief-format co-surfacing plus near-empty-set trigger is stronger than a bare caveat but still cannot guarantee recall on coupling no non-graph signal catches. Confirm the additive framing (skip-scope never lowers the baseline) is the honest ceiling of the claim.
 
