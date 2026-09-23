@@ -58,3 +58,11 @@ The core (haiku `cdocs:bash-runner` agent) depends on neither broken mechanism, 
 - All internal paths cited by the proposal confirmed to exist on disk (reports, agents, rules, README, hooks.json, build script).
 - External claims verified via WebFetch on the two GitHub issues plus WebSearch corroboration; installed CC version confirmed via `claude --version` (2.1.280).
 - No code changed; proposal-authoring task only, per instructions.
+
+## Propose-Revise Loop (started 2026-09-23, entering at review since proposal already exists at `review_ready`)
+
+Maintainer invoked `/cdocs:propose-revise cdocs/proposals/2026-09-22-haiku-bash-wrapper.md --first-round fable`, starting at the reviewer rather than the proposer since round 0 (initial authoring) is already done. Round 1 reviewer dispatched on fable per `--first-round`; resolves the proposal's own two open Investigation Requested questions (Bash-only vs. Bash+Read tool allowlist; `/cdocs:init` write-vs-document for the settings cap) plus the standard review floor.
+
+| Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
+|---|---|---|---|---|
+| 1 | fable | n/a (proposal pre-existed, entering at review) | pending | pending |
