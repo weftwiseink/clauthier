@@ -52,7 +52,8 @@ decides the full-send.
 | Round | Role | Dispatch | Return | Overseer ctx | Inline |
 |-------|------|----------|--------|--------------|--------|
 | 0 | overseer | scaffolded devlog + briefed reviser | — | ~120K | devlog write |
-| 1 | reviser | cdocs:proposer (Path-A revision, dispatched) | pending | — | — |
+| 1 | reviser | cdocs:proposer (Path-A revision, dispatched) | done; 5 commits cdd20b4..bf181ef; status→review_ready; license RESOLVED Apache-2.0; first-increment boundary added | ~130K | devlog edit + commit |
+| 1 | reviewer | cdocs:reviewer (fresh, dispatched) | pending | — | — |
 
 ## Decisions Made
 
