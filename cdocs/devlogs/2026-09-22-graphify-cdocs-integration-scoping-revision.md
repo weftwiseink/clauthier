@@ -53,7 +53,15 @@ decides the full-send.
 |-------|------|----------|--------|--------------|--------|
 | 0 | overseer | scaffolded devlog + briefed reviser | — | ~120K | devlog write |
 | 1 | reviser | cdocs:proposer (Path-A revision, dispatched) | done; 5 commits cdd20b4..bf181ef; status→review_ready; license RESOLVED Apache-2.0; first-increment boundary added | ~130K | devlog edit + commit |
-| 1 | reviewer | cdocs:reviewer (fresh, dispatched) | pending | — | — |
+| 1 | reviewer | cdocs:reviewer (fresh, dispatched) | ACCEPT round 3; all 4 points integrated, spine intact, boundary actionable; 1 should-fix + 2 nits | ~140K | devlog edit |
+| 2 | reviser | cdocs:proposer (resumed, clear accepting-round items) | pending | — | — |
+
+Review 1: `cdocs/reviews/2026-09-22-review-of-graphify-cdocs-integration-scoping-revision.md` (ACCEPT r3).
+Accepting-round items routed to reviser: [should-fix] qualify first-increment intro — recall parity is
+STRUCTURALLY protected in incr 1 (additive + skip-scope + flag), MEASURED at Phase 3 (do NOT pull a recall
+check into Phase 2 = scope inflation); [nit N1] neutralize D1 exemplar to "CLI or MCP"; [nit N2] dense top
+NOTE — leave (permitted). Then status → implementation_ready. Overseer chose the qualify-intro option over
+adding a Phase-2 recall check (keeps the first increment lean + honest); flagged to maintainer, overridable.
 
 ## Decisions Made
 
