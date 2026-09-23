@@ -5,12 +5,12 @@ first_authored:
 task_list: meta/chat-record-devlog-management
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-4-8"
-  at: 2026-09-23T10:57:41-07:00
-  round: 3
+  at: 2026-09-23T13:20:00-07:00
+  round: 4
 tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-memory]
 ---
 
@@ -208,7 +208,7 @@ Header metadata, all optional after the timestamp: `n=<ordinal of this speaker's
 **`files=` (the mechanical half of the gist log).** A quoted, comma-separated list of the files the assistant read or edited during that turn, each prefixed by its access mode: `r:` read in full (`Read`), `w:` written or edited (`Edit`, `Write`, `NotebookEdit`), `rw:` both.
 Paths are relative to `cwd` when under it, absolute otherwise, deduplicated, in first-touch order.
 Example: `files="r:plugins/cdocs/hooks/hooks.json,rw:plugins/cdocs/hooks/chat-record.sh"`.
-This is ground truth about *which* files the top-level agent's own turn touched, attached by `chat-record.sh` from the `PostToolUse` turn buffer (verified, Phase 0) when the agent calls `note`, or by the `Stop` placeholder; the agent never types it.
+This is ground truth about *which* files the top-level agent's own turn touched, attached by `chat-record.sh` from the `PostToolUse` turn buffer (verified, Phase 0) on the turn where the agent calls `note`; the agent never types it, and a turn with no entry carries no `files=` at all.
 It says nothing about *why*, which is the Scratchpoint's `files:` gist list.
 `PostToolUse` also fires inside dispatched subagents (with `agent_id` set; verified by the round-1 review and documented in the hooks reference), and the hook drops those events, so a reviewer's reads never appear on the overseer's block.
 Reads that bypass the `Read` tool (a `cat` inside `Bash`, a haiku-wrapper dispatch) do not produce a matching event at all; the agent's gist list covers those when they mattered.
@@ -342,7 +342,7 @@ Fields: `as_of` (timestamp plus the context estimate that iterate's `overseer_ct
 **`files:` (the judgment half of the gist log).** One line per important file read in full or edited since the last handoff, in the fixed shape `- <path> (<r|w|rw>): <one-line gist of what it was useful for or why it mattered here>`.
 Its job is awareness, per the shared-cache report: a sibling or successor agent reads the gist and decides "does this cover me, or do I need the bytes", instead of re-reading blind.
 It is not a token saver and must not be described as one; when a task needs real content (review, exact edits, verification), the agent re-reads regardless.
-"Important" is the author's call: files skimmed for a `Glob` or `Grep` hit do not belong; the hook's `files=` on the chat record is the exhaustive complement if someone needs the full list.
+"Important" is the author's call: files skimmed for a `Glob` or `Grep` hit do not belong; the hook's `files=` on an entry-bearing turn is the mechanical complement, and for a turn that logged nothing the raw transcript is the exhaustive fallback (Decision 11).
 At each handoff the current `files:` list rolls into the handoff's Completed subsection ("files touched" gains the gist one-liners), and the Scratchpoint's list restarts empty.
 Writers: the overseer of any loop (`iterate`, `propose-revise`, `full-send`, `oversee`) and any Pillar-3 durable specialist, in the devlog it owns; a specialist that owns no devlog writes to the file its dispatch brief names.
 Not writers: one-shot dispatched legs (their returned summary is their checkpoint, per the chat-record report).

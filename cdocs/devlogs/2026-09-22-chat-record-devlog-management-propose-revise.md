@@ -55,6 +55,7 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 | 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | done: `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md` | revise (5 blocking, warm proposer) |
 | 2 (revision) | fable (warm, same proposer) | done: 12 action items + 3 maintainer decisions applied, commit `8986747`; evidence artifact `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md` | done (fresh reviewer, opus-4-8): `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management-r2.md` | **accept** (5 non-blocking nits) |
 | 3 (reopened) | fable (warm, same proposer) | done: bullet-block reversal + evidence backlink, commit `082df8c` | done (fresh reviewer, opus-4-8): `cdocs/reviews/2026-09-23-review-of-chat-record-devlog-management-r3.md` | **revise** (2 blocking: remove `_judge/`, remove `_verify/`+`## Evidence` genre) |
+| 4 (revision) | fable (warm, same proposer) | done: judgment-driven gist model, drop block/placeholder, `_judge/`+`_verify/` removed, canary relocated to chunk, commit `bddee7d` | done (fresh reviewer, opus-4-8): `cdocs/reviews/2026-09-23-review-of-chat-record-devlog-management-r4.md` | **accept** (2 stale-clause nits fixed in place, 3 non-blocking; `implementation_ready`) |
 
 ## Round 1: proposer (fable-5-1)
 
@@ -241,3 +242,27 @@ All three corrections applied; proposal stays `status: review_ready`.
 **Block-then-placeholder tension, resolved by dropping it.** Under the gist model the absence of an entry is the correct output for most working turns, so any per-turn enforcer either coerces non-gists into existence (the block) or marks correct silence as a defect (the `gap=1` placeholder); both would corrupt the record. Replaced with one weak, narrow check: `Stop` counts consecutive working turns with no entry (`<session_id>.quiet`); when the count reaches 5, the next `UserPromptSubmit` carries a single advisory `additionalContext` line asking whether any of those turns surfaced a useful query, a salient file, or an open follow-up, stating that nothing is owed otherwise, and the counter resets. Five sits inside the Pillar-2 handoff cadence so the question lands about once per task unit, at the moment the agent is already reflecting for its Scratchpoint. No event returns `decision: block` any more; the run-8 evidence is kept in the canary chunk and the Phase-0 table, annotated as available but unused for entries (a possible tool for Phase 3's `/cdocs:compact` checkpoint). The chat-record-gap condition was removed from the judge's `signal_missing` inputs; Scratchpoint staleness remains.
 
 **Not changed.** User-turn and `@compact` capture, the grammar, the `agent_id` guard, the `files=` mechanics (now present only on turns that produced an entry; Decision 11 says so and names the transcript as the exhaustive fallback), the closed-concern split rules, the three-arm A/B, and the Phase-3 sketch.
+
+## Round 4: reviewer (opus-4-8, fresh)
+
+Review at `cdocs/reviews/2026-09-23-review-of-chat-record-devlog-management-r4.md`; proposal `last_reviewed` set to `accepted`, round 4; `status` set to `implementation_ready`.
+Verdict: **accept** (two stale-clause nits fixed in place per the accepting-round convention; three non-blocking suggestions for the implementer).
+
+**Method.** Fresh reviewer, no priors. Formed independent judgment on the round-4 core-model rewrite first (is the gist model followable; is dropping enforcement sound; is the nudge an implementable contract; is complementarity real), then read rounds 1-3 for continuity. Verified the four hard-check items against the document and the repo.
+
+**Core rewrite: sound, no design reopened.**
+- Gist model is followable: three concrete categories with worked examples, an explicit never-list, and the "materially worse off not knowing" test give as much structure as the devlog-bullet discipline it extends; the Phase-1 real-session success criterion is an empirical gate against silent-collapse.
+- Dropping the block/placeholder enforcer is well-reasoned, and the downside is bounded because agent entries are *additive* over an already-valuable verbatim-user-turn + `@compact` substrate: with zero agent entries the record still beats today, so sparseness degrades value gradually rather than zeroing it. The five-quiet-turn nudge is an adequate light backstop.
+- The nudge is a real hook contract: `<session_id>.quiet` in the runtime dir, incremented on `Stop` when the turn did work and no `p=`-matching entry exists, reset on entry or after firing at 5; injection via `UserPromptSubmit` additionalContext (canaried). Depends on no un-canaried compaction behavior.
+- Complementarity (chronological curated notes vs. replace-in-place snapshot; same file, different lifetimes) is a real distinction, not relabeling; coherent.
+
+**Four hard-check items, all clean.** `_judge`/`_verify`/`## Evidence` absent from the proposal (surviving strings are only in this devlog's history, correct); `agents/judge.md` staleness update intact as Phase-2 deliverable 4; canary relocation correct on every axis (`part_of`, `status: done`, chunk-form backlink NOTE, `## Chunks` row, `git log --follow`-tracked rename, relative links now resolving from `cdocs/devlogs/`); regression spot-check (grammar, `agent_id` guard, three-arm A/B, closed-concern test, Phase-3 sketch) intact with no verbatim-capture or bullet residue in the design body.
+
+**Two stale clauses fixed in place (the `files=`-mechanics residue the brief's item 6 warned of).**
+(1) The `files=` paragraph still said `files=` is attached "or by the `Stop` placeholder" — placeholder dropped this round; corrected to "no `files=` on an entry-less turn."
+(2) The Scratchpoint `files:` paragraph still called `files=` "the exhaustive complement" — false now (covers no quiet turn) and contradicting Decision 11; corrected to name the raw transcript as the exhaustive fallback.
+Both were low-risk because the authoritative hook-contract table and Decision 11 were correct throughout, so this stayed an accept-with-nit-fix rather than a revision.
+
+**Non-blocking, left for the implementer.** (S1) add a contrasting "busy turn that correctly logs nothing" example; (S2) state the graceful-degradation argument explicitly in Decision 10; (S3) give `Bash`/`Agent` `PostToolUse` firing the same "assumption, confirm in Phase 1" treatment as `NotebookEdit` (the `.acted` mark and quiet-counter depend on it) and add a Bash-only-turn test. One optional maintainer question on nudge-repetition backoff in long AFK stretches (recommended: keep as-is for Phase 1).
+
+Loop terminates on **accept**; proposal is `implementation_ready`, ready for a future `/cdocs:iterate` pass.
