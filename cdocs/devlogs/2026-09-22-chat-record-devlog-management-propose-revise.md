@@ -28,6 +28,14 @@ Invocation: `/cdocs:propose-revise --first-round fable 2 and 3. ...` — three d
 
 Maintainer refinement: the chat-record summarizer should also carry a running "files touched" list — for each important file, a very brief one-liner on what it was useful for / why it mattered in that stretch of work. This is the "awareness-only" half of the dropped RFP-4 mechanism per `cdocs/reports/2026-09-22-shared-retrieval-cache-redundancy-check.md` (a sibling agent can decide whether to re-read or trust the note; it does not by itself save tokens, since it doesn't put the file's bytes in the sibling's context). Must land in the proposal's actual chat-record format/schema, not just prose. If the round-1 proposer had already finished before this was delivered, it becomes review feedback / a revision-round item instead.
 
+## Mid-round steering, round 1 review (relayed to the reviewer via SendMessage while in flight)
+
+Three maintainer refinements/questions to fold into the round-1 review's findings:
+
+1. **Capture trigger/mechanism.** Capture should fire at turn-handoff (not continuously); agent-turn capture can be a skill/convention (agent self-discipline, like devlog upkeep today) rather than hook-enforced if wiring is annoying — but agent turns should be SUMMARIZED when captured, never verbatim. User turns are the exception: always auto-captured verbatim via a reliable hook (`UserPromptSubmit`), since that doesn't depend on agent discipline. Reviewer asked to re-examine the proposal's "Stop-captured assistant turns" judgment call (file-size cost) specifically against this alternative.
+2. **Strategic question, explicit section requested**: does this system, fully built, actually obviate the need for Anthropic's native auto-compaction entirely (proactive cap-and-reseed means compaction never has to run cold), or does compaction remain an unavoidable safety net regardless? Reviewer asked for a recommendation, not just acknowledgment.
+3. **Reopened as a genuine open question, not blocking round 1**: should chat-record-like capture extend to subagent/inner-loop contexts, not just the overseer, given the mechanism's actual goal (context orientation for agents/subagents) doesn't stop at the human-conversation boundary? For a subagent, "upstream input" is the overseer's dispatch prompt rather than a literal human turn — summarized-per-level applied recursively (per point 1) is the natural shape if so. Reviewer asked to assess whether this is a real Phase-2/3 scope question worth flagging, or whether scratchpoint (for durable specialists) already covers this need, making a separate subagent-chat-record redundant.
+
 ## Round log
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
