@@ -166,7 +166,7 @@ Treat graphify's pre-1.0 churn as an integration risk: pin a version, and keep t
 
 Who indexes, when, and how a loop tolerates a stale or missing index is a first-class design point, not a detail.
 Policy: the loop treats scoping as best-effort. A fresh index is a precondition for scoping a round, never for running the round.
-Options for provisioning (to be decided in Phase 3, informed by instrumentation): index-on-loop-start, index-as-a-standing-service the loop reads, or index-on-demand per round.
+Options for provisioning: index-on-loop-start, index-as-a-standing-service the loop reads, or index-on-demand per round. Phase 2 picks the simplest workable option to ship the surface; refining the choice against measured cost is deferrable work, not a blocker.
 The staleness contract is fixed now: stale or missing means skip-scope for that round, never block and never trust a stale graph.
 
 ## Edge Cases / Challenging Scenarios
@@ -206,72 +206,62 @@ For the deferrable Phase 3 (opt-in): land the corpus-measured recall-parity gate
 
 ## Implementation Phases
 
-Phased so the librarian (Phase 4) can be dropped entirely if Phase 3 instrumentation shows the stateless tool suffices.
 No time estimates. Dependencies are explicit.
 
-**FIRST INCREMENT (green-lightable on its own): Phase 1 + Phase 2.**
-The coarse per-role baseline meter (Phase 1, with the per-task causal verdict delegated to `/cdocs:ablate`) plus a reviewer-first, CLI-backed scoping surface (Phase 2).
-This is the shippable slice: it establishes the live baseline and puts a correct dependent-set brief in front of the RFP's original consumer, with no dependence on the roll-out, the librarian, or the adapter.
-In this first increment recall parity is protected STRUCTURALLY, not measured: scoping is additive (it only ADDS context to the round, never removes it), skip-scope on a stale or missing index guarantees the baseline floor, and the surface ships behind a flag.
-The MEASURED recall-parity discriminator gate (D2, the hard gate) lands in Phase 3, where scoping rolls across roles and is metered against the labeled corpus; the first increment does not weaken that gate, it precedes it.
-Phases 3 to 5 are explicitly-deferred LATER increments, each gated on the one before it; the maintainer can full-send just the first increment.
+**The shippable HEADLINE is Phase 2: the integration itself.**
+Prime a graphify dependent-set brief into the loop up front and instruct the reviewer (then implementer and judge) to use the graphify CLI, integrated behind a flag.
+Its validation of record is a `/cdocs:ablate` spot-check on a couple of real MULTI-FILE tasks (the harness is already built and e2e-verified), not a mandatory before/after coarse baseline.
+Recall parity is protected STRUCTURALLY here, not measured: scoping is additive (it only ADDS context to the round, never removes it), skip-scope on a stale or missing index guarantees the baseline floor, and the surface ships behind a flag.
+Phase 1 (a coarse per-role meter) is OPTIONAL instrumentation and does NOT block shipping Phase 2.
+Phase 3 (the MEASURED recall-parity discriminator gate, D2) is a deferrable later increment, opt-in and not required to ship. The librarian and adapter are out of scope (see below).
 
-### Phase 1: Coarse token-accounting baseline (gate; prerequisite for all claims)
+### Phase 2: Stateless graph-scoping surface (the headline deliverable)
+
+- Precondition (RESOLVED): graphify's license is Apache-2.0, confirmed from the upstream [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) repo's root `LICENSE` (D4). The engine is NOT license-blocked. The sole residual is a spot-check that the adopted pin `0.9.61` carries the same `LICENSE` at its tag; a license regression at the pin would block adoption at that pin, nothing more.
+- Provision a graphify index over the working tree; expose the graph query behind a thin loop-side contract over the CLI subcommands (`query`/`explain`/`path`), never raw `graph.json` ingestion (D4).
+- Prime the scoped-context brief (dependent set + AID caveat, D3) from the round's changed symbols INTO the loop up front, and instruct the consuming role to use the graphify CLI for follow-up queries.
+- Wire skip-scope on stale/missing index and on engine error (D5), with fallback labeled.
+- Integrate into ONE role first (reviewer, the RFP's original consumer) behind a flag; then the implementer and judge (same query shape, same brief).
+- Validate with the `/cdocs:ablate` spot-check on a couple of real MULTI-FILE dependent-set tasks (ablate e2e Probe A: single-file tasks are expected-null and do not gate the tool out).
+- Success: the reviewer (then implementer/judge) receives a correct dependent-set brief up front on a fresh index and falls back cleanly otherwise, briefs carry the caveat, and the ablate spot-check shows a positive context-gap verdict on multi-file tasks.
+- Depends on: nothing (Phase 1 is optional and not a prerequisite).
+
+### Phase 1: Coarse token-accounting baseline (OPTIONAL instrumentation)
+
+Opt-in, for when hard live per-role numbers are wanted. It does NOT block Phase 2 and is not a prerequisite for any claim; the shipped increment's causal "scoping pays" verdict comes from the `/cdocs:ablate` spot-check.
 
 - Build a COARSE per-role token meter for cdocs loops, attributing tokens to overseer/implementer/reviewer/judge. This is tractable: role maps to subagent identity, and the dispatched-agent result payload already surfaces per-subagent tokens (the `/cdocs:ablate` harness reads the same source, so this reuses a proven metering path).
-- Resolution is per-role TOTALS plus a context-gathering PROXY: read-token volume and tool-call count per turn (context-gathering reads) versus generate-token volume (reasoning/writing, expected unmoved). The efficiency claim is stated at THIS resolution: total per-role burn falls and the read-token proxy falls while the generate proxy holds, recall held.
-- Per-phase attribution is explicitly OUT of Phase 1's critical path. The interleaved-phase meter (tool-boundary / read-vs-generate attribution WITHIN a single turn) was the design's fragile point; the "did scoping actually help" causal question it existed to answer is DELEGATED to the `/cdocs:ablate` harness (see Discriminator-first instrumentation), which answers it per-task by A/B rather than by inference. Nothing downstream depends on true per-phase attribution; a later phase may add finer resolution, but it must not be resurrected onto the critical path.
-- Capture the BEFORE baseline on the labeled corpus (D2), including missed-dependent labels.
-- Success: a reproducible coarse per-role baseline plus the read/generate proxy exists on the corpus.
-- Constraint: this phase adds NO scoping. It only measures. Nothing downstream is admissible until it lands.
-- Depends on: nothing. Blocks: Phases 2, 3, 4.
+- Resolution is per-role TOTALS plus a context-gathering PROXY: read-token volume and tool-call count per turn (context-gathering reads) versus generate-token volume (reasoning/writing, expected unmoved).
+- Per-phase attribution is explicitly OUT of scope. The interleaved-phase meter (tool-boundary / read-vs-generate attribution WITHIN a single turn) was the design's fragile point; it must not be resurrected onto any critical path.
+- Success: a reproducible coarse per-role baseline plus the read/generate proxy exists on the corpus, when a consumer chooses to land it.
 
-### Phase 2: Stateless graph-scoping surface (CLI-backed)
+### Phase 3: Formal discriminator gate (deferrable later increment)
 
-- Precondition (RESOLVED): graphify's license is Apache-2.0, confirmed from the upstream [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) repo's root `LICENSE` (D4). The engine is NOT license-blocked for the first increment. The sole residual is a spot-check that the adopted pin `0.9.61` carries the same `LICENSE` at its tag; a license regression at the pin would block adoption at that pin, nothing more.
-- Provision a graphify index over the corpus; expose the graph query behind a thin loop-side contract over the CLI subcommands (`query`/`explain`/`path`), never raw `graph.json` ingestion (D4).
-- Produce the scoped-context brief (dependent set + AID caveat, D3) from changed symbols.
-- Wire skip-scope on stale/missing index and on engine error (D5), with fallback labeled for instrumentation.
-- Integrate into ONE role first (reviewer, the RFP's original consumer) behind a flag.
-- Success: reviewer receives a correct dependent set on a fresh index and falls back cleanly otherwise; briefs carry the caveat.
-- Depends on: Phase 1. Blocks: Phase 3.
+Opt-in and NOT required to ship Phase 2. This is where recall parity is MEASURED rather than protected only structurally.
 
-> NOTE(claude-opus-4-8/code-graph/cdocs-integration): FIRST-INCREMENT BOUNDARY. Phases 1 to 2 above are the green-lightable slice; Phases 3 to 5 below are deferred later increments, each gated on the one before it.
+- Run the discriminator against a labeled corpus of MULTI-FILE dependent-set / blast-radius task shapes (D2), with the optional Phase 1 coarse meter supplying live per-role token deltas and `/cdocs:ablate` supplying the per-task causal verdict on those same shapes.
+- Enforce the MEASURED recall-parity hard gate (D2): scoped per-category recall >= unscoped baseline within the labeling protocol's confidence interval, zero tolerance for a systematic miss class. A token win with any recall regression is rejected.
+- Success: a metered verdict on the efficiency claim, admissible only if recall holds.
+- Depends on: Phase 2.
 
-### Phase 3: Roll scoping across roles + measure (the discriminator gate)
+### Out of scope (dropped)
 
-- Extend the scoping surface to the implementer and judge (same query shape, same brief).
-- Run the discriminator on MULTI-FILE dependent-set / blast-radius task shapes (ablate e2e Probe A: single-file tasks are expected-null and do not gate the tool out). Produce the token and recall deltas from the coarse per-role meter, and take the per-task causal "scoping pays" verdict from `/cdocs:ablate` on those same task shapes.
-- Decide, on the metered result: does scoping pay, and does the residual re-query pattern justify evaluating a librarian at all?
-- Success: a metered verdict on the efficiency claim (admissible only if recall holds), and an explicit go/no-go on Phase 4.
-- Depends on: Phase 2. Gates: Phase 4.
+The following were framed as later increments in earlier rounds and are struck from this proposal. They are not carried as live plan and may be revisited via a FRESH proposal if ever justified by instrumentation.
 
-### Phase 4: Librarian evaluation (conditional; only if Phase 3 justifies it)
-
-- Only if Phase 3 shows residual re-query burn a resident index would cut.
-- Prototype the librarian as a read-only shared SERVICE (D1), not a workstream specialist. Confirm the consuming project's model policy admits its tier rather than authoring a new carve-out: for weftwise the existing search/explore->sonnet carve-out plausibly already covers a librarian's lookup work (D1), making this a confirmation step; a consumer with NO search carve-out would need one. Test that the shared index stays bounded as workstream count grows (D1), not merely that it cuts burn.
-- Measure total loop burn net of the librarian's standing cost, against the Phase 3 stateless-tool baseline; verify cross-target degradation to bet 1 on a no-`SendMessage` runtime.
-- Success: the librarian cuts total burn net of its cost without recall loss, OR is explicitly declined with the metered reason recorded.
-- Depends on: Phase 3 go decision. Blocks: nothing.
-
-### Phase 5: Adapter migration (deferred, tracked)
-
-- Migrate the loop-side contract from graphify's engine-direct surface (CLI now, MCP if later adopted) onto the RFP's engine-agnostic adapter (sibling #3) when it exists.
-- Success: engine swap is a surface change; loop code is unchanged.
-- Depends on: sibling #3 landing. Not blocking for Phases 1 to 4.
+- **Librarian (formerly Phase 4).** A durable resume-by-name subagent holding codebase knowledge (D1). Dropped: the stateless tool captures the near-certain win, and a standing warm-agent cost is not justified without evidence the tool leaves residual re-query burn.
+- **Adapter migration (formerly Phase 5).** Migrating the loop-side contract onto the RFP's engine-agnostic adapter (sibling #3). Dropped from this proposal; the thin loop-side contract (D4) already keeps a future swap a surface change, so no work is required here until sibling #3 exists.
 
 ## Investigation Requested
 
 Forward-looking items a review round could pressure-test:
 
-- **Coarse-meter sufficiency (Phase 1).** Per-phase attribution is dropped from the critical path: the coarse per-role meter plus the read/generate proxy is the plan of record, and the per-task causal verdict is delegated to `/cdocs:ablate`. Confirm the coarse resolution plus the ablation harness together carry the efficiency claim, and that no downstream gate silently reintroduces a dependence on true per-phase attribution.
-- **Bounded shared-librarian context (D1, Phase 4).** Whether a single shared read-only librarian can hold M workstreams' context without recreating the large-context problem inside one agent is unproven and deferred to Phase 4. Flag if it should GATE Phase 4 entry rather than be tested within it.
+- **Ablate spot-check sufficiency (Phase 2).** The shipped increment's causal "scoping pays" verdict comes from a `/cdocs:ablate` spot-check on a couple of real multi-file tasks, not a mandatory coarse baseline. Confirm the spot-check plus the structural recall guard together carry the shipped increment, and that no gate silently reintroduces a dependence on the optional Phase 1 meter to ship Phase 2.
 - **Structural CRDT guard sufficiency (D3).** The brief-format co-surfacing plus near-empty-set trigger is stronger than a bare caveat but still cannot guarantee recall on coupling no non-graph signal catches. Confirm the additive framing (skip-scope never lowers the baseline) is the honest ceiling of the claim.
 
 ## Open Questions
 
 - **What is "lace"?** An unspecified weftwise integration target referenced by the maintainer. Not designed against here; a prerequisite for any lace-specific hook.
-- **Index provisioning model (D5).** Index-on-loop-start vs standing-service vs on-demand: deferred to Phase 3, informed by the metered cost of each.
+- **Index provisioning model (D5).** Index-on-loop-start vs standing-service vs on-demand: Phase 2 ships the simplest workable option; refining it against metered cost is deferrable.
 - **Diff-size threshold for scoping.** Below what change size does scoping cost exceed its savings? An instrumentation output, not a guess.
 - **graphify license (RESOLVED).** graphify is Apache-2.0, confirmed from the upstream [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) root `LICENSE` (D4). No longer an open blocker; the sole residual is a per-pin spot-check of the `0.9.61` tag's `LICENSE`, tracked as Phase 2 diligence, not a gate.
 - **Semantic-retrieval complement.** Structural graph scoping and embedding retrieval answer different questions; whether a hybrid beats either is left to the RFP's separate report, not this proposal.
