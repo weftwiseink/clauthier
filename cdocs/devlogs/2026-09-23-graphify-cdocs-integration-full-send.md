@@ -58,6 +58,7 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 (propose-revise) | rev-1 (cdocs:proposer) | reviewer-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | ~135K | no | ACCEPT r4; all 5 deltas verified in-text; 1 should-fix (D2 corpus "Phase 1 deliverable"→Phase 3) + 2 nits to clear |
 
 ## Judge Log
 
@@ -71,6 +72,8 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | dispatch | rev-1 (cdocs:proposer) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:05:00-08:00 | lean-track re-scope (5 deltas) |
 | return | rev-1 (cdocs:proposer) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:12:00-08:00 | done; 5 commits 4676eee..f6edca6; status kept implementation_ready; 4 judgment calls flagged (title, librarian residue, lone "Bet 1", D5 un-deferred) |
 | dispatch | reviewer-1 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | 2026-09-23T09:13:00-08:00 | review lean-track re-scope |
+| return | reviewer-1 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | 2026-09-23T09:20:00-08:00 | ACCEPT r4 (9de6a92); 1 should-fix + 2 nits |
+| dispatch | rev-1 (cdocs:proposer, resumed) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:21:00-08:00 | clear accepting-round items |
 
 ## Steering Log
 
