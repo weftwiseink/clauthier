@@ -1,0 +1,349 @@
+<title>Bash Wrapper Design</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#f5f6f4; --fg:#1b1f1a; --mute:#5c6459; --line:#d8ddd3; --card:#ffffff;
+  --acc:#3d6b3f; --accbg:#e6efe1; --code:#eef1ea;
+  --ok:#2c7a3d; --okbg:#e2f3e3;
+  --warn:#a3650f; --warnbg:#fbeed9;
+  --dead:#a13636; --deadbg:#f9e2e2;
+  --defer:#5b5aa8; --deferbg:#e9e8f7;
+  --shadow:0 1px 2px rgba(20,25,15,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160f; --fg:#e6e9e0; --mute:#9aa392; --line:#2d3427; --card:#181d15;
+    --acc:#7fc281; --accbg:#1c2e1c; --code:#1f2519;
+    --ok:#6fd382; --okbg:#193020;
+    --warn:#e3ab54; --warnbg:#33270f;
+    --dead:#e88888; --deadbg:#331f1f;
+    --defer:#a6a4e8; --deferbg:#252356;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160f; --fg:#e6e9e0; --mute:#9aa392; --line:#2d3427; --card:#181d15;
+  --acc:#7fc281; --accbg:#1c2e1c; --code:#1f2519;
+  --ok:#6fd382; --okbg:#193020;
+  --warn:#e3ab54; --warnbg:#33270f;
+  --dead:#e88888; --deadbg:#331f1f;
+  --defer:#a6a4e8; --deferbg:#252356;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 'IBM Plex Sans',system-ui,sans-serif;padding-inline:16px}
+main{max-width:130ch;margin:0 auto;padding-block:32px 72px}
+h1,h2,h3,h4{font-family:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;text-wrap:balance}
+h1{font-size:30px;font-weight:700;margin:0 0 8px}
+h2{font-size:21px;font-weight:600;margin:52px 0 6px;padding-top:18px;border-top:1px solid var(--line)}
+h3{font-size:16px;font-weight:600;margin:26px 0 8px}
+h4{font:600 11px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:0 0 6px}
+.eyebrow{font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--acc);margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 26px;max-width:80ch}
+p,li{max-width:82ch}
+main.wide p,main.wide li{max-width:none}
+ul,ol{padding-left:22px}
+li{margin:5px 0}
+code{font:13px 'IBM Plex Mono',monospace;background:var(--code);padding:1px 5px;border-radius:3px}
+a{color:var(--acc)}
+.ref{font:12.5px 'IBM Plex Mono',monospace;color:var(--mute)}
+blockquote{margin:0 0 24px;padding:16px 20px;background:var(--accbg);border-radius:6px;box-shadow:inset 0 0 0 1px var(--line)}
+blockquote p{margin:0 0 8px;max-width:none}
+blockquote p:last-child{margin-bottom:0}
+.fig{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px 6px;margin:16px 0 4px;box-shadow:var(--shadow)}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+figcaption{font-size:13px;color:var(--mute);margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.tw{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.03em;text-align:left;color:var(--mute);border-bottom:2px solid var(--line);padding:7px 10px;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font:600 11px 'IBM Plex Mono',monospace;padding:2px 8px;border-radius:99px;white-space:nowrap;letter-spacing:.01em}
+.p-ok{background:var(--okbg);color:var(--ok)}
+.p-warn{background:var(--warnbg);color:var(--warn)}
+.p-dead{background:var(--deadbg);color:var(--dead)}
+.p-defer{background:var(--deferbg);color:var(--defer)}
+.slug{font:500 12.5px 'IBM Plex Mono',monospace;background:var(--code);color:var(--acc);padding:1px 6px;border-radius:3px;white-space:nowrap}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13px;margin:14px 0 4px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.kt{font:600 11px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.card{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--card);box-shadow:var(--shadow)}
+.card h4{margin-bottom:8px}
+.card p{margin:0;font-size:13.5px;color:var(--fg)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+.claim{border-radius:8px;padding:14px 16px;border:1px solid var(--line)}
+.claim.was{background:var(--deadbg);border-color:color-mix(in srgb,var(--dead) 40%,var(--line))}
+.claim.now{background:var(--okbg);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.claim h4{margin-bottom:6px}
+.claim .lbl{font:700 10.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+.claim.was .lbl{color:var(--dead)}
+.claim.now .lbl{color:var(--ok)}
+.term{background:var(--card);border:1px solid #000;border-radius:6px;padding:12px 14px;font:12.5px/1.55 'IBM Plex Mono',monospace;overflow-x:auto;margin:10px 0}
+:root:not([data-theme="light"]) .term,:root[data-theme="dark"] .term{border-color:#000}
+.term{background:#14161a;color:#d8ecd8;border-color:#000}
+.term .c{color:#7fc281}
+.term .o{color:#e3ab54}
+.chunk{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{font:500 12px 'IBM Plex Mono',monospace;background:var(--code);border:1px solid var(--line);border-radius:5px;padding:3px 9px}
+@media(max-width:520px){h1{font-size:24px}h2{font-size:18px}}
+</style>
+<main class="wide">
+<header>
+<p class="eyebrow">Proposal · 2026-09-22 → 2026-09-23 · <span class="pill p-ok">implementation_ready</span> · meta/token-spend-attribution · 2 review rounds</p>
+<h1>Haiku Bash-Output Wrapper</h1>
+<p class="sub"><code>cdocs:bash-runner</code> + a deterministic output floor, and how two rounds of live testing overturned three of the proposal's own assumptions before it shipped.</p>
+</header>
+
+<blockquote>
+<p><strong>Ship two mechanisms together, not one:</strong> a haiku-tier <code>cdocs:bash-runner</code> agent (opt-in, captures a command's output to its own scratch file, extracts a salient excerpt) for anticipated-verbose calls, plus a tightened <code>bashOutputMaxChars</code> settings floor (start <strong>6,000 chars</strong>, band 4,000&ndash;8,000) for everything nobody thought to route through the wrapper.</p>
+<p><strong>Both hook-based interception routes were investigated and both stay deferred</strong> &mdash; one because it is genuinely dead on this platform version, one because live testing found it actually <em>works</em> but doesn't close a real gap. Read <a href="#corrections">the corrections</a> below: this proposal's headline finding is procedural as much as technical &mdash; reading a GitHub issue is not verification, only a reproducible live canary is, and this repo hit that lesson twice in two rounds.</p>
+</blockquote>
+
+<h2 id="problem">1 &middot; The problem, sized</h2>
+<p>Bash command output is <strong>28.5% of all read intake</strong> across a measured week of this project's own sessions &mdash; 3.76M of 13.17M approx-tokens, from 9,581 results averaging 390 tokens each. <span class="ref">cdocs/reports/2026-09-20-read-source-attribution.md</span> called this "death by a thousand cuts": no single whale result, just volume.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 300" role="img" aria-label="Distribution of 11,531 real Bash-call output sizes, log scale, with the chosen 6,000-character cap marked near the 95th percentile">
+<defs><marker id="tick" viewBox="0 0 4 4" refX="2" refY="2" markerWidth="4" markerHeight="4"><rect width="4" height="4" fill="currentColor"/></marker></defs>
+<g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">
+<text x="10" y="22" font-weight="600" font-size="12.5">Per-call Bash output size &mdash; 11,531 results, weftwise corpus, 2026-09-12 onward</text>
+<text x="10" y="40" fill="var(--mute)" font-size="11">log scale (chars) &middot; cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md Appendix</text>
+<!-- axis -->
+<line x1="90" y1="230" x2="860" y2="230" stroke="currentColor" stroke-opacity=".4"/>
+<!-- bars: p50 655 p75 1841 p90 3978 p95 6228 p99 14103 max 29351, log scale mapped 100..30000 -> x 90..860 -->
+<!-- logScale(v) = 90 + (log10(v)-log10(100))/(log10(30000)-log10(100)) * 770 -->
+<g>
+<!-- p50 -->
+<rect x="130" y="120" width="46" height="110" fill="var(--acc)" opacity=".35" rx="3"/>
+<text x="153" y="112" text-anchor="middle">p50</text>
+<text x="153" y="246" text-anchor="middle" fill="var(--mute)">655</text>
+<!-- p75 -->
+<rect x="270" y="105" width="46" height="125" fill="var(--acc)" opacity=".45" rx="3"/>
+<text x="293" y="97" text-anchor="middle">p75</text>
+<text x="293" y="246" text-anchor="middle" fill="var(--mute)">1,841</text>
+<!-- p90 -->
+<rect x="400" y="88" width="46" height="142" fill="var(--acc)" opacity=".6" rx="3"/>
+<text x="423" y="80" text-anchor="middle">p90</text>
+<text x="423" y="246" text-anchor="middle" fill="var(--mute)">3,978</text>
+<!-- p95 / cap marker -->
+<rect x="470" y="76" width="46" height="154" fill="var(--acc)" opacity=".8" rx="3"/>
+<text x="493" y="68" text-anchor="middle" font-weight="600">p95</text>
+<text x="493" y="246" text-anchor="middle" fill="var(--mute)">6,228</text>
+<!-- p99 -->
+<rect x="640" y="52" width="46" height="178" fill="var(--acc)" rx="3"/>
+<text x="663" y="44" text-anchor="middle">p99</text>
+<text x="663" y="246" text-anchor="middle" fill="var(--mute)">14,103</text>
+<!-- max -->
+<rect x="790" y="35" width="46" height="195" fill="var(--dead)" rx="3"/>
+<text x="813" y="27" text-anchor="middle" fill="var(--dead)">max</text>
+<text x="813" y="246" text-anchor="middle" fill="var(--mute)">29,351</text>
+</g>
+<!-- cap line at 6000, near p95 bar -->
+<line x1="90" y1="78" x2="860" y2="78" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="860" y="74" text-anchor="end" fill="var(--warn)" font-weight="600">chosen cap: 6,000 chars (p95)</text>
+<text x="10" y="270" fill="var(--mute)" font-size="11">mean 1,602 chars (~400 tok) &middot; matches the read-source report's independently measured 390 tok/result mean, validating the join</text>
+</g>
+</svg>
+<figcaption>Percentile bars on a log scale (equal-ratio spacing, not equal-value). The 6,000-char cap sits at p95: it spills the top 606 of 11,531 calls (5.3%), leaving ordinary multi-line output untouched. 4,000 (p90) cuts more but risks more read-backs; 8,000 (~p97) is the conservative end.</figcaption>
+</figure>
+
+<div class="tw"><table><thead><tr><th>Cap</th><th class="n">Calls over cap</th><th class="n">% of calls</th><th class="n">Chars above cap</th><th class="n">% of all Bash chars</th></tr></thead><tbody>
+<tr><td>2,000</td><td class="n">2,674</td><td class="n">23.2%</td><td class="n">7.98M</td><td class="n">43.2%</td></tr>
+<tr><td>4,000</td><td class="n">1,141</td><td class="n">9.9%</td><td class="n">4.52M</td><td class="n">24.5%</td></tr>
+<tr style="background:var(--warnbg)"><td><strong>6,000 &larr; chosen</strong></td><td class="n">606</td><td class="n">5.3%</td><td class="n">2.85M</td><td class="n">15.4%</td></tr>
+<tr><td>8,000</td><td class="n">385</td><td class="n">3.3%</td><td class="n">1.88M</td><td class="n">10.2%</td></tr>
+<tr><td>10,000</td><td class="n">258</td><td class="n">2.2%</td><td class="n">1.24M</td><td class="n">6.7%</td></tr>
+<tr><td>30,000 (platform default)</td><td class="n">0</td><td class="n">&mdash;</td><td class="n">0</td><td class="n">&mdash;</td></tr>
+</tbody></table></div>
+<p class="ref">No cdocs report had a per-call Bash size distribution before this proposal &mdash; the round-1 reviewer measured it directly from the local transcript corpus rather than leave the cap unbacked. Script and invocation: cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md Appendix.</p>
+
+<h2 id="corrections">2 &middot; Two rounds, two live-tested corrections</h2>
+<p>The proposal's first draft reasoned about platform hook behavior from GitHub issue text. Both live-tested corrections below <strong>tightened the design, they didn't loosen it</strong> &mdash; and the pattern (issue-reading is not verification) repeats across this session's other proposals, not just this one.</p>
+
+<h3>2a &middot; "Both hooks are dead" &rarr; one is, one isn't</h3>
+<div class="two">
+<div class="claim was">
+<span class="lbl">Claimed (round 1 draft, from issue text)</span>
+<h4 style="color:inherit">Both channels inert for Bash</h4>
+<p><code>PostToolUse updatedToolOutput</code> and <code>PreToolUse updatedInput</code> both silently no-op for the built-in Bash tool, citing <a href="https://github.com/anthropics/claude-code/issues/68951">#68951</a> and <a href="https://github.com/anthropics/claude-code/issues/79321">#79321</a> as closed "not planned."</p>
+</div>
+<div class="claim now">
+<span class="lbl">Verified (round 1, live canary, 2/2 runs, CC 2.1.280 Linux headless)</span>
+<h4 style="color:inherit">Only one channel is actually dead</h4>
+<p><code>PreToolUse updatedInput</code> <strong>rewrote the command</strong> &mdash; transcript showed the model's original request, but the tool result was the rewritten text. <code>PostToolUse updatedToolOutput</code> fired but the sentinel never reached the model: genuinely inert.</p>
+</div>
+</div>
+<div class="term">$ <span class="c">echo ORIGINAL_OUTPUT</span>  <span style="color:#8a9a86"># PreToolUse hook rewrites to: echo REWRITE_APPLIED</span>
+tool_use.input.command  = "echo ORIGINAL_OUTPUT"   <span style="color:#8a9a86">&larr; model's request, unchanged</span>
+toolUseResult.stdout    = "REWRITE_APPLIED"        <span class="o">&larr; rewrite executed</span>
+</div>
+<p><code>#79321</code> was filed against 2.1.215 on Windows desktop; this canary ran 2.1.280 on Linux headless. The behavior is <strong>environment-dependent</strong>, not a fixed platform fact &mdash; the proposal now gates any future use of this channel on re-running the canary, never on trusting the issue's status.</p>
+
+<h3>2b &middot; "The cap truncates" &rarr; the cap spills to a file</h3>
+<div class="two">
+<div class="claim was">
+<span class="lbl">Claimed (round 1 draft)</span>
+<h4 style="color:inherit">Head/tail clip at the ceiling</h4>
+<p>A command over the <code>bashOutputMaxChars</code> ceiling gets cut to a head+tail excerpt, like the wrapper's own extraction logic &mdash; so the wrapper and the cap were modeled as doing the same thing at different thresholds.</p>
+</div>
+<div class="claim now">
+<span class="lbl">Verified (round 1, direct observation + CC docs)</span>
+<h4 style="color:inherit">A cliff, not a clip &mdash; and it depends on exit status</h4>
+<p>A <strong>valid</strong> (exit 0) over-ceiling result collapses to a file path + ~2,000-char preview. Only a <strong>failed</strong> command gets the lossy head+tail excerpt, with no file at all &mdash; the middle is unrecoverable without a re-run.</p>
+</div>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 900 210" role="img" aria-label="Three outcomes of a Bash call under the output cap: valid and under cap passes through inline, valid and over cap spills to a file with a preview, failed and over cap yields a lossy excerpt with no file">
+<g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+<!-- three columns -->
+<g>
+<rect x="20" y="20" width="260" height="170" rx="8" fill="var(--okbg)" stroke="var(--ok)" stroke-opacity=".5"/>
+<text x="150" y="46" text-anchor="middle" font-weight="600" fill="var(--ok)">valid &middot; under cap</text>
+<text x="150" y="70" text-anchor="middle" fill="var(--mute)" font-size="11">exit 0, output &le; 6,000 chars</text>
+<line x1="60" y1="92" x2="240" y2="92" stroke="var(--ok)" marker-end="url(#tick)"/>
+<text x="150" y="118" text-anchor="middle">full output, inline</text>
+<text x="150" y="138" text-anchor="middle" fill="var(--mute)" font-size="11">reaches the model as-is</text>
+<text x="150" y="168" text-anchor="middle" fill="var(--ok)" font-weight="600">nothing lost</text>
+</g>
+<g>
+<rect x="320" y="20" width="260" height="170" rx="8" fill="var(--warnbg)" stroke="var(--warn)" stroke-opacity=".5"/>
+<text x="450" y="46" text-anchor="middle" font-weight="600" fill="var(--warn)">valid &middot; over cap</text>
+<text x="450" y="70" text-anchor="middle" fill="var(--mute)" font-size="11">exit 0, output &gt; 6,000 chars</text>
+<line x1="360" y1="92" x2="540" y2="92" stroke="var(--warn)" marker-end="url(#tick)"/>
+<text x="450" y="118" text-anchor="middle">file path + ~2k preview</text>
+<text x="450" y="138" text-anchor="middle" fill="var(--mute)" font-size="11">full output on disk, recoverable</text>
+<text x="450" y="168" text-anchor="middle" fill="var(--warn)" font-weight="600">costs a read-back</text>
+</g>
+<g>
+<rect x="620" y="20" width="260" height="170" rx="8" fill="var(--deadbg)" stroke="var(--dead)" stroke-opacity=".5"/>
+<text x="750" y="46" text-anchor="middle" font-weight="600" fill="var(--dead)">failed &middot; over cap</text>
+<text x="750" y="70" text-anchor="middle" fill="var(--mute)" font-size="11">exit &ne; 0, output &gt; ~10k chars</text>
+<line x1="660" y1="92" x2="840" y2="92" stroke="var(--dead)" marker-end="url(#tick)"/>
+<text x="750" y="118" text-anchor="middle">head+tail excerpt, no file</text>
+<text x="750" y="138" text-anchor="middle" fill="var(--mute)" font-size="11">middle is gone</text>
+<text x="750" y="168" text-anchor="middle" fill="var(--dead)" font-weight="600">unrecoverable without a re-run</text>
+</g>
+</g>
+</svg>
+<figcaption>Three different outcomes for the same over-cap situation, split by exit status. This is why the wrapper's own capture step deliberately forces a tiny, exit-0 tool result (&sect;4) &mdash; it sidesteps the third, lossy outcome entirely, on every command it runs.</figcaption>
+</figure>
+
+<h2 id="runner-bug">3 &middot; The wrapper's own self-defeating bug</h2>
+<p>Because <code>cdocs:bash-runner</code> is itself <code>Bash</code>-only, its <em>own</em> dispatched command hits the exact same ceiling described above. The original design &mdash; "the haiku agent reads the whole output once in disposable context" &mdash; would have failed its own containment test: a <code>seq 1 200000</code> canary would spill to a ~2k preview <em>inside the runner</em>, and a Bash-only agent asked for "the last line" could not recover it from a preview.</p>
+
+<div class="two">
+<div class="card">
+<h4>Before &middot; read-once (broken)</h4>
+<p><code>&lt;cmd&gt;</code> runs directly, its stdout is the runner's tool result. Under the cap, this is fine. Over the cap, the runner's own tool result is a truncated preview &mdash; the exact failure mode the runner exists to prevent, now happening to the runner itself.</p>
+</div>
+<div class="card" style="border-color:color-mix(in srgb, var(--ok) 40%, var(--line))">
+<h4 style="color:var(--ok)">After &middot; capture-to-file-then-extract</h4>
+<p>Redirect to a scratch file, echo the exit code as the <em>only</em> tool result, then run bounded <code>grep</code>/<code>tail</code>/<code>head</code>/<code>cut</code> over the file. Every step's own output stays small by construction.</p>
+</div>
+</div>
+
+<div class="term"><span class="c">OUT="$SCRATCH/bash-runner-$(date +%s).log"</span>
+<span class="c">&lt;cmd&gt;</span> &gt; "$OUT" 2&gt;&amp;1<span style="color:#8a9a86">; </span><span class="c">echo</span> "exit=$?"     <span style="color:#8a9a86"># tool result: just "exit=&lt;n&gt;" &mdash; tiny, always exit 0</span>
+<span class="c">grep</span> -nE '&lt;pattern&gt;' "$OUT" | <span class="c">head</span> -n N     <span style="color:#8a9a86"># bounded extraction, cannot itself spill</span>
+<span class="c">tail</span> -n N "$OUT"                          <span style="color:#8a9a86"># ...</span>
+</div>
+<p>Because the trailing <code>echo "exit=$?"</code> is the last command in the pipeline, the <em>overall</em> invocation always reports exit 0 with a tiny result &mdash; regardless of what <code>&lt;cmd&gt;</code> itself did. That sidesteps the lossy failure-path excerpt from &sect;2b entirely: the full output is <strong>always</strong> on disk, for every command the runner ever captures.</p>
+
+<div class="fig" style="padding:14px 16px">
+<h4 style="margin-top:0">Round-2 reviewer's own verification (not trusted from prose)</h4>
+<div class="term">seq 1 200000 &gt; "$OUT" 2&gt;&amp;1<span style="color:#8a9a86">; </span>echo "exit=$?"   &rarr;  <span class="c">exit=0</span>        <span style="color:#8a9a86"># entire capture-step tool result</span>
+wc -c "$OUT"                                  &rarr;  <span class="c">1288895</span>     <span style="color:#8a9a86"># 1.3MB, on disk</span>
+tail -n 1 "$OUT"                              &rarr;  <span class="c">200000</span>      <span style="color:#8a9a86"># true last line, recovered</span></div>
+<figcaption>Run reproduced directly by the round-2 reviewer before accepting &mdash; not inferred from the proposal's prose. A ~2k spilled preview could never have yielded the true last line of a 200,000-line output; the capture file does. <span class="ref">cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md</span></figcaption>
+</div>
+
+<h2 id="mechanism">4 &middot; The full mechanism</h2>
+<div class="tw"><table><thead><tr><th>Mechanism</th><th>Fires on</th><th>Technique</th><th>Cost</th><th>Status</th></tr></thead><tbody>
+<tr><td>Platform default (~30k valid / ~10k failure)</td><td>every Bash call</td><td>blind spill-to-file / head+tail</td><td>zero</td><td><span class="pill p-ok">shipped upstream</span></td></tr>
+<tr style="background:var(--okbg)"><td><strong>bashOutputMaxChars</strong> tightened to 6,000</td><td>every Bash call</td><td>blind, tunable spill cliff</td><td>zero</td><td><span class="pill p-ok">adopt</span> &middot; mechanism 2</td></tr>
+<tr style="background:var(--okbg)"><td><strong>cdocs:bash-runner</strong> (haiku)</td><td>deliberately dispatched</td><td>semantic: capture, then bounded extraction</td><td>small (haiku + round-trip)</td><td><span class="pill p-ok">adopt</span> &middot; mechanism 1, primary</td></tr>
+<tr><td><code>PreToolUse</code> rewrite (<code>updatedInput</code>)</td><td>matched known-verbose commands</td><td>blind, pattern-scoped rewrite</td><td>zero</td><td><span class="pill p-defer">works here &middot; deferred</span></td></tr>
+<tr><td><code>PostToolUse</code> content-aware (<code>updatedToolOutput</code>)</td><td>every / matched call</td><td>heuristic, error-preserving</td><td>zero</td><td><span class="pill p-dead">blocked &middot; inert</span></td></tr>
+</tbody></table></div>
+
+<h3>Coverage: what the two adopted mechanisms actually close</h3>
+<div class="tw"><table><thead><tr><th>Case</th><th>Covered by</th><th>Outcome</th></tr></thead><tbody>
+<tr><td>Anticipated verbose, dispatched</td><td class="slug">mechanism 1</td><td>Parent sees the fixed-format report only</td></tr>
+<tr><td>Unanticipated verbose, exit 0</td><td class="slug">mechanism 2</td><td>~2k preview + file path; bounded, recoverable via read-back</td></tr>
+<tr><td>Unanticipated verbose, non-zero exit</td><td class="slug">mechanism 2</td><td>head+tail excerpt, no file; <strong>a mid-log error can be lost</strong> &mdash; the one real gap, closed only by re-running through mechanism 1</td></tr>
+</tbody></table></div>
+
+<h3>When to dispatch <code>cdocs:bash-runner</code></h3>
+<p>Reordered in round 1 from intuition (build logs first) to the corpus's actual observed traffic &mdash; the 15 heaviest results (22&ndash;29k chars each) are all sweeps, not builds:</p>
+<div class="chunk">
+<span class="chip">grep -rn sweeps</span><span class="chip">find</span><span class="chip">git diff</span><span class="chip">multi-file cat loops</span><span class="chip">build logs</span><span class="chip">test suites</span><span class="chip">npm install</span><span class="chip">linters</span><span class="chip">terraform plan/apply</span><span class="chip">container builds</span><span class="chip">git log -p</span><span class="chip">any unbounded/unfamiliar command</span>
+</div>
+<p>Salience specs come in two shapes: <strong>line-oriented</strong> for pass/fail commands ("return the exit code and any line matching error/fail"), and <strong>aggregate</strong> for sweeps where the matches themselves are the signal ("matches per file, first 3 per file") &mdash; a head/tail default would be the wrong shape for a sweep.</p>
+
+<h2 id="rtk">5 &middot; Build vs. adopt: why not <code>rtk</code></h2>
+<p>A parallel report investigated whether existing tooling could replace the bespoke build. <a href="https://github.com/rtk-ai/rtk"><code>rtk-ai/rtk</code></a> is real and relevant: Apache-2.0, Rust, 81.5k stars, and it already deterministically compresses 100+ known dev commands &mdash; including exactly the <code>grep</code>/<code>find</code>/<code>git diff</code>/<code>cat</code>-sweep shapes that dominate this corpus's whale traffic.</p>
+
+<div class="two">
+<div class="card">
+<h4>What rtk has</h4>
+<p>Fast, free, deterministic compression for ~100 known command types. Zero LLM cost. Already covers the sweep patterns this proposal's own data shows are the heaviest traffic.</p>
+</div>
+<div class="card">
+<h4>What rtk structurally lacks</h4>
+<p>No caller-steerable salience spec. No coverage of unfamiliar/unanticipated commands &mdash; they pass through unfiltered. No semantic "find the buried needle regardless of format." These are <code>cdocs:bash-runner</code>'s entire value proposition.</p>
+</div>
+</div>
+
+<h3>The rejected hybrid: bash-runner shells out to rtk as a pre-filter</h3>
+<p>Considered explicitly, rejected on architectural grounds sharper than a simple dependency-hygiene concern:</p>
+<ul>
+<li><strong>Semantic incompatibility on exactly the whale traffic.</strong> rtk's compression is fixed per command type, applied before the caller's salience spec ever sees the output. A caller asking for "matches per file, first 3 per file" over a <code>grep</code> sweep may find rtk has already dropped or reshaped precisely what was asked for &mdash; the pre-filter and the semantic extractor fight hardest on the case where "the matches ARE the signal."</li>
+<li><strong>Breaks the no-silent-loss guarantee &sect;3 depends on.</strong> The containment argument rests on the runner controlling the exact bytes on disk. Insert rtk and the on-disk artifact is already rtk-transformed &mdash; recovering the true raw output would require capturing twice.</li>
+<li><strong>Environment availability.</strong> rtk is pre-1.0 (<code>dev-0.50.0-rc.451</code>), CLI-only with no library/MCP mode, and would need to be installed and PATH-resolvable in every consuming environment &mdash; including CI and sandboxes the plugin cannot provision.</li>
+</ul>
+<p>One capability needs no design change at all: a caller who wants rtk's compression can already dispatch <code>rtk git diff</code> <em>as the command itself</em> &mdash; the runner just captures whatever it's given. rtk is cited in mechanism 3's background as further evidence for staying deferred (a mature tool already covers that allowlist's territory better than a bespoke one would), not adopted as a dependency.</p>
+
+<h2 id="tiering">6 &middot; Tiering</h2>
+<div class="fig" style="padding:16px">
+<svg viewBox="0 0 900 150" role="img" aria-label="Two implementation phases: Phase 1 the bash-runner agent, works now; Phase 2 dispatch convention and settings guidance; both hook mechanisms explicitly deferred, not phases">
+<g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+<rect x="20" y="20" width="380" height="100" rx="8" fill="var(--okbg)" stroke="var(--ok)" stroke-opacity=".5"/>
+<text x="40" y="44" font-weight="600" fill="var(--ok)">Phase 1 &middot; works now</text>
+<text x="40" y="66" font-size="11.5">cdocs:bash-runner agent</text>
+<text x="40" y="84" font-size="11.5" fill="var(--mute)">capture-to-file-then-extract workflow,</text>
+<text x="40" y="100" font-size="11.5" fill="var(--mute)">inline extraction contract, no rule-reading</text>
+<rect x="430" y="20" width="380" height="100" rx="8" fill="var(--okbg)" stroke="var(--ok)" stroke-opacity=".5"/>
+<text x="450" y="44" font-weight="600" fill="var(--ok)">Phase 2 &middot; convention + guidance</text>
+<text x="450" y="66" font-size="11.5">model-tiering carve-out</text>
+<text x="450" y="84" font-size="11.5" fill="var(--mute)">+ "Bash output hygiene" section in</text>
+<text x="450" y="100" font-size="11.5" fill="var(--mute)">orchestration-discipline.md</text>
+<line x1="400" y1="70" x2="430" y2="70" stroke="currentColor" stroke-opacity=".4" marker-end="url(#tick)"/>
+</g>
+</svg>
+<figcaption>Two hook mechanisms are explicitly <strong>deferred, not phases</strong>: the PreToolUse rewrite (works, but redundant/mis-targeted) and the PostToolUse content-aware truncation (blocked on the platform regression). Neither is scheduled; both have a named re-check trigger (re-run the hook canary; watch #68951 / #32105).</figcaption>
+</div>
+
+<h3>Where this sits in <code>model-tiering.md</code></h3>
+<p><code>cdocs:bash-runner</code> joins <code>nit-fix</code> as a named example in the <strong>Mechanical / Deterministic Fan-Out Tier (haiku)</strong> &mdash; tasks with a clear pass/fail signal and no need for reasoning flexibility, where a stronger model buys nothing. This is documented as a <strong>named carve-out, not an automatic override</strong>: per the rule's Precedence section, a consumer with a blanket opus floor still has to explicitly bless this dispatch down to haiku &mdash; the shape ships ready to adopt, it doesn't silently downgrade anyone's existing policy.</p>
+
+<div class="key">
+<span class="kt">Legend</span>
+<span class="pill p-ok">adopt / verified</span>
+<span class="pill p-warn">corrected mid-loop</span>
+<span class="pill p-dead">dead / inert</span>
+<span class="pill p-defer">works, deferred anyway</span>
+</div>
+
+<h2 id="sources">Sources</h2>
+<ul style="font-size:13px;color:var(--mute)">
+<li><span class="ref">cdocs/proposals/2026-09-22-haiku-bash-wrapper.md</span> &mdash; the accepted proposal (implementation_ready, round 2)</li>
+<li><span class="ref">cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md</span> &mdash; round 1 (Revise, 3 blocking, the two corrections in &sect;2, the size distribution)</li>
+<li><span class="ref">cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md</span> &mdash; round 2 (Accept, the live containment re-verification in &sect;3, the rtk analysis in &sect;5)</li>
+<li><span class="ref">cdocs/reports/2026-09-22-haiku-bash-wrapper-landscape.md</span> &mdash; original landscape report</li>
+<li><span class="ref">cdocs/reports/2026-09-23-bash-output-tooling-landscape.md</span> &mdash; the rtk build-vs-adopt investigation</li>
+<li><span class="ref">cdocs/reports/2026-09-20-read-source-attribution.md</span> &mdash; the 28.5%-of-intake figure</li>
+<li><span class="ref">plugins/cdocs/rules/model-tiering.md</span> &mdash; the haiku tier and carve-out precedence</li>
+</ul>
+</main>
