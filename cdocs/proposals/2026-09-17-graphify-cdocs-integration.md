@@ -16,11 +16,12 @@ last_reviewed:
 
 # Graphify integration into cdocs loops, and the librarian question
 
-> NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (Bet 1 as core, librarian deferred/conditional, recall parity as a hard gate, the CRDT blind-spot honesty) is intact.
-> WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it and Phase 1 shrinks to a coarse per-role meter); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0. Restructured toward a green-lightable FIRST INCREMENT (Phase 1 + Phase 2).
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping + lean-track revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (Bet 1 as core, recall parity as a hard principle, the CRDT blind-spot honesty) is intact.
+> WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0.
+> LEAN-TRACK re-scope (maintainer-approved in the "Graphify in cdocs" explainer): the shippable headline is the integration itself - Phase 2, the scoping surface - validated by a `/cdocs:ablate` spot-check on real multi-file tasks, NOT by a mandatory before/after coarse baseline. Phase 1 (coarse per-role meter) is demoted to OPTIONAL instrumentation; Phase 3 (the formal, corpus-measured discriminator gate) is a deferrable later increment; the librarian and the adapter are struck from this proposal's scope (revisit via a fresh proposal if ever justified).
 
 > BLUF(claude-opus-4-8/code-graph/cdocs-integration): Integrate a pre-indexed code-graph engine (graphify, Apache-2.0, CLI-backed) into cdocs loops as a stateless, cross-target scoping surface that hands the implementer, reviewer, and judge a change's true MULTI-FILE dependent set up front, cutting speculative read sweeps and enabling tighter model-tiering.
-> Ship a FIRST INCREMENT: a coarse per-role baseline meter (with the per-task "does scoping pay" verdict DELEGATED to the accepted `/cdocs:ablate` harness) plus a reviewer-first, CLI-backed scoping surface. DEFER roll-across-roles, the librarian, and the adapter. Recall parity is a hard gate: a token win that misses a dependent is a regression.
+> Ship the integration itself (Phase 2): prime a graphify dependent-set brief into the loop before iterate/review and instruct the reviewer (then implementer/judge) to use the graphify CLI, validated by a `/cdocs:ablate` spot-check on real multi-file tasks. Coarse per-role metering is OPTIONAL instrumentation; the formal measured discriminator gate is a deferrable later increment; the librarian and adapter are out of scope. Recall parity is a hard principle, protected STRUCTURALLY in the shipped increment (additive-only, skip-scope on a stale/missing index, behind a flag): a token win that misses a dependent is a regression.
 
 ## Summary
 
@@ -28,15 +29,16 @@ The graph substrate resolves a changed symbol's real dependent set: barrel re-ex
 The leverage is not review-only.
 The implementer, reviewer, and judge each run the same "what does this change touch" context-gathering sweep, so a precise dependent set up front cuts the speculative read burn across every heavy loop role and lets more of the loop run on cheaper models without losing related-code coverage.
 
-This proposal makes two separable bets and phases them apart so the second can be dropped:
+The proposal's one bet is **a stateless graph-scoping surface** (CLI-backed now) every loop role queries directly: this is the core, load-bearing deliverable, and it is what ships.
+A durable "librarian" sonnet subagent (orchestration-discipline Pillar 3) was considered as packaging on top of it and is dropped from this proposal's scope (see Important Design Decisions); the tool captures the near-certain win without it.
 
-1. **A stateless graph-scoping surface** (CLI-backed now) every loop role queries directly. This is the core, load-bearing bet.
-2. **A durable "librarian" sonnet subagent** (orchestration-discipline Pillar 3) that would hold codebase knowledge and answer leads' lookups cheaply. This is packaging on top of bet 1, and this proposal recommends deferring it until instrumentation justifies it.
+Three disciplines carry from the source RFP and are non-negotiable: recall parity (a token win that misses one more dependent is a regression), the CRDT blind spot (the graph is a scoping AID, never a related-code guarantee), and a metered verdict before any efficiency claim (discriminator-first, satisfied for the shipped increment by a `/cdocs:ablate` spot-check on real multi-file tasks).
 
-Three disciplines carry from the source RFP and are non-negotiable: a metered token baseline before any efficiency claim (discriminator-first), recall parity (a token win that misses one more dependent is a regression), and the CRDT blind spot (the graph is a scoping AID, never a related-code guarantee).
-
-The shippable FIRST INCREMENT is Phase 1 (a coarse per-role baseline meter, with the per-task "does scoping pay" causal verdict DELEGATED to the accepted `/cdocs:ablate` harness rather than inferred from a fragile per-phase meter) plus Phase 2 (a reviewer-first, CLI-backed scoping surface).
-Roll-across-roles (Phase 3), the librarian (Phase 4), and the adapter (Phase 5) are explicitly-deferred later increments, each gated on the one before it, so the maintainer can green-light full-sending just the first increment.
+The shippable deliverable is **Phase 2**: a graphify dependent-set brief primed into the loop up front plus the reviewer (then implementer and judge) instructed to use the graphify CLI, integrated behind a flag.
+Its validation of record is a `/cdocs:ablate` spot-check on a couple of real MULTI-FILE tasks (the harness is already built and e2e-verified), not a mandatory before/after coarse baseline.
+Recall parity is protected STRUCTURALLY in this increment (additive-only, skip-scope on a stale/missing index, behind a flag); the MEASURED recall-parity gate is what the deferrable Phase 3 adds.
+Phase 1 (a coarse per-role baseline meter) is OPTIONAL instrumentation for when hard live per-role numbers are wanted and does not block shipping Phase 2.
+Phase 3 (the formal, corpus-measured discriminator gate) is a deferrable later increment, opt-in and not required to ship. The librarian and the adapter are out of scope for this proposal.
 
 > NOTE(claude-opus-4-8/code-graph/cdocs-integration): This is a NEW clauthier proposal, not an in-place elaboration of the source RFP.
 > The RFP is the weftwise-side consumer decision trail; clauthier/cdocs is where the plugin, agent, and skill surfaces actually change.
@@ -92,21 +94,20 @@ Properties:
 - **AID, not guarantee.** Every brief carries a standing caveat that the dependent set is a scoping aid and NOT a related-code-completeness guarantee (see the CRDT blind spot below). Roles must not treat an empty or small dependent set as "nothing else is coupled."
 - **Skip-scope on a stale or missing index.** If no fresh index exists, the role falls back to today's unscoped sweep for that round rather than blocking or trusting a stale graph. Scoping is strictly additive: its absence must never degrade recall below the current baseline.
 
-### Bet 2: the librarian (deferred, conditional)
+### The librarian (considered, dropped from scope)
 
-A durable, resume-by-name sonnet subagent that would hold codebase/context knowledge and answer leads' lookups, so an expensive opus/fable lead never loads a file it could delegate a lookup for.
-This is packaging over bet 1, not a replacement for it: a librarian would itself query the same graph surface.
-The recommendation (see Important Design Decisions) is to build bet 1 first and gate the librarian on instrumentation showing the stateless tool leaves residual, re-query-driven burn worth a standing agent's cost.
+A durable "librarian" sonnet subagent (resume-by-name, holding codebase knowledge to answer leads' lookups) was considered as packaging over the scoping surface, not a replacement for it: it would itself query the same graph.
+It is dropped from this proposal's scope. The tool-first rationale (see D1) holds regardless, and the librarian may be revisited via a fresh proposal if instrumentation ever shows the stateless tool leaves residual, re-query-driven burn worth a standing agent's cost.
 
-### Discriminator-first instrumentation (gates everything)
+### Discriminator-first: the ablate spot-check (validation of record)
 
-The discriminator is split across two instruments with a clear division of labor, so the fragile fine-grained meter is off the critical path:
+The efficiency claim is never asserted, it is metered. For the shipped increment (Phase 2) the discriminator is the `/cdocs:ablate` harness:
 
-- **Per-task causal verdict: the `/cdocs:ablate` harness (DELEGATED).** "Does scoping actually pay for this task?" is answered by the accepted, e2e-verified ablation harness ([`2026-09-17-mcp-tool-effectiveness-ablation.md`](./2026-09-17-mcp-tool-effectiveness-ablation.md)), which runs graphify-as-tool against the counterfactual of not having it on a representative scoping task and emits a signed context-gap verdict with a token corroborator. This proposal CONSUMES that instrument for the causal "did it help" discriminator rather than building a bespoke per-phase attribution meter to infer it.
-- **Live per-role baseline burn: the Phase 1 coarse meter (owned here).** A COARSE per-role token meter (per-role totals plus a context-gathering read-token proxy and tool-call count), landed BEFORE either bet and re-metered after, to track live baseline burn per role across a real loop. It deliberately does NOT attempt per-phase attribution (see Phase 1): that fine-grained interleaved-phase meter was the design's fragile point and is dropped from the critical path.
+- **Per-task causal verdict: the `/cdocs:ablate` spot-check.** "Does scoping actually pay for this task?" is answered by the accepted, e2e-verified ablation harness ([`2026-09-17-mcp-tool-effectiveness-ablation.md`](./2026-09-17-mcp-tool-effectiveness-ablation.md)), which runs graphify-as-tool against the counterfactual of not having it on a representative scoping task and emits a signed context-gap verdict with a token corroborator. The shipped increment is validated by running this spot-check on a couple of real MULTI-FILE tasks, not by a mandatory before/after coarse baseline. This proposal CONSUMES the harness for the causal "did it help" discriminator rather than building a bespoke attribution meter to infer it.
+- **Optional live per-role baseline burn: the Phase 1 coarse meter.** When hard live per-role numbers are wanted, a COARSE per-role token meter (per-role totals plus a context-gathering read-token proxy and tool-call count) can be landed and re-metered to track baseline burn per role across a real loop (see Phase 1). This is opt-in instrumentation, not a gate on shipping Phase 2; it deliberately does NOT attempt per-phase attribution (the fragile interleaved-phase meter is off the critical path entirely).
 
-Together: the ablation harness supplies the per-task causal "scoping pays" verdict on dependent-set task shapes; the Phase 1 coarse meter supplies the live per-role baseline the rolled-out loop (Phase 3) is measured against.
-Without at least these two, every efficiency figure below is a guess and is inadmissible.
+The ablate spot-check supplies the per-task causal "scoping pays" verdict on dependent-set task shapes and is sufficient to ship the increment.
+The deferrable Phase 3 adds the corpus-measured recall-parity gate and, if wanted, the optional coarse per-role baseline it is measured against.
 
 ## Important Design Decisions
 
