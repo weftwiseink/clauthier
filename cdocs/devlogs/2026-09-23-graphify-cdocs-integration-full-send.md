@@ -76,6 +76,8 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | dispatch | rev-1 (cdocs:proposer, resumed) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:21:00-08:00 | clear accepting-round items |
 | return | rev-1 (cdocs:proposer, resumed) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:28:00-08:00 | done; 3 commits 33f3fb5/96be57f/9c19271; should-fix + 2 nits cleared; status implementation_ready |
 | dispatch | impl-1 (general-purpose) | plugins/cdocs/skills/{iterate,review}/*, plugins/cdocs/agents/reviewer.md, plugins/cdocs/lib/graphify-scope* (new), tests | 2026-09-23T09:35:00-08:00 | iterate phase: build Phase 2 scoping surface |
+| return | impl-1 (general-purpose) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/agents/reviewer.md | 2026-09-23T10:05:00-08:00 | done; 3 commits 07af3d4/d7d6fca/2ea4b2b; 39/39 tests green; CLI output shape ASSUMED (isolated to graphify_dependents()), for overseer live-run reconciliation |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:07:00-08:00 | review Phase 2 scoping surface impl |
 
 ## Steering Log
 
