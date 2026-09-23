@@ -42,6 +42,10 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 2. **Subagent reads in `files=`: (a) exclude via `agent_id` guard**, confirmed — fixes the reviewer's independently-found bug (`PostToolUse` firing inside subagents). BUT the maintainer flagged a strong forward-looking implication while answering: this makes them confident nested chat records will be wanted soon, scoped **per-workstream** (one per set of proposer/reviewer/implementer working the same task_list), not just per-individual-agent — "so much of the point is context preservation for a workstream." This elevates the review's Phase-3 "subagent chronology" item from a hedge to a likely-near-term need, with a specific scoping unit (workstream, not agent) that the review's sketch didn't specify.
 3. **Phase-2 A/B third arm: (a) add `/clear`-plus-reseed now**, confirmed — three-arm A/B (carry-indefinitely, cap-and-reseed-from-scratchpoint, `/clear`-plus-reseed) in Phase 2.
 
+## Evidence
+
+- [`_verify/2026-09-22-chat-record-hook-canary.md`](_verify/2026-09-22-chat-record-hook-canary.md): the eight sandboxed hook-canary runs (settings, commands, inputs, log lines, results) behind the proposal's Phase 0, plus the round-1 review's Run A/Run B; open it when you need a hook payload's exact shape or the sandbox recipe.
+
 ## Round log
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
@@ -174,3 +178,21 @@ Loop was reopened before any implementation started. Two corrections, both desig
 2. **`cdocs/devlogs/_verify/` placement questioned.** This namespace was invented reactively by round 1's reviewer as a blocking-item fix (evidence must be reproducible, not asserted) and was never checked against the devlog-chunk scheme this same proposal defines. Overseer's resolution: keep it as a distinct genre (raw reproducible evidence is not devlog narrative prose; inlining it as a chunk would recreate the append-only-bloat failure mode devlog-management exists to prevent) but require it to be backlinked from the owning workstream's devlog via the same `part_of`-style convention the chunks already use, so it's discoverable, not a disconnected namespace.
 
 Dispatched to the same (warm) proposer for a round-3 revision.
+
+## Round 3: revision (fable-5-1, warm proposer)
+
+Both corrections applied; proposal back to `status: review_ready`.
+
+**1. Chat-record content.** Agent turns are now agent-authored bullet blocks, one bullet per action item (`- <verb> <object>[: <why or outcome>]`, ~120 chars each), written as the last action of any turn that did work via a new `chat-record.sh note [--as <speaker>] <record-path> "<bullets>"` entry mode; the script attaches `p=` (prompt id stashed by `UserPromptSubmit`) and `files=` (from the `PostToolUse` turn buffer) mechanically, so the agent types only the bullets.
+`last_assistant_message` is never written to the record.
+Reworked: BLUF, Summary table and a reversal NOTE, layer map, speaker table, new "Agent bullet blocks" paragraph, `files=` paragraph, the composite example, the hook contract (two entry modes; `Stop` row; `PostToolUse` matcher widened to `Bash|Agent` for an `acted` mark), the invariants (one append path, two authors; agents never `Edit`/`Write` the record), the Scratchpoint's "different shapes" paragraph, Decisions 4 and 10, Edge Cases, Test Plan (note, forgot-note, no-work scenarios), Phase-1 deliverables and success criteria, and the Phase-3 `@return` sourcing caveat.
+
+**Forgot-the-bullet answer, settled:** (1) first `Stop` of a working turn with no bullet returns `decision: block` with a reminder to call `note`; (2) if the second `Stop` (`stop_hook_active=true`) still finds none, the hook appends a placeholder `@<model-short>: <ts> p=<pid8> files="..." gap=1` with an empty body; (3) the gap is accepted.
+No truncated reply is ever used as the fallback: the placeholder's `files=` is real information and `gap=1` is greppable (two or more gaps since the last handoff feed the judge's `overseer_thinness: signal_missing`), whereas a truncated dump is the shape the maintainer ruled out.
+Verified the block mechanism with canary run 8 (2026-09-23, CC 2.1.280, haiku): the harness honored the block, the agent performed the requested action, the second `Stop` fired with `stop_hook_active=true`, three turns total; recorded in the `_verify` artifact.
+Turns with no tool use owe no bullet and are never blocked.
+
+**2. `_verify/` placement.** Kept as its own genre (with `_judge/`), now linked like chunks: evidence files carry `part_of: <owning devlog>` plus a first-line backlink NOTE, and the owning devlog's index carries an `## Evidence` list adjacent to `## Chunks` (a list, not chunk rows, because the read-when semantics differ). Applied to the canary artifact and to this devlog's new `## Evidence` section; the convention is in the proposal's new "Evidence files" subsection and in Phase-1 deliverable 6 and Phase-2 deliverable 4 (`triage`/`status` flag an evidence file whose owner lacks an `## Evidence` line).
+
+**Not changed.** User-turn capture (hook, verbatim), `@compact` capture (verbatim summary, the one non-compact block), the grammar, the `agent_id` guard, and the splitting rules.
+**Flagged for the reviewer:** the `Stop` reminder is the design's only `decision: block`; the bound is the harness's `stop_hook_active`, verified once headless, not interactively.
