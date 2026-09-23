@@ -27,7 +27,7 @@ The implementer, reviewer, and judge each run the same "what does this change to
 
 This proposal makes two separable bets and phases them apart so the second can be dropped:
 
-1. **A stateless graph-scoping tool/MCP surface** every loop role queries directly. This is the core, load-bearing bet.
+1. **A stateless graph-scoping surface** (CLI-backed now) every loop role queries directly. This is the core, load-bearing bet.
 2. **A durable "librarian" sonnet subagent** (orchestration-discipline Pillar 3) that would hold codebase knowledge and answer leads' lookups cheaply. This is packaging on top of bet 1, and this proposal recommends deferring it until instrumentation justifies it.
 
 Three disciplines carry from the source RFP and are non-negotiable: a metered token baseline before any efficiency claim (discriminator-first), recall parity (a token win that misses one more dependent is a regression), and the CRDT blind spot (the graph is a scoping AID, never a related-code guarantee).
@@ -58,7 +58,7 @@ Secondary: evaluate honestly whether bundling graph access into a durable librar
 ```mermaid
 flowchart LR
   D[Changed symbols<br/>from diff] --> Q{Graph index<br/>fresh?}
-  Q -->|yes| G[Query engine MCP:<br/>resolved dependent set]
+  Q -->|yes| G[Query engine CLI:<br/>resolved dependent set]
   Q -->|stale/missing| S[Skip-scope:<br/>fall back to today's sweep]
   G --> C[Scoped context brief<br/>+ AID-not-guarantee caveat]
   C --> I[Implementer]
@@ -78,7 +78,7 @@ Output: the resolved dependent set (barrel/aliased re-exports and multi-hop chai
 Properties:
 
 - **Stateless and role-agnostic.** No warm context, no ownership, no per-role variant. The reviewer, implementer, and judge issue the same query shape and receive the same brief format.
-- **Engine-behind-MCP now, adapter-ready later.** Query the engine's MCP surface directly in the first cut. Structure the query/response contract so a later swap onto the RFP's engine-agnostic adapter (sibling #3) is a surface change, not a rewrite. Do not couple loop code to graphify-specific response shapes beyond a thin translation layer.
+- **Engine-behind-CLI now, adapter-ready later.** Query the engine's CLI subcommands (`query`/`explain`/`path`) directly in the first cut: they cover every query the scoping brief needs over the same tree-sitter index, and the CLI is live in-container while the MCP is shadowed by a config over-mount (D4). Structure the query/response contract so a later swap onto the RFP's engine-agnostic adapter (sibling #3), or onto the MCP transport, is a surface change, not a rewrite. Do not couple loop code to graphify-specific response shapes beyond a thin translation layer. Constrain the wrapper to the query subcommands, never raw `graph.json` ingestion, to keep the brief compact.
 - **AID, not guarantee.** Every brief carries a standing caveat that the dependent set is a scoping aid and NOT a related-code-completeness guarantee (see the CRDT blind spot below). Roles must not treat an empty or small dependent set as "nothing else is coupled."
 - **Skip-scope on a stale or missing index.** If no fresh index exists, the role falls back to today's unscoped sweep for that round rather than blocking or trusting a stale graph. Scoping is strictly additive: its absence must never degrade recall below the current baseline.
 
@@ -145,12 +145,12 @@ Together these make the production guard structural (the brief cannot omit the C
 > WARN(claude-opus-4-8/code-graph/cdocs-integration): The failure mode to design against is a role treating a small graph dependent set as license to skip broader review.
 > On a CRDT-heavy codebase the graph can return a near-empty dependent set for a change with heavy runtime coupling. The caveat is not decoration; it is the guardrail against a recall regression that the token meter alone would not catch.
 
-### D4: Engine choice: graphify default, MCP-direct now, adapter later
+### D4: Engine choice: graphify default, CLI-backed now, adapter later
 
 graphify (Apache/MIT, license to be re-verified under fresh diligence per the Open Questions) is the default candidate and is pre-1.0.
-Query its MCP surface directly in the first cut; keep the loop-side contract thin so migration onto the engine-agnostic adapter (RFP sibling #3) is a later surface swap.
+Query its CLI subcommands (`query`/`explain`/`path`) directly in the first cut; keep the loop-side contract thin so migration onto the engine-agnostic adapter (RFP sibling #3), or onto the MCP transport, is a later surface swap.
 
-> NOTE(claude-opus-4-8/graphify-integration): The scoping surface is transport-agnostic: graphify's CLI subcommands (`query`/`explain`/`path`) map one-to-one onto the MCP tools (`query_graph`/`get_node`/`shortest_path`) over the identical tree-sitter index, so "MCP" is a transport, not a distinct capability (see [`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)). Read D4 as "engine-direct now (CLI or MCP), adapter later": the thin loop-side contract is what matters. A CLI-backed first cut is expected where the MCP is unavailable — e.g. in the clauthier lace devcontainer the graphify MCP is currently shadowed by a claude-code host-config over-mount (tracked by a lace-side RFP), while the CLI is live. Revisit an MCP transport only if Phase 3 instrumentation shows the loop needs unplanned graph queries mid-reasoning rather than a precomputed brief.
+> NOTE(claude-opus-4-8/graphify-integration): The scoping surface is transport-agnostic: graphify's CLI subcommands (`query`/`explain`/`path`) map one-to-one onto the MCP tools (`query_graph`/`get_node`/`shortest_path`) over the identical tree-sitter index, so "MCP" is a transport, not a distinct capability (see [`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)). Read D4 as "engine-direct now (CLI by default), adapter later": the thin loop-side contract is what matters. The first cut is CLI-BACKED by default, not merely as a fallback: graphify's CLI is live in-container and the MCP-vs-CLI report ([`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)) concludes the CLI subcommands fully cover the scoping queries, while in the clauthier lace devcontainer the graphify MCP is currently shadowed by a claude-code host-config over-mount (tracked by a lace-side RFP). The brief-up-front shape (not ad-hoc query mid-reasoning) is exactly the shape the CLI serves cleanly. Revisit an MCP transport only if Phase 3 instrumentation shows the loop needs unplanned graph queries mid-reasoning rather than a precomputed brief.
 Treat graphify's pre-1.0 churn as an integration risk: pin a version, and keep the translation layer small enough to re-target if the engine's shape shifts.
 
 ### D5: Index provisioning and staleness policy
@@ -207,10 +207,10 @@ No time estimates. Dependencies are explicit.
 - Constraint: this phase adds NO scoping. It only measures. Nothing downstream is admissible until it lands.
 - Depends on: nothing. Blocks: Phases 2, 3, 4.
 
-### Phase 2: Stateless graph-scoping tool/MCP surface
+### Phase 2: Stateless graph-scoping surface (CLI-backed)
 
 - Precondition: re-verify graphify's license (expected Apache/MIT) under fresh diligence before adopting it as an in-loop dependency, per the RFP's engine-under-license item (D4, Open Questions). A license regression blocks adoption.
-- Provision a graphify index over the corpus; expose the graph query behind a thin loop-side contract (D4).
+- Provision a graphify index over the corpus; expose the graph query behind a thin loop-side contract over the CLI subcommands (`query`/`explain`/`path`), never raw `graph.json` ingestion (D4).
 - Produce the scoped-context brief (dependent set + AID caveat, D3) from changed symbols.
 - Wire skip-scope on stale/missing index and on engine error (D5), with fallback labeled for instrumentation.
 - Integrate into ONE role first (reviewer, the RFP's original consumer) behind a flag.
@@ -235,7 +235,7 @@ No time estimates. Dependencies are explicit.
 
 ### Phase 5: Adapter migration (deferred, tracked)
 
-- Migrate the loop-side contract from graphify's MCP surface onto the RFP's engine-agnostic adapter (sibling #3) when it exists.
+- Migrate the loop-side contract from graphify's engine-direct surface (CLI now, MCP if later adopted) onto the RFP's engine-agnostic adapter (sibling #3) when it exists.
 - Success: engine swap is a surface change; loop code is unchanged.
 - Depends on: sibling #3 landing. Not blocking for Phases 1 to 4.
 
