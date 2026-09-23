@@ -40,7 +40,7 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
 |---|---|---|---|---|
-| 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | pending | pending |
+| 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | done: `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md` | revise (5 blocking, warm proposer) |
 
 ## Round 1: proposer (fable-5-1)
 
@@ -68,3 +68,33 @@ The coordinator's mid-task steering note (files-touched gist log from `2026-09-2
 **Not done / for the reviewer.**
 No `/cdocs:review` was dispatched (dispatched mode); the overseer's reviewer round covers it.
 Open judgment calls a reviewer may push on: committing chat records by default; `Stop`-captured assistant turns adding file size; the mtime heuristic for "active devlog" in the nudge.
+
+## Round 1: reviewer (fable-5-1)
+
+Review at `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md`; proposal `last_reviewed` set to `revision_requested`, round 1.
+Verdict: **revise**, warm proposer (all blocking items are bounded spec edits plus one evidence file; no design decision reopens).
+
+**Independent verification performed (not taken from the proposer's summary).**
+Re-derived every Phase-0 row from the raw canary logs (`scratchpad/canary/canary*.log`, `run*.in`, `run*.out`, `cfg*/settings.json`): `PostCompact` fires with `compact_summary` (2.8-9.1KB) after `SessionStart(compact)`; manual and auto `PreCompact` fire; run 4's marker output proves `additionalContext` from all three compaction-adjacent hooks reaches the model; `--include-hook-events` omits `PreCompact`/`PostCompact`; run 5 shows no `UserPromptSubmit` between `SubagentStart`/`SubagentStop` and the second `UserPromptSubmit` prompt (from the sandbox transcript) begins `<task-notification>`.
+Ran two fresh sandboxed canaries (`scratchpad/rv/`, CC 2.1.280, haiku) with a recorder that logs `agent_id`/`agent_type` on every event:
+Run A (foreground `Agent` whose subagent `Read`s a file): `UserPromptSubmit` fired once (scoping claim holds on the foreground path too) but **`PostToolUse` fired inside the subagent with `agent_id` set**, contradicting the proposal's "subagent reads are invisible by construction"; the docs confirm tool hooks run inside subagents.
+Run B (`claude -p "/echo hello-world"` with a project command): `UserPromptSubmit` fires with the raw invocation string, not the expanded skill body; built-in `/compact` fires none (run 2).
+External: [#13572](https://github.com/anthropics/claude-code/issues/13572) is closed-stale, [#14258](https://github.com/anthropics/claude-code/issues/14258) closed, `PostCompact` in the official hooks table.
+
+**Blocking (5).**
+(1) Canary evidence lives only in a session scratchpad; move settings, exact commands, inputs, and payload-key lines to `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md`; fix six-vs-seven runs; relabel the "real payloads" example as a composite of runs 2, 4, 7.
+(2) Add an `agent_id` guard to every chat-record event; correct the subagent-read statements; rest the overseer-only scoping on the documented `agent_id` field.
+(3) Pin the grammar: one `HEADER_RE` prefix for writer and reader (strict `header` vs loose reader regex currently disagree on `@alice: hey`, LESS `@var:`, CSS `@page:first`); define quoted-value escapes incl. newline in `instructions=`; file lookup by `*-<sid8>.md` glob plus full `sid=` on the start line.
+(4) Commit-by-default: `WARN` must cover assistant bodies and compaction summaries, not only pastes; specify explicit-path staging at handoff and "dispatched agents never stage `cdocs/_chat/`" (always-dirty tree, `git add -A` sweep); choose a redaction stance.
+(5) Define "closed concern" (three-part closure test; move every closed concern, one chunk each, ~3KB merge) so two agents split identically.
+
+**Judgment-call verdicts.**
+(a) commit by default: keep, with the protocol and exposure fixes above; gitignore-by-default offered as maintainer option.
+(b) `Stop`-captured assistant turns: keep verbatim via hook; `Stop` is the turn-handback point and `last_assistant_message` is the final text block only (already summary-shaped); a skill-convention per-turn summary would be a third summarization layer and duplicate the Scratchpoint; add the rule "overseer's final message each turn is its turn summary".
+(c) mtime heuristic: reject as primary; use session-scoped "last devlog this session `Edit`/`Write`'d" from the already-wired `PostToolUse` hook, then `grep -l <sid8>`, then mtime.
+
+**Steering items addressed in the review (explicit sections).**
+Strategic: the system does not obviate native auto-compaction for the top-level session (no agent-invokable compaction, AFK/headless sessions, uncontrolled growth); it makes the summary's content irrelevant and compaction rare; restate the objective accordingly and add a `/clear`-plus-reseed third arm to the Phase-2 A/B.
+Subagent-level capture: one-shot legs already covered by dispatch brief plus return summary; durable specialists have the state half in the Scratchpoint and lack only chronology; `SubagentStart/Stop` + `agent_transcript_path` + `agent_id`-keyed `PostToolUse` make a per-agent record one more `case` branch; recommended as a scoped Phase-3 investigation item, not designed now.
+
+**Scope check.** No creep into graphify or the shared-cache token-cost half; interactive `/compact` correctly a Phase-1 manual check.
