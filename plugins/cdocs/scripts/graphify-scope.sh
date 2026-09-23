@@ -2,8 +2,10 @@
 # graphify-scope.sh - thin, CLI-backed graph-scoping helper for cdocs loops (proposal Phase 2).
 #
 # Turns a round's changed files/symbols into a compact SCOPED-CONTEXT BRIEF by shelling out to
-# graphify's QUERY SUBCOMMANDS (`explain`/`query`/`path`) over its pre-built index -- NEVER raw
-# `graph.json` ingestion (D4). The brief carries the resolved multi-file dependent set, the standing
+# graphify's QUERY SUBCOMMANDS (`explain` for a file's symbols, then `affected` for each symbol's
+# reverse-traversal blast radius) over its pre-built index -- NEVER raw `graph.json` ingestion (D4).
+# Reconciled against real graphify 0.9.61 (plain-text output; no --json on these subcommands).
+# The brief carries the resolved multi-file dependent set, the standing
 # AID-not-guarantee caveat (D3), and a co-surfaced `.observe`/`.subscribe` channel for the touched
 # files (the D3 structural CRDT guard). It is deliberately MINIMAL: prime a brief + point the role
 # at the graphify CLI for follow-ups; nothing more.
@@ -64,31 +66,102 @@ skip() {
   exit 0
 }
 
-# ---------------------------------------------------------------------------------------------
-# graphify_dependents (THE thin translation layer -- the ONLY graphify-shape-coupled function).
-# Shells out to `graphify explain <target> --json` per target and unions the resolved file set.
-# Uses the QUERY SUBCOMMAND only, never raw graph.json. Robust to output-shape drift: pulls every
-# `.file`/`.path` field at any depth of the JSON, so a shape wobble in a pre-1.0 engine changes
-# only THIS function (D4). Prints the deduped dependent file list (one per line) on stdout.
-# Returns non-zero on ANY engine error (caller maps that to skip-scope).
-# ---------------------------------------------------------------------------------------------
+# =============================================================================================
+# THE THIN TRANSLATION LAYER -- the ONLY graphify-shape-coupled code (D4).
+# A later swap onto the MCP transport or an engine-agnostic adapter touches ONLY the four
+# functions in this block; the rest of the script is shape-agnostic.
+#
+# Reconciled against REAL graphify 0.9.61 (the assumed `explain --json` contract was wrong):
+#   - Output is PLAIN TEXT. There is NO `--json` flag on explain/affected/query (only god-nodes
+#     and diagnose emit JSON). We parse text.
+#   - The dependent set (blast radius) comes from `affected "<symbol>"` (REVERSE traversal --
+#     "what does a change to X impact"), NOT `explain` (which lists a node's neighbors).
+#   - Targets are SYMBOL labels (e.g. `parseFrontmatter()`), NOT file basenames. `affected` on a
+#     basename returns "No affected nodes found." So the pipeline is:
+#       changed file -> `explain "<basename>"` -> parse `[contains]` symbols
+#                    -> per symbol `affected "<symbol>"` -> union the dependent `<path>`s.
+#   - The graph lives in graphify's cache (default `graphify-out/graph.json`; in-container
+#     `/var/cache/graphify/graph.json`), resolved by `resolve_graph_path` and passed via `--graph`
+#     so the file we stat for staleness is exactly the file the queries read.
+# Still CLI-subcommands only, never raw graph.json ingestion.
+# =============================================================================================
+
+# resolve_graph_path: print the path to the graph.json the queries will read (and we will stat for
+# staleness), or empty if none exists. Precedence: explicit --graph / --index / --graph-path flag,
+# then env CDOCS_GRAPHIFY_GRAPH, then graphify's own default locations (GRAPHIFY_OUT, the container
+# cache, the cwd-relative default). Configurable, with graphify's default as the fallback.
+resolve_graph_path() {
+  local explicit="$1"   # value of --graph/--index/--graph-path, or empty
+  local c
+  if [ -n "$explicit" ]; then echo "$explicit"; return 0; fi
+  if [ -n "${CDOCS_GRAPHIFY_GRAPH:-}" ]; then echo "$CDOCS_GRAPHIFY_GRAPH"; return 0; fi
+  for c in \
+    "${GRAPHIFY_OUT:+${GRAPHIFY_OUT%/}/graph.json}" \
+    "/var/cache/graphify/graph.json" \
+    "graphify-out/graph.json" ; do
+    [ -n "$c" ] || continue
+    if [ -f "$c" ]; then echo "$c"; return 0; fi
+  done
+  echo ""   # none found => caller maps to missing-index
+  return 0
+}
+
+# graphify_symbols_for_file <graph> <file-basename>: run `explain` and print the symbol labels the
+# file DEFINES (the `[contains]` connections). Returns non-zero ONLY on an engine error (nonzero
+# exit); an empty/absent-node result is a legitimately empty symbol list (exit 0, no output).
+# NOTE: `explain` truncates its connection list ("... and N more"), so a file with very many
+# symbols may under-list; that is a best-effort AID limit, additive-safe (never a recall guarantee).
+graphify_symbols_for_file() {
+  local graph="$1" base="$2" raw rc
+  if raw="$(graphify explain "$base" --graph "$graph" 2>/dev/null)"; then rc=0; else rc=$?; fi
+  [ "$rc" -eq 0 ] || return "$rc"
+  # `  --> <label> [contains] [EXTRACTED] <path>:L<n>`  -> extract <label>
+  printf '%s\n' "$raw" \
+    | awk -F' \\[contains\\]' '/\[contains\]/ { sub(/^[[:space:]]*--> /,"",$1); if ($1!="") print $1 }' \
+    | sort -u || true
+}
+
+# graphify_affected_paths <graph> <symbol>: run `affected` (reverse traversal) and print the
+# dependent file paths (the `<path>` in `- <label> [<rel>] <path>:L<n>` lines), deduped. The empty
+# case prints exactly "No affected nodes found." and yields no paths. Returns non-zero on engine
+# error only.
+graphify_affected_paths() {
+  local graph="$1" sym="$2" raw rc
+  if raw="$(graphify affected "$sym" --graph "$graph" 2>/dev/null)"; then rc=0; else rc=$?; fi
+  [ "$rc" -eq 0 ] || return "$rc"
+  # grab every `<path>:L<n>` token, then strip the `:L<n>` suffix. Header lines carry no such token.
+  printf '%s\n' "$raw" \
+    | grep -oE '[^[:space:]]+:L[0-9]+' \
+    | sed -E 's/:L[0-9]+$//' \
+    | sort -u || true
+}
+
+# graphify_dependents <graph> <mode:files|symbols> <target...>: orchestrate the real pipeline and
+# print the deduped union of dependent file paths. In `files` mode each target is a changed-file
+# path (basename -> explain -> [contains] symbols -> affected). In `symbols` mode each target is a
+# symbol label queried with `affected` directly. Returns non-zero on ANY engine error.
 graphify_dependents() {
-  local out="" t rc
-  for t in "$@"; do
-    local raw
-    # `--json` requests structured output; a caret-free positional target mirrors the probe usage
-    # (`graphify explain "inject-rules.ts"`). An engine error here fails the whole resolution.
-    # Capture inside an `if` so `set -e` does not kill us before we read the exit code.
-    if raw="$(graphify explain "$t" --json 2>/dev/null)"; then rc=0; else rc=$?; fi
+  local graph="$1" mode="$2"; shift 2
+  local out="" t base syms sym aff rc
+  local symbols=()
+  if [ "$mode" = "files" ]; then
+    for t in "$@"; do
+      base="$(basename "$t")"
+      if syms="$(graphify_symbols_for_file "$graph" "$base")"; then rc=0; else rc=$?; fi
+      [ "$rc" -eq 0 ] || return "$rc"
+      [ -n "$syms" ] || continue
+      while IFS= read -r sym; do [ -n "$sym" ] && symbols+=("$sym"); done <<< "$syms"
+    done
+  else
+    symbols=("$@")
+  fi
+  for sym in "${symbols[@]:-}"; do
+    [ -n "$sym" ] || continue
+    if aff="$(graphify_affected_paths "$graph" "$sym")"; then rc=0; else rc=$?; fi
     [ "$rc" -eq 0 ] || return "$rc"
-    [ -n "$raw" ] || return 0   # empty output is a legitimately empty set, not an error
-    local files
-    files="$(printf '%s' "$raw" | jq -r '[.. | (.file? // .path? // empty)] | unique[]' 2>/dev/null)" \
-      || return 1               # unparseable output => treat as engine error
-    out="$out$files
+    out="$out$aff
 "
   done
-  # dedupe the union across all targets
   printf '%s' "$out" | grep -v '^$' | sort -u || true
 }
 
@@ -114,8 +187,11 @@ observe_sites() {
 #                               in {1,true,on,yes} also enables). OFF => zero graphify calls.
 #   --files "<a> <b> ..."       explicit changed files (space-separated). Else derived from git.
 #   --diff-base <ref>           derive changed files from `git diff --name-only <ref>`.
-#   --symbols "<x> <y> ..."     explicit graph targets. Else the changed files' basenames are used.
-#   --index <path>              path to graph.json (else ${GRAPHIFY_OUT:-.}/graph.json).
+#   --symbols "<x> <y> ..."     explicit symbol labels to run `affected` on directly, skipping the
+#                               file->explain->[contains] derivation. Else derived from the changed
+#                               files via the real pipeline.
+#   --graph <path> | --index <path>  path to graph.json. Else resolved from CDOCS_GRAPHIFY_GRAPH,
+#                               GRAPHIFY_OUT, the container cache, or graphify's cwd default.
 #   --near-empty-threshold <n>  dependent-set size <= n counts as near-empty for the CRDT trigger
 #                               (default 1).
 # ---------------------------------------------------------------------------------------------
@@ -127,7 +203,6 @@ cmd_brief() {
   [ -n "$enable" ] || skip "disabled" ""
 
   local near_empty="${A[near-empty-threshold]:-1}"
-  local index="${A[index]:-${GRAPHIFY_OUT:-.}/graph.json}"
 
   # --- resolve the round's changed files -----------------------------------------------------
   local changed=()
@@ -147,28 +222,29 @@ cmd_brief() {
 
   # --- skip-scope preconditions (each additive-safe) -----------------------------------------
   command -v graphify >/dev/null 2>&1 || skip "skip-scope" "no-binary"
-  [ -f "$index" ] || skip "skip-scope" "missing-index"
-  # Staleness: any changed file NEWER than the index means the index predates the change (D5).
+  # Resolve the ACTUAL graph.json the queries will read; stat THAT for missing/stale (never a
+  # hard-coded path, or the helper always false-skips against the container cache).
+  local graph; graph="$(resolve_graph_path "${A[graph]:-${A[index]:-}}")"
+  [ -n "$graph" ] && [ -f "$graph" ] || skip "skip-scope" "missing-index"
+  # Staleness: any changed file NEWER than the resolved graph means it predates the change (D5).
   local idx_mtime fmt
-  idx_mtime="$(stat -c %Y "$index" 2>/dev/null || echo 0)"
+  idx_mtime="$(stat -c %Y "$graph" 2>/dev/null || echo 0)"
   for f in "${changed[@]}"; do
     [ -f "$f" ] || continue
     fmt="$(stat -c %Y "$f" 2>/dev/null || echo 0)"
     if [ "$fmt" -gt "$idx_mtime" ]; then skip "skip-scope" "stale-index"; fi
   done
 
-  # --- resolve targets and query the engine --------------------------------------------------
-  local targets=()
+  # --- query the engine via the real pipeline (file->explain->symbols->affected) -------------
+  local deps rc mode="files"
+  local targets=("${changed[@]}")
   if [ -n "${A[symbols]:-}" ]; then
+    mode="symbols"
     # shellcheck disable=SC2206
     targets=(${A[symbols]})
-  else
-    for f in "${changed[@]}"; do targets+=("$(basename "$f")"); done
   fi
-
-  local deps rc
   # Capture inside an `if` so `set -e` does not kill us before we read the engine's exit code.
-  if deps="$(graphify_dependents "${targets[@]}")"; then rc=0; else rc=$?; fi
+  if deps="$(graphify_dependents "$graph" "$mode" "${targets[@]}")"; then rc=0; else rc=$?; fi
   [ "$rc" -eq 0 ] || skip "skip-scope" "engine-error"
 
   # dependent set = engine files MINUS the round's own changed files (inputs are not "dependents")
@@ -230,14 +306,15 @@ cmd_brief() {
   echo "  consideration; on any doubt, fall back to the full unscoped sweep."
   echo
   echo "FOLLOW-UP: use the graphify CLI for further queries over the same index --"
-  echo "  graphify explain \"<symbol>\"   (a node + its neighbors)"
-  echo "  graphify query   \"<question>\" (BFS traversal for a question)"
-  echo "  graphify path    \"<A>\" \"<B>\"  (shortest path between two nodes)"
-  echo "  Never ingest raw graph.json; use the query subcommands (they return scoped answers)."
+  echo "  graphify affected \"<symbol>\"  (reverse traversal: what a change to <symbol> impacts)"
+  echo "  graphify explain  \"<node>\"     (a node + its neighbors; a file lists its [contains] symbols)"
+  echo "  graphify query    \"<question>\" (BFS traversal for a question)"
+  echo "  graphify path     \"<A>\" \"<B>\"  (shortest path between two nodes)"
+  echo "  Output is plain text (no --json on these); never ingest raw graph.json."
 }
 
 # --- dispatch --------------------------------------------------------------------------------
-[ $# -ge 1 ] || die "usage: graphify-scope.sh brief [--enable] [--files \"...\"] [--diff-base <ref>] [--symbols \"...\"] [--index <path>] [--near-empty-threshold <n>]"
+[ $# -ge 1 ] || die "usage: graphify-scope.sh brief [--enable] [--files \"...\"] [--diff-base <ref>] [--symbols \"...\"] [--graph <path> | --index <path>] [--near-empty-threshold <n>]"
 sub="$1"; shift
 case "$sub" in
   brief) cmd_brief "$@" ;;

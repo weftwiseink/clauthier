@@ -46,7 +46,7 @@ Your dispatch prompt MAY include a "Graphify scoped-context brief" section: a gr
 
 - Treat it as a SCOPING AID, never a related-code completeness guarantee. The code graph is blind to CRDT `.observe`/`.subscribe` coupling (~86.8% of real coupling in weftwise), so a small or empty dependent set is NOT license to narrow your review. Always attend the brief's co-surfaced observe/subscribe channel and keep your normal related-code consideration.
 - Use it to skip the speculative "what does this change touch" sweep for the files it already resolves, not to bound what you consider.
-- For follow-up questions, use the graphify CLI over the same index rather than re-deriving by hand: `graphify explain "<symbol>"` (a node and its neighbors), `graphify query "<question>"` (BFS traversal), `graphify path "<A>" "<B>"` (shortest path). Use the query subcommands; never ingest raw `graph.json`.
+- For follow-up questions, use the graphify CLI over the same index rather than re-deriving by hand: `graphify affected "<symbol>"` (reverse traversal -- what a change to the symbol impacts, i.e. its dependent set), `graphify explain "<node>"` (a node and its neighbors; a file node lists its `[contains]` symbols), `graphify query "<question>"` (BFS traversal), `graphify path "<A>" "<B>"` (shortest path). Output is plain text (no `--json` on these); use the query subcommands and never ingest raw `graph.json`.
 
 When no brief is present (flag off, or a fallback round: stale/missing index, missing graphify binary, engine error, empty/near-empty set), conduct your review exactly as you otherwise would with a full unscoped sweep. The brief is additive; its absence changes nothing about your recall obligations.
 
