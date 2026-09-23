@@ -14,7 +14,7 @@ last_reviewed:
   round: 4
 ---
 
-# Graphify integration into cdocs loops, and the librarian question
+# Graphify integration into cdocs loops
 
 > NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping + lean-track revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (the stateless graph-scoping surface as core, recall parity as a hard principle, the CRDT blind-spot honesty) is intact.
 > WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0.
