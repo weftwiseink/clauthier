@@ -152,7 +152,9 @@ Together these make the production guard structural (the brief cannot omit the C
 
 ### D4: Engine choice: graphify default, CLI-backed now, adapter later
 
-graphify (Apache/MIT, license to be re-verified under fresh diligence per the Open Questions) is the default candidate and is pre-1.0.
+graphify (Apache-2.0, CONFIRMED) is the default candidate and is pre-1.0.
+The license precondition is RESOLVED: the engine is PyPI `graphifyy`, built from the public [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) GitHub repository, which carries an Apache-2.0 `LICENSE` at its root (confirmed via the GitHub license API, spdx `Apache-2.0`).
+Residual diligence, NOT a blocker for the first increment: PyPI package metadata for `graphifyy` omits the SPDX classifier (a packaging gap, not a license ambiguity), and the adopted pin (`0.9.61`) should be spot-checked to carry the same `LICENSE` at its tag before it becomes a standing dependency.
 Query its CLI subcommands (`query`/`explain`/`path`) directly in the first cut; keep the loop-side contract thin so migration onto the engine-agnostic adapter (RFP sibling #3), or onto the MCP transport, is a later surface swap.
 
 > NOTE(claude-opus-4-8/graphify-integration): The scoping surface is transport-agnostic: graphify's CLI subcommands (`query`/`explain`/`path`) map one-to-one onto the MCP tools (`query_graph`/`get_node`/`shortest_path`) over the identical tree-sitter index, so "MCP" is a transport, not a distinct capability (see [`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)). Read D4 as "engine-direct now (CLI by default), adapter later": the thin loop-side contract is what matters. The first cut is CLI-BACKED by default, not merely as a fallback: graphify's CLI is live in-container and the MCP-vs-CLI report ([`../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md`](../reports/2026-09-17-graphify-mcp-vs-cli-value-add.md)) concludes the CLI subcommands fully cover the scoping queries, while in the clauthier lace devcontainer the graphify MCP is currently shadowed by a claude-code host-config over-mount (tracked by a lace-side RFP). The brief-up-front shape (not ad-hoc query mid-reasoning) is exactly the shape the CLI serves cleanly. Revisit an MCP transport only if Phase 3 instrumentation shows the loop needs unplanned graph queries mid-reasoning rather than a precomputed brief.
@@ -215,7 +217,7 @@ No time estimates. Dependencies are explicit.
 
 ### Phase 2: Stateless graph-scoping surface (CLI-backed)
 
-- Precondition: re-verify graphify's license (expected Apache/MIT) under fresh diligence before adopting it as an in-loop dependency, per the RFP's engine-under-license item (D4, Open Questions). A license regression blocks adoption.
+- Precondition (RESOLVED): graphify's license is Apache-2.0, confirmed from the upstream [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) repo's root `LICENSE` (D4). The engine is NOT license-blocked for the first increment. The sole residual is a spot-check that the adopted pin `0.9.61` carries the same `LICENSE` at its tag; a license regression at the pin would block adoption at that pin, nothing more.
 - Provision a graphify index over the corpus; expose the graph query behind a thin loop-side contract over the CLI subcommands (`query`/`explain`/`path`), never raw `graph.json` ingestion (D4).
 - Produce the scoped-context brief (dependent set + AID caveat, D3) from changed symbols.
 - Wire skip-scope on stale/missing index and on engine error (D5), with fallback labeled for instrumentation.
@@ -258,7 +260,7 @@ Forward-looking items a review round could pressure-test:
 - **What is "lace"?** An unspecified weftwise integration target referenced by the maintainer. Not designed against here; a prerequisite for any lace-specific hook.
 - **Index provisioning model (D5).** Index-on-loop-start vs standing-service vs on-demand: deferred to Phase 3, informed by the metered cost of each.
 - **Diff-size threshold for scoping.** Below what change size does scoping cost exceed its savings? An instrumentation output, not a guess.
-- **graphify license re-verification.** The RFP requires confirming graphify's Apache/MIT license under fresh diligence before it becomes an in-loop dependency; D4 treats it as the default candidate, not settled. This is a Phase 2 precondition, not a detail.
+- **graphify license (RESOLVED).** graphify is Apache-2.0, confirmed from the upstream [`Graphify-Labs/graphify`](https://github.com/Graphify-Labs/graphify) root `LICENSE` (D4). No longer an open blocker; the sole residual is a per-pin spot-check of the `0.9.61` tag's `LICENSE`, tracked as Phase 2 diligence, not a gate.
 - **Semantic-retrieval complement.** Structural graph scoping and embedding retrieval answer different questions; whether a hybrid beats either is left to the RFP's separate report, not this proposal.
 
 ## Links
