@@ -79,3 +79,19 @@ Three empirical findings drive the revise verdict, each verified rather than rea
 - **Per-call Bash size distribution** computed over the read-source corpus (11,531 results, weftwise, 2026-09-12 onward; mean 400 tok matches the report's 390): p50 655, p90 3,978, p95 6,228, p99 14,103 chars. Top-15 whales are all `grep`/`find`/`git diff`/multi-`cat` sweeps, not builds or installs.
 
 Reviser instructions are the review's Action Items 1-3 (blocking) and 4-7 (fold-in); the review's Appendix carries the exact canary and measurement procedures so the reviser can cite them without re-deriving.
+
+## Round 1 review verdict + maintainer decisions (2026-09-23)
+
+Round 1 (fable reviewer): **Revise**, 3 blocking (Findings 2-3/BLUF/Summary/division-of-labor table wrong on installed-version hook behavior — `PreToolUse updatedInput` actually WORKS empirically, only `PostToolUse updatedToolOutput` is inert; `bashOutputMaxChars` is spill-to-file-with-preview not head/tail clipping; `cdocs:bash-runner` itself needs capture-to-file-then-extract since its own Bash call hits the same cliff). Review: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md`, commit `566941b`.
+
+Maintainer decisions on the review's three questions:
+1. **Cap value: 6,000 chars (p95, reviewer's recommendation).**
+2. **Mechanism 3 (PreToolUse rewrite, now confirmed working): keep deferred** (reviewer's recommendation — the 15 heaviest observed Bash results are grep/find/git-diff/multi-cat sweeps, not the npm-install/docker-build/terraform pattern a rewrite hook would target; no real gap to close).
+3. **Runner capture-file location: the subagent's own scratchpad directory.**
+
+Additional maintainer request: dispatch a sonnet `/cdocs:report` on related/existing tooling (e.g. `rtk-ai/rtk`) BEFORE the next review round, to inform whether the round-2 reviewer should consider adopting/wrapping an existing tool instead of (or alongside) the bespoke `cdocs:bash-runner` build — "or maybe even more" (i.e. an existing tool might exceed what a bespoke build would achieve). Dispatched in parallel with the round-2 revision; feeds the round-2 REVIEWER, not the reviser (the concrete correctness fixes from round 1 apply regardless of the tooling question).
+
+| Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
+|---|---|---|---|---|
+| 1 | fable | n/a (proposal pre-existed, entering at review) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md` | revise (3 blocking) |
+| 2 (revision) | opus (warm, original proposer resumed) | pending | pending (fresh; will incorporate the tooling report below) | pending |
