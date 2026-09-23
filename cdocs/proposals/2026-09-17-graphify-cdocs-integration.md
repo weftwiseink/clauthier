@@ -16,7 +16,7 @@ last_reviewed:
 
 # Graphify integration into cdocs loops, and the librarian question
 
-> NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping + lean-track revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (Bet 1 as core, recall parity as a hard principle, the CRDT blind-spot honesty) is intact.
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping + lean-track revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (the stateless graph-scoping surface as core, recall parity as a hard principle, the CRDT blind-spot honesty) is intact.
 > WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0.
 > LEAN-TRACK re-scope (maintainer-approved in the "Graphify in cdocs" explainer): the shippable headline is the integration itself - Phase 2, the scoping surface - validated by a `/cdocs:ablate` spot-check on real multi-file tasks, NOT by a mandatory before/after coarse baseline. Phase 1 (coarse per-role meter) is demoted to OPTIONAL instrumentation; Phase 3 (the formal, corpus-measured discriminator gate) is a deferrable later increment; the librarian and the adapter are struck from this proposal's scope (revisit via a fresh proposal if ever justified).
 
@@ -81,7 +81,7 @@ flowchart LR
 
 ## Proposed Solution
 
-### Bet 1: a stateless graph-scoping surface (core)
+### The stateless graph-scoping surface (the core, and only, bet)
 
 A single graph-retrieval capability, queried directly by whichever role is gathering context.
 Input: the changed symbols for the round (derived from the diff).
