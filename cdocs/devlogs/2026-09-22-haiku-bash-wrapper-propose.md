@@ -94,7 +94,7 @@ Additional maintainer request: dispatch a sonnet `/cdocs:report` on related/exis
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
 |---|---|---|---|---|
 | 1 | fable | n/a (proposal pre-existed, entering at review) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md` | revise (3 blocking) |
-| 2 (revision) | opus (warm, original proposer resumed) | done (this entry) | pending (fresh; will incorporate the tooling report below) | pending |
+| 2 (revision) | opus (warm, original proposer resumed) | done (this entry) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md` | **accept** (0 blocking, 4 non-blocking nits) |
 
 ### Round 2 revision (2026-09-23, opus)
 
@@ -113,3 +113,24 @@ Non-blocking: Q1-Q4 resolutions recorded as a "Resolved Decisions" section (Bash
 Not acted on (correctly, per coordinator): the parallel sonnet tooling report (`rtk-ai/rtk`) feeds the round-2 reviewer, not this revision. Flagged in a Background NOTE that the correctness fixes hold even for a wrapped external tool if it is Bash-only under the hood.
 
 `status` returned to `review_ready`.
+
+### Round 2 review (2026-09-23, opus, fresh reviewer)
+
+**Verdict: accept.** Review: [`cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md`](../reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md).
+
+Fresh reviewer, no round-1 priors; formed an independent assessment, then read round 1 only to confirm its three blocking items landed. They did, and the reviewer verified the load-bearing one empirically rather than trusting the prose: ran `seq 1 200000 > "$OUT" 2>&1; echo exit=$?` (capture-step result `exit=0`, 1.3MB on disk, `tail -n 1` recovers `200000`), confirming the capture-to-file-then-extract flow genuinely contains a whale. B1 (hook facts) is consistent across BLUF/Summary/Findings/division-of-labor table with no stale phrasing surviving a grep; B2 (spill-to-file cap) propagated to mechanism 2, Design Decisions, Edge Cases, and the cap-shape test; B3 (runner capture-to-file) is correct in Workflow, Output contract, Constraints, and Verification steps 2/5. All three maintainer decisions (cap 6,000/band 4,000-8,000 with the distribution cited; mechanism 3 deferred on redundancy not breakage; capture file in subagent scratchpad) are applied as firm choices.
+
+On the tooling report: the reviewer independently concurred with build-is-right for mechanism 1 and no-rtk-dependency, but reached it by a sharper route - an rtk pre-filter is semantically incompatible with the caller-steerable-salience contract for exactly the whale traffic (it lossily transforms the very bytes the semantic extractor searches per the caller's spec) and breaks the no-silent-loss property the B3 fix leans on. Judged the report's pure supply-chain framing as the weakest of its reasons (somewhat overcautious given Apache-2.0 + adoption); the load-bearing reasons are environment availability (no library/MCP mode, cannot install/pin) and architecture. Endorsed the report's optional mechanism-3 rtk citation.
+
+Four non-blocking nits to fold in on this accepting round (none reopens the design, none needs another round):
+1. `omitClaudeMd: true` has no repo precedent and may not be a recognized CC subagent frontmatter field; verify it is honored before relying on it, else drop it (its token-saving rationale becomes a no-op if ignored). OC build drops it either way.
+2. `maxTurns` is referenced but never given a value; name a concrete start (e.g. `5`).
+3. Design-Decisions line 242 still says the runner "reads the whole output once," in mild tension with the corrected model; tighten to "full output on disk, extracted from."
+4. Fold the report's optional rtk citation into mechanism 3's Background; note a caller can already dispatch `rtk <cmd>` as the runner's command with no design change.
+
+| Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
+|---|---|---|---|---|
+| 1 | fable | n/a (proposal pre-existed) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md` | revise (3 blocking) |
+| 2 | opus (revision) / opus (fresh review) | done | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md` | **accept** (0 blocking, 4 nits) |
+
+Next: fold the 4 nits (a nit-fix-scale pass, no re-review needed), then the proposal is implementation-ready for `/cdocs:iterate` or `/cdocs:implement`.
