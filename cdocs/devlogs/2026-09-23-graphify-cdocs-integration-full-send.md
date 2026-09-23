@@ -85,6 +85,7 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | return | impl-1 (general-purpose) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/agents/reviewer.md | 2026-09-23T10:05:00-08:00 | done; 3 commits 07af3d4/d7d6fca/2ea4b2b; 39/39 tests green; CLI output shape ASSUMED (isolated to graphify_dependents()), for overseer live-run reconciliation |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:07:00-08:00 | review Phase 2 scoping surface impl |
 | return | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:20:00-08:00 | ACCEPT r1 (9eb0770); reproduced 39/39 + alt-JSON parser-isolation probe; 3 non-blocking nits; live ablate = overseer deferred-to-followup |
+| dispatch | impl-1 (general-purpose, resumed) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh | 2026-09-23T13:20:00-08:00 | iteration 2: reconcile helper to REAL graphify CLI contract (live-run findings) |
 
 ## Steering Log
 
@@ -123,6 +124,28 @@ the no-binary path (`review_proof: confirmed` on host-testable behavior). The LI
 spot-check on multi-file tasks is the validation-of-record and is run at TOP LEVEL by the overseer in a
 graphify-equipped devcontainer (`review_proof: deferred-to-followup` for the dispatched reviewer — ablate
 dispatches subagents, which a dispatched agent cannot do; same structural constraint as the prior e2e).
+
+## Live-run findings (overseer, top-level, in `clauthier` container w/ graphify 0.9.61)
+
+The deferred validation-of-record ran the REAL graphify CLI and found the shipped helper's assumed contract
+wrong on four counts — a genuine functional defect (the helper would always skip-scope or mis-target against
+real graphify), exactly what the live floor exists to catch:
+
+1. **Command.** The dependent-set/blast-radius primitive is `graphify affected "<symbol>"` (reverse
+   traversal), NOT `explain <target> --json`. `explain` gives a node's neighbors; `affected` gives what a
+   change to X impacts.
+2. **Output is PLAIN TEXT, not JSON.** No `--json` flag on `explain`/`affected`/`query` (only `god-nodes`/
+   `diagnose`). `affected` lines: `- <label> [<rel>] <path>:L<n>`; empty = `No affected nodes found.`
+   `explain "<file>"` lists a file's symbols via `--> <label> [contains] [EXTRACTED] <path>:L<n>`.
+3. **Targets are SYMBOL labels** (`parseFrontmatter()`), not file basenames. `affected "<basename>"` returns
+   nothing; the working path is changed-file → `explain "<basename>"` [contains] → symbols → `affected
+   "<symbol>"` per symbol → union of dependent paths.
+4. **Index lives in graphify's CACHE** (`/var/cache/graphify/graph.json`), not `<tree>/graphify-out/graph.json`.
+   `graphify update <path> --no-cluster` builds it (39 nodes/54 edges over the clauthier TS subset, LLM-free);
+   `affected` resolves the cache automatically when `--graph` is omitted.
+
+Real fixtures saved for the reviser: `$JOB/tmp/graphify-live-fixtures/{affected-output.txt,
+explain-file-contains.txt,graphify-help.txt}`.
 
 ## Completed
 
