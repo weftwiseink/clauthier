@@ -6,6 +6,11 @@ task_list: meta/chat-record-devlog-management
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-fable-5-1"
+  at: 2026-09-22T18:43:06-07:00
+  round: 1
 tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-memory]
 ---
 
