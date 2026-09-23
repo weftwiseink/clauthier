@@ -36,7 +36,7 @@ The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestr
 
 - `--tool <target>`: the target capability, in EITHER form:
   - **MCP tool name:** fully qualified as `mcp__<server>__<tool>` (e.g. `mcp__graphify__scope`), or the bare trailing name (`scope`). The usage check matches `tool_use.name`.
-  - **CLI-command signature:** `cli:<regex>` (e.g. `cli:graphify `). For a CLI-first tool (its shell-out surfaces as a `Bash` tool_use, `.name == "Bash"`), the usage check matches the regex against the `Bash` tool_use's `.input.command`. To exclude an unrelated command, anchor to a COMMAND boundary, not string-start: an arm bound to a worktree prefixes nearly every command with `cd <worktree> && …`, so a `^`-anchored `cli:^graphify ` matches the leading `cd`, NOT `graphify`, and yields a FALSE `unused` (a false VOID on a run where the tool WAS used). Prefer the trailing-space bare form `cli:graphify ` (the `graphify-out/` path etc. won't match) or a separator-aware anchor like `cli:(^|&& |; |\| )graphify `.
+  - **CLI-command signature:** `cli:<regex>` (e.g. `cli:graphify `). For a CLI-first tool (its shell-out surfaces as a `Bash` tool_use, `.name == "Bash"`), the usage check matches the regex against the `Bash` tool_use's `.input.command` **at a command boundary**: the command is split at shell separators (`&&`, `||`, `;`, `|`) and the signature is tested per-segment (and against the whole string). So a `^`-anchored `cli:^graphify ` anchors to the real command even when a worktree-bound arm wraps it as `cd <worktree> && graphify …` — the caret matches `graphify`, not the leading `cd`. To exclude an unrelated command, either use the caret form `cli:^graphify ` or the trailing-space bare form `cli:graphify ` (the `graphify-out/` path etc. won't match); both are safe.
 - `--task <spec-or-path>`: the representative task, inline or a path to a task-spec file.
   One pinned prompt string is passed VERBATIM to both arms (D4).
 - `--base <commit>`: the pinned base commit both arms check out from. Defaults to `HEAD`.
@@ -257,7 +257,7 @@ Because graphify is CLI-first in-container (its MCP is shadowed by the lace over
 ```
 
 `ablate.sh detect-usage --tool 'cli:graphify '` matches the regex against a `Bash` tool_use's `.input.command`, so the usage gate has a REAL signal for graphify (no sentinel needed).
-To narrow the signature, anchor to a COMMAND boundary, not string-start: worktree-bound arms wrap commands as `cd <worktree> && graphify …`, so a `^`-anchored `cli:^graphify ` matches the `cd`, never `graphify`, and falsely reports `unused`. Use `cli:graphify (update|scope)` to restrict subcommands, or `cli:(^|&& |; |\| )graphify ` to anchor at a separator; the bare trailing-space `cli:graphify ` already excludes `graphify-out/`-style path substrings and is the safe default.
+The signature is tested at a command boundary (the command is split at `&&`/`||`/`;`/`|` and matched per-segment), so a `^`-anchored `cli:^graphify ` anchors to the real command even when a worktree-bound arm wraps it as `cd <worktree> && graphify …` — it no longer matches the leading `cd`. Use `cli:^graphify ` to require graphify at a command start, `cli:graphify (update|scope)` to restrict subcommands, or the bare trailing-space `cli:graphify ` (excludes `graphify-out/`-style path substrings); all are safe.
 
 Expected, on a coherent run:
 

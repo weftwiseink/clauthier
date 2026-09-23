@@ -130,6 +130,34 @@ check "detect-usage CLI: no false-positive on Bash" "$(bash "$SH" detect-usage -
 # regex form of the signature works too
 check "detect-usage CLI: regex signature"           "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_used.jsonl" --tool 'cli:graphify (update|scope)')" "used"
 
+# --- caret anchor vs worktree `cd <wt> && …` prefix (the false-VOID regression this fixes) ---
+# worktree-bound arms wrap commands as `cd <wt> && <cmd>`; a caret anchor must match the real
+# command, not the leading `cd`. Regression: `cli:^graphify ` used to match the `cd` and yield
+# a FALSE `unused` (false VOID) on a run where graphify WAS invoked.
+cat > "$SCRATCH/tx_cli_wt_used.jsonl" <<'JSON'
+{"type":"user","message":{"content":"go"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"cd /some/worktree && graphify update --scope src/","description":"scope"}}]}}
+JSON
+# worktree-bound Bash that never runs graphify -> must stay unused (no false positive)
+cat > "$SCRATCH/tx_cli_wt_unused.jsonl" <<'JSON'
+{"type":"user","message":{"content":"go"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"cd /wt && rg foo","description":"grep"}}]}}
+JSON
+check "detect-usage CLI: caret anchor matches through cd-prefix -> used" \
+  "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_wt_used.jsonl" --tool 'cli:^graphify ')" "used"
+check "detect-usage CLI: caret anchor, cd-prefixed non-graphify -> unused" \
+  "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_wt_unused.jsonl" --tool 'cli:^graphify ')" "unused"
+# caret anchor on a NON-worktree command still works (whole-string is a segment too)
+check "detect-usage CLI: caret anchor, bare command -> used" \
+  "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_used.jsonl" --tool 'cli:^graphify ')" "used"
+# caret anchor must NOT match a command that only mentions graphify mid-string as an arg
+cat > "$SCRATCH/tx_cli_wt_arg.jsonl" <<'JSON'
+{"type":"user","message":{"content":"go"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"cd /wt && rg graphify src/","description":"grep"}}]}}
+JSON
+check "detect-usage CLI: caret anchor, graphify only as rg arg -> unused" \
+  "$(bash "$SH" detect-usage --transcript "$SCRATCH/tx_cli_wt_arg.jsonl" --tool 'cli:^graphify ')" "unused"
+
 mk_meter(){ # arm granted invoked completed -> file
   local f="$SCRATCH/m_$1_$RANDOM.json"
   jq -n --arg arm "$1" --argjson g "$2" --arg inv "$3" --argjson c "$4" \

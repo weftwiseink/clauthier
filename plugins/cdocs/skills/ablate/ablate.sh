@@ -132,8 +132,12 @@ cmd_resolve_transcript() {
 #                         `Bash` tool_use whose command lives in `.input.command`, NOT in `.name`
 #                         (which is just "Bash"). The `cli:` prefix matches the regex against a
 #                         Bash tool_use's `.input.command`, so a CLI-shaped tool has a real,
-#                         non-sentinel usage signal. The regex is applied verbatim (anchor it if
-#                         a bare command name could match a substring of an unrelated command).
+#                         non-sentinel usage signal. The regex is tested at a COMMAND BOUNDARY:
+#                         the command is split at shell separators (&&, ||, ;, |) and the signature
+#                         is tested per-segment (and against the whole string). This makes a
+#                         caret anchor (`cli:^graphify `) match the real command even when a
+#                         worktree-bound arm wraps it as `cd <wt> && graphify …`, while unanchored
+#                         forms and true negatives are unaffected.
 # Prints "used" or "unused"; exit 0 either way (the caller/decide branches on the string).
 # ==========================================================================================
 cmd_detect_usage() {
@@ -150,7 +154,15 @@ cmd_detect_usage() {
     n="$(jq -r --arg sig "$sig" '
           select(.type=="assistant")
           | .message.content[]? | select(.type=="tool_use") | select(.name=="Bash")
-          | (.input.command // "") | select(test($sig))
+          | (.input.command // "") as $cmd
+          # Worktree-bound arms prefix nearly every command with `cd <wt> && …`, so a
+          # caret-anchored signature (`^graphify `) would anchor to the literal string start
+          # (the `cd`), never the real command, and falsely report `unused` on a run where the
+          # tool WAS used. Fix: match at a COMMAND BOUNDARY. Split the command at shell separators
+          # (&&, ||, ;, |) and test the signature against each segment as well as the whole string,
+          # so `^` anchors to a command while unanchored substrings and true negatives are preserved.
+          | ( [$cmd] + [ $cmd | splits("[ \\t]*(&&|;|\\|)[ \\t]*") ] ) as $segs
+          | select( any($segs[]; test($sig)) )
         ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
   else
     # MCP tool name (fully-qualified or bare trailing name).
