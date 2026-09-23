@@ -114,6 +114,22 @@ Not acted on (correctly, per coordinator): the parallel sonnet tooling report (`
 
 `status` returned to `review_ready`.
 
+### Round 2 review: Accept + closing nits (2026-09-23, opus) — loop terminates
+
+Round 2 reviewer (fresh opus, `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md`, commit `3bc3442`): **Accept**, no design changes needed; the reviewer ran the containment canary itself and confirmed the capture-to-file fix works. Four non-blocking nits folded in per the "resolve nits even on an accepting round" convention:
+
+1. **`omitClaudeMd` dropped.** No precedent in any `plugins/cdocs/agents/*.md` and unverified against the agent-frontmatter schema, so it would risk silently no-opping. Removed from frontmatter, Phase 1, and the Test Plan. (`maxTurns` DOES have precedent: `judge.md` carries `maxTurns: 10`.)
+2. **`maxTurns: 8`** — concrete value stated (capture + a handful of bounded extraction commands + report, with headroom; below `judge.md`'s 10 since the runner's loop is tighter).
+3. **Stale "reads the whole output once" corrected** in Important Design Decisions to the actual capture-then-extract phrasing (captures to the scratch file, extracts with bounded shell; a `grep` finds a buried error wherever it fell).
+4. **`rtk-ai/rtk` cited** in mechanism 3 (per `cdocs/reports/2026-09-23-bash-output-tooling-landscape.md`): a mature Apache-2.0 `PreToolUse` rewrite proxy already owns the grep/find/git-diff/cat-sweep territory a bespoke rewrite-hook allowlist would target, so staying deferred is further justified (report also recommends against adopting it as a plugin dependency: pre-1.0, RC-heavy, CLI-only).
+
+`status` set to `implementation_ready`. **The propose-revise loop terminates here on Accept.**
+
+| Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
+|---|---|---|---|---|
+| 1 | fable | n/a (entering at review) | done | revise (3 blocking) |
+| 2 | opus | done (revision) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md` | **accept** (4 nits folded in) |
+
 ### Round 2 review (2026-09-23, opus, fresh reviewer)
 
 **Verdict: accept.** Review: [`cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md`](../reviews/2026-09-23-review-of-haiku-bash-wrapper-r2.md).
