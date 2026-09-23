@@ -5,7 +5,7 @@ first_authored:
 task_list: meta/chat-record-devlog-management
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
@@ -192,6 +192,7 @@ This is ground truth about *which* files the top-level agent's own turn touched,
 `PostToolUse` also fires inside dispatched subagents (with `agent_id` set; verified by the round-1 review and documented in the hooks reference), and the hook drops those events, so a reviewer's reads never appear on the overseer's block.
 Reads that bypass the `Read` tool (a `cat` inside `Bash`, a haiku-wrapper dispatch) do not produce a matching event at all; the agent's gist list covers those when they mattered.
 The path field is `tool_input.file_path`, or `tool_input.notebook_path` for `NotebookEdit`.
+`NotebookEdit` is in the matcher by analogy to `Edit`/`Write`; the canary exercised `Read` and `Edit` only, so its `PostToolUse` firing and field name are an assumption the Phase-1 tests must confirm, not a verified fact.
 
 Example (a composite assembled from Phase-0 runs 2, 4, and 7, since no single run wired every event; bodies abbreviated):
 
@@ -233,7 +234,8 @@ Bash plus `jq`, not `tsx`: `UserPromptSubmit` runs on the critical path of every
 Invariants:
 
 - **`agent_id` guard, first thing on every event.** If the payload carries `agent_id`, exit 0 before any read or write.
-  Tool and stop events fire inside dispatched subagents with `agent_id` and `agent_type` set (hooks reference; round-1 review Run A), and without this guard an overseer turn that dispatched a reviewer would end with `files="r:<everything the reviewer read>"`.
+  The guard is defensive on all seven registered events, but the load-bearing case is `PostToolUse`: it is the only Phase-1 event that carries `agent_id` in practice, because tool events fire inside dispatched subagents with `agent_id` and `agent_type` set (hooks reference; round-1 review Run A, reproduced in the `_verify` artifact), while plain `Stop` fires only for the top-level agent (`agent_id: null`, run 5) and a subagent's turn end is `SubagentStop`, which Phase 1 does not register.
+  Without the guard an overseer turn that dispatched a reviewer would end with `files="r:<everything the reviewer read>"`.
   This guard is also what makes the chat record top-level-only.
 - Always exit 0; a chat-record failure never blocks or slows the user.
   Errors go to stderr only.
@@ -417,6 +419,7 @@ The `read this when` column is the navigation contract: a resuming agent reads t
   - `Agent` dispatch: exactly one `@user` block (the subagent's prompt is absent).
   - `Agent` dispatch whose subagent `Read`s `a.txt` while the parent reads nothing: the parent's `@<model>` block carries no `files=` (the `agent_id` guard).
   - `Read a.txt`, `Read b.txt`, `Edit b.txt` in one turn: the `@<model>` header carries exactly `files="r:a.txt,rw:b.txt"`; a following turn with no file access carries no `files=`.
+  - `NotebookEdit` on `n.ipynb`: the header carries `files="w:n.ipynb"` (this scenario is what turns the `NotebookEdit` assumption above into a verified fact; if the event does not fire or the field differs, the matcher and path lookup are corrected here, not worked around).
   - a project command `.claude/commands/echo.md` invoked as `/echo hello-world`: one `@user` block whose body is exactly `/echo hello-world`.
   - the `/compact` line in the stream-json scenario produces no `@user` block, only `compact-begin` and `@compact`.
   - `Edit` of `cdocs/devlogs/x.md` followed by a compaction: the `SessionStart(compact)` nudge names `cdocs/devlogs/x.md`, and the `SessionStart(compact)` payload's `model` field is present and cached.
@@ -545,12 +548,14 @@ Do not introduce a directory-per-workstream layout.
    A `cdocs/_chat/<task_list-slug>/` directory per workstream was considered and rejected for the relocation reason; `_chat/` is a mechanical asset directory, so the flat-naming argument from devlogs is not what decides this, the glob stability is.
 
    *Who writes the legs' blocks, and when.* Dispatched legs' events arrive in the parent session's hook process carrying the parent's `session_id` plus `agent_id`/`agent_type`, so the parent session's file is the natural home for their chronology and there is still exactly one writer.
-   Phase 3 replaces the Phase-1 "exit on `agent_id`" with a `case` on the event: `SubagentStart` appends `@dispatch: <ts> agent=<agent_type>/<agent_id8>` with the dispatch prompt as body (from `PreToolUse` on the `Agent` tool, whose `tool_input.prompt` is the brief, or from the first user message of `agent_transcript_path`); `PostToolUse` with `agent_id` appends to a per-agent buffer `<session_id>.<agent_id>.turn`; `SubagentStop` appends `@return: <ts> agent=<agent_type>/<agent_id8> files="..."` with `last_assistant_message` as body, which for a one-shot leg is already its checkpoint summary.
+   Phase 3 replaces the Phase-1 "exit on `agent_id`" with a `case` on the event: `SubagentStart` appends `@dispatch: <ts> agent=<agent_type>/<agent_id8>` with the dispatch prompt as body; `PostToolUse` with `agent_id` appends to a per-agent buffer `<session_id>.<agent_id>.turn`; `SubagentStop` appends `@return: <ts> agent=<agent_type>/<agent_id8> files="..."` with `last_assistant_message` as body, which for a one-shot leg is already its checkpoint summary.
+   Sourcing the `@dispatch` body is the unsettled step: `PreToolUse` on the `Agent` tool would carry the brief as `tool_input.prompt` but no `agent_id`, while `SubagentStart` carries `agent_id` but (per run 5's key list) neither the prompt nor `agent_transcript_path`, which only `SubagentStop` delivers.
+   So either the prompt is correlated from `PreToolUse` to the next `SubagentStart` (by dispatch ordering or a shared tool-use id, unspecified until canaried), or the `@dispatch` block is written lazily at `SubagentStop` time from the transcript's first user message, with `PreToolUse` as an optimization; gating canary (c) decides.
    The overseer's own `@<model>` blocks keep excluding subagent files, so the awareness split (who read what) is preserved, only now the legs' reads are recorded on the legs' own `@return` blocks instead of dropped.
 
    *What this adds beyond the Scratchpoint.* Chronology only: which briefs were dispatched in which order, what each returned, and what each read.
    The state half for durable specialists is already the Scratchpoint in the devlog they own; one-shot legs need nothing more than their `@dispatch`/`@return` pair, which is exactly the Dispatch/Return Events table's content captured mechanically rather than by the overseer's hand.
 
-   *Gating and the Phase-3 canary.* (a) Phase 1's `agent_id` guard and active-devlog tracking landed (they are the same script); (b) a canary confirming that a durable specialist resumed by `SendMessage` fires a fresh `SubagentStart`/`SubagentStop` pair with the same `agent_id` (unverified; if it does not, the specialist's later turns need a different anchor); (c) `PreToolUse` on the `Agent` tool delivering `tool_input.prompt` in the parent (unverified); (d) evidence that workstreams actually span enough legs and sessions to need the derived record, which the Phase-1 records themselves will show.
+   *Gating and the Phase-3 canary.* (a) Phase 1's `agent_id` guard and active-devlog tracking landed (they are the same script); (b) a canary confirming that a durable specialist resumed by `SendMessage` fires a fresh `SubagentStart`/`SubagentStop` pair with the same `agent_id` (unverified; if it does not, the specialist's later turns need a different anchor); (c) `PreToolUse` on the `Agent` tool delivering `tool_input.prompt` in the parent, and how that prompt is correlated to the later `SubagentStart`'s `agent_id` given that `SubagentStart` carries neither the prompt nor `agent_transcript_path` (unverified; the answer picks between eager correlation and lazy write-at-`SubagentStop`); (d) evidence that workstreams actually span enough legs and sessions to need the derived record, which the Phase-1 records themselves will show.
 
 Success criteria: a specialist reseeded at the cutoff continues without re-reading files its predecessor already read (measured by the reviewer on the next round); `/cdocs:compact` followed by the printed line produces a post-compaction or post-clear turn that acts on `next` from the Scratchpoint without re-orientation; the per-workstream sketch's canary items (b) and (c) have answers recorded before any implementation of item 3 begins.
