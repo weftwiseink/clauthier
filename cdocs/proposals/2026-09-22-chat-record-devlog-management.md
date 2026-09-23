@@ -7,10 +7,10 @@ type: proposal
 state: live
 status: review_ready
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-4-8"
-  at: 2026-09-23T08:47:59-07:00
-  round: 2
+  at: 2026-09-23T10:57:41-07:00
+  round: 3
 tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-memory]
 ---
 

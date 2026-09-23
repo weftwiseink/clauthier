@@ -52,6 +52,7 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 |---|---|---|---|---|
 | 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | done: `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md` | revise (5 blocking, warm proposer) |
 | 2 (revision) | fable (warm, same proposer) | done: 12 action items + 3 maintainer decisions applied, commit `8986747`; evidence artifact `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md` | done (fresh reviewer, opus-4-8): `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management-r2.md` | **accept** (5 non-blocking nits) |
+| 3 (reopened) | fable (warm, same proposer) | done: bullet-block reversal + evidence backlink, commit `082df8c` | done (fresh reviewer, opus-4-8): `cdocs/reviews/2026-09-23-review-of-chat-record-devlog-management-r3.md` | **revise** (2 blocking: remove `_judge/`, remove `_verify/`+`## Evidence` genre) |
 
 ## Round 1: proposer (fable-5-1)
 
@@ -205,3 +206,22 @@ Turns with no tool use owe no bullet and are never blocked.
 
 **Not changed.** User-turn capture (hook, verbatim), `@compact` capture (verbatim summary, the one non-compact block), the grammar, the `agent_id` guard, and the splitting rules.
 **Flagged for the reviewer:** the `Stop` reminder is the design's only `decision: block`; the bound is the harness's `stop_hook_active`, verified once headless, not interactively.
+
+## Round 3: reviewer (opus-4-8, fresh)
+
+Review at `cdocs/reviews/2026-09-23-review-of-chat-record-devlog-management-r3.md`; proposal `last_reviewed` set to `revision_requested`, round 3; `status` stays `review_ready`.
+Verdict: **revise** (2 blocking, warm reviser: both are scope reductions, not design reopenings).
+
+**Method.** Fresh reviewer, no priors. Formed independent judgment on the round-3 content first, then read rounds 1/2 for continuity. Verified each round-3 change against the document and the repo, and folded the maintainer's mid-flight `_judge/`/`_verify/` corrections (relayed via SendMessage while in flight) as blocking findings.
+
+**Core bullet-block work: sound, keep unchanged.**
+- Bullet convention specified as precisely as the devlog-bullet discipline it extends; `files=`/`p=` mechanical-vs-agent split unambiguous (script attaches header metadata, agent types only bullets; `note`-then-`Stop` buffer ordering checks out). One non-blocking ambiguity: sample read-bullet vs. the "reads go to the Scratchpoint" routing rule.
+- Block-then-placeholder fallback bounded by `stop_hook_active`, cannot hang; run 8 reproducibility meets the round-1 bar (recorder, settings, command, both log lines, three-turn total). Non-blocking robustness note: `stop_hook_active` is loop-global, so a coexisting user `Stop` hook could cost the one reminder (soft false `gap=1`, never a hang); cdocs ships no other `Stop` hook.
+- Scratchpoint/chat-record complementarity now argued by shape (append-only chronology vs. replace-in-place snapshot), load-bearing and correct.
+- Regression check clean: grammar, `agent_id` guard, closed-concern test, three-arm A/B, Phase-3 sketch intact; no stale verbatim-capture residue survives the reversal.
+
+**Blocking (2), both content removal/relocation:**
+(1) `_judge/` — remove every reference (never requested). Keep the separate `agents/judge.md` staleness-condition update, which is in-scope and not `_judge/`-genre.
+(2) `_verify/` directory + separate `## Evidence` list — remove; route reproducible evidence through the devlog's existing `## Verification` section (template.md:27, SKILL.md:71-90, predates this proposal), and split it as a standard closed-concern chunk (`-verification`/`-canary`, `part_of`, backlink NOTE, `## Chunks` row) if it grows. `part_of` and the backlink NOTE survive as the standard chunk convention. The review enumerates the eight proposal cross-references to retarget and specifies relocating this workstream's own ~400-line canary from `cdocs/devlogs/_verify/` to a normal loop-devlog chunk (removing this devlog's `## Evidence` section).
+
+Verified both maintainer claims on disk: the devlog template/SKILL already own a Verification section for pasted evidence; the frontmatter validator is informational-only and accepts `part_of` (no regression). Dispatched back to the warm proposer for a round-4 revision.
