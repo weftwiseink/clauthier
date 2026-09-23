@@ -165,3 +165,12 @@ Nits applied:
 Final state: proposal `implementation_ready`, `last_reviewed: accepted`, round 2.
 Not done in this loop, by design: no implementation; the interactive TUI `/compact` check and the two Phase-3 gating canaries remain for the implementer.
 This proposer dispatch is complete.
+
+## Round 3 (reopened, post-acceptance, pre-implementation): maintainer correction on chat-record content and `_verify` placement (2026-09-23)
+
+Loop was reopened before any implementation started. Two corrections, both design-level, not artifact-only:
+
+1. **Chat-record content was wrong.** The accepted design has agent turns captured verbatim via `Stop` (`last_assistant_message`, the final text block). Maintainer's original concept, restated explicitly: chat-record entries should be highly compact orienting summaries — roughly **one bullet point per action item**, not a reply dump. This overturns round 1's judgment call (b) ("keep `Stop`-captured verbatim, a summary would duplicate the Scratchpoint"). Overseer's resolution: chat-record (append-only, compact, chronological action log) and Scratchpoint (rolling, replace-in-place, current-state snapshot) are different *shapes*, not the same job at different granularity — that's what actually resolves the round-1 duplication concern, in the opposite direction from how round 1 resolved it. Mechanism reverts to the overseer's original round-1 steering (skill/convention-driven agent-authored bullets at turn-handoff, not hook-captured raw text); the `Stop` hook may still serve as a trigger/reminder, not as the content source.
+2. **`cdocs/devlogs/_verify/` placement questioned.** This namespace was invented reactively by round 1's reviewer as a blocking-item fix (evidence must be reproducible, not asserted) and was never checked against the devlog-chunk scheme this same proposal defines. Overseer's resolution: keep it as a distinct genre (raw reproducible evidence is not devlog narrative prose; inlining it as a chunk would recreate the append-only-bloat failure mode devlog-management exists to prevent) but require it to be backlinked from the owning workstream's devlog via the same `part_of`-style convention the chunks already use, so it's discoverable, not a disconnected namespace.
+
+Dispatched to the same (warm) proposer for a round-3 revision.
