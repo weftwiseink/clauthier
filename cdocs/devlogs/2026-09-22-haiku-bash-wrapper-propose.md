@@ -94,4 +94,22 @@ Additional maintainer request: dispatch a sonnet `/cdocs:report` on related/exis
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
 |---|---|---|---|---|
 | 1 | fable | n/a (proposal pre-existed, entering at review) | done: `cdocs/reviews/2026-09-23-review-of-haiku-bash-wrapper.md` | revise (3 blocking) |
-| 2 (revision) | opus (warm, original proposer resumed) | pending | pending (fresh; will incorporate the tooling report below) | pending |
+| 2 (revision) | opus (warm, original proposer resumed) | done (this entry) | pending (fresh; will incorporate the tooling report below) | pending |
+
+### Round 2 revision (2026-09-23, opus)
+
+Applied all 3 blocking action items and all 4 non-blocking items; folded the three maintainer decisions in as firm choices, not open questions. The proposal was rewritten rather than patched, since the three empirical corrections propagate through most sections.
+
+Blocking fixes:
+
+- **B1 (hook facts).** Rewrote the BLUF, Summary, the whole Verification section (Findings 1-4), and the division-of-labor table to state the canary-verified truth: `PostToolUse updatedToolOutput` is inert for built-in Bash ([#68951](https://github.com/anthropics/claude-code/issues/68951), Finding 1), but `PreToolUse updatedInput` DOES rewrite Bash commands on 2.1.280 Linux headless (2/2), so [#79321](https://github.com/anthropics/claude-code/issues/79321) does not reproduce here and the channel is environment-dependent. My round-1 Finding 2 ("also dead") was wrong: it reasoned from the GitHub issue text instead of testing, which the reviewer caught by running the canary. Corrected to present-tense verified facts; the "was re-run / tightens rather than loosens" narrative is dropped from the proposal (it lives here in the devlog). Mechanism 3 stays deferred but the reason flips from "broken" to "redundant with 1+2 and mis-targets the observed whales."
+- **B2 (cap semantics).** Replaced the head/tail-clip model of `bashOutputMaxChars` with the documented spill-to-file cliff: a VALID over-ceiling result collapses to a file path + ~2k preview; only a FAILED command gets a lossy head+tail excerpt with no file. `bashOutputMaxChars` sizes the inline ceiling and read-back window together and makes CC ignore `BASH_MAX_OUTPUT_LENGTH`. Rewrote mechanism 2, Design Decisions, added the spill-then-read-back Edge Case, and fixed the "Deterministic cap shape" test to assert preview+path, not truncation.
+- **B3 (runner hits the same cliff).** Redesigned the runner Workflow to capture-to-file-then-extract (`<cmd> > "$OUT" 2>&1; echo exit=$?`, then bounded `wc`/`grep`/`head`/`tail`/`cut` over `$OUT`), which also keeps the result "valid" so the failure-path excerpt never applies. Flipped the Output contract default to `saved to <path>`, loosened Constraints to explicitly permit bounded extraction over the capture file (a literal haiku agent would otherwise refuse to grep its own file), added the "runner under a low cap" test, and fixed Verification Methodology steps 2 and 5.
+
+Maintainer decisions applied as firm choices: cap start **6,000** (band 4,000-8,000), citing the review Appendix distribution (p90 3,978, p95 6,228); mechanism 3 **deferred on redundancy**, not breakage; capture-file location **the subagent's own scratchpad directory**.
+
+Non-blocking: Q1-Q4 resolutions recorded as a "Resolved Decisions" section (Bash-only stays, no Read; init document-only via a "Bash output hygiene" section in the existing `orchestration-discipline.md` so `/cdocs:init` needs no edit); added the hook-channel canary as the documented re-check in the Deferred section; reordered the dispatch-scope list to lead with sweeps (grep/find/git-diff/multi-cat) and added aggregate salience-spec examples; added `maxTurns` and `omitClaudeMd: true` to the runner frontmatter.
+
+Not acted on (correctly, per coordinator): the parallel sonnet tooling report (`rtk-ai/rtk`) feeds the round-2 reviewer, not this revision. Flagged in a Background NOTE that the correctness fixes hold even for a wrapped external tool if it is Bash-only under the hood.
+
+`status` returned to `review_ready`.
