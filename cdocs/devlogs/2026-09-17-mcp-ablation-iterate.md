@@ -145,12 +145,12 @@ skill files edited. Two probes, single-shot (`gate_admissible:false`, correct):
 > 1. **jq reserved-word `label` (FIXED, `4f9b353`)** — `cmd_meter` bound `--arg label`/`$label`, a compile
 >    error under the container's jq 1.6 (`label` is reserved for `label/break`), breaking every meter call.
 >    Host jq tolerated it, so the 49/49 unit tests missed it. Renamed to `$armlabel`; 49/49 still pass.
-> 2. **`cli:^` anchor false-VOID (OPEN, docs-only `62ee9a5`)** — worktree arms prefix commands with
->    `cd <worktree> && …`, so a `^`-anchored `cli:^graphify ` matches the leading `cd`, not `graphify`, and
->    `detect-usage` falsely returns `unused` → a FALSE VOID on a run where the tool WAS used (the exact
->    dishonesty the harness exists to prevent). Neither probe was corrupted (A used the unanchored form; B
->    genuinely never invoked graphify), but this needs a CODE fix (strip the `cd …&&` prefix / anchor at a
->    command boundary in `detect-usage`), not just the current SKILL.md warning. Recommended top follow-up.
+> 2. **`cli:^` anchor false-VOID (FIXED, `80e4f49`)** — worktree arms prefix commands with `cd <worktree>
+>    && …`, so a `^`-anchored `cli:^graphify ` matched the leading `cd`, not `graphify`, and `detect-usage`
+>    falsely returned `unused` → a FALSE VOID on a run where the tool WAS used. Fixed: `detect-usage` now
+>    matches the `cli:` signature at a COMMAND BOUNDARY (splits `.input.command` on `&&`/`||`/`;`/`|` and
+>    tests each segment plus the whole string), so `^` anchors to a real command through the worktree
+>    `cd`-prefix; true negatives preserved. SKILL.md reconciled; +4 regression fixtures (53/53 pass).
 
 ## Completed
 
