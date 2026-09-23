@@ -64,6 +64,7 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
 | 1 (propose-revise) | rev-1 (cdocs:proposer) | reviewer-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | ~135K | no | ACCEPT r4; all 5 deltas verified in-text; 1 should-fix (D2 corpus "Phase 1 deliverable"→Phase 3) + 2 nits to clear |
+| 1 (iterate) | impl-1 (general-purpose) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | ~140K | no | ACCEPT r1; reviewer reproduced 39/39 + line-cited every floor branch + fed alt-nested JSON to confirm parser isolation. Host behavior=confirmed; LIVE ablate spot-check (CLI-shape reconcile) = deferred-to-followup (overseer top-level). 3 non-blocking nits |
 
 ## Judge Log
 
@@ -83,6 +84,7 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | dispatch | impl-1 (general-purpose) | plugins/cdocs/skills/{iterate,review}/*, plugins/cdocs/agents/reviewer.md, plugins/cdocs/lib/graphify-scope* (new), tests | 2026-09-23T09:35:00-08:00 | iterate phase: build Phase 2 scoping surface |
 | return | impl-1 (general-purpose) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/agents/reviewer.md | 2026-09-23T10:05:00-08:00 | done; 3 commits 07af3d4/d7d6fca/2ea4b2b; 39/39 tests green; CLI output shape ASSUMED (isolated to graphify_dependents()), for overseer live-run reconciliation |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:07:00-08:00 | review Phase 2 scoping surface impl |
+| return | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:20:00-08:00 | ACCEPT r1 (9eb0770); reproduced 39/39 + alt-JSON parser-isolation probe; 3 non-blocking nits; live ablate = overseer deferred-to-followup |
 
 ## Steering Log
 
@@ -129,6 +131,9 @@ dispatches subagents, which a dispatched agent cannot do; same structural constr
   (33f3fb5/96be57f/9c19271). Proposal lean + `implementation_ready`, overseer-verified.
 - Turn 0 (iterate): scope = Phase 2 only; verification floor set (host brief/fallback = confirmed; live
   ablate spot-check = overseer top-level, deferred-to-followup).
+- Iterate loop: impl-1 built the scoping surface (3 commits 07af3d4/d7d6fca/2ea4b2b, 39/39 tests) → rev-2
+  ACCEPT r1 (9eb0770), host behavior CONFIRMED (reproduced 39/39 + alt-JSON parser-isolation probe). Code
+  accepted on host-testable behavior; single code round, no judge needed (accept round 1).
 
 ## Decisions Made
 
@@ -136,9 +141,15 @@ dispatches subagents, which a dispatched agent cannot do; same structural constr
   (Path A, accepted r4), iterate = build Phase 2 only.
 - graphify absent on host → dispatched agents verify against recorded CLI fixtures + fallback branches; the
   overseer runs the live ablate spot-check at top level (structural: ablate dispatches subagents).
+- Proposal frontmatter held at `implementation_ready` (NOT flipped to accepted) until the live ablate
+  spot-check (the floor's validation-of-record) passes — code review ACCEPT alone does not satisfy the floor.
 
 ## Open Todos
 
-- [ ] Iterate: impl-1 builds Phase 2 scoping surface + tests → fresh reviewer each round → accept.
-- [ ] Overseer top-level: run live `/cdocs:ablate` spot-check on multi-file tasks in a graphify devcontainer
-  (validation-of-record) once the surface is accepted.
+- [x] Iterate: impl-1 builds Phase 2 scoping surface + tests → rev-2 ACCEPT r1.
+- [ ] Nits (non-blocking): (1) basename input-exclusion cross-dir collision; (2) `stat -c %Y` GNU-only
+  staleness (Linux devcontainer target); (3) add `--symbols` pointer to the skill. Fold 1-2 into live-run
+  reconciliation; do 3 as a quick doc fix.
+- [ ] Overseer top-level (validation-of-record): run live `/cdocs:ablate` spot-check on multi-file tasks in a
+  graphify-equipped devcontainer; reconcile the assumed `explain <basename> --json` CLI shape against the real
+  binary and adjust `graphify_dependents()` if needed. On pass → flip proposal to `implementation_accepted`.
