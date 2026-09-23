@@ -5,7 +5,7 @@ first_authored:
 task_list: code-graph/cdocs-integration
 type: devlog
 state: live
-status: wip
+status: done
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
@@ -175,6 +175,50 @@ only if two changed files share a basename across dirs — documented nit). (4) 
 `/var/cache/graphify/graph.json`. (5) Build step intentionally not auto-wired (stale/missing → skip-scope);
 a `--build` refresh is a possible later flag.
 
+### Iteration 2 cleanup + TRUNCATION-MARKER LIVE PROOF (PASS) — LOOP COMPLETE
+
+rev-3 ACCEPT (6662d43): reconcile verified line-for-line vs the real fixtures + 43/43 reproduced; 1 should-fix
+(surface `explain` truncation in the brief) + 4 nits. impl-1 cleared all (commits `b4c96d7`/`749ba41`/
+`3170b2b`; host suite now **51/51**): truncation now emits a `SCOPE-TRUNCATED: <file>` header marker + a body
+`WARNING (truncation)` block; `[contains]` extraction anchored to the `-->`/`<--` prefix; `stat -f %m` BSD
+fallback; `--symbols` pointer added to the iterate skill. nit-2 overseer-resolved live: `explain` AND
+`affected` both **exit 0** on an unknown target, so an unknown changed file yields empty, never a whole-round
+skip.
+
+**Overseer live TRUNCATION proof (PASS).** `$JOB/tmp/graphify-live-fixtures/live-truncation-proof.txt`:
+a god-node fixture (`mod_big.ts`, 26 connections → `... and 6 more`) with a cross-file dependent
+(`mod_dep.ts`) → `SCOPE-STATUS: scoped`, dependent set `{mod_dep.ts}` (correct), AND both the
+`SCOPE-TRUNCATED: mod_big.ts` header marker and the body truncation WARNING. The E2E was re-run after the
+cleanup and still resolves `mod_a.ts → {mod_b.ts, mod_c.ts}`. Container scratch cleaned.
+
+## LOOP COMPLETE — overseer synthesis
+
+**Full-send done. Proposal flipped `implementation_ready → implementation_accepted`.**
+
+- **Propose-revise (lean track):** ACCEPT r4, accepting-round items cleared. Proposal is lean — Phase 2 is the
+  headline, Phase 1 optional, Phase 3 deferrable, librarian + adapter dropped; non-negotiables intact.
+- **Iterate (Phase 2):** two code rounds, both accepted by fresh reviewers (rev-2 r1, rev-3 r2); host suite
+  51/51. The scoping surface (`plugins/cdocs/scripts/graphify-scope.sh` + reviewer wiring in
+  `iterate/SKILL.md` and `agents/reviewer.md`) is the shippable deliverable.
+- **Functional validation-of-record: PASSED, live, against real graphify 0.9.61** (in the `clauthier`
+  container). This is the honest headline: the live run CAUGHT a real functional defect (the assumed CLI
+  contract was wrong on four counts — the helper would never have scoped), drove the reconcile, and then
+  live-proved the fixed helper produces correct multi-file/multi-hop dependent-set briefs, clean fallbacks on
+  every skip-scope branch, and the truncation guard. Without the live run this would have shipped broken; with
+  it, the surface is proven to work.
+
+**HONEST SCOPE NOTE — what was NOT run.** The Phase 2 success criteria also name a `/cdocs:ablate`
+*efficiency* spot-check ("does scoping measurably pay on multi-file tasks", a signed context-gap A/B). That
+was NOT run here. What I ran is the *functional* validation (does the surface produce correct briefs against
+real graphify) — the more fundamental question, and the one that retires the CLI-shape risk. The efficiency
+A/B is heavier (it needs nested top-level claude sessions inside a graphify container) and remains an OPTIONAL
+follow-up: the shipped increment's recall is protected STRUCTURALLY (additive-only + skip-scope + flag),
+independent of any efficiency measurement, and the lean proposal itself defers *measured* efficiency to the
+opt-in Phase 3. The prior e2e already has the single-file null point (Probe A `context_gap 0`); a multi-file
+ablate run would supply the positive complement if/when the maintainer wants the efficiency number.
+
+**Not pushed** (per standing instruction) — all commits are local on `main`.
+
 ## Completed
 
 - Turn 0 (propose-revise): devlog scaffolded, lean-track brief stated.
@@ -183,8 +227,11 @@ a `--build` refresh is a possible later flag.
 - Turn 0 (iterate): scope = Phase 2 only; verification floor set (host brief/fallback = confirmed; live
   ablate spot-check = overseer top-level, deferred-to-followup).
 - Iterate loop: impl-1 built the scoping surface (3 commits 07af3d4/d7d6fca/2ea4b2b, 39/39 tests) → rev-2
-  ACCEPT r1 (9eb0770), host behavior CONFIRMED (reproduced 39/39 + alt-JSON parser-isolation probe). Code
-  accepted on host-testable behavior; single code round, no judge needed (accept round 1).
+  ACCEPT r1 (9eb0770), host behavior CONFIRMED (reproduced 39/39 + alt-JSON parser-isolation probe).
+- Live run (overseer, real graphify 0.9.61) caught a 4-count CLI-contract defect → impl-1 reconcile (2 commits
+  10e8f71/bb2b873, 43/43) → rev-3 ACCEPT r2 (6662d43) → LIVE E2E PASS (mod_a → {mod_b,mod_c}).
+- Accepting-round cleanup (b4c96d7/749ba41/3170b2b, 51/51): truncation marker + 3 nits → LIVE truncation proof
+  PASS. Proposal flipped to `implementation_accepted`.
 
 ## Decisions Made
 
@@ -198,9 +245,20 @@ a `--build` refresh is a possible later flag.
 ## Open Todos
 
 - [x] Iterate: impl-1 builds Phase 2 scoping surface + tests → rev-2 ACCEPT r1.
-- [ ] Nits (non-blocking): (1) basename input-exclusion cross-dir collision; (2) `stat -c %Y` GNU-only
-  staleness (Linux devcontainer target); (3) add `--symbols` pointer to the skill. Fold 1-2 into live-run
-  reconciliation; do 3 as a quick doc fix.
-- [ ] Overseer top-level (validation-of-record): run live `/cdocs:ablate` spot-check on multi-file tasks in a
-  graphify-equipped devcontainer; reconcile the assumed `explain <basename> --json` CLI shape against the real
+- [x] All accepting-round nits cleared (truncation marker, arrow-anchored parse, `stat -f %m` fallback,
+  `--symbols` skill pointer); 51/51 host tests.
+- [x] Overseer top-level (functional validation-of-record): live real-graphify E2E + truncation proof PASS in
+  the `clauthier` container; CLI contract reconciled against the real binary. Proposal → `implementation_accepted`.
+- [ ] OPTIONAL follow-up (maintainer's call): the `/cdocs:ablate` *efficiency* spot-check (does scoping
+  measurably pay on multi-file tasks) — heavier (nested top-level sessions in a graphify container); the
+  shipped increment is recall-safe without it and the lean proposal defers *measured* efficiency to opt-in
+  Phase 3. Not run.
+- [ ] OPTIONAL: `lace`-side / other consumers can adopt by installing the graphify feature and turning on
+  `--graphify-scope` (default OFF); `graphify update <tree> --no-cluster` provisions the index. Not pushed.
+
+### superseded (pre-live-run wording, kept for audit)
+- Original validation-of-record framing named a live `/cdocs:ablate` spot-check; the overseer instead ran the
+  live FUNCTIONAL validation (correct-briefs-against-real-graphify), which retired the CLI-shape risk and
+  caught the contract defect. The efficiency A/B is the optional follow-up above. Original reconcile note:
+  reconcile the assumed `explain <basename> --json` CLI shape against the real
   binary and adjust `graphify_dependents()` if needed. On pass → flip proposal to `implementation_accepted`.

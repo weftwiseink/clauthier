@@ -5,7 +5,7 @@ first_authored:
 task_list: code-graph/cdocs-integration
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_accepted
 tags: [tooling, code_review, architecture, model_tiering, token_efficiency, future_work]
 last_reviewed:
   status: accepted
