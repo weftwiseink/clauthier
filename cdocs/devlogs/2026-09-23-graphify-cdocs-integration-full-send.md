@@ -65,6 +65,7 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 |---|---|---|---|---|---|---|---|---|
 | 1 (propose-revise) | rev-1 (cdocs:proposer) | reviewer-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | ~135K | no | ACCEPT r4; all 5 deltas verified in-text; 1 should-fix (D2 corpus "Phase 1 deliverable"→Phase 3) + 2 nits to clear |
 | 1 (iterate) | impl-1 (general-purpose) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | ~140K | no | ACCEPT r1; reviewer reproduced 39/39 + line-cited every floor branch + fed alt-nested JSON to confirm parser isolation. Host behavior=confirmed; LIVE ablate spot-check (CLI-shape reconcile) = deferred-to-followup (overseer top-level). 3 non-blocking nits |
+| 2 (iterate) | impl-1 (general-purpose, resumed) | rev-3 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r2.md | ~150K | yes (live E2E) | ACCEPT r2 (6662d43); reconcile to real graphify verified line-for-line vs fixtures + 43/43 reproduced. Overseer LIVE E2E PASS = validation-of-record confirmed. 1 should-fix (surface explain-truncation in brief) + 4 nits routed to cleanup; nit-2 (explain unknown-basename exit) overseer-resolved: exit 0 |
 
 ## Judge Log
 
@@ -89,6 +90,8 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | return | impl-1 (general-purpose, resumed) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/agents/reviewer.md | 2026-09-23T13:40:00-08:00 | done; 2 commits 10e8f71/bb2b873; 43/43 tests; 5 uncertainties for overseer live run |
 | return | overseer (live E2E, in clauthier container) | plugins/cdocs/scripts/graphify-scope.sh | 2026-09-23T14:05:00-08:00 | LIVE E2E PASS: mod_a.ts → {mod_b.ts,mod_c.ts}; flag-off/missing-index correct; 5 uncertainties resolved |
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r2.md | 2026-09-23T14:07:00-08:00 | review reconciled helper (iteration 2) |
+| return | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r2.md | 2026-09-23T14:20:00-08:00 | ACCEPT (6662d43); reconcile verified vs fixtures + 43/43; 1 should-fix + 4 nits |
+| dispatch | impl-1 (general-purpose, resumed) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/skills/iterate/SKILL.md | 2026-09-23T14:25:00-08:00 | clear iteration-2 accepting-round items (truncation marker + 3 nits) |
 
 ## Steering Log
 
