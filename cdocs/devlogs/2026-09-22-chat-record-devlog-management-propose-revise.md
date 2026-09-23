@@ -104,3 +104,27 @@ Strategic: the system does not obviate native auto-compaction for the top-level 
 Subagent-level capture: one-shot legs already covered by dispatch brief plus return summary; durable specialists have the state half in the Scratchpoint and lack only chronology; `SubagentStart/Stop` + `agent_transcript_path` + `agent_id`-keyed `PostToolUse` make a per-agent record one more `case` branch; recommended as a scoped Phase-3 investigation item, not designed now.
 
 **Scope check.** No creep into graphify or the shared-cache token-cost half; interactive `/compact` correctly a Phase-1 manual check.
+
+## Round 1: revision (fable-5-1, warm proposer)
+
+All 12 action items and the 3 maintainer decisions applied; proposal remains `status: review_ready` (64.7KB, from 46.5KB).
+
+**Blocking.**
+(1) Wrote `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md`: per run, the recorder script, `settings.json`, exact `claude` command, `run*.in`, canary-log lines (`transcript_path` dropped, sandbox path elided), model result; includes the run-5 `<task-notification>` prompt from the transcript and a "Not exercised" list. Phase 0 links it, says seven runs, and the example record is labeled a composite of runs 2, 4, 7.
+(2) `agent_id` guard is now the first invariant of the hook contract; "invisible by construction" language replaced with the verified behavior (tool hooks fire inside subagents with `agent_id`); Non-Goals rests the scoping on the documented field; Phase-0 table gained the review's Run A and Run B rows; subagent-`Read` test scenario added.
+(3) Grammar pinned: `HEADER_RE := ^@[A-Za-z0-9][A-Za-z0-9._-]*:` is the single writer-escape and reader-split test (with the `@alice:`/LESS/CSS examples stated as escaped); quoted values have exactly four escapes (`\\`, `\"`, `\n`, `\r`); CRLF normalized; file located by `*-<sid8>.md` glob, full `sid=` on the start line, full-id filename fallback on mismatch; adversarial fixture extended.
+(4) `WARN` names three leak channels (pastes, assistant bodies, compaction summaries); commit protocol specified (overseer stages by explicit path at handoff in a devlog-class commit; dispatched agents never stage `cdocs/_chat/`); Pillar 1 carve-out sentence added; redaction stance per maintainer decision 1: none, exposure accepted, pointer to `cdocs/proposals/2026-09-23-chat-record-redaction-scanning-rfp.md` in Non-Goals, the `WARN`, and Decision 9.
+(5) Closed concern defined by the three-part test (own heading; every handoff Open Todo naming it done or moved; no live table still receiving rows); move every closed concern, one chunk each, ~3KB merge, shared-table rows move with their concern or stay if shared; chunks carry `status: done`.
+
+**Non-blocking.**
+(6) Active devlog resolved in three tiers: `<session_id>.devlog` written by the already-wired `PostToolUse` hook on `Edit`/`Write` of `cdocs/devlogs/*.md`, then `grep -l <sid8>`, then mtime; the two-sessions edge case is now resolved rather than documented.
+(7) `last_assistant_message` stated as the final text block only; rule added that the overseer ends every turn with a short turn summary (Phase-1 Pillar 2 deliverable); `Stop` capture kept verbatim.
+(8) New section "Relationship to native auto-compaction"; Objective and BLUF restated as "make the summary's quality irrelevant and compaction rare"; Phase-2 A/B is three-arm per maintainer decision 3 (carry-indefinitely, cap-and-reseed-from-scratchpoint, `/clear`-plus-reseed) with the arm-3 result feeding the `/cdocs:compact` print decision.
+(9) Rewritten per maintainer decision 2 as a Phase-3 design sketch for a **per-workstream** record keyed by `task_list`: key learned from the active devlog's frontmatter; session files are not relocated, the hook appends `@session ... workstream ws=<task_list>` and the workstream record is the `grep -l` set (covers next-day sessions, merges across worktrees); legs' chronology lands in the parent session's file as `@dispatch`/`@return` blocks from `SubagentStart`/`SubagentStop` (`last_assistant_message` as the return body, per-agent `files=` from `agent_id`-keyed buffers), still one writer; gated on Phase-1 landing plus two unverified canary items (`SendMessage` resume firing a fresh `SubagentStart`/`Stop` pair; `PreToolUse` on `Agent` delivering `tool_input.prompt`).
+(10) #13572 closed-stale and #14258 closed noted in the Summary NOTE; hooks reference cited for `PostCompact`; Decision 7 rationale is "unverified interactive path".
+(11) `notebook_path` for `NotebookEdit`; README "seven entries"; slash-command capture (raw invocation string) and built-in `/compact` non-capture stated with tests; `model` cached from `SessionStart(compact)` as first source for `<model-short>`; steering string is user-typed or `/cdocs:compact`-printed.
+(12) Scratchpoint bounded to 15 lines and 8 `files:` entries; staleness maps to the judge's existing `overseer_thinness: signal_missing`; Pillar-1 carve-out sentence (see item 4).
+
+**Not fully resolvable here, flagged.**
+The per-workstream sketch (item 9) has two mechanics I could not verify without a durable-specialist canary: whether `SendMessage` resume re-fires `SubagentStart`/`SubagentStop` with the same `agent_id`, and whether `PreToolUse` on the `Agent` tool exposes the brief; both are listed as Phase-3 gating canaries, not assumed.
+The interactive TUI `/compact` path remains the Phase-1 manual check, unchanged.
