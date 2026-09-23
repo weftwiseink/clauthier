@@ -179,6 +179,15 @@ Loop was reopened before any implementation started. Two corrections, both desig
 
 Dispatched to the same (warm) proposer for a round-3 revision.
 
+## Round 3 follow-up correction (mid-flight, relayed to the round-3 reviewer): `_judge/` rejected, `_verify/` folded into existing devlog Verification + chunking
+
+The round-3 revision (commit `082df8c`) introduced an unrequested `_judge/` namespace and kept `_verify/` as a separate, backlinked genre per the overseer's round-3 brief above. Maintainer overrides both, correctly identifying that the overseer's own "keep `_verify/` separate but backlinked" resolution was itself scope creep:
+
+- **`_judge/`: rejected outright, out of scope.** Never requested; remove.
+- **`_verify/`: also rejected as a separate namespace.** This proposal's actual scope is chat-record + devlog CHUNKING, not redesigning what devlogs contain. `plugins/cdocs/skills/devlog/template.md`/`SKILL.md` already has a **Verification** section for pasted build/test/runtime evidence — that predates this proposal. Correct fix: reproducible canary evidence lives in the devlog's own Verification section; if it outgrows one file, that is exactly what this proposal's own chunking mechanism (`-<concern>` naming, `part_of`, backlink NOTE, `## Chunks` index) is for — e.g. a `-verification` chunk, using the SAME machinery as any other closed-concern split. No separate directory, no separate `## Evidence` index-list type.
+
+Relayed live to the in-flight round-3 reviewer (`ae077db08527082d6`) as a further correction on top of the brief it's already reviewing against.
+
 ## Round 3: revision (fable-5-1, warm proposer)
 
 Both corrections applied; proposal back to `status: review_ready`.
