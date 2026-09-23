@@ -10,8 +10,8 @@ tags: [tooling, code_review, architecture, model_tiering, token_efficiency, futu
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
-  at: 2026-09-17T14:05:00-08:00
-  round: 2
+  at: 2026-09-22T15:30:00-07:00
+  round: 3
 ---
 
 # Graphify integration into cdocs loops, and the librarian question
@@ -213,7 +213,9 @@ No time estimates. Dependencies are explicit.
 
 **FIRST INCREMENT (green-lightable on its own): Phase 1 + Phase 2.**
 The coarse per-role baseline meter (Phase 1, with the per-task causal verdict delegated to `/cdocs:ablate`) plus a reviewer-first, CLI-backed scoping surface (Phase 2).
-This is the shippable slice: it establishes the live baseline and puts a correct dependent-set brief in front of the RFP's original consumer, with recall parity gated and no dependence on the roll-out, the librarian, or the adapter.
+This is the shippable slice: it establishes the live baseline and puts a correct dependent-set brief in front of the RFP's original consumer, with no dependence on the roll-out, the librarian, or the adapter.
+In this first increment recall parity is protected STRUCTURALLY, not measured: scoping is additive (it only ADDS context to the round, never removes it), skip-scope on a stale or missing index guarantees the baseline floor, and the surface ships behind a flag.
+The MEASURED recall-parity discriminator gate (D2, the hard gate) lands in Phase 3, where scoping rolls across roles and is metered against the labeled corpus; the first increment does not weaken that gate, it precedes it.
 Phases 3 to 5 are explicitly-deferred LATER increments, each gated on the one before it; the maintainer can full-send just the first increment.
 
 ### Phase 1: Coarse token-accounting baseline (gate; prerequisite for all claims)
