@@ -32,4 +32,31 @@ Maintainer refinement: the chat-record summarizer should also carry a running "f
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
 |---|---|---|---|---|
-| 1 | fable | pending | pending | pending |
+| 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | pending | pending |
+
+## Round 1: proposer (fable-5-1)
+
+Proposal written at `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`, `status: review_ready`.
+
+**Chosen conventions.**
+Chat record: one hook-written file per session at `cdocs/_chat/YYYY-MM-DD-<sid8>.md`; blocks headed `@speaker: <ISO ts> key=value...` at column 0, body verbatim until the next header, header-shaped body lines escaped with a leading backslash; speakers `user`, `harness`, `<model-short>` (e.g. `opus-4-8`), `assistant`, `compact`, `session`.
+Assistant blocks carry `files="r:path,rw:path"` (hook-written from `PostToolUse`), the mechanical half of the gist log the shared-cache report folded into RFP-2; the judgment half is a `files:` one-liner list in the Scratchpoint.
+Scratchpoint: rolling replace-in-place `## Scratchpoint` block in the devlog the agent owns (generalizes the `overseer_thinness` columns; columns kept).
+Devlog split: at handoff boundaries past ~12KB, cut at the most recent closed concern into flat `-<concern>` chunk siblings sharing the root's date; root becomes index with a `## Chunks` table (`read this when` column); chunks get `part_of` frontmatter and a backlink NOTE.
+Delivery: `/compact <steering>` primary; `PreCompact` nudge, `SessionStart(compact)` reseed pointer, `PostCompact` summary capture secondary.
+
+**Hook canary (Phase 0, run here, CC 2.1.280, sandboxed `CLAUDE_CONFIG_DIR`, haiku, 7 headless runs): confirmed-working.**
+`SessionStart` (startup and compact), `UserPromptSubmit`, `Stop`, `SubagentStart/Stop`, `PostToolUse` (Read/Edit), `PreCompact` (manual via stream-json `/compact`, and auto via `--autocompact 100000`), `PostCompact` (manual and auto), `SessionEnd` all fired with usable payloads.
+`PostCompact` exists on this version and carries the full `compact_summary`; the research report had assumed it was still an open request.
+`additionalContext` from `UserPromptSubmit`, `PreCompact`, `SessionStart(compact)`, and `PostCompact` all reached the model.
+`UserPromptSubmit` did not fire for a dispatched subagent's prompt (top-level-only scoping is mechanical), but did fire for a background-subagent completion notification (hence the `@harness` speaker).
+Not verified: interactive `/compact` ([#13572](https://github.com/anthropics/claude-code/issues/13572) path), made a Phase-1 manual check.
+Evidence: canary scripts and logs in the session scratchpad (`.../scratchpad/canary/`, runs 1-7); the recorder recipe is reproduced in the proposal's Verification Methodology.
+
+**Deviations from the brief.**
+`cdocs/rules/cdocs.md` does not exist in this repo (nor `plugins/cdocs/rules/cdocs.md`); the devlog mandate is cited from root `CLAUDE.md` and `writing-conventions.md`.
+The coordinator's mid-task steering note (files-touched gist log from `2026-09-22-shared-retrieval-cache-redundancy-check.md`) was folded in before completion, as schema in both artifacts, not prose.
+
+**Not done / for the reviewer.**
+No `/cdocs:review` was dispatched (dispatched mode); the overseer's reviewer round covers it.
+Open judgment calls a reviewer may push on: committing chat records by default; `Stop`-captured assistant turns adding file size; the mtime heuristic for "active devlog" in the nudge.
