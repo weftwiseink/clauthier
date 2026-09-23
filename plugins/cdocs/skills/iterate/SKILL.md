@@ -1,7 +1,7 @@
 ---
 name: iterate
 description: Run an implement-review loop on a proposal as the overseer, dispatching fresh implementer, reviewer, and judge subagents until accept-or-escalate
-argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]]"
+argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]] [--graphify-scope]"
 ---
 
 # CDocs Iterate Loop
@@ -36,6 +36,26 @@ Code and cdocs should be committed early and often.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
   For default tier guidance (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins), see [`model-tiering.md`](../../rules/model-tiering.md).
+- `--graphify-scope`: opt into priming a graphify-resolved dependent-set brief into the reviewer's dispatch (see "Graphify scoping" below).
+  DEFAULT OFF: with the flag absent the loop behaves exactly as today and makes zero graphify calls.
+
+## Graphify scoping (flag-gated, reviewer only, default OFF)
+
+When `--graphify-scope` is passed, the overseer primes a compact graph-resolved dependent-set brief into the reviewer's dispatch prompt up front, so the reviewer starts from the change's true MULTI-FILE dependent set instead of a speculative read sweep.
+This is deliberately minimal: prime a brief + point the reviewer at the graphify CLI. It is currently wired for the REVIEWER role only (the RFP's original consumer); implementer and judge are out of scope for this increment.
+
+At **Turn N.b (Review)**, before dispatching the reviewer, and ONLY when the flag is on, the overseer runs the helper against the round's changed files:
+
+```
+plugins/cdocs/scripts/graphify-scope.sh brief --enable --diff-base <base-ref>
+```
+
+- If the first line is `SCOPE-STATUS: scoped`, the overseer pastes the brief VERBATIM into the reviewer's dispatch prompt under a "Graphify scoped-context brief" heading, and the reviewer treats it per [`reviewer.md`](../../agents/reviewer.md) (an AID, never a completeness guarantee).
+- If the first line is `SCOPE-STATUS: skip-scope` or `disabled` (missing/stale index, missing graphify binary, engine error, or an empty/near-empty set), the round is a fallback round: the overseer primes NO brief and the reviewer runs today's unscoped sweep. Note the labeled status in the Iteration Log `notes` (e.g. `[graphify: skip-scope missing-index]`) so instrumentation can tell scoped rounds from fallback rounds.
+
+The helper is ADDITIVE ONLY: it can only ever ADD context to a round, never narrow it, so its absence or any fallback never lowers recall below the current baseline.
+The overseer never blocks a round on scoping.
+Flag off = no helper call at all.
 
 ## Roles
 
