@@ -5,7 +5,7 @@ first_authored:
 task_list: code-graph/cdocs-integration
 type: devlog
 state: live
-status: wip
+status: done
 tags: [cdocs, propose-revise, graphify, token_efficiency, scoping]
 ---
 
@@ -54,7 +54,14 @@ decides the full-send.
 | 0 | overseer | scaffolded devlog + briefed reviser | — | ~120K | devlog write |
 | 1 | reviser | cdocs:proposer (Path-A revision, dispatched) | done; 5 commits cdd20b4..bf181ef; status→review_ready; license RESOLVED Apache-2.0; first-increment boundary added | ~130K | devlog edit + commit |
 | 1 | reviewer | cdocs:reviewer (fresh, dispatched) | ACCEPT round 3; all 4 points integrated, spine intact, boundary actionable; 1 should-fix + 2 nits | ~140K | devlog edit |
-| 2 | reviser | cdocs:proposer (resumed, clear accepting-round items) | pending | — | — |
+| 2 | reviser | cdocs:proposer (resumed, clear accepting-round items) | done; 3 commits 1b86e58/22fac05/220936e; recall framing qualified, D1 nit neutralized, status→implementation_ready | ~150K | overseer-verified |
+
+**LOOP COMPLETE — scoping revision ACCEPTED (r3), accepting-round items cleared.** Overseer verified:
+`status: implementation_ready`, proposal tree clean, no stale MCP-first / per-phase-meter phrasing, recall
+parity reads structural-in-increment-1 / measured-at-Phase-3, license RESOLVED Apache-2.0 (residual = pin
+spot-check only). First-increment boundary (Phase 1 coarse meter + delegated `/cdocs:ablate` discriminator;
+Phase 2 reviewer-first CLI-backed scoping surface) is green-lightable on its own; Phases 3–5 deferred, each
+gated on the prior. HELD for maintainer full-send decision.
 
 Review 1: `cdocs/reviews/2026-09-22-review-of-graphify-cdocs-integration-scoping-revision.md` (ACCEPT r3).
 Accepting-round items routed to reviser: [should-fix] qualify first-increment intro — recall parity is
@@ -69,6 +76,7 @@ adding a Phase-2 recall check (keeps the first increment lean + honest); flagged
 
 ## Open Todos
 
-- [ ] Reviser round 1; capture path.
-- [ ] Review round 1.
-- [ ] Hold for maintainer full-send decision on the revised first increment.
+- [x] Reviser round 1 (5 commits); Review round 1 (ACCEPT r3); accepting-round items cleared (3 commits).
+- [x] Proposal at `implementation_ready`, overseer-verified.
+- [ ] HOLD: maintainer full-send decision on the first increment (Phase 1 + Phase 2). Loop does not
+  proceed to `/full-send` without explicit go.
