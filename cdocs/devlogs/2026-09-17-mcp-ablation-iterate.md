@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/mcp-ablation
 type: devlog
 state: live
-status: review_ready
+status: done
 tags: [cdocs, iterate, ablation, tooling, verification, graphify]
 ---
 
@@ -181,5 +181,4 @@ skill files edited. Two probes, single-shot (`gate_admissible:false`, correct):
 - [ ] FOLLOW-UP (not started; awaiting user): hard CLI-tool withhold (agent-def omission / PATH scrub) —
   see FINDING above. Also: lace's own container needs its Dockerfile `NPM_CONFIG_PREFIX` vs node-feature
   bug fixed before it can build (lace repo; graphify feature already committed there, not pushed).
-- [ ] Human acceptance: proposal is `implementation_ready` + e2e-verified; awaiting user sign-off to move
-  it to `implementation_accepted`.
+- [x] Human acceptance (2026-09-22): user accepted; proposal → `implementation_accepted`. Loop CLOSED.
