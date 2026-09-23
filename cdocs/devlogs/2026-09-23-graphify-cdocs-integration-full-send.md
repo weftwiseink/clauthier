@@ -86,6 +86,9 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:07:00-08:00 | review Phase 2 scoping surface impl |
 | return | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r1.md | 2026-09-23T10:20:00-08:00 | ACCEPT r1 (9eb0770); reproduced 39/39 + alt-JSON parser-isolation probe; 3 non-blocking nits; live ablate = overseer deferred-to-followup |
 | dispatch | impl-1 (general-purpose, resumed) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh | 2026-09-23T13:20:00-08:00 | iteration 2: reconcile helper to REAL graphify CLI contract (live-run findings) |
+| return | impl-1 (general-purpose, resumed) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/agents/reviewer.md | 2026-09-23T13:40:00-08:00 | done; 2 commits 10e8f71/bb2b873; 43/43 tests; 5 uncertainties for overseer live run |
+| return | overseer (live E2E, in clauthier container) | plugins/cdocs/scripts/graphify-scope.sh | 2026-09-23T14:05:00-08:00 | LIVE E2E PASS: mod_a.ts → {mod_b.ts,mod_c.ts}; flag-off/missing-index correct; 5 uncertainties resolved |
+| dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-scoping-surface-impl-r2.md | 2026-09-23T14:07:00-08:00 | review reconciled helper (iteration 2) |
 
 ## Steering Log
 
@@ -146,6 +149,28 @@ real graphify), exactly what the live floor exists to catch:
 
 Real fixtures saved for the reviser: `$JOB/tmp/graphify-live-fixtures/{affected-output.txt,
 explain-file-contains.txt,graphify-help.txt}`.
+
+### Iteration 2 reconcile + LIVE E2E PROOF (PASS)
+
+impl-1 (resumed) reconciled the helper to the real contract (commits `10e8f71`, `bb2b873`; 43/43 host tests):
+pipeline is changed-file → `explain "<basename>"` [contains] → symbols → `affected "<symbol>"` per symbol →
+union dependent paths − changed files; graph path resolved via `--graph`/`--index` → `CDOCS_GRAPHIFY_GRAPH` →
+`GRAPHIFY_OUT` → `/var/cache/graphify/graph.json`; all plain-text parsing isolated to one block (D4).
+
+**Overseer live E2E against real graphify 0.9.61 (coupled fixture mod_a ← mod_b ← mod_c) — PASS.** Proof:
+`$JOB/tmp/graphify-live-fixtures/live-e2e-proof.txt`. `brief --enable --files mod_a.ts` →
+`SCOPE-STATUS: scoped`, dependent set `{mod_b.ts, mod_c.ts}` (correct multi-file, multi-hop), AID caveat +
+observe channel + CLI follow-ups present; flag-off → `disabled` (zero graphify calls); missing index →
+`skip-scope missing-index`. The floor's live validation-of-record is met.
+
+**Five uncertainties resolved:** (1) `explain` truncates its connection list at ~20 (`... and N more`) — a
+file with >~20 symbols/edges may under-list [contains] symbols → some dependents missed; ADDITIVE-SAFE (AID
+caveat + skip-scope stand), documented as a known limitation, no `--json`/`--all` to widen. (2) An unknown
+node **exits 0** with `No unique node match` (not nonzero) → one unknown changed file yields empty, does NOT
+skip the whole round. (3) Paths emit as bare basenames here; extraction + basename-drop correct (over-drop
+only if two changed files share a basename across dirs — documented nit). (4) Canonical graph resolves to
+`/var/cache/graphify/graph.json`. (5) Build step intentionally not auto-wired (stale/missing → skip-scope);
+a `--build` refresh is a possible later flag.
 
 ## Completed
 
