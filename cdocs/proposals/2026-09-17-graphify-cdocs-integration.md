@@ -67,6 +67,10 @@ flowchart LR
   S --> I
 ```
 
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration): The scoping surface targets MULTI-FILE dependent-set / change-blast-radius navigation, NOT single-file lookups.
+> The ablate e2e (Probe A, a single-file `explain` task) scored `context_gap 0`: a change fully reconstructable by reading one file exercises none of graphify's blast-radius strength, and the evaluator honestly scored 0 rather than manufacturing a win.
+> So single-file/trivial changes are EXPECTED-NULL for scoping value and must never be read as "graphify has no value"; the surface plugs in where a change's true dependent set spans files a single read would miss. This grounds the recall-parity and discriminator framing (D2, Phase 3, Test Plan) in real e2e data.
+
 ## Proposed Solution
 
 ### Bet 1: a stateless graph-scoping surface (core)
@@ -124,6 +128,7 @@ Because the whole design is discriminator-first, the gate must be measurable, no
 
 - **Ground-truth labeling protocol.** For each fixture change the true dependent set is built as a labeled CANDIDATE union, then adjudicated: (1) union the graph output, a grep-recall floor (per the RFP, grep holds ~97.4% raw recall), and an `.observe`/`.subscribe` observe-site scan of the touched files; (2) opus/human-adjudicate that union to drop false positives and confirm true dependents. Crucially the CRDT label does NOT come from the graph, which is blind by construction: it comes from the observe-site scan, hardened on a small CRDT-heavy subset by (3) runtime-trace-derived coupling as the gold-standard tiebreaker. This is how a true dependent is defined for a change the graph cannot see: by the non-graph signals, never the graph itself.
 - **Corpus.** A minimum labeled corpus characterized to over-represent the hard cases the graph exists to win and the CRDT cases it cannot: barrel re-exports, aliased re-exports, multi-hop chains, and observe/subscribe-coupled changes, plus plain-import controls. A hard gate on a tiny or barrel-free fixture is noise, so the corpus is sized and its case-mix recorded before any gate reading is admissible; exact size is a Phase 1 deliverable, floored at enough per-category fixtures to yield a meaningful per-category rate.
+The discriminator corpus is further constrained to MULTI-FILE dependent-set / blast-radius task shapes, the cases graphify exists to win, grounded in the ablate e2e Probe A finding that a single-file task scores `context_gap 0`; single-file/trivial fixtures are retained ONLY as expected-null controls and are inadmissible as evidence that scoping does not pay.
 - **Pass rule under noise.** Recall is measured on a sample, so the gate is not naive zero-tolerance on a single fixture flip. The rule: scoped per-category recall must be >= unscoped baseline recall within the labeling protocol's confidence interval, AND there is zero tolerance for a SYSTEMATIC miss class (a whole coupling category the scoping drops, e.g. every aliased re-export). A lone ambiguous-label flip is label noise; a category regression is a real recall loss and fails.
 
 > NOTE(claude-opus-4-8/code-graph/cdocs-integration): The gate distinguishes label noise from a recall regression by CLASS, not by raw count.
@@ -165,7 +170,7 @@ The staleness contract is fixed now: stale or missing means skip-scope for that 
 - **Stale index mid-loop.** A change lands that the index predates. Detected by index-vs-diff freshness check; the affected round skip-scopes. Never silently returns a dependent set computed against old source.
 - **Engine returns empty or errors.** Treated identically to a missing index: skip-scope, fall back to the unscoped sweep, log the fallback so instrumentation does not misattribute the round's burn to "scoped."
 - **CRDT-heavy change with a near-empty graph set.** The highest-risk recall case (D3). The structural guard holds here: the brief co-surfaces the nearby `.observe`/`.subscribe` sites and never presents the set as exhaustive, and a near-empty set on observe-coupled touched files triggers an unscoped sweep for that round. The test plan includes a CRDT-coupled fixture to verify a role does not over-trust the set.
-- **Scoping cost exceeds savings on a tiny diff.** A one-symbol change may not repay even a cheap graph query plus brief-loading. Instrumentation must attribute this; the policy may gate scoping below a diff-size threshold.
+- **Scoping cost exceeds savings on a tiny diff.** A one-symbol change may not repay even a cheap graph query plus brief-loading. Instrumentation must attribute this; the policy may gate scoping below a diff-size threshold. A single-file/trivial change is additionally EXPECTED-NULL for scoping value (ablate e2e Probe A: single-file `explain` -> `context_gap 0`): a near-empty benefit there is honest, not a failure, and must not gate the tool out.
 - **Librarian, if built, on OpenCode.** No `SendMessage`: degrades to fresh-session-from-handoff, losing warm context. The librarian must degrade to "each role queries the stateless tool directly" (i.e., bet 1), never to a broken resume.
 - **lace.** An unspecified weftwise integration target. Out of scope: named only as an open question, not designed against.
 
@@ -174,6 +179,7 @@ The staleness contract is fixed now: stale or missing means skip-scope for that 
 Metrics are meaningless without the Phase 1 meter; every row below presumes it.
 
 - **Token accounting (primary).** Two instruments (see Discriminator-first instrumentation). Live COARSE per-role burn on a fixed corpus of representative loops, metered before scoping lands and re-metered after: the claim under test is that total per-role burn and the read-token (context-gathering) proxy fall for implementer, reviewer, and judge while the generate-token (reasoning/writing) proxy holds. The per-task causal "scoping pays" verdict is DELEGATED to the `/cdocs:ablate` harness run on dependent-set task shapes, not inferred from a per-phase meter.
+- **Task-shape targeting (grounds the discriminator).** The discriminator and the `/cdocs:ablate` verdict run on MULTI-FILE dependent-set / blast-radius task shapes, per the e2e Probe A finding (single-file `explain` -> `context_gap 0`). Single-file/trivial fixtures are expected-null controls only; a near-zero result on them is NOT admissible as "scoping does not pay."
 - **Recall parity (hard gate).** Missed-dependent rate on a labeled fixture set (changes with known true dependent sets, including barrel/aliased/multi-hop cases). Scoped recall must be >= unscoped baseline recall. Any regression fails the change.
 - **CRDT guard (structural).** A fixture where the graph dependent set is near-empty but real runtime coupling is heavy. Assert the brief co-surfaces the nearby observe/subscribe sites and never presents the set as exhaustive (D3), and that the near-empty-plus-observe-proximity trigger forces an unscoped sweep for that round. The check is at test time; the production guard is the structural brief format plus that trigger, not the caveat alone.
 - **Staleness / fallback.** Force a stale and a missing index; assert the round skip-scopes and its recall matches the unscoped baseline, and that instrumentation labels the round as fallback, not scoped.
@@ -185,7 +191,7 @@ Metrics are meaningless without the Phase 1 meter; every row below presumes it.
 The loop is its own test harness: run the real `/cdocs:iterate` loop on the fixture corpus and read the metered output, do not simulate.
 
 1. Land Phase 1 coarse instrumentation and capture the BEFORE baseline on the corpus (per-role totals + read/generate proxy; missed-dependent rate). The per-task causal "did scoping help" verdict is supplied by `/cdocs:ablate` on dependent-set (multi-file) task shapes, not by this meter.
-2. Land the scoping tool behind a flag; run the SAME corpus with scoping on and off; diff the metered tokens and recall.
+2. Land the scoping tool behind a flag; run the SAME corpus with scoping on and off; diff the metered tokens and recall. Use dependent-set (MULTI-FILE) task shapes; a single-file task is expected-null and does not disconfirm the tool (ablate e2e Probe A).
 3. Gate: the change is admissible only if context-gathering tokens fall AND recall holds. A token win with any recall loss is rejected (D2).
 4. For the librarian (if reached), repeat the before/after against the stateless-tool baseline, charging the librarian's standing cost to its column.
 
@@ -220,7 +226,7 @@ No time estimates. Dependencies are explicit.
 ### Phase 3: Roll scoping across roles + measure (the discriminator gate)
 
 - Extend the scoping surface to the implementer and judge (same query shape, same brief).
-- Run the before/after methodology; produce the token and recall deltas.
+- Run the discriminator on MULTI-FILE dependent-set / blast-radius task shapes (ablate e2e Probe A: single-file tasks are expected-null and do not gate the tool out). Produce the token and recall deltas from the coarse per-role meter, and take the per-task causal "scoping pays" verdict from `/cdocs:ablate` on those same task shapes.
 - Decide, on the metered result: does scoping pay, and does the residual re-query pattern justify evaluating a librarian at all?
 - Success: a metered verdict on the efficiency claim (admissible only if recall holds), and an explicit go/no-go on Phase 4.
 - Depends on: Phase 2. Gates: Phase 4.
