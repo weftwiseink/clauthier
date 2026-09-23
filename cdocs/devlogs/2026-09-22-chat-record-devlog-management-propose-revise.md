@@ -24,6 +24,10 @@ Invocation: `/cdocs:propose-revise --first-round fable 2 and 3. ...` — three d
 - **Maintainer directives folded into the proposer's brief:** chat-record format is `@speaker:`-delimited markdown (e.g. `@opus-4-8:`) with light metadata, not a heavier schema; state the report's resolved design plainly as a decision, not a hedge; this session's hook-reliability findings (dead Bash hooks, `PreCompact` gap #13572) should make the proposal treat "Phase 1 is cheap and ships now" as needing a quick verification spike, not an assumption.
 - Bash-wrapper tool-use simplification note: checked against the existing `cdocs/proposals/2026-09-22-haiku-bash-wrapper.md` — already reflects "simple wrapper, no fancy hook wiring" (Phase 3 hook already optional/deferred). No edit made; noted for the record.
 
+## Mid-round steering (relayed to the round-1 proposer via SendMessage while in flight)
+
+Maintainer refinement: the chat-record summarizer should also carry a running "files touched" list — for each important file, a very brief one-liner on what it was useful for / why it mattered in that stretch of work. This is the "awareness-only" half of the dropped RFP-4 mechanism per `cdocs/reports/2026-09-22-shared-retrieval-cache-redundancy-check.md` (a sibling agent can decide whether to re-read or trust the note; it does not by itself save tokens, since it doesn't put the file's bytes in the sibling's context). Must land in the proposal's actual chat-record format/schema, not just prose. If the round-1 proposer had already finished before this was delivered, it becomes review feedback / a revision-round item instead.
+
 ## Round log
 
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
