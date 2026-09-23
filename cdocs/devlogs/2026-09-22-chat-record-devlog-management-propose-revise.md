@@ -47,6 +47,7 @@ Three maintainer refinements/questions to fold into the round-1 review's finding
 | Round | Model | Proposer/Reviser dispatch | Reviewer dispatch | Verdict |
 |---|---|---|---|---|
 | 1 | fable | done: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (review_ready) | done: `cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md` | revise (5 blocking, warm proposer) |
+| 2 (revision) | fable (warm, same proposer) | done: 12 action items + 3 maintainer decisions applied, commit `8986747`; evidence artifact `cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md` | pending (fresh reviewer, default/opus) | pending |
 
 ## Round 1: proposer (fable-5-1)
 
