@@ -1,0 +1,560 @@
+<!--
+DESIGN PLAN
+Color: cool engineering-slate ground, one structural accent (blue), three semantic
+  verification-status colors (confirmed/assumed/unverified) kept strictly apart from
+  the accent and from the phase-status vocabulary (done/ships-now/gated), so a reader
+  never has to guess which dimension a chip encodes.
+Type: IBM Plex Sans (headings/body), IBM Plex Sans Condensed (display), IBM Plex Mono
+  (paths, code, data, chips) - matches this project's existing engineering-artifact
+  series so the maintainer's growing artifact library reads as one system.
+Layout: dense single-column technical reference, ~120ch measure, section-numbered,
+  each section pairs one hand-drawn SVG with citation-backed prose. A persistent
+  legend defines the confirmed/assumed/unverified triad once, referenced everywhere.
+-->
+<title>Chat-Record Design</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#f5f7f9; --fg:#151b22; --mute:#5b6b78; --line:#dbe2e8; --card:#ffffff;
+  --accent:#2458c9; --accent-bg:#e4ecfc; --code:#eef1f5;
+  --conf-fg:#146c43; --conf-bg:#d9f5e6;
+  --assume-fg:#8a5a00; --assume-bg:#fbead0;
+  --unver-fg:#9c2b2b; --unver-bg:#fbdcdc;
+  --phase-done-fg:#146c43; --phase-done-bg:#d9f5e6;
+  --phase-now-fg:#2458c9; --phase-now-bg:#e4ecfc;
+  --phase-gated-fg:#6b5b1f; --phase-gated-bg:#f3ead0;
+  --shadow: 0 1px 2px rgba(21,27,34,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#10161d; --fg:#e6ebef; --mute:#93a2af; --line:#2a3441; --card:#161e27;
+    --accent:#7fa8ff; --accent-bg:#1c2b4d; --code:#1c2530;
+    --conf-fg:#5fd399; --conf-bg:#123326;
+    --assume-fg:#e3b158; --assume-bg:#3a2c0d;
+    --unver-fg:#f08a8a; --unver-bg:#3a1717;
+    --phase-done-fg:#5fd399; --phase-done-bg:#123326;
+    --phase-now-fg:#7fa8ff; --phase-now-bg:#1c2b4d;
+    --phase-gated-fg:#e3c778; --phase-gated-bg:#332a11;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#10161d; --fg:#e6ebef; --mute:#93a2af; --line:#2a3441; --card:#161e27;
+  --accent:#7fa8ff; --accent-bg:#1c2b4d; --code:#1c2530;
+  --conf-fg:#5fd399; --conf-bg:#123326;
+  --assume-fg:#e3b158; --assume-bg:#3a2c0d;
+  --unver-fg:#f08a8a; --unver-bg:#3a1717;
+  --phase-done-fg:#5fd399; --phase-done-bg:#123326;
+  --phase-now-fg:#7fa8ff; --phase-now-bg:#1c2b4d;
+  --phase-gated-fg:#e3c778; --phase-gated-bg:#332a11;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 'IBM Plex Sans',system-ui,sans-serif;padding-inline:16px}
+main{max-width:124ch;margin:0 auto;padding-block:30px 72px}
+.eyebrow{font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+h1{font:700 32px/1.1 'IBM Plex Sans Condensed',sans-serif;margin:0 0 10px;text-wrap:balance}
+.sub{color:var(--mute);margin:0 0 22px;max-width:80ch}
+h2{font:700 21px/1.25 'IBM Plex Sans Condensed',sans-serif;margin:46px 0 4px;padding-top:18px;border-top:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+h2 .no{color:var(--accent);font:600 14px 'IBM Plex Mono',monospace}
+h3{font:600 15.5px 'IBM Plex Sans',sans-serif;margin:22px 0 8px}
+p,li{max-width:82ch}
+ul,ol{padding-left:20px;margin:8px 0}
+li{margin:3px 0}
+code{font:12.5px 'IBM Plex Mono',monospace;background:var(--code);padding:1px 5px;border-radius:3px}
+a{color:var(--accent)}
+.ref{font:12px 'IBM Plex Mono',monospace;color:var(--mute);display:inline-block;margin-top:2px}
+blockquote{margin:0 0 22px;padding:14px 18px;background:var(--accent-bg);border-radius:6px;box-shadow:inset 0 0 0 1px var(--line)}
+blockquote p{margin:4px 0;max-width:none}
+blockquote p:first-child{margin-top:0}
+blockquote p:last-child{margin-bottom:0}
+.fig{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:14px 0 6px;box-shadow:var(--shadow)}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+figcaption{font-size:13px;color:var(--mute);margin:0 0 18px;max-width:82ch}
+.tw{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.03em;text-align:left;color:var(--mute);border-bottom:2px solid var(--line);padding:6px 10px;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td code{white-space:nowrap}
+
+/* legend + status chips, shared vocabulary across every figure */
+.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;margin:14px 0 26px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.legend .grp{display:flex;align-items:center;gap:6px}
+.legend .kt{font:600 11px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin-right:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;font:600 11px 'IBM Plex Mono',monospace;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.chip.confirmed{background:var(--conf-bg);color:var(--conf-fg)}
+.chip.confirmed .dot{background:var(--conf-fg)}
+.chip.assumed{background:var(--assume-bg);color:var(--assume-fg)}
+.chip.assumed .dot{background:var(--assume-fg)}
+.chip.unverified{background:var(--unver-bg);color:var(--unver-fg)}
+.chip.unverified .dot{background:var(--unver-fg)}
+.chip.done{background:var(--phase-done-bg);color:var(--phase-done-fg)}
+.chip.ships-now{background:var(--phase-now-bg);color:var(--phase-now-fg)}
+.chip.gated{background:var(--phase-gated-bg);color:var(--phase-gated-fg)}
+
+.slug{font:500 12px 'IBM Plex Mono',monospace;background:var(--code);padding:1px 6px;border-radius:3px;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--card);box-shadow:var(--shadow)}
+.card h4{margin:0 0 6px;font:600 13px 'IBM Plex Mono',monospace;color:var(--accent)}
+.card p{margin:0;font-size:13px;color:var(--mute)}
+@media (max-width:720px){.cards{grid-template-columns:1fr}}
+
+svg text{fill:currentColor;font-family:'IBM Plex Mono',monospace}
+svg .lbl{font-size:11.5px}
+svg .lbl-b{font-size:11.5px;font-weight:600}
+svg .hdr{font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:12.5px}
+svg .mute{opacity:.62}
+svg .lane{stroke:currentColor;stroke-opacity:.28;stroke-width:1.4;stroke-dasharray:2 4}
+svg .arrow{stroke:currentColor;stroke-width:1.5;fill:none}
+svg .arrow-accent{stroke:var(--accent);stroke-width:2;fill:none}
+svg .box{fill:var(--card);stroke:var(--line);stroke-width:1.3}
+svg .box-accent{fill:var(--accent-bg);stroke:var(--accent);stroke-width:1.3}
+svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
+
+@media(max-width:560px){h1{font-size:25px}.cards{gap:8px}}
+</style>
+
+<main>
+<p class="eyebrow">Design reference &middot; 2026-09-23 &middot; meta/chat-record-devlog-management &middot; status: implementation_ready</p>
+<h1>Chat Record, Scratchpoint &amp; Devlog Splitting</h1>
+<p class="sub">How the accepted proposal actually works: file layout, hook timing, the Scratchpoint's shape, the devlog-splitting rule, the phase/tiering plan, and the unbuilt per-workstream sketch. Every diagram cites the source it was drawn from.</p>
+
+<blockquote>
+<p><strong>Two layers, one job each.</strong> A hook-written <strong>chat record</strong> captures every user turn, assistant reply, and compaction summary verbatim at zero LLM cost. An agent-written <strong>Scratchpoint</strong> in the devlog captures dense working state every turn, including a one-line gist per file touched. Delivery across compaction is <code>/compact &lt;steering&gt;</code> first, hooks second.</p>
+<p>A Phase-0 canary (seven sandboxed runs) confirmed every hook this design needs fires on Claude Code 2.1.280 headless &mdash; including <code>PostCompact</code>, which the original research assumed did not exist. The system makes the compaction summary's quality irrelevant to resumption and compaction rare; it does not, and cannot, prevent native auto-compaction outright.</p>
+</blockquote>
+
+<div class="legend">
+  <span class="grp"><span class="kt">Verification</span>
+    <span class="chip confirmed"><span class="dot"></span>confirmed &mdash; canaried</span>
+    <span class="chip assumed"><span class="dot"></span>assumed &mdash; by analogy, untested</span>
+    <span class="chip unverified"><span class="dot"></span>unverified &mdash; not yet checked</span>
+  </span>
+  <span class="grp"><span class="kt">Build status</span>
+    <span class="chip done">done</span>
+    <span class="chip ships-now">ships now</span>
+    <span class="chip gated">gated / sketch only</span>
+  </span>
+</div>
+
+<h2><span class="no">1</span>File layout</h2>
+<p>Three artifacts, three writers, three cadences &mdash; the whole design is downstream of keeping them separate.</p>
+<div class="tw"><table>
+<thead><tr><th>Artifact</th><th>Writer</th><th>Cadence</th><th>Location</th></tr></thead>
+<tbody>
+<tr><td>Chat record</td><td><code>chat-record.sh</code> hook (mechanical)</td><td>every user turn, every assistant turn end, every compaction event</td><td><code>cdocs/_chat/YYYY-MM-DD-&lt;sid8&gt;.md</code>, one file per session</td></tr>
+<tr><td>Scratchpoint</td><td>the overseer or a durable specialist (agent)</td><td>every state-changing turn, replaced in place</td><td><code>## Scratchpoint</code> block inside the devlog that agent owns</td></tr>
+<tr><td>Devlog chunks</td><td>the devlog's author (agent)</td><td>at a handoff boundary, once a concern has closed</td><td><code>cdocs/devlogs/YYYY-MM-DD-&lt;root&gt;-&lt;concern&gt;.md</code>, root becomes the index</td></tr>
+</tbody>
+</table></div>
+
+<figure class="fig">
+<svg viewBox="0 0 900 470" role="img" aria-label="Directory tree showing cdocs/_chat session files, the devlogs root index with its Scratchpoint and Chunks table pointing at two chunk files, the _verify evidence directory, the proposal file, and two review files.">
+<!-- tree lines -->
+<g class="mute">
+<line x1="34" y1="46" x2="34" y2="430" stroke="currentColor" stroke-width="1.2"/>
+</g>
+<!-- row generator: level marks -->
+<!-- cdocs/ root -->
+<text x="16" y="40" class="lbl-b">cdocs/</text>
+
+<!-- _chat -->
+<line x1="34" y1="66" x2="58" y2="66" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<text x="62" y="70" class="lbl-b">_chat/</text>
+<text x="150" y="70" class="lbl mute">mechanical, no frontmatter &middot; excluded from validation &amp; edit-path regex</text>
+<line x1="58" y1="76" x2="58" y2="96" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<line x1="58" y1="96" x2="82" y2="96" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="86" y="84" width="330" height="24" rx="4" class="box-code"/>
+<text x="96" y="100" class="lbl">2026-09-22-13ee1efb.md</text>
+<text x="430" y="100" class="lbl mute">first line: @session start sid=&lt;full id&gt;</text>
+
+<!-- devlogs -->
+<line x1="34" y1="132" x2="58" y2="132" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<text x="62" y="136" class="lbl-b">devlogs/</text>
+<line x1="58" y1="142" x2="58" y2="330" class="mute" stroke="currentColor" stroke-width="1.2"/>
+
+<line x1="58" y1="162" x2="82" y2="162" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="86" y="150" width="330" height="24" rx="4" class="box-accent"/>
+<text x="96" y="166" class="lbl-b">2026-09-22-chat-record-devlog-management.md</text>
+<text x="430" y="160" class="lbl mute">ROOT / INDEX</text>
+<text x="430" y="174" class="lbl mute">frontmatter, Objective, ## Scratchpoint,</text>
+<text x="430" y="188" class="lbl mute">## Chat Record pointer, live tables, ## Chunks table</text>
+
+<line x1="58" y1="220" x2="82" y2="220" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="86" y="208" width="300" height="24" rx="4" class="box-code"/>
+<text x="96" y="224" class="lbl">-canary.md</text>
+<text x="410" y="224" class="lbl mute">chunk &middot; status: done &middot; part_of &rarr; root</text>
+
+<line x1="58" y1="252" x2="82" y2="252" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="86" y="240" width="300" height="24" rx="4" class="box-code"/>
+<text x="96" y="256" class="lbl">-phase1-hooks.md</text>
+<text x="410" y="256" class="lbl mute">chunk &middot; status: done &middot; part_of &rarr; root</text>
+
+<line x1="58" y1="284" x2="82" y2="284" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<text x="86" y="288" class="lbl-b">_verify/</text>
+<line x1="82" y1="294" x2="106" y2="294" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="110" y="306" width="360" height="24" rx="4" class="box-code" transform="translate(0,0)"/>
+<line x1="82" y1="294" x2="82" y2="318" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="110" y="306" width="380" height="24" rx="4" class="box-code"/>
+<text x="120" y="322" class="lbl">2026-09-22-chat-record-hook-canary.md</text>
+<text x="510" y="322" class="lbl mute">reproducible evidence: settings, commands, log lines</text>
+
+<!-- proposals -->
+<line x1="34" y1="358" x2="58" y2="358" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<text x="62" y="362" class="lbl-b">proposals/</text>
+<line x1="58" y1="368" x2="58" y2="388" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<line x1="58" y1="388" x2="82" y2="388" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<rect x="86" y="376" width="330" height="24" rx="4" class="box"/>
+<text x="96" y="392" class="lbl">2026-09-22-chat-record-devlog-management.md</text>
+<text x="430" y="392" class="lbl mute" fill="var(--phase-done-fg)">status: implementation_ready</text>
+
+<!-- reviews -->
+<line x1="34" y1="424" x2="58" y2="424" class="mute" stroke="currentColor" stroke-width="1.2"/>
+<text x="62" y="428" class="lbl-b">reviews/</text>
+<text x="150" y="428" class="lbl mute">round 1 (revise, 5 blocking) + round 2 (accept, 5 nits)</text>
+</svg>
+</figure>
+<figcaption>Directory relationships for the design's artifacts. Chunk files carry <code>part_of</code> frontmatter pointing back at the root, which lists them in its own <code>## Chunks</code> table &mdash; the link is bidirectional but only the root is ever read cold.</figcaption>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Chat record: location and naming, &sect; Devlog splitting at closed-concern boundaries</p>
+
+<h2><span class="no">2</span>Timing &amp; hook mechanics</h2>
+<p>Seven Claude Code hooks drive the mechanical half of the system. All fired as expected in the Phase-0 canary (seven headless runs, Claude Code 2.1.280) and were independently re-derived by the round-1 review, which added two runs of its own. The one gap: the <em>interactive</em> TUI <code>/compact</code> path was never exercised headless &mdash; it is a named Phase-1 manual check, not a failure.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 660" role="img" aria-label="Sequence diagram across four lanes -- User, Tool calls, the chat-record hook, and the chat-record file -- showing which hook fires at each step of a session's lifecycle and what it writes, from the first prompt through a compaction to session end.">
+<!-- lanes -->
+<text x="70" y="26" class="hdr" text-anchor="middle">User</text>
+<text x="300" y="26" class="hdr" text-anchor="middle">Tool calls</text>
+<text x="540" y="26" class="hdr" text-anchor="middle">chat-record.sh</text>
+<text x="800" y="26" class="hdr" text-anchor="middle">cdocs/_chat/&lt;sid8&gt;.md</text>
+<line x1="70" y1="38" x2="70" y2="620" class="lane"/>
+<line x1="300" y1="38" x2="300" y2="620" class="lane"/>
+<line x1="540" y1="38" x2="540" y2="620" class="lane"/>
+<line x1="800" y1="38" x2="800" y2="620" class="lane"/>
+
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+</marker>
+</defs>
+
+<!-- step template: arrow line class=arrow marker-end url(#ar), label text above, status chip dot -->
+<!-- 1 -->
+<line x1="70" y1="66" x2="540" y2="66" class="arrow" marker-end="url(#ar)"/>
+<text x="90" y="60" class="lbl-b">UserPromptSubmit</text>
+<circle cx="530" cy="66" r="4" fill="var(--conf-fg)"/>
+<!-- 2 -->
+<line x1="540" y1="92" x2="800" y2="92" class="arrow" marker-end="url(#ar)"/>
+<text x="560" y="86" class="lbl">writes @user block, verbatim</text>
+<circle cx="790" cy="92" r="4" fill="var(--conf-fg)"/>
+
+<!-- 3 -->
+<line x1="300" y1="128" x2="540" y2="128" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="122" class="lbl-b">PostToolUse &times; N &nbsp;(Read / Edit / Write)</text>
+<circle cx="530" cy="128" r="4" fill="var(--conf-fg)"/>
+<text x="320" y="144" class="lbl mute">NotebookEdit matcher: same event, untested</text>
+<circle cx="480" cy="140" r="3.5" fill="var(--assume-fg)"/>
+<!-- 4 -->
+<rect x="500" y="158" width="200" height="22" rx="4" class="box-code"/>
+<text x="600" y="172" class="lbl mute" text-anchor="middle">buffers &lt;mode&gt;:&lt;path&gt; &rarr; &lt;sid&gt;.turn</text>
+
+<!-- 5 -->
+<line x1="300" y1="210" x2="540" y2="210" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="204" class="lbl-b">Stop &nbsp;(turn end)</text>
+<circle cx="530" cy="210" r="4" fill="var(--conf-fg)"/>
+<!-- 6 -->
+<line x1="540" y1="236" x2="800" y2="236" class="arrow" marker-end="url(#ar)"/>
+<text x="560" y="230" class="lbl">writes @&lt;model&gt; block, files= from the turn buffer</text>
+<circle cx="790" cy="236" r="4" fill="var(--conf-fg)"/>
+
+<!-- 7 -->
+<line x1="300" y1="278" x2="540" y2="278" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="272" class="lbl-b">PreCompact &nbsp;(manual: /compact steering &middot; or auto)</text>
+<circle cx="530" cy="278" r="4" fill="var(--conf-fg)"/>
+<text x="320" y="294" class="lbl mute">headless confirmed &middot; interactive TUI path</text>
+<circle cx="560" cy="290" r="3.5" fill="var(--unver-fg)"/>
+<text x="570" y="294" class="lbl mute">unverified (Phase-1 manual check)</text>
+<!-- 8 -->
+<line x1="540" y1="316" x2="800" y2="316" class="arrow" marker-end="url(#ar)"/>
+<text x="560" y="310" class="lbl">writes compact-begin line</text>
+<circle cx="790" cy="316" r="4" fill="var(--conf-fg)"/>
+<!-- 9 -->
+<line x1="540" y1="342" x2="300" y2="342" class="arrow" marker-end="url(#ar)"/>
+<text x="330" y="336" class="lbl">additionalContext: preserve Scratchpoint + handoff verbatim</text>
+<circle cx="310" cy="342" r="4" fill="var(--conf-fg)"/>
+
+<!-- 10 -->
+<line x1="300" y1="378" x2="540" y2="378" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="372" class="lbl-b">SessionStart &nbsp;(source=compact)</text>
+<circle cx="530" cy="378" r="4" fill="var(--conf-fg)"/>
+<!-- 11 -->
+<line x1="540" y1="404" x2="300" y2="404" class="arrow" marker-end="url(#ar)"/>
+<text x="330" y="398" class="lbl">additionalContext: reseed pointer (read Scratchpoint, chat-record tail)</text>
+<circle cx="310" cy="404" r="4" fill="var(--conf-fg)"/>
+
+<!-- 12 -->
+<line x1="300" y1="440" x2="540" y2="440" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="434" class="lbl-b">PostCompact</text>
+<circle cx="530" cy="440" r="4" fill="var(--conf-fg)"/>
+<!-- 13 -->
+<line x1="540" y1="466" x2="800" y2="466" class="arrow" marker-end="url(#ar)"/>
+<text x="560" y="460" class="lbl">writes @compact block (full compact_summary)</text>
+<circle cx="790" cy="466" r="4" fill="var(--conf-fg)"/>
+
+<!-- 14 -->
+<line x1="300" y1="510" x2="540" y2="510" class="arrow" marker-end="url(#ar)"/>
+<text x="320" y="504" class="lbl-b">SessionEnd</text>
+<circle cx="530" cy="510" r="4" fill="var(--conf-fg)"/>
+<line x1="540" y1="536" x2="800" y2="536" class="arrow" marker-end="url(#ar)"/>
+<text x="560" y="530" class="lbl">writes @session end reason=&hellip;</text>
+<circle cx="790" cy="536" r="4" fill="var(--conf-fg)"/>
+
+<rect x="70" y="566" width="730" height="40" rx="6" class="box-accent"/>
+<text x="90" y="590" class="lbl mute">agent_id guard runs first on every one of these seven events; when the payload carries agent_id (true for PostToolUse inside a dispatched subagent), the hook exits 0 before any write &mdash; this is what keeps the record top-level-only.</text>
+</svg>
+</figure>
+<figcaption>Every arrow above is <span class="chip confirmed" style="vertical-align:1px"><span class="dot"></span>confirmed</span> by the Phase-0 canary except the two flagged inline: the interactive <code>/compact</code> path (unverified) and the <code>NotebookEdit</code> matcher (assumed by analogy to <code>Read</code>/<code>Edit</code>).</figcaption>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Hook contract: plugins/cdocs/hooks/chat-record.sh &middot; cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md</p>
+
+<div class="tw"><table>
+<thead><tr><th>Hook</th><th>Matcher</th><th>Status</th><th>Payload fact relied on</th></tr></thead>
+<tbody>
+<tr><td><code>SessionStart</code></td><td>all</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td><td><code>session_id</code>, <code>cwd</code>, <code>source</code>; <code>additionalContext</code> reaches the model</td></tr>
+<tr><td><code>UserPromptSubmit</code></td><td>all</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td><td>does not fire for a dispatched subagent's own prompt (scoping is mechanical); fires again on a background-subagent completion notice &rarr; <code>@harness</code> speaker</td></tr>
+<tr><td><code>PostToolUse</code></td><td><code>Read\|Edit\|Write\|NotebookEdit</code></td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span> / <span class="chip assumed"><span class="dot"></span>assumed</span></td><td>fires once per call in order; also fires <em>inside</em> a dispatched subagent with <code>agent_id</code> set &mdash; the reason the guard exists; <code>NotebookEdit</code> untested</td></tr>
+<tr><td><code>Stop</code></td><td>all</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td><td><code>last_assistant_message</code>; no model field; transcript can lag by a turn</td></tr>
+<tr><td><code>PreCompact</code></td><td><code>manual\|auto</code></td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span> headless / <span class="chip unverified"><span class="dot"></span>unverified</span> interactive</td><td><code>trigger</code>, <code>custom_instructions</code>; auto fired 4&times; in one 3-minute run under a 100K window</td></tr>
+<tr><td><code>PostCompact</code></td><td>manual &amp; auto</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td><td>full <code>compact_summary</code> text; the research report had assumed this hook did not exist</td></tr>
+<tr><td><code>SessionEnd</code></td><td>all</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td><td><code>reason</code></td></tr>
+</tbody>
+</table></div>
+
+<h2><span class="no">3</span>Scratchpoint</h2>
+<p>One <code>## Scratchpoint</code> section, replaced in place every state-changing turn &mdash; never appended, so it cannot become a second chronology competing with the chat record.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 420" role="img" aria-label="Annotated Scratchpoint block showing its six fields -- as_of, now, since_handoff, open, next, and files -- with bound limits and its relationship to the existing judge-observable thinness columns.">
+<rect x="20" y="20" width="440" height="360" rx="8" class="box"/>
+<text x="36" y="46" class="lbl-b">## Scratchpoint</text>
+<line x1="36" y1="56" x2="424" y2="56" stroke="currentColor" stroke-opacity=".2"/>
+<text x="36" y="80" class="lbl">- as_of: 2026-09-22T18:40:11-07:00  ctx: ~140K</text>
+<text x="36" y="104" class="lbl">- now: wiring PreCompact nudge</text>
+<text x="36" y="128" class="lbl">- since_handoff: PostCompact exists on 2.1.280&hellip;</text>
+<text x="36" y="152" class="lbl">- open: interactive /compact check (#13572)</text>
+<text x="36" y="176" class="lbl">- next: run interactive canary, then commit</text>
+<text x="36" y="200" class="lbl">- files:</text>
+<text x="52" y="222" class="lbl mute">- hooks.json (rw): SessionStart entry is</text>
+<text x="52" y="238" class="lbl mute">&nbsp;&nbsp;the template for the new events</text>
+<text x="52" y="260" class="lbl mute">- inject-rules.ts (r): additionalContext</text>
+<text x="52" y="276" class="lbl mute">&nbsp;&nbsp;emit shape + silent-exit guards to copy</text>
+<text x="52" y="298" class="lbl mute">- README.md#sandbox-testing (r): the</text>
+<text x="52" y="314" class="lbl mute">&nbsp;&nbsp;credential-copy recipe only</text>
+
+<rect x="36" y="336" width="180" height="24" rx="99" class="box-code"/>
+<text x="126" y="352" class="lbl mute" text-anchor="middle">bounded: &le;15 lines</text>
+<rect x="230" y="336" width="180" height="24" rx="99" class="box-code"/>
+<text x="320" y="352" class="lbl mute" text-anchor="middle">&le;8 files: entries</text>
+
+<!-- annotations -->
+<line x1="460" y1="80" x2="520" y2="80" class="arrow"/>
+<text x="528" y="66" class="lbl-b">as_of</text>
+<text x="528" y="84" class="lbl mute">the same ctx estimate iterate's</text>
+<text x="528" y="98" class="lbl mute">overseer_ctx_est column already asks for</text>
+
+<line x1="460" y1="200" x2="520" y2="200" class="arrow"/>
+<text x="528" y="186" class="lbl-b">files: (judgment half of the gist log)</text>
+<text x="528" y="204" class="lbl mute">one line per important file: what it was</text>
+<text x="528" y="218" class="lbl mute">useful for &mdash; awareness only, never a</text>
+<text x="528" y="232" class="lbl mute">token saver; paired with the hook's</text>
+<text x="528" y="246" class="lbl mute">exhaustive-but-mute files= (&sect;2)</text>
+
+<rect x="520" y="270" width="360" height="110" rx="8" class="box-accent"/>
+<text x="538" y="292" class="lbl-b">generalizes overseer_thinness</text>
+<text x="538" y="310" class="lbl mute">same per-turn, agent-written, judge-observable</text>
+<text x="538" y="324" class="lbl mute">pattern as the existing columns &mdash; kept, not replaced.</text>
+<text x="538" y="344" class="lbl mute">Deviation: replace-in-place, not additive rows,</text>
+<text x="538" y="358" class="lbl mute">because history is now the chat record's job.</text>
+<text x="538" y="374" class="lbl mute">as_of stale &gt;2 rows, or absent &rarr; judge writes</text>
+</svg>
+</figure>
+<figcaption>The Scratchpoint's <code>as_of</code> staleness feeds the judge's existing <code>overseer_thinness</code> field as one added condition (<code>signal_missing</code>), not a new field &mdash; the judge agent's Phase-2 update is a one-line change.</figcaption>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Scratchpoint &middot; Design Decision 5</p>
+
+<h3>Capture vs. delivery &mdash; two jobs, not one</h3>
+<div class="cards">
+<div class="card"><h4>Capture</h4><p>Chat record (hook, verbatim) + Scratchpoint (agent, dense state). Makes durable state exist that is at most one turn stale.</p></div>
+<div class="card"><h4>Delivery</h4><p><code>/compact &lt;steering&gt;</code> primary; <code>PreCompact</code> / <code>SessionStart(compact)</code> / <code>PostCompact</code> hooks secondary. Gets that state read instead of an opaque summary.</p></div>
+<div class="card"><h4>Neither alone is enough</h4><p>Capture without delivery: wrapping still seeds from a devlog up to a task-unit stale. Delivery without capture: nothing better than the devlog exists to read.</p></div>
+</div>
+<p><strong>Does this obviate native auto-compaction?</strong> No. An agent cannot invoke <code>/compact</code> (<a href="https://github.com/anthropics/claude-code/issues/71803">#71803</a> open) or prevent it &mdash; in AFK/headless runs nobody types anything, so auto-compaction is the only trimming mechanism there (Phase-0 run 3 fired it four times in three minutes under a 100K window). What changes: with a Scratchpoint at most one turn stale plus a reseed pointer, compaction becomes a mechanical trim whose summary quality no longer determines resumption quality. Durable specialists (Pillar 3) are the one true exception &mdash; their cap-and-reseed (Phase 3) is a dispatch-level primitive the overseer fully controls, no compaction primitive involved.</p>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Relationship to native auto-compaction &middot; Design Decision 1</p>
+
+<h2><span class="no">4</span>Devlog splitting (rotation)</h2>
+<p>The trigger to <em>look</em> for a split is size (~12KB or ~5 rounds); the trigger to <em>cut</em> is never size &mdash; only a closed concern. A concern is closed when all three hold: it has its own heading; every Open Todo naming it is done or moved to the root's current handoff; no live table still receives rows for it.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 340" role="img" aria-label="Before and after: a monolithic 19KB devlog with three concerns tangled in one file, split into a root index plus two standalone chunk files, connected by part_of links and listed in the root's Chunks navigation table.">
+<text x="10" y="24" class="hdr">before &mdash; one file, size is only a prompt to look</text>
+<rect x="10" y="36" width="230" height="270" rx="8" class="box"/>
+<rect x="24" y="50" width="202" height="60" rx="5" class="box-code"/>
+<text x="34" y="72" class="lbl-b">Phase-0 canary</text>
+<text x="34" y="88" class="lbl mute">closed &middot; own heading</text>
+<text x="34" y="102" class="lbl mute">no live rows remain</text>
+<rect x="24" y="118" width="202" height="60" rx="5" class="box-code"/>
+<text x="34" y="140" class="lbl-b">Phase-1 hooks</text>
+<text x="34" y="156" class="lbl mute">closed &middot; own heading</text>
+<text x="34" y="170" class="lbl mute">no live rows remain</text>
+<rect x="24" y="186" width="202" height="104" rx="5" class="box-accent"/>
+<text x="34" y="208" class="lbl-b">Phase-2 A/B (live)</text>
+<text x="34" y="224" class="lbl mute">Iteration Log still</text>
+<text x="34" y="238" class="lbl mute">receiving rows &mdash;</text>
+<text x="34" y="252" class="lbl mute">stays in root</text>
+<text x="34" y="272" class="lbl mute">~19KB total</text>
+
+<line x1="260" y1="170" x2="330" y2="170" class="arrow-accent" marker-end="url(#ar)"/>
+<text x="295" y="160" class="lbl" text-anchor="middle">split</text>
+
+<text x="350" y="24" class="hdr">after &mdash; root is the index, chunks stand alone</text>
+<rect x="350" y="36" width="230" height="110" rx="8" class="box-accent"/>
+<text x="362" y="56" class="lbl-b">root (index)</text>
+<text x="362" y="74" class="lbl mute">frontmatter, Objective,</text>
+<text x="362" y="88" class="lbl mute">## Scratchpoint, live tables,</text>
+<text x="362" y="102" class="lbl mute">## Chunks table</text>
+<text x="362" y="122" class="lbl mute">~6KB, Phase-2 A/B only</text>
+
+<rect x="350" y="164" width="230" height="64" rx="6" class="box-code"/>
+<text x="362" y="184" class="lbl-b">-canary.md</text>
+<text x="362" y="200" class="lbl mute">status: done &middot; part_of &rarr; root</text>
+<line x1="465" y1="164" x2="465" y2="146" class="arrow" marker-end="url(#ar)"/>
+
+<rect x="350" y="240" width="230" height="64" rx="6" class="box-code"/>
+<text x="362" y="260" class="lbl-b">-phase1-hooks.md</text>
+<text x="362" y="276" class="lbl mute">status: done &middot; part_of &rarr; root</text>
+<line x1="465" y1="240" x2="465" y2="146" class="arrow" marker-end="url(#ar)"/>
+
+<rect x="610" y="36" width="270" height="268" rx="8" class="box"/>
+<text x="622" y="58" class="hdr">## Chunks</text>
+<line x1="622" y1="68" x2="866" y2="68" stroke="currentColor" stroke-opacity=".2"/>
+<text x="622" y="90" class="lbl-b">chunk</text><text x="740" y="90" class="lbl-b">read this when</text>
+<text x="622" y="112" class="lbl">-canary</text>
+<text x="622" y="128" class="lbl mute">you need a hook's exact</text>
+<text x="622" y="142" class="lbl mute">payload fields</text>
+<text x="622" y="168" class="lbl">-phase1-hooks</text>
+<text x="622" y="184" class="lbl mute">you are touching the hook</text>
+<text x="622" y="198" class="lbl mute">script or hooks.json</text>
+<text x="622" y="230" class="lbl mute">the read this when column is the</text>
+<text x="622" y="244" class="lbl mute">navigation contract &mdash; a resuming</text>
+<text x="622" y="258" class="lbl mute">agent opens at most one chunk</text>
+</svg>
+</figure>
+<figcaption>Rows in shared tables (Changes Made, Verification) move with the concern that produced them; a row belonging to two concerns stays in the root. If no concern has closed, the rule says don't split &mdash; move bulky evidence to <code>_verify/</code> instead.</figcaption>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Devlog splitting at closed-concern boundaries &middot; Design Decision 6</p>
+
+<h2><span class="no">5</span>Phases &amp; tiering</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 900 300" role="img" aria-label="Four-phase timeline: Phase 0 hook canary, done; Phase 1 capture, steering and nudge, ships now; Phase 2 scratchpoint and splitting gated on a three-arm resumption-quality A/B; Phase 3 cap-and-reseed, the cdocs:compact skill, and the per-workstream sketch, gated on Phase 2.">
+<line x1="40" y1="60" x2="860" y2="60" stroke="currentColor" stroke-opacity=".25" stroke-width="1.5"/>
+<!-- phase 0 -->
+<circle cx="80" cy="60" r="7" fill="var(--phase-done-fg)"/>
+<text x="80" y="40" class="lbl-b" text-anchor="middle">Phase 0</text>
+<rect x="30" y="82" width="100" height="20" rx="99" fill="var(--phase-done-bg)"/>
+<text x="80" y="96" class="lbl-b" text-anchor="middle" fill="var(--phase-done-fg)">done</text>
+<text x="80" y="118" class="lbl mute" text-anchor="middle">hook canary</text>
+<text x="80" y="132" class="lbl mute" text-anchor="middle">7 runs, CC 2.1.280</text>
+
+<!-- phase 1 -->
+<circle cx="300" cy="60" r="7" fill="var(--phase-now-fg)"/>
+<text x="300" y="40" class="lbl-b" text-anchor="middle">Phase 1</text>
+<text x="300" y="118" class="lbl mute" text-anchor="middle">chat-record.sh, hooks.json,</text>
+<text x="300" y="132" class="lbl mute" text-anchor="middle">steering string, reseed nudge,</text>
+<text x="300" y="146" class="lbl mute" text-anchor="middle">interactive /compact check</text>
+
+<!-- phase 2 -->
+<circle cx="540" cy="60" r="7" fill="var(--phase-gated-fg)"/>
+<text x="540" y="40" class="lbl-b" text-anchor="middle">Phase 2</text>
+<text x="540" y="118" class="lbl mute" text-anchor="middle">Scratchpoint + semantic split;</text>
+<text x="540" y="132" class="lbl mute" text-anchor="middle">3-arm A/B: carry-indefinitely /</text>
+<text x="540" y="146" class="lbl mute" text-anchor="middle">cap-and-reseed / /clear-plus-reseed</text>
+<text x="540" y="166" class="lbl mute" text-anchor="middle">gate: arm 2 wins or ties arm 1</text>
+
+<!-- phase 3 -->
+<circle cx="780" cy="60" r="7" fill="var(--phase-gated-fg)"/>
+<text x="780" y="40" class="lbl-b" text-anchor="middle">Phase 3</text>
+<text x="780" y="118" class="lbl mute" text-anchor="middle">cap-and-reseed specialists,</text>
+<text x="780" y="132" class="lbl mute" text-anchor="middle">/cdocs:compact skill,</text>
+<text x="780" y="146" class="lbl mute" text-anchor="middle">per-workstream sketch (&sect;6)</text>
+<text x="780" y="166" class="lbl mute" text-anchor="middle">gate: Phase-2 A/B result</text>
+
+<line x1="140" y1="60" x2="290" y2="60" class="arrow-accent" marker-end="url(#ar)"/>
+<line x1="360" y1="60" x2="530" y2="60" class="arrow" marker-end="url(#ar)"/>
+<line x1="600" y1="60" x2="770" y2="60" class="arrow" marker-end="url(#ar)"/>
+
+<rect x="20" y="200" width="860" height="80" rx="8" class="box"/>
+<text x="40" y="222" class="lbl-b">tiering, cost axis (not phase)</text>
+<text x="40" y="242" class="lbl mute">hook writes (chat record, all of &sect;2): zero LLM cost, bash + jq, below every model tier</text>
+<text x="40" y="258" class="lbl mute">Scratchpoint content, closed-concern split decision: judgment-bearing &mdash; runs at whatever tier the authoring agent already runs at (overseer/judge: opus &middot; a durable specialist: its own tier)</text>
+<text x="40" y="274" class="lbl mute">a hook can nudge either; it can never author either &mdash; Design Decision &ldquo;Hook-enforced scratchpoint writing&rdquo; (Non-Goals)</text>
+</svg>
+</figure>
+<figcaption>Phase gating is sequential (2 needs 1's reseed pointer and steering string; 3 is gated on 2's A/B result), but the cost/tiering axis is orthogonal: most of this design is free (a shell hook), and the only LLM-tier cost is the Scratchpoint's own content and the split-boundary judgment call &mdash; both already priced into whichever agent is doing the handoff, per <code>model-tiering.md</code>'s existing Lead/Overseer/Judgment tier. No new tier is implied.</figcaption>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Implementation Phases &middot; plugins/cdocs/rules/model-tiering.md</p>
+
+<h2><span class="no">6</span>Per-workstream chat record <span class="chip gated" style="margin-left:8px">design sketch, not built</span></h2>
+<p>Maintainer direction (2026-09-23): nested chat records will be wanted soon, scoped <strong>per workstream</strong> &mdash; one record for the set of proposer, reviewer, and implementer legs working the same <code>task_list</code>, not one per subagent, because the point is context preservation for the workstream as a whole. The sketch below uses only mechanics Phase 1 already ships or the canary already verified; two items are still open.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 360" role="img" aria-label="Per-workstream sketch: the hook learns a session's task_list from the active devlog's frontmatter, tags the session's chat-record file with that workstream, and a grep across cdocs/_chat derives the workstream's record without moving any file; dispatched legs get dispatch and return blocks in the parent session's file, keeping a single writer.">
+<rect x="20" y="20" width="380" height="90" rx="8" class="box"/>
+<text x="36" y="42" class="lbl-b">1&middot; learn the key</text>
+<text x="36" y="62" class="lbl mute">session Edits/Writes cdocs/devlogs/*.md</text>
+<text x="36" y="78" class="lbl mute">&rarr; hook reads task_list: from its frontmatter</text>
+<text x="36" y="94" class="lbl mute">&rarr; appends @session workstream ws=&lt;task_list&gt;</text>
+
+<line x1="400" y1="65" x2="460" y2="65" class="arrow" marker-end="url(#ar)"/>
+
+<rect x="460" y="20" width="420" height="90" rx="8" class="box-accent"/>
+<text x="476" y="42" class="lbl-b">2&middot; derive, never relocate</text>
+<text x="476" y="62" class="lbl mute">workstream record = grep -l 'ws=&lt;task_list&gt;' cdocs/_chat/*.md</text>
+<text x="476" y="78" class="lbl mute">covers a workstream resumed next day, merges across worktrees;</text>
+<text x="476" y="94" class="lbl mute">a directory-per-workstream layout was considered, rejected (glob stability)</text>
+
+<rect x="20" y="140" width="860" height="150" rx="8" class="box"/>
+<text x="36" y="162" class="lbl-b">3&middot; dispatched legs keep a single writer &mdash; the parent session's file</text>
+<rect x="40" y="176" width="180" height="34" rx="5" class="box-code"/>
+<text x="130" y="197" class="lbl" text-anchor="middle">Proposer leg</text>
+<rect x="260" y="176" width="180" height="34" rx="5" class="box-code"/>
+<text x="350" y="197" class="lbl" text-anchor="middle">Reviewer leg</text>
+<rect x="480" y="176" width="180" height="34" rx="5" class="box-code"/>
+<text x="570" y="197" class="lbl" text-anchor="middle">Implementer leg</text>
+<line x1="130" y1="210" x2="130" y2="234" class="arrow" marker-end="url(#ar)"/>
+<line x1="350" y1="210" x2="350" y2="234" class="arrow" marker-end="url(#ar)"/>
+<line x1="570" y1="210" x2="570" y2="234" class="arrow" marker-end="url(#ar)"/>
+<rect x="40" y="236" width="800" height="40" rx="6" class="box"/>
+<text x="60" y="260" class="lbl mute">parent session's cdocs/_chat/&lt;sid8&gt;.md &mdash; @dispatch: agent=&lt;type&gt;/&lt;id8&gt; (prompt) &middot; @return: agent=&lt;type&gt;/&lt;id8&gt; files=&hellip; (last_assistant_message)</text>
+</svg>
+</figure>
+<figcaption>What this adds beyond the Scratchpoint: chronology only &mdash; which briefs were dispatched in what order, what each returned, what each read. State for durable specialists is still the Scratchpoint in the devlog they own; a one-shot leg needs nothing more than its own <code>@dispatch</code>/<code>@return</code> pair.</figcaption>
+
+<div class="tw"><table>
+<thead><tr><th>Gating item</th><th>Status</th><th>Question</th></tr></thead>
+<tbody>
+<tr><td>(a) agent_id guard + active-devlog tracking</td><td><span class="chip done">done</span></td><td>already shipped in Phase 1 &mdash; same script, no new code</td></tr>
+<tr><td>(b) SendMessage-resumed specialist</td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td><td>does resuming a durable specialist via SendMessage re-fire <code>SubagentStart</code>/<code>SubagentStop</code> under the same <code>agent_id</code>?</td></tr>
+<tr><td>(c) dispatch-prompt correlation</td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td><td><code>PreToolUse</code> on <code>Agent</code> carries <code>tool_input.prompt</code> but no <code>agent_id</code>; <code>SubagentStart</code> carries neither prompt nor transcript path &mdash; eager correlation, or write <code>@dispatch</code> lazily at <code>SubagentStop</code>?</td></tr>
+<tr><td>(d) actual need</td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td><td>do workstreams span enough legs/sessions to justify the derived record? &mdash; the Phase-1 records themselves will show this</td></tr>
+</tbody>
+</table></div>
+<p class="ref">cdocs/proposals/2026-09-22-chat-record-devlog-management.md &sect; Phase 3, "Per-workstream chat record (design sketch, not built here)"</p>
+
+<h2><span class="no">7</span>Sources</h2>
+<ul>
+<li><code>cdocs/proposals/2026-09-22-chat-record-devlog-management.md</code> &mdash; primary source, <code>status: implementation_ready</code>, accepted round 2</li>
+<li><code>cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md</code> &mdash; reproducible Phase-0 evidence</li>
+<li><code>cdocs/reviews/2026-09-22-review-of-chat-record-devlog-management.md</code> and <code>-r2.md</code> &mdash; both review rounds</li>
+<li><code>cdocs/reports/2026-09-22-chat-record-scratchpoint-design.md</code> &mdash; the original research this operationalizes</li>
+<li><code>plugins/cdocs/rules/model-tiering.md</code> &mdash; the tier structure referenced in &sect;5</li>
+</ul>
+</main>
