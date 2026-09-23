@@ -5,7 +5,7 @@ first_authored:
 task_list: meta/token-spend-attribution
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-4-8"
@@ -95,7 +95,7 @@ Three mechanisms with a precise division of labor, mirroring the landscape repor
 A new dispatched agent at `plugins/cdocs/agents/bash-runner.md`, modeled structurally on `nit-fix.md`: frontmatter, Input, Workflow, Output Format, Constraints.
 
 **Frontmatter.**
-`model: haiku`, `tools: Bash` only, plus `maxTurns` (bounding a haiku runner that could loop on extraction, as `judge.md` does) and `omitClaudeMd: true` (the runner has no use for the consuming project's `CLAUDE.md`; it is pure per-dispatch overhead).
+`model: haiku`, `tools: Bash` only, plus `maxTurns: 8` (bounding a haiku runner that could loop on extraction, following `judge.md`'s `maxTurns: 10` precedent; 8 covers capture plus a handful of bounded extraction commands plus the report, with headroom).
 No `Read`/`Edit`/`Write`/`Task`: this agent runs one requested command plus bounded extraction over its capture file, and reports.
 Omitting `Task` prevents onward dispatch; omitting `Write`/`Edit` keeps it inert on the filesystem beyond its scratch capture file.
 The `Bash`-only allowlist survives the OpenCode build: `scripts/build-opencode.ts` `mapTools` turns `tools: Bash` into `bash: true` with `read`/`edit`/`write: false`.
@@ -202,8 +202,9 @@ It is nonetheless deferred, on coverage grounds rather than breakage:
 
   The third row is the only real gap, and a rewrite hook does not close it: it fires only on a fixed pattern allowlist, and the observed whales are not on any plausible allowlist.
 - It mis-targets the traffic. The 15 heaviest Bash results are `git diff`, `grep -rn` sweeps, `find`, and multi-`cat` loops - not `npm install`, `docker build`, or `terraform`. A blind `| tail` on a `grep` sweep destroys the signal (the matches ARE the output), so even a working rewrite is a poor fit for what actually dominates.
+- A mature off-the-shelf tool already owns this niche better than a bespoke allowlist would. The tooling landscape report [`cdocs/reports/2026-09-23-bash-output-tooling-landscape.md`](../reports/2026-09-23-bash-output-tooling-landscape.md) found [`rtk-ai/rtk`](https://github.com/rtk-ai/rtk) (Apache-2.0, a Rust `PreToolUse` command-rewrite proxy) deterministically compresses 100+ known dev commands - including exactly the `git diff`/`grep`/`find`/`cat`-sweep shapes that dominate this corpus - with per-command filter/group/dedup pipelines a hand-written allowlist cannot match. A consumer who wants the deterministic-rewrite lever is better served pointing at rtk than by cdocs shipping a bespoke hook; that report recommends against adopting rtk as a plugin dependency (pre-1.0, RC-heavy, CLI-only) but confirms building a competing allowlist is not worth it.
 
-If a future need arises for a hand-picked allowlist (a specific known-verbose command a team runs constantly), this hook is the lever; re-verify the channel with the canary first, since its behavior is environment-dependent.
+If a future need arises (a specific known-verbose command a team runs constantly, or a consumer opting into rtk-style rewriting), this hook is the lever; re-verify the channel with the canary first, since its behavior is environment-dependent.
 
 ### Deferred: custom content-aware `PostToolUse` hook
 
@@ -239,7 +240,7 @@ Until then, track as blocked/future work; do not implement.
   Preserves the "cdocs never silently mutates harness config" invariant, and riding an existing rule file's materialization pipeline avoids editing `/cdocs:init`.
 - **Semantic distillation is not redundant with a blind cap.**
   The blind cap loses signal in two ways the wrapper does not: a failed verbose command yields a lossy head+tail excerpt with no file (the middle is unrecoverable without a re-run), and a valid one puts the middle on disk at the cost of a read-back that re-ingests it whole.
-  The runner reads the whole output (from its capture file) once, in disposable context, and returns the buried needle - including for a sweep, where a head/tail excerpt is the wrong default and per-file aggregation is the signal.
+  The runner captures the whole output to its scratch file and extracts from it with bounded shell (a `grep` over the file finds a buried error wherever it fell, and per-file aggregation is available for a sweep where a head/tail excerpt is the wrong default), so the salient signal reaches the parent without the raw dump - all in disposable context.
 - **No dependency on either rewrite hook channel.**
   The design does not use `updatedInput` or `updatedToolOutput` for Bash, so it is robust to their environment-dependent and regressed behavior respectively.
 
@@ -266,7 +267,7 @@ Until then, track as blocked/future work; do not implement.
 ## Test Plan
 
 - **Agent definition parses and loads.**
-  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: haiku`, `tools: Bash`, `maxTurns`, `omitClaudeMd`) is well-formed.
+  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: haiku`, `tools: Bash`, `maxTurns: 8`) is well-formed.
 - **Tool restriction holds.**
   The agent cannot call `Read`/`Write`/`Edit`/`Task` (infrastructure-enforced allowlist).
 - **Fixed-format report.**
@@ -308,7 +309,7 @@ Phases 1-2 are the adopt-now core and are largely independent; the two hook mech
 
 ### Phase 1: `cdocs:bash-runner` agent (primary)
 
-- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: haiku`, `tools: Bash`, plus `maxTurns` and `omitClaudeMd: true`.
+- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: haiku`, `tools: Bash`, plus `maxTurns: 8`.
 - Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then bounded `wc`/`grep`/`head`/`tail`/`cut` over the file).
 - Inline the salience/extraction contract (line-oriented and aggregate shapes) and the fixed-format report; no rule-file read.
 - Constraints section: run the requested command exactly once; bounded extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded haiku agent does not refuse to `grep` its own capture file.)
