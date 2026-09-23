@@ -108,18 +108,31 @@ details.appendix>summary .sub{margin:0;font:400 13px var(--sans);color:var(--ink
 .lc-shipped{background:var(--accent-soft);color:var(--accent)}
 .landed{background:var(--accent-soft);border:1px solid var(--accent);border-radius:4px;padding:10px 14px;font-size:13.5px;margin-top:14px}
 .landed b{color:var(--accent)}
+
+/* --- v3 additions: collapsible detail rows --- */
+.idea-tbl td.oneln{max-width:300px}
+td.tg,th.tg{width:34px;text-align:center;padding-inline:2px}
+.tb{background:none;border:1px solid var(--line);color:var(--accent);border-radius:3px;width:26px;height:24px;cursor:pointer;font-size:13px;line-height:1}
+.tb:focus-visible,.ab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar{margin:10px 0 6px}
+.ab{font:500 12px var(--mono);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer}
+tr.dr td{background:var(--bg);padding:10px 14px}
+.dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px}
+.dg p{margin:0}
+.dg h4{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);margin:0 0 4px}
 </style>
 
 <main>
 <header>
-  <div class="eyebrow">clauthier · cdocs · 2026-09-22 · v2, planning-first</div>
+  <div class="eyebrow">clauthier · cdocs · 2026-09-22 · v4, RFP-1 shipped &amp; scrubbed</div>
   <h1>Cdocs context roadmap</h1>
   <div class="bluf">
     <p><b>BLUF.</b> Planning view first, evidence appendix last. RFP-1 (subagent labeling) has <b>shipped</b> and is cut from the active inventory below — see "Recently landed." Of the seven RFPs still active: <span class="lc lc-rfped">rfped</span> graphify-scoped retrieval (accepted proposal, only devcontainer plumbing landed) and, as of this pass, the haiku Bash-wrapper (an opus <code>/cdocs:propose</code> landed, see [BASHWRAP]); <span class="lc lc-researching">researching</span> chat-record/devlog-management design (a sonnet <code>/cdocs:report</code> landed with a resolution, no proposal written yet, see [CHATREC]); the rest <span class="lc lc-unresearched">unresearched</span>.</p>
     <p>Two levers were previously conflated and are now split: <b>graphify</b> cheapens each cold read (per-call scoping); a <b>shared retrieval cache</b> would stop the 97.4% cross-agent re-reads graphify never touches (no design exists for this yet — genuinely new territory, <span class="lc lc-unresearched">unresearched</span>). Cap-and-reseed hard-depends on the chat-record/devlog substrate landing first. Prompt-cache-TTL tuning, upstream <code>claude-usage</code> bug filings, and a standalone measurement harness are out of scope for this roadmap (deprioritized / owned elsewhere — see appendix).</p>
   </div>
   <div class="landed">
-    <p><b>Recently landed — <span class="slug">subagent-labeling</span>.</b> <code>cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md</code>, accepted round 1 in both the propose-revise and iterate loops. New <code>plugins/cdocs/agents/implementer.md</code>/<code>proposer.md</code> plus the two <code>SKILL.md</code> dispatch-line fixes are live. Status <code>implementation_wip</code> pending the maintainer's manual flip to <code>implementation_accepted</code> (human-only step, this repo's convention) — <b>shipped, pending sign-off</b>, not fully closed out.</p>
+    <p><b>Landed and closed — <span class="slug">subagent-labeling</span>.</b> <code>cdocs/proposals/2026-09-22-label-implementer-proposer-agents.md</code>, accepted round 1 in both the propose-revise and iterate loops. New <code>plugins/cdocs/agents/implementer.md</code>/<code>proposer.md</code> plus the two <code>SKILL.md</code> dispatch-line fixes are live. Status is now <code>implementation_accepted</code> (human sign-off, commit <code>6ed6429</code>) — fully closed out; cut from the active inventory and RFP list below.</p>
+    <p>Verification: new implementer/proposer rows should appear as <code>cdocs:implementer</code>/<code>cdocs:proposer</code> in <code>usage.db</code>, reproducing the $3,152 role table without heuristic classification — the live-classification smoke test is deferred to the next real <code>/cdocs:iterate</code> or <code>/cdocs:propose-revise</code> run.</p>
     <p style="margin:0">Two small deferred follow-ups logged in the devlog, not blockers: <code>iterate/SKILL.md</code>'s reviewer dispatch is still the bare string <code>"reviewer"</code>, not <code>cdocs:reviewer</code> (pre-existing, unrelated bug); and a commit-boundary attribution nit where an implementer's commit swept in an overseer-owned devlog row.</p>
   </div>
   <p class="caveat" style="margin-top:14px"><b>Scope caveat.</b> Underlying numbers are one 7-day weftwise window (2026-09-12 to 09-20), dominated by loro-repo propose/implement loops (top 2 of ~40 sessions ≈ 75% of read intake). The role mix is workload-dependent; implementer dominance is a hypothesis about an implement-heavy week, not a certified structure — a re-measurement checkpoint sits at the end of Phase 2 and Phase 3. Read-volume token counts are approximations (chars ÷ 4).</p>
@@ -135,79 +148,170 @@ details.appendix>summary .sub{margin:0;font:400 13px var(--sans);color:var(--ink
     <span class="kt" style="margin-left:10px">Difficulty</span>
     <span class="eff eff-S">S</span><span class="eff eff-M">M</span><span class="eff eff-L">L</span>
   </div>
-  <div class="tw"><table class="idea-tbl">
-    <tr><th>ID</th><th>Idea</th><th>Predicted impact</th><th>Lifecycle</th><th>Diff.</th><th>Depends on</th><th>RFP</th></tr>
+  <div class="bar"><button class="ab" data-expand-all="#idea-tbl">Expand all</button></div>
+  <div class="tw"><table class="idea-tbl" id="idea-tbl">
+    <tr><th>ID</th><th>Idea</th><th>Impact</th><th>Lifecycle</th><th>Diff.</th><th>Depends on</th><th>RFP</th><th class="tg"></th></tr>
+
     <tr><td class="id"><span class="slug">chat-record-scratchpoint</span></td>
-      <td><b>Chat record + scratchpoints.</b> Resolved, not just proposed: compaction-wrapping (delivery) and chat-record/scratchpoint (capture) are both needed, not redundant — the devlog's own handoff cadence (every 3–5 iterations, per <code>orchestration-discipline.md</code>) is too coarse for wrap-<code>/compact</code> alone to cover. Chat record is overseer-only by construction (subagents have no interactive user turns); scratchpoint extends to durable specialists carried warm across turns, not to one-shot dispatched legs (their return summary is already their checkpoint). Generalizes an existing proto-scratchpoint already in this repo: <code>orchestration-discipline.md</code>'s per-turn <code>overseer_thinness</code> columns.</td>
-      <td class="imp">Aims to negate reliance on lossy auto-compaction; unmeasured — [DEVLOG] establishes the field precedent (structured memory beats raw transcript and generic re-summarization), [CHATREC] adds new prior art (a shipped <code>PreCompact</code> hook, an arXiv self-compaction paper, three bounding Claude Code issues) but neither gives a token figure yet.</td>
-      <td><span class="lc lc-researching">researching</span><div class="src" style="margin-top:3px">report landed 2026-09-22 with a resolution — see [CHATREC]; no proposal written yet</div></td>
+      <td class="oneln"><b>Chat record + scratchpoints.</b> Compaction-wrapping (delivery) and chat-record/scratchpoint (capture) are both needed, not redundant.</td>
+      <td class="imp oneln">Aims to negate reliance on lossy auto-compaction; unmeasured in tokens so far.</td>
+      <td><span class="lc lc-researching">researching</span></td>
       <td><span class="eff eff-M">M</span></td>
       <td class="dep">none</td>
-      <td>RFP-2 (Phase 1)</td></tr>
+      <td>RFP-2 (Phase 1)</td>
+      <td class="tg"><button class="tb" data-target="d-chatrec" aria-expanded="false" aria-label="Toggle details for chat-record-scratchpoint">▸</button></td></tr>
+    <tr class="dr" id="d-chatrec" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Resolved, not just proposed: the devlog's own handoff cadence (every 3–5 iterations, per <code>orchestration-discipline.md</code>) is too coarse for wrap-<code>/compact</code> alone to cover. Chat record is overseer-only by construction (subagents have no interactive user turns); scratchpoint extends to durable specialists carried warm across turns, not to one-shot dispatched legs (their return summary is already their checkpoint). Generalizes an existing proto-scratchpoint already in this repo: <code>orchestration-discipline.md</code>'s per-turn <code>overseer_thinness</code> columns.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[DEVLOG] establishes the field precedent (structured memory beats raw transcript and generic re-summarization); [CHATREC] adds new prior art (a shipped <code>PreCompact</code> hook, an arXiv self-compaction paper, three bounding Claude Code issues) but neither gives a token figure yet. Report landed 2026-09-22 with a resolution — see [CHATREC]; no proposal written yet.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">devlog-management</span></td>
-      <td><b>Devlog management v2.</b> Wiki-like, semantically-chunked devlogs (index + per-phase/concern files, sliced for navigation rather than fixed size or round count); split when a chunk stops being skimmable; compaction restores from the devlog instead of re-summarizing.</td>
-      <td class="imp">Devlogs are 8.2% of read intake; two are re-read 10× and 21× whole-file. [DEVLOG] Recs 2–3; [READ] Rec 4</td>
-      <td><span class="lc lc-unresearched">unresearched</span><div class="src" style="margin-top:3px">lower-uncertainty than chat-record — a candidate to skip straight to a proposal without its own research report</div></td>
+      <td class="oneln"><b>Devlog management v2.</b> Wiki-like, semantically-chunked devlogs, sliced for navigation.</td>
+      <td class="imp oneln">Devlogs are 8.2% of read intake; two are re-read 10× and 21× whole-file.</td>
+      <td><span class="lc lc-unresearched">unresearched</span></td>
       <td><span class="eff eff-M">M</span></td>
       <td class="dep">none</td>
-      <td>RFP-2</td></tr>
+      <td>RFP-2</td>
+      <td class="tg"><button class="tb" data-target="d-devlog" aria-expanded="false" aria-label="Toggle details for devlog-management">▸</button></td></tr>
+    <tr class="dr" id="d-devlog" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Index + per-phase/concern files, sliced for navigation rather than fixed size or round count; split when a chunk stops being skimmable; compaction restores from the devlog instead of re-summarizing.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[DEVLOG] Recs 2–3; [READ] Rec 4. Lower-uncertainty than chat-record — a candidate to skip straight to a proposal without its own research report.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">graphify-retrieval</span></td>
-      <td><b>Graphify-scoped retrieval.</b> Drive the existing accepted proposal's Phase 1 (token instrumentation), 2 (stateless scoping tool, reviewer role first) and 3 (roll to implementer + judge, before/after gate) to completion. Not a new design — a build-out of what's already accepted.</td>
-      <td class="imp">Codebase reads are 54.7% of intake, mean 2,066 tok/read, heaviest 15–18K. [READ] Rec 1; [SPEND] Action 2</td>
-      <td><span class="lc lc-rfped">rfped</span><div class="src" style="margin-top:3px">proposal accepted 2026-09-17 (round-2); devcontainer CLI plumbing landed, MCP deferred; Phase 1 not started [GRAPHIFY]</div></td>
+      <td class="oneln"><b>Graphify-scoped retrieval.</b> Drive the existing accepted proposal's Phase 1–3 to completion.</td>
+      <td class="imp oneln">Codebase reads are 54.7% of intake, mean 2,066 tok/read, heaviest 15–18K.</td>
+      <td><span class="lc lc-rfped">rfped</span></td>
       <td><span class="eff eff-L">L</span></td>
       <td class="dep">none (external CLI dep already in devcontainer)</td>
-      <td>RFP-3</td></tr>
+      <td>RFP-3</td>
+      <td class="tg"><button class="tb" data-target="d-graphify" aria-expanded="false" aria-label="Toggle details for graphify-retrieval">▸</button></td></tr>
+    <tr class="dr" id="d-graphify" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Phase 1 (token instrumentation), 2 (stateless scoping tool, reviewer role first) and 3 (roll to implementer + judge, before/after gate). Not a new design — a build-out of what's already accepted.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[READ] Rec 1; [SPEND] Action 2. Proposal accepted 2026-09-17 (round-2); devcontainer CLI plumbing landed, MCP deferred; Phase 1 not started [GRAPHIFY].</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">shared-retrieval-cache</span></td>
-      <td><b>Shared retrieval cache across agents/sessions.</b> Cross-agent/cross-session read dedup — distinct from graphify, which only cheapens a single agent's own cold read. No design doc exists anywhere in either repo as of this search.</td>
-      <td class="imp">97.4% of reread waste is a fresh subagent or session reading a file cold in its own context (~4.7–5.0M tok, ~70% of whole-file-read volume). [SPEND] Workstream 3; [READ] Reread drill</td>
-      <td><span class="lc lc-unresearched">unresearched</span><div class="src" style="margin-top:3px">confirmed no proposal/report anywhere [GRAPHIFY]; genuinely new territory, not graphify's job</div></td>
+      <td class="oneln"><b>Shared retrieval cache across agents/sessions.</b> Cross-agent/cross-session read dedup — distinct from graphify.</td>
+      <td class="imp oneln">97.4% of reread waste is a fresh subagent or session reading a file cold in its own context.</td>
+      <td><span class="lc lc-unresearched">unresearched</span></td>
       <td><span class="eff eff-L">L</span></td>
       <td class="dep">complements graphify-retrieval, not blocked by it</td>
-      <td>RFP-4</td></tr>
+      <td>RFP-4</td>
+      <td class="tg"><button class="tb" data-target="d-sharedcache" aria-expanded="false" aria-label="Toggle details for shared-retrieval-cache">▸</button></td></tr>
+    <tr class="dr" id="d-sharedcache" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Graphify only cheapens a single agent's own cold read; this would eliminate repeat cold reads by different agents/sessions. No design doc exists anywhere in either repo as of this search.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[SPEND] Workstream 3; [READ] Reread drill (~4.7–5.0M reread tok, ~70% of whole-file-read volume). Confirmed no proposal/report anywhere [GRAPHIFY]; genuinely new territory, not graphify's job.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">cap-and-reseed</span></td>
-      <td><b>Cap-and-reseed the implementer.</b> When resident context crosses a cutoff, checkpoint into the chat-record/devlog and dispatch a fresh leg seeded from it plus graphify. Start nearer ~0.4–0.6M, not the report's tentative 0.2M (round-1 peak is already 155k, so 0.2M would reseed almost every round); A/B once re-briefing is cheap.</td>
-      <td class="imp">Implementers are 54.8% of week cache-read (top one alone 11.3%); corr(rounds, carried context) = 0.89. [SPEND] Workstream 4</td>
-      <td><span class="lc lc-unresearched">unresearched</span><div class="src" style="margin-top:3px">hard-depends on chat-record-scratchpoint + devlog-management landing</div></td>
+      <td class="oneln"><b>Cap-and-reseed the implementer.</b> Checkpoint and reset at a cutoff, seeding the fresh leg from the chat-record/devlog plus graphify.</td>
+      <td class="imp oneln">Implementers are 54.8% of week cache-read (top one alone 11.3%).</td>
+      <td><span class="lc lc-unresearched">unresearched</span></td>
       <td><span class="eff eff-M">M</span></td>
       <td class="dep">chat-record-scratchpoint, devlog-management</td>
-      <td>RFP-5</td></tr>
+      <td>RFP-5</td>
+      <td class="tg"><button class="tb" data-target="d-capreseed" aria-expanded="false" aria-label="Toggle details for cap-and-reseed">▸</button></td></tr>
+    <tr class="dr" id="d-capreseed" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Start nearer ~0.4–0.6M, not the report's tentative 0.2M (round-1 peak is already 155k, so 0.2M would reseed almost every round); A/B once re-briefing is cheap.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[SPEND] Workstream 4; corr(rounds, carried context) = 0.89. Hard-depends on chat-record-scratchpoint + devlog-management landing.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">haiku-bash-wrapper</span></td>
-      <td><b>Haiku Bash wrapper (+ deterministic tools it should reuse).</b> Proposed design: a <code>cdocs:bash-runner</code> haiku agent (opt-in dispatch, Bash-only tool) as the primary mechanism, plus a documented <code>bashOutputMaxChars</code> ~4–6k setting (delivered via <code>/cdocs:init</code> guidance, not silently written) as the always-on deterministic floor. Both <code>PostToolUse updatedToolOutput</code> and <code>PreToolUse updatedInput</code> are confirmed dead/won't-fix for the built-in Bash tool (installed v2.1.280; issues #68951, #79321) — worse than the landscape report alone suggested, so the content-aware hook is deferred pending upstream, not built. Two open questions before <code>/cdocs:iterate</code>: Bash-only vs. Bash+Read toolset; whether <code>/cdocs:init</code> should write the setting or only document it.</td>
-      <td class="imp">Bash output is 28.5% of intake, 9,581 results, mean 390 tok — death by a thousand cuts, not a few whales. [READ] Rec 3</td>
-      <td><span class="lc lc-rfped">rfped</span><div class="src" style="margin-top:3px">proposal landed 2026-09-22 — see [BASHWRAP]</div></td>
+      <td class="oneln"><b>Haiku Bash wrapper + deterministic floor.</b> <code>cdocs:bash-runner</code> haiku agent plus a documented <code>bashOutputMaxChars</code> setting.</td>
+      <td class="imp oneln">Bash output is 28.5% of intake, 9,581 results, mean 390 tok — death by a thousand cuts.</td>
+      <td><span class="lc lc-rfped">rfped</span></td>
       <td><span class="eff eff-M">S–M</span></td>
       <td class="dep">none</td>
-      <td>RFP-6</td></tr>
+      <td>RFP-6</td>
+      <td class="tg"><button class="tb" data-target="d-bashwrap" aria-expanded="false" aria-label="Toggle details for haiku-bash-wrapper">▸</button></td></tr>
+    <tr class="dr" id="d-bashwrap" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>A <code>cdocs:bash-runner</code> haiku agent (opt-in dispatch, Bash-only tool) as the primary mechanism, plus a documented <code>bashOutputMaxChars</code> ~4–6k setting (delivered via <code>/cdocs:init</code> guidance, not silently written) as the always-on deterministic floor. Both <code>PostToolUse updatedToolOutput</code> and <code>PreToolUse updatedInput</code> are confirmed dead/won't-fix for the built-in Bash tool (installed v2.1.280; issues #68951, #79321) — worse than the landscape report alone suggested, so the content-aware hook is deferred pending upstream, not built.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[READ] Rec 3. Proposal landed 2026-09-22 — see [BASHWRAP]. Two open questions before <code>/cdocs:iterate</code>: Bash-only vs. Bash+Read toolset; whether <code>/cdocs:init</code> should write the setting or only document it.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">sonnet-playwright-frontend</span></td>
-      <td><b>Sonnet Playwright / frontend-tweaks subagent.</b> Route DOM-heavy testing and frontend-tweak rounds to Sonnet; large DOM snapshots die inside the subagent instead of entering Opus context.</td>
-      <td class="imp">Playwright DOM is 3.5% of intake but individual snapshots run heavy (mean 2,349 tok); the win is keeping them out of Opus context, not raw volume. [SPEND] Workstream 2</td>
+      <td class="oneln"><b>Sonnet Playwright / frontend-tweaks subagent.</b> Route DOM-heavy testing and frontend-tweak rounds to Sonnet.</td>
+      <td class="imp oneln">Playwright DOM is 3.5% of intake but individual snapshots run heavy (mean 2,349 tok).</td>
       <td><span class="lc lc-unresearched">unresearched</span></td>
       <td><span class="eff eff-S">S</span></td>
       <td class="dep">none</td>
-      <td>RFP-7</td></tr>
+      <td>RFP-7</td>
+      <td class="tg"><button class="tb" data-target="d-playwright" aria-expanded="false" aria-label="Toggle details for sonnet-playwright-frontend">▸</button></td></tr>
+    <tr class="dr" id="d-playwright" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Large DOM snapshots die inside the subagent instead of entering Opus context; the win is keeping them out of Opus context, not raw volume.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[SPEND] Workstream 2.</p></div>
+    </div></td></tr>
+
     <tr><td class="id"><span class="slug">sonnet-overseer-advisor</span></td>
-      <td><b>Sonnet-high /oversee + on-call Opus advisor.</b> Fork-style consult for hard calls only; judge stays Opus. Needs a spike measuring escalation reliability and routing/dispatch-quality regression before any <code>model-tiering.md</code> change — this is not a silent downgrade.</td>
-      <td class="imp">Overseer bucket is 15.2% of spend, 586M cache-read at Opus rates; ~2.5× cheaper per token at Sonnet-5 rates if quality holds. [SPEND] Directional proposal</td>
-      <td><span class="lc lc-unresearched">unresearched</span><div class="src" style="margin-top:3px">directional analysis exists in [SPEND]; no formal spike design or proposal yet</div></td>
+      <td class="oneln"><b>Sonnet-high /oversee + on-call Opus advisor.</b> Fork-style consult for hard calls only; judge stays Opus.</td>
+      <td class="imp oneln">Overseer bucket is 15.2% of spend, 586M cache-read at Opus rates.</td>
+      <td><span class="lc lc-unresearched">unresearched</span></td>
       <td><span class="eff eff-M">M+M</span></td>
       <td class="dep">spike gates a model-tiering.md revision</td>
-      <td>RFP-8</td></tr>
+      <td>RFP-8</td>
+      <td class="tg"><button class="tb" data-target="d-overseer" aria-expanded="false" aria-label="Toggle details for sonnet-overseer-advisor">▸</button></td></tr>
+    <tr class="dr" id="d-overseer" hidden><td colspan="8"><div class="dg">
+      <div><h4>What</h4><p>Needs a spike measuring escalation reliability and routing/dispatch-quality regression before any <code>model-tiering.md</code> change — this is not a silent downgrade. ~2.5× cheaper per token at Sonnet-5 rates if quality holds.</p></div>
+      <div><h4>Evidence &amp; status</h4><p>[SPEND] Directional proposal. Directional analysis exists; no formal spike design or proposal yet.</p></div>
+    </div></td></tr>
   </table></div>
 </section>
 
 <section>
   <h2>2. Proposed RFPs</h2>
-  <div class="tw"><table style="min-width:820px">
-    <tr><th>RFP</th><th>One-line scope</th><th>Covers</th><th>Phase</th><th>Lifecycle</th></tr>
-    <tr><td class="id">RFP-1</td><td><b>Subagent labeling.</b> Semantic dispatch types for implementer/proposer so <code>usage.db</code> self-classifies. <b>Shipped</b> 2026-09-22, pending manual sign-off — see BLUF.</td><td>(closed)</td><td>P0</td><td><span class="lc lc-shipped">shipped</span></td></tr>
-    <tr><td class="id">RFP-2</td><td><b>Chat record, scratchpoints &amp; devlog management v2.</b> 3-phase per [CHATREC]: (1) <code>UserPromptSubmit</code> chat-record hook + <code>/compact [instructions]</code> steering + best-effort <code>PreCompact</code> nudge — cheap, ships now; (2) scratchpoint as a rule/skill extension for durable specialists; (3, gated) proactive <code>cdocs:compact</code> skill, converges with cap-and-reseed (RFP-5). Plus sectioned/semantically-chunked devlogs.</td><td>chat-record-scratchpoint, devlog-management</td><td>P1 (Phase 3 → P3)</td><td><span class="lc lc-researching">researching</span></td></tr>
-    <tr><td class="id">RFP-3</td><td><b>Graphify-scoped retrieval rollout.</b> Execute the already-accepted proposal's Phase 1–3 (instrumentation, reviewer, then implementer + judge).</td><td>graphify-retrieval</td><td>P2</td><td><span class="lc lc-rfped">rfped</span></td></tr>
-    <tr><td class="id">RFP-4</td><td><b>Shared retrieval cache.</b> Design cross-agent/cross-session read dedup from scratch — new territory, complementary to graphify.</td><td>shared-retrieval-cache</td><td>P2</td><td><span class="lc lc-unresearched">unresearched</span></td></tr>
-    <tr><td class="id">RFP-5</td><td><b>Cap-and-reseed loop control.</b> Checkpoint-and-reset policy for long-lived implementers, cutoff tuned by A/B.</td><td>cap-and-reseed</td><td>P3</td><td><span class="lc lc-unresearched">unresearched</span></td></tr>
-    <tr><td class="id">RFP-6</td><td><b>Haiku Bash wrapper &amp; tool-output hygiene.</b> <code>cdocs:bash-runner</code> + a deterministic floor; content-aware hook deferred (both Bash hook channels confirmed dead upstream).</td><td>haiku-bash-wrapper</td><td>P1</td><td><span class="lc lc-rfped">rfped</span></td></tr>
-    <tr><td class="id">RFP-7</td><td><b>Sonnet Playwright / frontend-tweaks subagent.</b> Cheap-tier routing for DOM-heavy and frontend rounds.</td><td>sonnet-playwright-frontend</td><td>P1</td><td><span class="lc lc-unresearched">unresearched</span></td></tr>
-    <tr><td class="id">RFP-8</td><td><b>Sonnet overseer + Opus advisor.</b> Spike design, escalation-reliability and routing-regression metrics, gated <code>model-tiering.md</code> revision.</td><td>sonnet-overseer-advisor</td><td>P3 (gated)</td><td><span class="lc lc-unresearched">unresearched</span></td></tr>
+  <div class="bar"><button class="ab" data-expand-all="#rfp-tbl">Expand all</button></div>
+  <div class="tw"><table id="rfp-tbl" style="min-width:820px">
+    <tr><th>RFP</th><th>Title</th><th>Phase</th><th>Lifecycle</th><th class="tg"></th></tr>
+
+    <tr><td class="id">RFP-2</td><td><b>Chat record, scratchpoints &amp; devlog management v2.</b></td><td>P1 (Phase 3 → P3)</td><td><span class="lc lc-researching">researching</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp2" aria-expanded="false" aria-label="Toggle details for RFP-2">▸</button></td></tr>
+    <tr class="dr" id="d-rfp2" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>3-phase per [CHATREC]: (1) <code>UserPromptSubmit</code> chat-record hook + <code>/compact [instructions]</code> steering + best-effort <code>PreCompact</code> nudge — cheap, ships now; (2) scratchpoint as a rule/skill extension for durable specialists; (3, gated) proactive <code>cdocs:compact</code> skill, converges with cap-and-reseed (RFP-5). Plus sectioned/semantically-chunked devlogs.</p></div>
+      <div><h4>Covers</h4><p>chat-record-scratchpoint, devlog-management</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-3</td><td><b>Graphify-scoped retrieval rollout.</b></td><td>P2</td><td><span class="lc lc-rfped">rfped</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp3" aria-expanded="false" aria-label="Toggle details for RFP-3">▸</button></td></tr>
+    <tr class="dr" id="d-rfp3" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>Execute the already-accepted proposal's Phase 1–3 (instrumentation, reviewer, then implementer + judge).</p></div>
+      <div><h4>Covers</h4><p>graphify-retrieval</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-4</td><td><b>Shared retrieval cache.</b></td><td>P2</td><td><span class="lc lc-unresearched">unresearched</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp4" aria-expanded="false" aria-label="Toggle details for RFP-4">▸</button></td></tr>
+    <tr class="dr" id="d-rfp4" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>Design cross-agent/cross-session read dedup from scratch — new territory, complementary to graphify.</p></div>
+      <div><h4>Covers</h4><p>shared-retrieval-cache</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-5</td><td><b>Cap-and-reseed loop control.</b></td><td>P3</td><td><span class="lc lc-unresearched">unresearched</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp5" aria-expanded="false" aria-label="Toggle details for RFP-5">▸</button></td></tr>
+    <tr class="dr" id="d-rfp5" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>Checkpoint-and-reset policy for long-lived implementers, cutoff tuned by A/B.</p></div>
+      <div><h4>Covers</h4><p>cap-and-reseed</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-6</td><td><b>Haiku Bash wrapper &amp; tool-output hygiene.</b></td><td>P1</td><td><span class="lc lc-rfped">rfped</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp6" aria-expanded="false" aria-label="Toggle details for RFP-6">▸</button></td></tr>
+    <tr class="dr" id="d-rfp6" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p><code>cdocs:bash-runner</code> + a deterministic floor; content-aware hook deferred (both Bash hook channels confirmed dead upstream).</p></div>
+      <div><h4>Covers</h4><p>haiku-bash-wrapper</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-7</td><td><b>Sonnet Playwright / frontend-tweaks subagent.</b></td><td>P1</td><td><span class="lc lc-unresearched">unresearched</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp7" aria-expanded="false" aria-label="Toggle details for RFP-7">▸</button></td></tr>
+    <tr class="dr" id="d-rfp7" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>Cheap-tier routing for DOM-heavy and frontend rounds.</p></div>
+      <div><h4>Covers</h4><p>sonnet-playwright-frontend</p></div>
+    </div></td></tr>
+
+    <tr><td class="id">RFP-8</td><td><b>Sonnet overseer + Opus advisor.</b></td><td>P3 (gated)</td><td><span class="lc lc-unresearched">unresearched</span></td>
+      <td class="tg"><button class="tb" data-target="d-rfp8" aria-expanded="false" aria-label="Toggle details for RFP-8">▸</button></td></tr>
+    <tr class="dr" id="d-rfp8" hidden><td colspan="5"><div class="dg">
+      <div><h4>Scope</h4><p>Spike design, escalation-reliability and routing-regression metrics, gated <code>model-tiering.md</code> revision.</p></div>
+      <div><h4>Covers</h4><p>sonnet-overseer-advisor</p></div>
+    </div></td></tr>
   </table></div>
 </section>
 
@@ -216,23 +320,23 @@ details.appendix>summary .sub{margin:0;font:400 13px var(--sans);color:var(--ink
   <p class="sub">Solid arrows: hard dependencies on the critical path. Dashed: gated on a spike. Letter in each bar: effort S/M/L.</p>
   <figure>
     <div class="wide">
-    <svg viewBox="0 0 780 300" role="img" aria-label="Roadmap across four phases. Critical path: P0 subagent labeling, P1 chat record and devlog management, P2 graphify rollout and shared cache, P3 cap-and-reseed. Parallel low-dependency lanes: haiku bash wrapper in P1, sonnet playwright and frontend subagent in P1, sonnet overseer plus opus advisor spike gated in P3.">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Roadmap across three phases, following the already-shipped and closed subagent-labeling quick win. Critical path: P1 chat record and devlog management, P2 graphify rollout and shared cache, P3 cap-and-reseed. Parallel low-dependency lanes: haiku bash wrapper in P1, sonnet playwright and frontend subagent in P1, sonnet overseer plus opus advisor spike gated in P3.">
       <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink2)"/></marker></defs>
-      <g class="phase"><rect x="200" y="0" width="140" height="284"/><rect x="480" y="0" width="140" height="284"/></g>
-      <g class="tb" text-anchor="middle"><text x="270" y="18">P0 quick wins</text><text x="410" y="18">P1 substrate</text><text x="550" y="18">P2 retrieval</text><text x="690" y="18">P3 loop control</text></g>
+      <g class="phase"><rect x="480" y="0" width="140" height="284"/></g>
+      <g class="tb" text-anchor="middle"><text x="410" y="18">P1 substrate</text><text x="550" y="18">P2 retrieval</text><text x="690" y="18">P3 loop control</text></g>
       <text class="sm" x="10" y="18">CRITICAL PATH</text>
+      <text class="sm" x="10" y="34">(subagent-labeling, formerly P0 here, shipped and closed — see "Landed and closed" above)</text>
       <g class="t">
-        <text x="10" y="50">Subagent labeling — RFP-1 (shipped ✓, pending sign-off)</text>
         <text x="10" y="86">Chat record + devlog mgmt — RFP-2 (researching)</text>
         <text x="10" y="122">Graphify rollout + shared cache — RFP-3/4</text>
         <text x="10" y="158">Cap-and-reseed — RFP-5</text>
       </g>
       <g style="fill:var(--accent);stroke:none">
-        <rect x="206" y="34" width="128" height="22" rx="2"/><rect x="346" y="70" width="128" height="22" rx="2"/><rect x="486" y="106" width="128" height="22" rx="2"/><rect x="626" y="142" width="128" height="22" rx="2"/>
+        <rect x="346" y="70" width="128" height="22" rx="2"/><rect x="486" y="106" width="128" height="22" rx="2"/><rect x="626" y="142" width="128" height="22" rx="2"/>
       </g>
-      <g class="v" text-anchor="middle" style="fill:var(--surface)"><text x="270" y="50" style="fill:var(--surface)">S</text><text x="410" y="86" style="fill:var(--surface)">M</text><text x="550" y="122" style="fill:var(--surface)">L</text><text x="690" y="158" style="fill:var(--surface)">M</text></g>
+      <g class="v" text-anchor="middle" style="fill:var(--surface)"><text x="410" y="86" style="fill:var(--surface)">M</text><text x="550" y="122" style="fill:var(--surface)">L</text><text x="690" y="158" style="fill:var(--surface)">M</text></g>
       <g class="arr" style="marker-end:url(#ah2)">
-        <path d="M334 45 H340 V81 H344" marker-end="url(#ah2)"/><path d="M474 81 H480 V117 H484" marker-end="url(#ah2)"/><path d="M614 117 H620 V153 H624" marker-end="url(#ah2)"/>
+        <path d="M474 81 H480 V117 H484" marker-end="url(#ah2)"/><path d="M614 117 H620 V153 H624" marker-end="url(#ah2)"/>
       </g>
       <line x1="10" y1="176" x2="770" y2="176" class="gr"/><text class="sm" x="10" y="192">PARALLEL / LOW DEPENDENCY</text>
       <g class="t">
@@ -259,9 +363,6 @@ details.appendix>summary .sub{margin:0;font:400 13px var(--sans);color:var(--ink
   <h2>4. Phase exit criteria</h2>
   <p class="sub">Each phase is measured against the [SPEND]/[READ] baselines, on the same query method (<code>turns</code> table, weftwise, 7-day window).</p>
   <div class="phases">
-    <div class="ph"><h3>P0 · Quick wins</h3><div class="who">RFP-1 <span class="lc lc-shipped" style="margin-left:4px">shipped</span></div><dl>
-      <dt>Exit</dt><dd>New implementer/proposer rows appear as <code>cdocs:implementer</code>/<code>cdocs:proposer</code> in <code>usage.db</code>; a role-scoped query reproduces the $3,152 role table without heuristic classification. Landed 2026-09-22; live-classification smoke test deferred to the next real <code>/cdocs:iterate</code> or <code>/cdocs:propose-revise</code> run.</dd>
-      <dt>Baseline</dt><dd>gp bucket 64.9% of spend, conflating implementer+proposer; a <code>cdocs:*</code>-only view sees 16.5%.</dd></dl></div>
     <div class="ph"><h3>P1 · Durable substrate</h3><div class="who">RFP-2 (Phase 1–2), RFP-6, RFP-7</div><dl>
       <dt>Exit</dt><dd>A post-compaction instance can list prior user messages from the record; devlogs over the cap trigger a semantic split; verbose Bash routed through <code>cdocs:bash-runner</code> or capped by <code>bashOutputMaxChars</code>; Playwright/frontend rounds default to Sonnet.</dd>
       <dt>Baseline</dt><dd>Devlogs 8.2% of intake, two re-read 10× and 21×; Bash 28.5% of intake; Playwright 3.5%.</dd></dl></div>
@@ -539,3 +640,34 @@ details.appendix>summary .sub{margin:0;font:400 13px var(--sans);color:var(--ink
   </div>
 </details>
 </main>
+<script>
+(function(){
+  function setBtn(btn,open){
+    btn.setAttribute('aria-expanded',open?'true':'false');
+    btn.textContent=open?'▾':'▸';
+  }
+  document.querySelectorAll('.tb[data-target]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var row=document.getElementById(btn.dataset.target);
+      if(!row) return;
+      var opening=row.hasAttribute('hidden');
+      if(opening) row.removeAttribute('hidden'); else row.setAttribute('hidden','');
+      setBtn(btn,opening);
+    });
+  });
+  document.querySelectorAll('.ab[data-expand-all]').forEach(function(all){
+    all.addEventListener('click',function(){
+      var scope=document.querySelector(all.dataset.expandAll);
+      if(!scope) return;
+      var rows=scope.querySelectorAll('tr.dr');
+      var anyHidden=Array.prototype.some.call(rows,function(r){return r.hasAttribute('hidden');});
+      rows.forEach(function(r){
+        var btn=scope.querySelector('.tb[data-target="'+r.id+'"]');
+        if(anyHidden){ r.removeAttribute('hidden'); if(btn) setBtn(btn,true); }
+        else { r.setAttribute('hidden',''); if(btn) setBtn(btn,false); }
+      });
+      all.textContent=anyHidden?'Collapse all':'Expand all';
+    });
+  });
+})();
+</script>
