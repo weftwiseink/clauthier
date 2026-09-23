@@ -38,9 +38,10 @@ if [ "${GSTUB_MODE:-ok}" = "error" ]; then exit 3; fi
 sub="$1"; shift
 case "$sub" in
   explain)
-    # $1 is the file basename; list the symbols it [contains] (real explain shape, truncated tail).
+    # $1 is the file basename; list the symbols it [contains] (real explain shape).
     node="$1"
     cat <<TXT
+### CMD: graphify explain "$node"  (file node -> [contains] symbols)
 Node: $node
   ID:        stub_node
   Source:    $node L1
@@ -52,9 +53,11 @@ Connections (4):
   --> widgetHelper() [contains] [EXTRACTED] $node:L42
   --> ref_fs [imports_from] [EXTRACTED] $node:L2
   --> WIDGET_CONST [contains] [EXTRACTED] $node:L5
-  Grouped by file:
-    --> $node: 4 connections
 TXT
+    # GSTUB_TRUNC => emulate a god-node whose connection list was capped ("... and N more").
+    if [ -n "${GSTUB_TRUNC:-}" ]; then echo "  ... and 9 more"; fi
+    echo "  Grouped by file:"
+    echo "    --> $node: 4 connections"
     ;;
   affected)
     # reverse traversal for a symbol. "empty" subset => no affected nodes.
@@ -133,6 +136,12 @@ has  "pipeline invoked explain"          "$(cat "$SENT")" "^explain "
 has  "pipeline invoked affected"         "$(cat "$SENT")" "^affected "
 # affected is queried on a SYMBOL label parsed from explain's [contains] lines, not a basename.
 has  "affected queried on parsed symbol" "$(cat "$SENT")" "affected renderWidget\(\)"
+# nit: the [contains] extraction is anchored to the `--> ` connection prefix, so the annotation
+# line (`### CMD ... [contains] symbols)`) is NOT parsed into a bogus affected query.
+hasnt "annotation line not parsed as symbol" "$(cat "$SENT")" "affected ### CMD"
+hasnt "annotation prose not queried"         "$(cat "$SENT")" "affected.*graphify explain"
+# no truncation trailer this round => no truncation marker.
+hasnt "no SCOPE-TRUNCATED when not truncated" "$OUT" "SCOPE-TRUNCATED"
 
 echo
 echo "=== TEST 3: fallback branch -- missing binary -> labeled skip-scope ==="
@@ -191,6 +200,16 @@ OUT="$(cd "$WS" && GSTUB_SUBSET=multi run bash "$SH" brief --enable --files "src
 has  "healthy multi-file scoped"      "$OUT" "SCOPE-STATUS: scoped"
 has  "observe channel co-surfaced with real set" "$OUT" "nearby .observe/.subscribe site"
 has  "observe count > 0 header"       "$OUT" "SCOPE-OBSERVE-COUNT: [1-9]"
+
+echo
+echo "=== TEST 10: explain truncation -> visible SCOPE-TRUNCATED marker + body warning ==="
+# GSTUB_TRUNC makes explain emit a "... and 9 more" trailer for the changed file (a god-node).
+OUT="$(cd "$WS" && GSTUB_SUBSET=multi GSTUB_TRUNC=1 run bash "$SH" brief --enable --files "src/widget.ts" --index "$IDX")"
+has  "still scoped under truncation"   "$OUT" "SCOPE-STATUS: scoped"
+has  "SCOPE-TRUNCATED marker present"  "$OUT" "SCOPE-TRUNCATED: src/widget.ts"
+has  "marker warns under-listing"      "$OUT" "dependents may be under-listed"
+has  "body truncation WARNING present" "$OUT" "WARNING \(truncation\)"
+has  "body names the truncated file"   "$OUT" "    - src/widget.ts"
 
 echo
 echo "======================================"
