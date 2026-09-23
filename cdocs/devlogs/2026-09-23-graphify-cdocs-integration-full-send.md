@@ -74,22 +74,64 @@ then proceed (full-send, maintainer already green-lit) into the iterate phase.
 | dispatch | reviewer-1 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | 2026-09-23T09:13:00-08:00 | review lean-track re-scope |
 | return | reviewer-1 (cdocs:reviewer) | cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md | 2026-09-23T09:20:00-08:00 | ACCEPT r4 (9de6a92); 1 should-fix + 2 nits |
 | dispatch | rev-1 (cdocs:proposer, resumed) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:21:00-08:00 | clear accepting-round items |
+| return | rev-1 (cdocs:proposer, resumed) | cdocs/proposals/2026-09-17-graphify-cdocs-integration.md | 2026-09-23T09:28:00-08:00 | done; 3 commits 33f3fb5/96be57f/9c19271; should-fix + 2 nits cleared; status implementation_ready |
+| dispatch | impl-1 (general-purpose) | plugins/cdocs/skills/{iterate,review}/*, plugins/cdocs/agents/reviewer.md, plugins/cdocs/lib/graphify-scope* (new), tests | 2026-09-23T09:35:00-08:00 | iterate phase: build Phase 2 scoping surface |
 
 ## Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 
+## Turn 0 Brief (iterate phase) — PROPOSE-REVISE PHASE COMPLETE
+
+**PROPOSE-REVISE LOOP COMPLETE — lean-track re-scope ACCEPTED (r4), accepting-round items cleared.**
+Overseer-verified: `status: implementation_ready`; H1 trimmed to "Graphify integration into cdocs loops";
+no stale gate/first-increment/Bet-1/librarian-title phrasing; phases read Phase 2 (headline) / Phase 1
+(optional) / Phase 3 (deferrable) / Out-of-scope (librarian + adapter dropped). Review:
+`cdocs/reviews/2026-09-23-review-of-graphify-cdocs-integration-lean-track.md` (ACCEPT r4).
+
+**Iterate scope: Phase 2 ONLY — the lean integration.** Build the stateless, CLI-backed graph-scoping
+surface and wire it into the reviewer role (the RFP's original consumer) behind a flag. Deliberately minimal,
+honoring the maintainer's "why is this complex — it should just be prime-context + instruct-agents" intent:
+1. A thin loop-side wrapper over graphify CLI (`query`/`explain`/`path`) — never raw `graph.json` — that
+   turns the round's changed symbols into a compact scoped-context brief.
+2. Brief content (non-negotiable, small): the resolved multi-file dependent set + the AID-not-guarantee caveat
+   (D3) + co-surfaced nearby `.observe`/`.subscribe` sites for the touched files (D3 structural CRDT guard).
+3. skip-scope on stale/missing index, engine error, OR missing graphify binary → fall back to today's
+   unscoped sweep, fallback labeled. Additive only: absence never lowers baseline recall.
+4. Flag-gated wiring: the iterate/review skill primes the brief into the reviewer's dispatch up front when the
+   flag is on; the reviewer agent prompt instructs graphify-CLI use for follow-up queries.
+NOT in scope: Phase 1 coarse meter, Phase 3 measured gate, implementer/judge roll-out, librarian, adapter.
+
+**Verification floor:** With the flag ON and a fresh index, the reviewer receives a scoped-context brief
+carrying the correct multi-file dependent set, the AID caveat, and co-surfaced observe/subscribe sites; with
+the flag OFF, or a missing/stale index, or graphify absent, the round falls back to the unscoped sweep with
+the fallback LABELED. Failure pictures: a brief that presents the dependent set as exhaustive (no caveat / no
+observe-site channel); a missing/stale index that blocks the round or hands back a stale set instead of
+skip-scoping; a flag-off path that still burns a graphify call. Because graphify is NOT on the host, the
+dispatched reviewer verifies brief-shape + all fallback branches against RECORDED graphify CLI fixtures and
+the no-binary path (`review_proof: confirmed` on host-testable behavior). The LIVE real-graphify `/cdocs:ablate`
+spot-check on multi-file tasks is the validation-of-record and is run at TOP LEVEL by the overseer in a
+graphify-equipped devcontainer (`review_proof: deferred-to-followup` for the dispatched reviewer — ablate
+dispatches subagents, which a dispatched agent cannot do; same structural constraint as the prior e2e).
+
 ## Completed
 
 - Turn 0 (propose-revise): devlog scaffolded, lean-track brief stated.
+- Propose-revise loop: reviser (5 deltas, 4676eee..f6edca6) → reviewer ACCEPT r4 (9de6a92) → items cleared
+  (33f3fb5/96be57f/9c19271). Proposal lean + `implementation_ready`, overseer-verified.
+- Turn 0 (iterate): scope = Phase 2 only; verification floor set (host brief/fallback = confirmed; live
+  ablate spot-check = overseer top-level, deferred-to-followup).
 
 ## Decisions Made
 
-- Full-send maintainer-approved per the "Graphify in cdocs" explainer; the propose-revise phase is a
-  lean-track re-scope (Path A), the iterate phase builds Phase 2.
+- Full-send maintainer-approved per the "Graphify in cdocs" explainer; propose-revise = lean-track re-scope
+  (Path A, accepted r4), iterate = build Phase 2 only.
+- graphify absent on host → dispatched agents verify against recorded CLI fixtures + fallback branches; the
+  overseer runs the live ablate spot-check at top level (structural: ablate dispatches subagents).
 
 ## Open Todos
 
-- [ ] Dispatch reviser (lean-track re-scope), then fresh reviewer; loop to accept.
-- [ ] On accept: proceed to iterate phase (build + verify Phase 2), maintainer full-send standing.
+- [ ] Iterate: impl-1 builds Phase 2 scoping surface + tests → fresh reviewer each round → accept.
+- [ ] Overseer top-level: run live `/cdocs:ablate` spot-check on multi-file tasks in a graphify devcontainer
+  (validation-of-record) once the surface is accepted.
