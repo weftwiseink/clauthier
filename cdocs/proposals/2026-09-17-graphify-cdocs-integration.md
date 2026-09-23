@@ -179,27 +179,30 @@ The staleness contract is fixed now: stale or missing means skip-scope for that 
 
 ## Test Plan
 
-Metrics are meaningless without the Phase 1 meter; every row below presumes it.
+The shipped increment (Phase 2) is validated by the ablate spot-check plus the structural-guard and fallback checks below; the corpus-measured rows (labeled recall corpus, coarse before/after) belong to the deferrable Phase 3 and its optional meter.
 
-- **Token accounting (primary).** Two instruments (see Discriminator-first instrumentation). Live COARSE per-role burn on a fixed corpus of representative loops, metered before scoping lands and re-metered after: the claim under test is that total per-role burn and the read-token (context-gathering) proxy fall for implementer, reviewer, and judge while the generate-token (reasoning/writing) proxy holds. The per-task causal "scoping pays" verdict is DELEGATED to the `/cdocs:ablate` harness run on dependent-set task shapes, not inferred from a per-phase meter.
-- **Task-shape targeting (grounds the discriminator).** The discriminator and the `/cdocs:ablate` verdict run on MULTI-FILE dependent-set / blast-radius task shapes, per the e2e Probe A finding (single-file `explain` -> `context_gap 0`). Single-file/trivial fixtures are expected-null controls only; a near-zero result on them is NOT admissible as "scoping does not pay."
-- **Recall parity (hard gate).** Missed-dependent rate on a labeled fixture set (changes with known true dependent sets, including barrel/aliased/multi-hop cases). Scoped recall must be >= unscoped baseline recall. Any regression fails the change.
+- **Ablate spot-check (primary, shipped increment).** Run the `/cdocs:ablate` harness on a couple of real MULTI-FILE dependent-set tasks: graphify-as-tool against the counterfactual of not having it, reading the signed context-gap verdict with its token corroborator. This is the validation of record that scoping pays; no mandatory before/after coarse baseline is required to ship.
+- **Task-shape targeting (grounds the discriminator).** The ablate spot-check (and any later Phase-3 corpus) runs on MULTI-FILE dependent-set / blast-radius task shapes, per the e2e Probe A finding (single-file `explain` -> `context_gap 0`). Single-file/trivial fixtures are expected-null controls only; a near-zero result on them is NOT admissible as "scoping does not pay."
 - **CRDT guard (structural).** A fixture where the graph dependent set is near-empty but real runtime coupling is heavy. Assert the brief co-surfaces the nearby observe/subscribe sites and never presents the set as exhaustive (D3), and that the near-empty-plus-observe-proximity trigger forces an unscoped sweep for that round. The check is at test time; the production guard is the structural brief format plus that trigger, not the caveat alone.
-- **Staleness / fallback.** Force a stale and a missing index; assert the round skip-scopes and its recall matches the unscoped baseline, and that instrumentation labels the round as fallback, not scoped.
-- **Model-tiering realization.** Re-run a subset of loops with a downgraded role model under scoping; assert recall parity holds at the lower tier (the tiering claim's evidence). Only admissible if the consumer's floor permits the downgrade or a carve-out exists.
-- **Librarian (only if Phase 4 proceeds).** Compare stateless-tool loops against librarian-served loops on the same corpus: total loop burn including the librarian's standing cost, and recall parity. The librarian passes only if it cuts total burn net of its own cost without recall loss.
+- **Staleness / fallback.** Force a stale and a missing index; assert the round skip-scopes and its recall matches the unscoped baseline (recall parity protected structurally: scoping only ever adds context), and that a fallback round is labeled fallback, not scoped.
+- **Recall parity (hard gate, MEASURED in Phase 3).** In the shipped increment recall parity is protected STRUCTURALLY (additive-only, skip-scope, behind a flag) rather than measured. The MEASURED gate lands in Phase 3: missed-dependent rate on a labeled fixture set (changes with known true dependent sets, including barrel/aliased/multi-hop cases); scoped recall must be >= unscoped baseline recall, and any regression fails the change (D2).
+- **Coarse token accounting (optional, Phase 1).** When hard live per-role numbers are wanted: live COARSE per-role burn on a fixed corpus of representative loops, metered before scoping and re-metered after, testing that total per-role burn and the read-token (context-gathering) proxy fall for implementer, reviewer, and judge while the generate-token (reasoning/writing) proxy holds. Opt-in; not a gate on shipping Phase 2.
+- **Model-tiering realization (Phase 3).** Re-run a subset of loops with a downgraded role model under scoping; assert recall parity holds at the lower tier (the tiering claim's evidence). Only admissible if the consumer's floor permits the downgrade or a carve-out exists.
 
 ## Verification Methodology
 
-The loop is its own test harness: run the real `/cdocs:iterate` loop on the fixture corpus and read the metered output, do not simulate.
+The loop is its own test harness: run the real `/cdocs:iterate` loop and read the metered output, do not simulate.
 
-1. Land Phase 1 coarse instrumentation and capture the BEFORE baseline on the corpus (per-role totals + read/generate proxy; missed-dependent rate). The per-task causal "did scoping help" verdict is supplied by `/cdocs:ablate` on dependent-set (multi-file) task shapes, not by this meter.
-2. Land the scoping tool behind a flag; run the SAME corpus with scoping on and off; diff the metered tokens and recall. Use dependent-set (MULTI-FILE) task shapes; a single-file task is expected-null and does not disconfirm the tool (ablate e2e Probe A).
-3. Gate: the change is admissible only if context-gathering tokens fall AND recall holds. A token win with any recall loss is rejected (D2).
-4. For the librarian (if reached), repeat the before/after against the stateless-tool baseline, charging the librarian's standing cost to its column.
+For the shipped increment (Phase 2):
 
-> NOTE(claude-opus-4-8/code-graph/cdocs-integration): The causal "did the tool help" convention now exists as the accepted, e2e-verified `/cdocs:ablate` harness; this proposal CONSUMES it rather than rebuilding it.
-> Phase 1 adds only the complementary LIVE per-role baseline meter (coarse). If that coarse meter proves broadly useful beyond this proposal, factor it out via a follow-up; do not over-generalize it here, and do not resurrect the dropped per-phase attribution meter on the critical path.
+1. Land the scoping surface behind a flag: prime the graphify dependent-set brief into the loop up front and instruct the reviewer (then implementer/judge) to use the graphify CLI.
+2. Run the `/cdocs:ablate` spot-check on a couple of real MULTI-FILE dependent-set tasks; read the signed context-gap verdict with its token corroborator. A single-file task is expected-null and does not disconfirm the tool (ablate e2e Probe A).
+3. Verify the structural recall guard directly: scoping only ever adds context, a stale or missing index skip-scopes to the unscoped baseline, and the CRDT-proximity trigger forces an unscoped sweep (Test Plan). Recall parity is protected structurally here, not measured.
+
+For the deferrable Phase 3 (opt-in): land the corpus-measured recall-parity gate, and, if hard live per-role numbers are wanted, land the optional Phase 1 coarse meter and capture a before/after per-role baseline. The change is admissible only if context-gathering tokens fall AND recall holds; a token win with any recall loss is rejected (D2).
+
+> NOTE(claude-opus-4-8/code-graph/cdocs-integration): The causal "did the tool help" convention exists as the accepted, e2e-verified `/cdocs:ablate` harness; this proposal CONSUMES it as the shipped increment's validation of record rather than rebuilding it or blocking on a bespoke meter.
+> The optional Phase 1 coarse meter is complementary, not a prerequisite; the dropped per-phase attribution meter must not be resurrected onto any critical path.
 
 ## Implementation Phases
 
