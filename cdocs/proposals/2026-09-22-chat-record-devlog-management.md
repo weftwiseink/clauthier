@@ -20,7 +20,8 @@ tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-m
 > A hook-written, per-session, `@speaker:`-delimited **chat record** under `cdocs/_chat/` captures every user turn, assistant reply (with the files it read or edited), and compaction summary verbatim at zero LLM cost; a rolling agent-written **`## Scratchpoint`** block in the devlog captures dense working state every turn, including a one-line **gist per file touched** so a sibling agent can decide whether to re-read.
 > Delivery across compaction is `/compact <steering>` first, with `PreCompact`, `SessionStart(compact)`, and `PostCompact` hooks as a second layer.
 > Devlogs split at **closed-concern boundaries** into `-<concern>` chunk files with the root devlog as index, never at a byte count.
-> A Phase-0 canary run in this environment confirmed every hook this design needs fires on Claude Code 2.1.280 headless, including `PostCompact`, which the research report assumed did not exist.
+> A Phase-0 canary (seven sandboxed runs, evidence in [`_verify/2026-09-22-chat-record-hook-canary.md`](../devlogs/_verify/2026-09-22-chat-record-hook-canary.md)) confirmed every hook this design needs fires on Claude Code 2.1.280 headless, including `PostCompact`, which the research report assumed did not exist.
+> The system makes the compaction summary's quality irrelevant to resumption and compaction rare; it does not prevent native auto-compaction in the top-level session.
 
 ## Summary
 
@@ -39,12 +40,13 @@ The chat record generalizes nothing that exists; it fills the gap the read-sourc
 The scratchpoint generalizes the per-turn `overseer_thinness` columns in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md) (same per-turn, agent-authored, judge-observable pattern) with one deliberate change of storage shape: replace-in-place rather than additive append, because chronology now lives in the chat record and an append-only per-turn log would recreate the devlog-bloat failure mode.
 
 > NOTE(fable-5-1/chat-record-devlog-management): The chat-record report treated `PostCompact` as an open feature request ([#14258](https://github.com/anthropics/claude-code/issues/14258)) and treated a `PreCompact` reliability gap on manual `/compact` ([#13572](https://github.com/anthropics/claude-code/issues/13572)) as a reason to keep hooks secondary.
-> On the installed 2.1.280, `PostCompact` exists, delivers the full `compact_summary` in its payload, and both `PreCompact` and `PostCompact` fired on manual and auto compaction headless.
-> The primary/secondary ranking is kept anyway (see Design Decision 7) because the interactive `/compact` path was not exercised by the canary.
+> Both issues are now closed upstream (#13572 as stale, #14258 as shipped), and the official hooks reference lists `PostCompact` with `manual|auto` matchers (https://code.claude.com/docs/en/hooks.md); the canary adds the payload shape: on 2.1.280 `PostCompact` delivers the full `compact_summary`, and both `PreCompact` and `PostCompact` fired on manual and auto compaction headless.
+> The primary/secondary ranking is kept anyway (see Design Decision 7) because the interactive `/compact` path was not exercised by the canary, not because any open issue reports it broken.
 
 ## Objective
 
-Make lossy cold compaction unnecessary for long-lived contexts by ensuring that, at any moment, durable state exists that is at most one turn stale (capture), and that a fresh or post-compaction window is seeded from that state rather than from an opaque summary (delivery).
+Make the compaction summary's quality irrelevant to resumption, and make compaction rare, by ensuring that at any moment durable state exists that is at most one turn stale (capture), and that a fresh or post-compaction window is seeded from that state rather than from an opaque summary (delivery).
+See "Relationship to native auto-compaction" for what this does and does not prevent.
 Keep devlogs skimmable as workstreams grow by splitting them where the work itself has seams, so a resuming agent reads the one chunk relevant to its task rather than a 40KB chronology.
 
 ## Background
@@ -70,8 +72,11 @@ Read in this order; this proposal assumes their conclusions:
 - **Shared retrieval cache and cross-agent read deduplication (the token-cost half).** Dropped per the shared-cache report; this proposal neither designs nor assumes any content-sharing mechanism and makes no claim that the gist log reduces the measured 97.4% cross-agent re-read figure.
 - **Memory-tool integration.** Orthogonal per the chat-record report; a possible future storage backend, not adopted.
 - **Post-hoc distillation of devlogs by a cheap model.** Rejected by the devlog-value report.
-- **Chat records for dispatched subagents.** They have no user turns; the `UserPromptSubmit` hook does not fire inside them (verified, see Phase 0), so the scoping is mechanical, not a convention.
+- **Chat records for dispatched subagents, in Phases 1 and 2.** The hook exits on every event whose payload carries `agent_id`, the field the hooks reference documents as "present only when the hook fires inside a subagent call", so top-level-only scoping rests on a documented guard rather than on the (also observed) fact that `UserPromptSubmit` does not fire for a subagent's dispatch prompt.
+  A per-workstream record that includes dispatched legs is a Phase-3 design sketch, not built here.
 - **Hook-enforced scratchpoint writing.** The scratchpoint is judgment-bearing; a hook can nudge, never author.
+- **Redaction or secret scanning.** Chat records commit by default with no redaction pass; the exposure is accepted and documented (Design Decision 9).
+  General redaction and secret scanning for committed cdocs artifacts is scoped separately in [`2026-09-23-chat-record-redaction-scanning-rfp.md`](2026-09-23-chat-record-redaction-scanning-rfp.md) and nothing here attempts it.
 
 ## Proposed Solution
 
@@ -108,6 +113,10 @@ sequenceDiagram
 `cdocs/_chat/YYYY-MM-DD-<sid8>.md`, one file per Claude Code session, where `YYYY-MM-DD` is the local date of the session's first recorded event and `<sid8>` is the first eight hex characters of `session_id`.
 Example: `cdocs/_chat/2026-09-22-13ee1efb.md`.
 
+The hook locates the file by glob, `cdocs/_chat/*-<sid8>.md`, never by recomputing the date (a `--resume` the next day must land in the same file), and creates it only when the glob is empty.
+The first line of every file is `@session: <ts> start source=startup sid=<full session_id> cwd=<cwd>`; when the glob hits a file whose first line carries a different `sid=`, the hook falls back to the full id in the filename (`YYYY-MM-DD-<session_id>.md`) rather than appending to a stranger's record.
+A same-day 32-bit prefix collision is negligible in probability, but the hook must never be silently wrong about it.
+
 Why per session rather than per `task_list`: the hook knows `session_id` on every event and knows nothing about workstreams; `--resume` continues a session under the same id (per `claude --help`), so a resumed session keeps appending to the same file; and a session is the unit that compaction acts on.
 The link from workstream to chat record is made the other way: the hook tells the agent its chat-record path via `additionalContext` on the first prompt of the session and on every post-compaction `SessionStart`, and the agent records it in the devlog (`## Chat Record` pointer in the index devlog, see Scratchpoint section).
 
@@ -115,10 +124,16 @@ Why an underscore directory at the top level: `cdocs/_media/` already marks non-
 No frontmatter-spec change is needed; the spec gains one line noting `_chat/` alongside `_media/`.
 
 Chat records are committed, like devlogs, because durable state that must survive a fresh session or a sibling worktree is worthless untracked (the bare-repo layout in `CLAUDE.md` makes this explicit).
-Commit responsibility sits with the overseer at handoff time, the same moment it commits the devlog.
 
-> WARN(fable-5-1/chat-record-devlog-management): A committed chat record has the same exposure as a committed devlog or a local transcript: anything pasted into a prompt lands in git.
-> The hook honors `CDOCS_CHAT_RECORD=off` (no writes at all) and projects may add `cdocs/_chat/` to `.gitignore` to keep records local; both are opt-outs, the default is on and committed.
+**Commit protocol.** The record grows on every turn, so the working tree is dirty at every moment a commit happens.
+Therefore: the overseer stages the record by explicit path at each handoff (`git add cdocs/_chat/<file> cdocs/devlogs/<devlog>`), in the same devlog-class bookkeeping commit as the devlog; dispatched agents never stage `cdocs/_chat/` (no `git add -A`, no `git commit -a`, no "commit everything" step touches it), and their briefs say so.
+A commit made mid-turn is stale by the next `Stop`; that is expected, the record is append-only and the next handoff commit catches up.
+This is the carve-out to Pillar 1's "the overseer does not commit code itself": devlog and chat-record commits are bookkeeping the overseer already performs, not code commits.
+
+> WARN(fable-5-1/chat-record-devlog-management): A committed chat record has three leak channels, not one: text a human pastes into a prompt; `@<model>` bodies, where an assistant that echoes a `.env` value, a token from a tool result, or a credential path writes it to git with no human paste involved; and `@compact` summaries, which condense exactly the tool outputs this design tells compaction to drop and run 7-9KB each under auto-compaction.
+> Maintainer decision (2026-09-23): commit by default, no redaction pass in the hook; the exposure is accepted and documented here rather than mitigated.
+> General redaction and secret scanning is deferred to [`2026-09-23-chat-record-redaction-scanning-rfp.md`](2026-09-23-chat-record-redaction-scanning-rfp.md).
+> Opt-outs: the hook honors `CDOCS_CHAT_RECORD=off` (no writes at all), and a project may add `cdocs/_chat/` to `.gitignore` to keep records local at the cost of cross-worktree and cross-session durability.
 
 #### Block grammar
 
@@ -126,20 +141,26 @@ A chat record is a sequence of blocks.
 Each block is a header line at column 0 followed by a body that runs to the next header line or end of file.
 
 ```
-record   := block*
-block    := header "\n" body
-header   := "@" speaker ":" (" " meta)? "\n"        ; column 0, no leading whitespace
-speaker  := [A-Za-z0-9] [A-Za-z0-9._-]*
-meta     := timestamp (" " key "=" value)*           ; timestamp is ISO 8601 with offset
-value    := bare-token | "\"" (escaped chars) "\""   ; quote when the value has spaces or "="
-body     := line*                                    ; verbatim, may contain blank lines and fences
+HEADER_RE := ^@[A-Za-z0-9][A-Za-z0-9._-]*:          ; the ONE pattern both writer and reader use
+record    := block*
+block     := header "\n" body
+header    := HEADER_RE (" " meta)? "\n"              ; column 0, no leading whitespace
+meta      := timestamp (" " key "=" value)*          ; timestamp is ISO 8601 with offset
+value     := bare-token | "\"" qchar* "\""           ; quote when the value has spaces, "=", "," or "\""
+qchar     := any char except "\"" "\\" LF CR | "\\\\" | "\\\"" | "\\n" | "\\r"
+body      := line*                                   ; verbatim, may contain blank lines and fences
 ```
 
 Rules that keep the grammar unambiguous:
 
-- **Only a header starts with `@` at column 0.** The writer escapes any body line that would match `header` by prefixing one backslash (`\@user: ...`), and lines that already begin with a run of backslashes followed by a header-shaped token get one more.
-  A reader strips exactly one leading backslash from any line matching `^\\+@[A-Za-z0-9][A-Za-z0-9._-]*:`.
+- **`HEADER_RE` is the single split and escape test.** A line is a header if and only if it matches `HEADER_RE` at column 0 with no preceding backslash; whatever follows the colon on a real header is parsed as `meta` (an empty or malformed `meta` is still a header, with the tail kept as opaque text).
+  The writer escapes any body line matching `^\\*HEADER_RE` by prefixing one backslash, so `@alice: can you look at this`, a LESS `@brand-color: #333;`, a CSS `@page:first {`, and a pasted `@user: ...` first line are all escaped even though none carries a timestamp; the reader strips exactly one leading backslash from any line matching `^\\+HEADER_RE`.
+  Both tests use the same prefix, so writer and reader can never disagree about where a block ends.
   The transform is applied to every body line regardless of fence state, so parsing is stateless and round-trips verbatim.
+- **Quoted values have exactly four escapes.** Inside `"..."`, `\\` and `\"` are the only escapes for `\` and `"`, and a literal newline or carriage return in a value (a pasted multi-line `/compact` instruction, a path with a quote) is written as the two-character sequences `\n` and `\r`.
+  The reader unescapes those four and nothing else.
+  This is what keeps "metadata lives on the header line only" true.
+- **CRLF is normalized.** The writer converts `\r\n` to `\n` in bodies before the escape pass, so a pasted Windows transcript cannot carry `\r` into the header test.
 - **Metadata lives on the header line only.** A body never carries metadata; a following line is always content.
   This keeps the header regex the single thing a reader needs.
 - **Block separation is by header, not by blank line.** The writer emits one blank line after each body for readability; the reader strips trailing blank lines from a body.
@@ -158,17 +179,21 @@ Speakers:
 | `@compact` | `PostCompact` | `compact_summary`, verbatim |
 | `@session` | `SessionStart`, `PreCompact`, `SessionEnd` | empty; the header's metadata is the content |
 
-`<model-short>` is the transcript's `message.model` with the `claude-` prefix and any trailing `-YYYYMMDD` stripped: `claude-haiku-4-5-20251001` becomes `haiku-4-5`, `claude-opus-4-8` becomes `opus-4-8`.
+`<model-short>` is the model id with the `claude-` prefix and any trailing `-YYYYMMDD` stripped: `claude-haiku-4-5-20251001` becomes `haiku-4-5`, `claude-opus-4-8` becomes `opus-4-8`.
+The id comes from two sources in order: the `model` field of the most recent `SessionStart(source=compact)` payload, cached per session in the runtime dir, then the last `assistant` entry's `message.model` in the transcript; `@assistant` only when neither exists.
+Slash-command turns are captured as the raw invocation string (`/cdocs:propose-revise --first-round ...`), not the expanded skill body, which is short and exact; built-in `/compact` fires no `UserPromptSubmit` at all and is represented by the `compact-begin` line instead.
 
 Header metadata, all optional after the timestamp: `n=<ordinal of this speaker's blocks in the file>`, `p=<first 8 hex of prompt_id>` (correlates a `@user` block with its `@<model>` reply), `files="<list>"` on `@<model>` blocks (below), `trigger=manual|auto` on `@compact` and `compact-begin`, `source=startup|resume|compact|clear` and `reason=` on `@session`, `instructions="<custom_instructions>"` on `compact-begin` when `/compact <text>` was used.
 
 **`files=` (the mechanical half of the gist log).** A quoted, comma-separated list of the files the assistant read or edited during that turn, each prefixed by its access mode: `r:` read in full (`Read`), `w:` written or edited (`Edit`, `Write`, `NotebookEdit`), `rw:` both.
 Paths are relative to `cwd` when under it, absolute otherwise, deduplicated, in first-touch order.
 Example: `files="r:plugins/cdocs/hooks/hooks.json,rw:plugins/cdocs/hooks/chat-record.sh"`.
-This is ground truth about *which* files a turn touched, written by the hook from `PostToolUse` events (verified, Phase 0); it says nothing about *why*, which is the Scratchpoint's `files:` gist list.
-Reads that bypass the `Read` tool (a `cat` inside `Bash`, a haiku-wrapper dispatch) are invisible here by construction; the agent's gist list covers those.
+This is ground truth about *which* files the top-level agent's own turn touched, written by the hook from `PostToolUse` events (verified, Phase 0); it says nothing about *why*, which is the Scratchpoint's `files:` gist list.
+`PostToolUse` also fires inside dispatched subagents (with `agent_id` set; verified by the round-1 review and documented in the hooks reference), and the hook drops those events, so a reviewer's reads never appear on the overseer's block.
+Reads that bypass the `Read` tool (a `cat` inside `Bash`, a haiku-wrapper dispatch) do not produce a matching event at all; the agent's gist list covers those when they mattered.
+The path field is `tool_input.file_path`, or `tool_input.notebook_path` for `NotebookEdit`.
 
-Example (real payloads from the Phase-0 canary, bodies abbreviated):
+Example (a composite assembled from Phase-0 runs 2, 4, and 7, since no single run wired every event; bodies abbreviated):
 
 ```
 @session: 2026-09-22T18:24:38-07:00 start source=startup cwd=/tmp/.../proj4
@@ -199,22 +224,26 @@ Bash plus `jq`, not `tsx`: `UserPromptSubmit` runs on the critical path of every
 |---|---|---|---|
 | `SessionStart` | (all) | `@session ... start source=<source>`; creates the file on first event | on `source=startup\|resume`: `additionalContext` naming the chat-record path. On `source=compact`: the post-compaction reseed pointer (below) |
 | `UserPromptSubmit` | (all) | `@user` or `@harness` block | nothing (never `decision: block`) |
-| `PostToolUse` | `Read\|Edit\|Write\|NotebookEdit` | nothing in the record; appends `<mode>:<path>` to a per-session turn buffer at `${XDG_RUNTIME_DIR:-/tmp}/cdocs-chat/<session_id>.turn` | nothing |
-| `Stop` | (all) | `@<model>` block from `last_assistant_message` with `files=` built from the turn buffer, which is then cleared; skipped when the message is empty (the buffer still clears) | nothing |
+| `PostToolUse` | `Read\|Edit\|Write\|NotebookEdit` | nothing in the record; appends `<mode>:<path>` to a per-session turn buffer at `${XDG_RUNTIME_DIR:-/tmp}/cdocs-chat/<session_id>.turn`; when the path matches `cdocs/devlogs/*.md` and the tool is `Edit` or `Write`, also records it as the session's active devlog in `<session_id>.devlog` | nothing |
+| `Stop` | (all) | `@<model>` block from `last_assistant_message` (the final text block of the turn, not every text the model emitted between tool calls) with `files=` built from the turn buffer, which is then cleared; skipped when the message is empty (the buffer still clears) | nothing |
 | `PreCompact` | `manual\|auto` | `@session ... compact-begin trigger= instructions=` | the pre-compaction nudge (below) |
 | `PostCompact` | (all) | `@compact` block from `compact_summary` | nothing |
 | `SessionEnd` | (all) | `@session ... end reason=<reason>` | nothing |
 
 Invariants:
 
+- **`agent_id` guard, first thing on every event.** If the payload carries `agent_id`, exit 0 before any read or write.
+  Tool and stop events fire inside dispatched subagents with `agent_id` and `agent_type` set (hooks reference; round-1 review Run A), and without this guard an overseer turn that dispatched a reviewer would end with `files="r:<everything the reviewer read>"`.
+  This guard is also what makes the chat record top-level-only.
 - Always exit 0; a chat-record failure never blocks or slows the user.
   Errors go to stderr only.
 - No `cdocs/` directory under `cwd`, or `CDOCS_CHAT_RECORD=off`: exit silently before any write, mirroring `inject-rules.ts`.
 - Appends use `>>` (`O_APPEND`) with the whole block written in one `printf`, so concurrent events (a `Stop` racing a `SessionEnd`) interleave at block granularity, not mid-line.
 - The hook is the chat record's only writer.
   Agents read chat records (`tail`, `Read` with an offset) and never `Edit` them; a cdocs subagent cannot even path-wise (`_chat/` is outside the edit-path allowlist), and the rule text says so for the main session.
-- Model identity for `Stop` blocks is read best-effort from the transcript (`transcript_path` is in the payload; the last `assistant` entry's `message.model`), falling back to `@assistant`.
+- Model identity for `Stop` blocks comes from the cached `SessionStart(compact)` `model` field first, then best-effort from the transcript (`transcript_path` is in the payload; the last `assistant` entry's `message.model`), falling back to `@assistant`.
   The canary showed the transcript can lag the `Stop` event by a turn, which is harmless for the model id (it rarely changes) and is why the body comes from `last_assistant_message`, not the transcript.
+- The captured assistant body is summary-shaped by rule, not by luck: the overseer discipline (Pillar 2 text, Phase 1) says the overseer ends every turn with a short turn summary as its final message, which is exactly the block `Stop` captures.
 
 Pre-compaction nudge (`PreCompact` `additionalContext`, under 500 bytes):
 
@@ -224,13 +253,14 @@ Post-compaction reseed pointer (`SessionStart` with `source=compact`, `additiona
 
 > Context was just compacted. Before continuing: Read `## Scratchpoint` and the latest handoff in `<devlog>`, then the last 5 blocks of `<chat record>`. Do not re-derive state from the compaction summary alone.
 
-`<devlog>` is chosen mechanically: the most recently modified `cdocs/devlogs/*.md` (excluding `_*/` subdirectories) with mtime later than the session's first `@session` line; if none, the nudge names only the chat record.
-This is advisory and can pick wrong when two sessions work one checkout; the reseed pointer says "the devlog you own" as a fallback instruction.
+`<devlog>` is resolved per session, in three tiers: first the path in `${XDG_RUNTIME_DIR:-/tmp}/cdocs-chat/<session_id>.devlog`, which the `PostToolUse` hook wrote the last time this session `Edit`ed or `Write`d a `cdocs/devlogs/*.md` (the "active devlog" the autoflush RFP asked how to find, and per-session, so two sessions on one checkout cannot cross-contaminate); then `grep -l "<sid8>" cdocs/devlogs/*.md`, which finds the devlog whose `## Chat Record` section the agent wrote; then, as a last resort, the most recently modified `cdocs/devlogs/*.md` (excluding `_*/`) with mtime later than the session's first `@session` line.
+If all three miss, the nudge names only the chat record and says "the devlog you own".
 
 ### Compaction steering (the primary delivery mechanism)
 
 `orchestration-discipline.md` Pillar 2 gains a concrete instructions string.
-When the overseer reaches a task-unit boundary it writes the handoff, refreshes the Scratchpoint, commits, and then runs:
+An agent cannot invoke `/compact` ([#71803](https://github.com/anthropics/claude-code/issues/71803) is open), so the string is typed by the user, or printed by the Phase-3 `/cdocs:compact` skill for the user to run.
+When the overseer reaches a task-unit boundary it writes the handoff, refreshes the Scratchpoint, commits, and ends its turn by asking for:
 
 ```
 /compact Preserve verbatim from cdocs/devlogs/<devlog>.md: the ## Scratchpoint block and the latest Completed / Decisions Made / Open Todos handoff. Keep the paths cdocs/devlogs/<devlog>.md and cdocs/_chat/<record>.md and the last three user turns verbatim. Drop tool outputs and file contents; they are re-readable.
@@ -238,9 +268,24 @@ When the overseer reaches a task-unit boundary it writes the handoff, refreshes 
 
 The `custom_instructions` field arrives in the `PreCompact` payload (verified, Phase 0), so the hook records the steering text used, which makes steering discipline auditable from the chat record.
 
+### Relationship to native auto-compaction
+
+This design does not obviate native auto-compaction for the top-level session, and it should not be read as trying to:
+
+- Compaction cannot be prevented by the agent.
+  `/compact` and `/clear` are user actions; agent-invokable compaction does not exist.
+  In AFK `oversee` runs and headless `-p` sessions nobody types either, so auto-compaction is the only trimming mechanism there, and Phase-0 run 3 shows it firing four times in three minutes under a 100K window.
+- Context growth is not fully agent-controlled: tool results, harness notifications, and reseeded rules arrive unbidden.
+- Durable specialists (Pillar 3) are the exception.
+  Their "compaction" is the ~1M sawtooth reset, and Phase 3's cap-and-reseed is a dispatch-level primitive the overseer does control, so for subagents the system genuinely can keep compaction from ever running.
+
+What the design achieves instead: with a Scratchpoint at most one turn stale, a handoff, a chat-record tail, and a `SessionStart(compact)` pointer that says "read those, not the summary", compaction becomes a mechanical trimming event whose summary quality no longer determines resumption quality.
+Auto-compaction stays as the safety net for unmanaged stretches, and its role shrinks to "trim when nobody checkpointed", which the Scratchpoint staleness signal makes visible to the judge.
+Whether a hard `/clear` plus reseed from durable state beats steered `/compact` on the interactive path (no summarizer call, no 30-second pause, no 7-9KB `@compact` block) is an empirical question the Phase-2 A/B's third arm answers; if it ties, `/cdocs:compact` prints `/clear` plus a resume pointer instead of a steering string.
+
 ### Scratchpoint
 
-A single `## Scratchpoint` H2 section in the devlog the agent owns, replaced in place on every state-changing turn, bounded to roughly fifteen lines:
+A single `## Scratchpoint` H2 section in the devlog the agent owns, replaced in place on every state-changing turn, bounded by rule to at most 15 lines and at most 8 `files:` entries (older entries roll into the handoff at the next boundary):
 
 ```markdown
 ## Scratchpoint
@@ -268,7 +313,7 @@ Not writers: one-shot dispatched legs (their returned summary is their checkpoin
 
 Relationship to the existing thinness columns, stated plainly: this generalizes that pattern.
 The columns are the per-turn, agent-written, judge-observable precedent; the Scratchpoint carries the same `ctx` estimate plus actual working state, outside the iterate loop as well as inside it.
-The columns are not removed or replaced: inside `iterate` they remain the judge's bloat signal per row, and the Scratchpoint's `as_of` staleness becomes an additional judge-observable signal (a Scratchpoint older than two iterations is `signal_missing`-equivalent).
+The columns are not removed or replaced: inside `iterate` they remain the judge's bloat signal per row, and the Scratchpoint's `as_of` staleness becomes an additional input to the judge's existing `overseer_thinness` field: a Scratchpoint whose `as_of` is older than two Iteration Log rows, or absent, is written as `overseer_thinness: signal_missing`, the same value the judge already writes when the thinness columns are absent, so the judge agent's update in Phase 2 is one added condition, not a new field.
 The one deviation from the precedent is storage shape: replace-in-place, not additive rows, because per-turn history is now the chat record's job and appending working state every turn would push the devlog toward the append-only chronology the devlog-value report identifies as the failure mode.
 
 The index devlog also carries a two-line `## Chat Record` section: the path the hook announced, and the `@user` ordinal at the last handoff (so a resuming reader knows which tail to read).
@@ -279,8 +324,13 @@ The index devlog also carries a two-line `## Chat Record` section: the path the 
 Past ~12KB (the midpoint of the devlog-value report's 10-15KB band) or past ~5 loop rounds, the author must look for a boundary.
 The size is the prompt to look, never the place to cut.
 
-**Where to cut.** A chunk is a *closed concern*: a completed phase, a finished sub-loop of rounds, a resolved investigation or debugging arc, a landed verification campaign.
-Everything belonging to that concern (its Implementation Notes, Debugging Process, Changes Made rows, Verification evidence, Iteration Log rows for a finished sub-loop) moves to the chunk file.
+**What a closed concern is.** A concern is a completed phase, a finished sub-loop of rounds, a resolved investigation or debugging arc, or a landed verification campaign.
+It is *closed* when all three hold: (i) it has a heading of its own (H2 or H3) in the devlog; (ii) every Open Todo in the most recent handoff that names it is done, or has been moved into the root's current handoff; and (iii) no live table in the root still receives rows for it.
+Two agents applying this test to the same devlog get the same answer, which is what makes the Phase-2 dry-run scoreable.
+
+**Where to cut.** At a split, move **every** closed concern, one chunk per closed concern; a closed concern under ~3KB merges into the adjacent closed chunk, because a chunk should be worth opening alone.
+Everything belonging to a concern moves with it: its Implementation Notes, Debugging Process, Changes Made rows, Verification evidence, and Iteration Log rows for a finished sub-loop.
+Rows in shared tables (Changes Made, Verification) move with the concern that produced them; a row that belongs to two concerns stays in the root.
 Open concerns and live tables (Iteration Log, Judge Log, Dispatch/Return Events, Steering Log for the active loop) stay in the root.
 If no concern has closed, do not split: a large live section beats an arbitrary cut; instead move bulky pasted evidence to `cdocs/devlogs/_verify/` as the repo already does.
 
@@ -301,7 +351,7 @@ No directory-per-workstream: the `{date}-{slug}.md` convention, the hook path re
 
 The `read this when` column is the navigation contract: a resuming agent reads the root (index, Scratchpoint, handoff) and opens only the chunk whose trigger matches its task.
 
-**Each chunk stands alone.** It has full frontmatter (same `task_list`, plus `part_of: cdocs/devlogs/<root>.md`), an opening BLUF that does not depend on the root, and a first-line `> NOTE(author/workstream): Chunk of [<root>](<root>.md); see its Chunks table for siblings.` backlink.
+**Each chunk stands alone.** It has full frontmatter (same `task_list`, `status: done` because a closed concern is done by definition, so `/cdocs:triage` never flags a chunk as stale `wip`, plus `part_of: cdocs/devlogs/<root>.md`), an opening BLUF that does not depend on the root, and a first-line `> NOTE(author/workstream): Chunk of [<root>](<root>.md); see its Chunks table for siblings.` backlink.
 `part_of` is a new optional frontmatter field with `review_of` semantics (a repo-root path); `/cdocs:status` and `/cdocs:triage` group by it.
 
 ## Important Design Decisions
@@ -318,11 +368,12 @@ The `read this when` column is the navigation contract: a resuming agent reads t
    It generalizes the thinness-column pattern, keeps the columns, and changes only the storage shape.
 6. **Semantic split, flat naming, root as index, `part_of` link.** A byte-count cut produces chunks that are meaningless to navigate; a closed concern is a unit someone will actually want to read alone.
    Flat naming keeps every existing path assumption intact; the `read this when` column replaces a directory hierarchy.
-7. **`/compact <steering>` primary, hooks secondary, despite the canary.** The canary confirmed hooks fire headless on 2.1.280 for manual and auto compaction, but did not exercise the interactive `/compact` path [#13572](https://github.com/anthropics/claude-code/issues/13572) reports against.
+7. **`/compact <steering>` primary, hooks secondary, on the strength of what is verified, not on any reported breakage.** The canary confirmed hooks fire headless on 2.1.280 for manual and auto compaction; the interactive TUI `/compact` path is simply unverified (the issue once filed against it, [#13572](https://github.com/anthropics/claude-code/issues/13572), is closed as stale).
    Steering is verified interactive (read-source report) and costs nothing; hooks are defense-in-depth until the interactive check in Phase 1 passes, after which the ranking is a documentation note, not a design constraint.
 8. **Bash plus `jq`, not `tsx`.** `UserPromptSubmit` runs before every prompt; `npx tsx` startup is measurable latency on the interactive path, and two of the three existing hooks are already shell.
-9. **Committed by default, with opt-outs.** Untracked durable state does not cross worktrees or sessions.
-   The exposure is identical to devlogs and is called out with a `WARN`.
+9. **Committed by default, no redaction, explicit-path staging.** Untracked durable state does not cross worktrees or sessions.
+   The three leak channels (pastes, assistant bodies, compaction summaries) are named in the `WARN` and accepted by maintainer decision; redaction is a separate workstream ([`2026-09-23-chat-record-redaction-scanning-rfp.md`](2026-09-23-chat-record-redaction-scanning-rfp.md)).
+   The always-dirty tree is handled by protocol (overseer stages by explicit path at handoff; dispatched agents never stage `_chat/`), not by gitignoring.
 10. **`Stop`-captured assistant turns are included.** `last_assistant_message` is in the payload at zero cost and is exactly what the user saw; without it the record is half a conversation.
     Tool calls, thinking, and tool results are deliberately not captured: they are the re-readable bulk compaction should drop.
 11. **The gist log is split into a mechanical half and a judgment half, and claims only awareness.** The hook's `files=` list is exhaustive and free but knows nothing about relevance; the agent's `files:` gists know relevance but can forget a file.
@@ -331,20 +382,21 @@ The `read this when` column is the navigation contract: a resuming agent reads t
 
 ## Edge Cases / Challenging Scenarios
 
-- **Harness-generated prompts fire `UserPromptSubmit`.** Canary run 5 showed a background subagent's completion notification arrived as a second `UserPromptSubmit` with no human input.
+- **Harness-generated prompts fire `UserPromptSubmit`.** Canary run 5 showed a background subagent's completion notification arrived as a second `UserPromptSubmit` with no human input; its prompt begins `<task-notification>` / `<task-id>...` (see the `_verify` artifact).
   The payload has no field distinguishing it, so the hook classifies by shape: a prompt whose first non-blank token is an opening tag from a known harness set (`<task-notification`, `<system-reminder`, and whatever the Phase-1 implementer observes) is `@harness`; anything else, including a human pasting HTML, is `@user`.
   Allowlist, not "starts with `<`", to avoid mislabeling humans.
-- **Body content that looks like a header.** A user pasting a chat record, or an assistant quoting one, is handled by the backslash escape; round-trip is a Phase-1 unit test with adversarial input (headers inside fences, lines starting with `\@`, empty bodies).
+- **Slash commands.** A user-defined or plugin command fires `UserPromptSubmit` with the raw invocation string and is recorded as such; built-in `/compact` fires none (run 2) and is represented by `compact-begin`; `/clear` and `/resume` side effects on `UserPromptSubmit` and `session_id` are a Phase-1 verification item.
+- **Body content that looks like a header.** A user pasting a chat record (whose very first line is `@user: ...`), or an assistant quoting one, is handled by the backslash escape; round-trip is a Phase-1 unit test with adversarial input (a prompt whose first line matches `HEADER_RE`, headers inside fences, lines starting with `\@`, empty bodies, a multi-line `instructions=` value, a `files=` path containing `"`, CRLF input).
 - **Transcript lag on `Stop`.** Observed: the first `Stop` of a session found no assistant entry in the transcript and the second found the previous turn's.
   Body comes from `last_assistant_message`; only the model id is transcript-derived, with `@assistant` as fallback.
 - **`--resume` and `/clear`.** Resume keeps `session_id` and appends to the same file with a `@session ... start source=resume` line.
   `/clear` fires `SessionStart` with `source=clear`; whether the id changes is a Phase-1 verification item; either way the record is correct (same file continues, or a new one starts).
-- **Two sessions on one checkout.** Per-session files never collide.
-  The devlog heuristic in the nudge may name the other session's devlog; the nudge text always includes the fallback "the devlog you own".
+- **Two sessions on one checkout.** Per-session files never collide, and the active-devlog pointer is per session (runtime-dir file keyed by `session_id`), so the nudge names the right devlog; only the third-tier mtime fallback can cross sessions, and the nudge text always includes "the devlog you own".
 - **Empty or tool-only turns.** `Stop` with an empty `last_assistant_message` writes nothing and clears the turn buffer.
 - **Stale turn buffer.** A crash between `PostToolUse` and `Stop` leaves a buffer behind; the next `SessionStart` for that session id truncates it, and `SessionEnd` removes it.
   Buffers live outside the repo (`$XDG_RUNTIME_DIR`), so nothing stale is ever committed.
-- **Files touched outside the `Read`/`Edit` tools.** A `cat` in `Bash`, a `Glob`/`Grep` hit, or a dispatched haiku-wrapper read never reaches the buffer; `files=` is exhaustive only for the four tools it matches, and the Scratchpoint gist is where the agent records the rest when it mattered.
+- **Files touched outside the `Read`/`Edit` tools, or inside a subagent.** A `cat` in `Bash` or a `Glob`/`Grep` hit produces no matching event; a subagent's `Read` produces one that the `agent_id` guard drops.
+  `files=` is therefore exhaustive only for the top-level agent's own use of the four matched tools, and the Scratchpoint gist is where the agent records the rest when it mattered.
 - **Very large prompts or summaries.** Written verbatim; the file is read by tail and offset, never whole.
   No cap: truncation would defeat "lossless by construction".
 - **Hook timeout or `jq` missing.** Timeout 5s on every entry; the script checks for `jq` and exits 0 silently without it, printing one stderr line.
@@ -363,18 +415,24 @@ The `read this when` column is the navigation contract: a resuming agent reads t
   - manual compaction via `--input-format stream-json` with a `/compact` message: `compact-begin trigger=manual` then `@compact trigger=manual` with a non-empty body, in that order.
   - auto compaction via `--autocompact 100000` and ~100K tokens of `Read`s: at least one `compact-begin trigger=auto` / `@compact trigger=auto` pair.
   - `Agent` dispatch: exactly one `@user` block (the subagent's prompt is absent).
+  - `Agent` dispatch whose subagent `Read`s `a.txt` while the parent reads nothing: the parent's `@<model>` block carries no `files=` (the `agent_id` guard).
   - `Read a.txt`, `Read b.txt`, `Edit b.txt` in one turn: the `@<model>` header carries exactly `files="r:a.txt,rw:b.txt"`; a following turn with no file access carries no `files=`.
+  - a project command `.claude/commands/echo.md` invoked as `/echo hello-world`: one `@user` block whose body is exactly `/echo hello-world`.
+  - the `/compact` line in the stream-json scenario produces no `@user` block, only `compact-begin` and `@compact`.
+  - `Edit` of `cdocs/devlogs/x.md` followed by a compaction: the `SessionStart(compact)` nudge names `cdocs/devlogs/x.md`, and the `SessionStart(compact)` payload's `model` field is present and cached.
   - `CDOCS_CHAT_RECORD=off`: no file created.
   - no `cdocs/` in `cwd`: no file created.
-- Grammar unit test (pure shell, no Claude): escape/unescape round-trip on an adversarial fixture; a reader that splits on the header regex recovers exactly the input bodies.
+- Grammar unit test (pure shell, no Claude): escape/unescape round-trip on the adversarial fixture listed under Edge Cases (header-shaped first line, `@alice: hey`, LESS and CSS at-rules, headers inside fences, `\@` lines, empty body, multi-line `instructions=`, a path with `"`, CRLF); a reader that splits on `HEADER_RE` recovers exactly the input bodies and metadata values.
 - Payload-shape guard: each event's required fields (`prompt`, `last_assistant_message`, `compact_summary`, `trigger`, `source`) present, so a Claude Code upgrade that renames a field fails loudly in the test rather than silently in production.
 
 **Phase 1, interactive check (manual, once, recorded in the devlog with the resulting chat-record excerpt):** type `/compact` in a real interactive session with the plugin installed and confirm the `compact-begin` and `@compact` blocks appear; this is the [#13572](https://github.com/anthropics/claude-code/issues/13572) check the headless canary could not perform.
 
 **Phase 2, scratchpoint and splitting:**
 
-- Resumption-quality A/B (the gate for Phase 3), modeled on the Factory.ai anchored-iterative-summarization eval the devlog-value report cites: three real workstreams, compaction forced mid-task-unit (between handoffs); resume once from Scratchpoint plus handoff plus chat-record tail, once from the compaction summary alone; a fresh reviewer scores each resume on "correct next action, no re-litigated decision, no re-read of already-read files".
-  Pass: scratchpoint-seeded resume wins or ties on all three.
+- Resumption-quality A/B (the gate for Phase 3), modeled on the Factory.ai anchored-iterative-summarization eval the devlog-value report cites: three real workstreams, a reset forced mid-task-unit (between handoffs), three arms per workstream: (1) carry indefinitely, i.e. resume from the native compaction summary alone; (2) steered `/compact` then resume from Scratchpoint plus handoff plus chat-record tail; (3) `/clear` then reseed from the same durable state with no summary at all.
+  A fresh reviewer scores each resume on "correct next action, no re-litigated decision, no re-read of already-read files".
+  Pass: arm 2 wins or ties arm 1 on all three workstreams.
+  Decision rule for `/cdocs:compact`: if arm 3 ties arm 2, the skill prints `/clear` plus a resume pointer rather than a steering string, since a hard reset is then strictly cheaper.
 - Split dry-run on the two largest existing devlogs (`2026-09-22-agent-dispatch-labeling.md`, 19KB; `2026-05-12-rule-delivery-regression-test.md`, 17KB): a fresh agent, given only the root index, is asked three task-scoped questions and must answer each by opening at most one chunk.
 - `/cdocs:triage` and `/cdocs:status` recognize `part_of` and group chunks under their root.
 
@@ -411,8 +469,8 @@ For the scratchpoint and splitting, verification is the A/B and the split dry-ru
 
 ### Phase 0: hook canary (done in this environment, 2026-09-22, Claude Code 2.1.280)
 
-Prerequisite the brief required before Phase 1: confirm the hooks this design needs actually fire and behave, given three separate hook gaps surfaced in one session (`PostToolUse updatedToolOutput` and `PreToolUse updatedInput` dead for built-in Bash, and [#13572](https://github.com/anthropics/claude-code/issues/13572)).
-Six headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku`:
+Prerequisite the brief required before Phase 1: confirm the hooks this design needs actually fire and behave, given three separate hook gaps surfaced in one session (`PostToolUse updatedToolOutput` and `PreToolUse updatedInput` dead for built-in Bash, and the then-open [#13572](https://github.com/anthropics/claude-code/issues/13572)).
+Seven headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku`; per-run `settings.json`, exact commands, stream-json inputs, canary-log lines, and model results are in [`cdocs/devlogs/_verify/2026-09-22-chat-record-hook-canary.md`](../devlogs/_verify/2026-09-22-chat-record-hook-canary.md), and the round-1 review independently re-derived every row and added two runs of its own ([`2026-09-22-review-of-chat-record-devlog-management.md`](../reviews/2026-09-22-review-of-chat-record-devlog-management.md), "Independent Verification"):
 
 | Hook | How triggered | Fired | Payload facts relied on |
 |---|---|---|---|
@@ -423,6 +481,8 @@ Six headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku`:
 | `Stop` | turn end | yes | `last_assistant_message` (matches the printed result), `prompt_id`, `transcript_path`; no model field; transcript lags by a turn |
 | `SubagentStart` / `SubagentStop` | `Agent` dispatch | yes | `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message` (not used by this design) |
 | `PostToolUse` matcher `Read\|Edit\|Write\|Glob\|Grep` | `Read a.txt`, `Read b.txt`, `Edit b.txt` | yes, once per call, in order | `tool_name`, `tool_input.file_path`; plain `PostToolUse` firing is unaffected by the dead `updatedToolOutput` channel |
+| `PostToolUse` inside a dispatched subagent | review Run A: foreground `Agent` whose subagent `Read`s a file | **yes, with `agent_id` and `agent_type` set** | the reason for the `agent_id` guard; the hooks reference documents this behavior |
+| `UserPromptSubmit` on a user-defined slash command | review Run B: `claude -p "/echo hello-world"` | yes | `prompt` is the raw invocation string, not the expanded body |
 | `PreCompact` (manual) | `/compact` via `--input-format stream-json` | yes | `trigger=manual`, `custom_instructions` (null when unsteered); [#13572](https://github.com/anthropics/claude-code/issues/13572) did not reproduce headless |
 | `PreCompact` (auto) | `--autocompact 100000`, ~72K `pre_tokens` | yes, four times in one run | `trigger=auto` |
 | `SessionStart` (compact) | both compaction paths | yes, between `PreCompact` and `PostCompact` | `source=compact`, `model`; `additionalContext` visible to the model after compaction |
@@ -431,22 +491,23 @@ Six headless runs in a sandboxed `CLAUDE_CONFIG_DIR` with `--model haiku`:
 
 Result: **confirmed working** for every hook Phase 1 uses.
 `PreCompact` `additionalContext` was also visible post-compaction (marker listed by the model); whether it arrived via the summarizer's input or by direct injection was not distinguished and does not matter for the nudge.
-Not verified: the interactive `/compact` path (Phase 1 manual check), and behavior of `/clear` on `session_id`.
+Built-in `/compact` sent as a user line fired no `UserPromptSubmit` (run 2).
+Not verified: the interactive TUI `/compact` path (Phase 1 manual check), and behavior of `/clear` and `/resume` on `session_id` and `UserPromptSubmit`.
 
 ### Phase 1: capture, steering, nudge
 
 Deliverables:
 
-1. `plugins/cdocs/hooks/chat-record.sh` implementing the hook contract above; `hooks.json` entries for `SessionStart`, `UserPromptSubmit`, `PostToolUse` (matcher `Read|Edit|Write|NotebookEdit`), `Stop`, `PreCompact`, `PostCompact`, `SessionEnd` (timeouts 5s).
+1. `plugins/cdocs/hooks/chat-record.sh` implementing the hook contract above, `agent_id` guard first; `hooks.json` entries for `SessionStart`, `UserPromptSubmit`, `PostToolUse` (matcher `Read|Edit|Write|NotebookEdit`, path from `file_path` or `notebook_path`), `Stop`, `PreCompact`, `PostCompact`, `SessionEnd` (timeouts 5s); the per-session `.turn`, `.devlog`, and `.model` files in the runtime dir.
 2. `plugins/cdocs/hooks/tests/chat-record.test.sh` per the Test Plan, plus the grammar round-trip fixture.
 3. `/cdocs:init` scaffolds `cdocs/_chat/` with a one-paragraph `README.md` (what it is, hook-written, do not edit, opt-outs).
-4. `frontmatter-spec.md`: one line under "Media" noting `cdocs/_chat/` as hook-written, frontmatter-free, like `_media/`; `plugins/cdocs/README.md` "Hooks" gains the six entries and the opt-outs.
-5. `orchestration-discipline.md` Pillar 2: the steering string, "commit devlog and chat record together at handoff", "after any compaction Read the Scratchpoint, handoff, and chat-record tail", and the rule that agents never edit `cdocs/_chat/`.
+4. `frontmatter-spec.md`: one line under "Media" noting `cdocs/_chat/` as hook-written, frontmatter-free, like `_media/`; `plugins/cdocs/README.md` "Hooks" gains the seven entries and the opt-outs.
+5. `orchestration-discipline.md` Pillar 2: the steering string and who types it, the commit protocol (overseer stages devlog and chat record by explicit path at handoff; dispatched agents never stage `cdocs/_chat/`), the Pillar 1 carve-out sentence ("devlog and chat-record commits are bookkeeping commits, not the code commits Pillar 1 routes to subagents"), "after any compaction Read the Scratchpoint, handoff, and chat-record tail", the rule that the overseer ends every turn with a short turn summary as its final message, and the rule that agents never edit `cdocs/_chat/`.
 6. `plugins/cdocs/skills/devlog/SKILL.md`: `## Chat Record` pointer section; chat records are quoted only inside fences.
-7. Interactive `/compact` check recorded in the devlog.
+7. Interactive `/compact` check, plus `/clear` and `/resume` behavior, recorded in the devlog.
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
-Success criteria: all hook tests green; a real session in this repo produces a committed `cdocs/_chat/` file whose `@user` blocks match what was typed; the interactive check shows both compaction blocks.
+Success criteria: all hook tests green, including the subagent-`Read` and slash-command scenarios; a real session in this repo produces a committed `cdocs/_chat/` file whose `@user` blocks match what was typed and whose `@<model>` `files=` lists contain no file a dispatched agent read; the interactive check shows both compaction blocks.
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; never emit `decision: block` from any chat-record event.
 
@@ -458,11 +519,11 @@ Deliverables:
 
 1. `orchestration-discipline.md`: a "Scratchpoint" subsection under Pillar 2 with the block format (including the `files:` gist list and its awareness-only framing), writer set, cadence, and the judge-observable staleness rule; the handoff format's Completed subsection gains the gist one-liners for files touched; Pillar 3 says durable specialists keep one in the devlog they own.
 2. `plugins/cdocs/skills/devlog/template.md` gains `## Scratchpoint` and `## Chat Record`; `iterate`, `propose-revise`, `full-send`, `oversee`, and `implement` skills reference the rule (one line each, no restating); `agents/implementer.md` tells a warm implementer to maintain it.
-3. `plugins/cdocs/skills/devlog/SKILL.md`: "Splitting a devlog" section with the trigger, the closed-concern cut rule, naming, the Chunks table, chunk frontmatter and backlink; Pillar 2's handoff step adds "check size; if past ~12KB, split at the most recent closed concern".
-4. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` skills group by it.
-5. The resumption-quality A/B and the split dry-run from the Test Plan, results in the devlog.
+3. `plugins/cdocs/skills/devlog/SKILL.md`: "Splitting a devlog" section with the trigger, the three-part closure test, the move-every-closed-concern and ~3KB-merge rules, naming, the Chunks table, chunk frontmatter (`status: done`, `part_of`) and backlink; Pillar 2's handoff step adds "check size; if past ~12KB, split every closed concern".
+4. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` skills group by it; `agents/judge.md` gains the Scratchpoint-staleness condition for `overseer_thinness: signal_missing`.
+5. The three-arm resumption-quality A/B and the split dry-run from the Test Plan, results in the devlog.
 
-Success criteria: A/B passes on all three workstreams; the split dry-run answers each task question with at most one chunk opened; `cdocs-validate-frontmatter.sh` accepts chunk files unchanged.
+Success criteria: A/B arm 2 wins or ties arm 1 on all three workstreams, and the arm-3 result is recorded as the `/cdocs:compact` decision input; the split dry-run answers each task question with at most one chunk opened; `cdocs-validate-frontmatter.sh` accepts chunk files unchanged.
 
 Constraints: the `overseer_ctx_est`/`inline_work` columns and the judge's `overseer_thinness` field are not removed or renamed; the Scratchpoint is additive to them.
 Do not introduce a directory-per-workstream layout.
@@ -471,7 +532,25 @@ Do not introduce a directory-per-workstream layout.
 
 1. **Cap-and-reseed durable specialists** (token-spend workstream 4): Pillar 3 and the `iterate` skill gain a cutoff (starting value per that report's own caution, ~0.4-0.6M, tentative) at which the overseer has the specialist write a final Scratchpoint and handoff, then dispatches a fresh leg seeded from them plus a one-line pointer, instead of letting the specialist run to the ~1M sawtooth reset.
    This is fully agent-controllable today: no compaction primitive is involved, only dispatch.
-2. **`/cdocs:compact` skill**: user-invoked; performs the checkpoint (Scratchpoint, handoff, commit of devlog plus chat record) and then prints the exact `/compact <steering>` line for the user to run, because agent-invokable compaction does not exist ([#71803](https://github.com/anthropics/claude-code/issues/71803) open).
+2. **`/cdocs:compact` skill**: user-invoked; performs the checkpoint (Scratchpoint, handoff, commit of devlog plus chat record) and then prints the exact line for the user to run: `/compact <steering>`, or `/clear` plus a resume pointer if the Phase-2 arm-3 result says a hard reset ties, because agent-invokable compaction does not exist ([#71803](https://github.com/anthropics/claude-code/issues/71803) open).
    When that primitive ships, the skill's last step becomes the invocation itself.
+3. **Per-workstream chat record (design sketch, not built here).** Maintainer direction (2026-09-23): nested chat records will be wanted soon, scoped per workstream, one record for the set of proposer, reviewer, and implementer legs working the same `task_list`, not one per subagent, because the point is context preservation for a workstream.
+   The sketch below uses only mechanics Phase 1 already ships or the canary already verified; the gating items are at the end.
 
-Success criteria: a specialist reseeded at the cutoff continues without re-reading files its predecessor already read (measured by the reviewer on the next round); `/cdocs:compact` followed by the printed `/compact` line produces a post-compaction turn that acts on `next` from the Scratchpoint without re-orientation.
+   *Scoping unit and key.* The key is `task_list`, resolved the same way the reseed pointer resolves the active devlog: the hook reads `task_list:` from the frontmatter of the session's active devlog (`<session_id>.devlog`, tier 1), so a session learns its workstream the first time it `Edit`s or `Write`s a devlog.
+   Nothing new is written by an agent; the hook remains the only writer.
+
+   *File layout: derive the workstream record, do not relocate files.* A session's file stays `cdocs/_chat/YYYY-MM-DD-<sid8>.md` (moving it after the key is learned would break the glob lookup and any devlog pointer already written).
+   When the hook first learns the workstream it appends `@session: <ts> workstream ws=<task_list>`; the workstream record is then the ordered set `grep -l 'ws=<task_list>' cdocs/_chat/*.md`, which also covers a workstream resumed the next day in a new session, and it merges cleanly across worktrees because each session's file is distinct.
+   A `cdocs/_chat/<task_list-slug>/` directory per workstream was considered and rejected for the relocation reason; `_chat/` is a mechanical asset directory, so the flat-naming argument from devlogs is not what decides this, the glob stability is.
+
+   *Who writes the legs' blocks, and when.* Dispatched legs' events arrive in the parent session's hook process carrying the parent's `session_id` plus `agent_id`/`agent_type`, so the parent session's file is the natural home for their chronology and there is still exactly one writer.
+   Phase 3 replaces the Phase-1 "exit on `agent_id`" with a `case` on the event: `SubagentStart` appends `@dispatch: <ts> agent=<agent_type>/<agent_id8>` with the dispatch prompt as body (from `PreToolUse` on the `Agent` tool, whose `tool_input.prompt` is the brief, or from the first user message of `agent_transcript_path`); `PostToolUse` with `agent_id` appends to a per-agent buffer `<session_id>.<agent_id>.turn`; `SubagentStop` appends `@return: <ts> agent=<agent_type>/<agent_id8> files="..."` with `last_assistant_message` as body, which for a one-shot leg is already its checkpoint summary.
+   The overseer's own `@<model>` blocks keep excluding subagent files, so the awareness split (who read what) is preserved, only now the legs' reads are recorded on the legs' own `@return` blocks instead of dropped.
+
+   *What this adds beyond the Scratchpoint.* Chronology only: which briefs were dispatched in which order, what each returned, and what each read.
+   The state half for durable specialists is already the Scratchpoint in the devlog they own; one-shot legs need nothing more than their `@dispatch`/`@return` pair, which is exactly the Dispatch/Return Events table's content captured mechanically rather than by the overseer's hand.
+
+   *Gating and the Phase-3 canary.* (a) Phase 1's `agent_id` guard and active-devlog tracking landed (they are the same script); (b) a canary confirming that a durable specialist resumed by `SendMessage` fires a fresh `SubagentStart`/`SubagentStop` pair with the same `agent_id` (unverified; if it does not, the specialist's later turns need a different anchor); (c) `PreToolUse` on the `Agent` tool delivering `tool_input.prompt` in the parent (unverified); (d) evidence that workstreams actually span enough legs and sessions to need the derived record, which the Phase-1 records themselves will show.
+
+Success criteria: a specialist reseeded at the cutoff continues without re-reading files its predecessor already read (measured by the reviewer on the next round); `/cdocs:compact` followed by the printed line produces a post-compaction or post-clear turn that acts on `next` from the Scratchpoint without re-orientation; the per-workstream sketch's canary items (b) and (c) have answers recorded before any implementation of item 3 begins.
