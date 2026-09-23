@@ -65,6 +65,18 @@
       "resolvedSource": "/home/mjr/.config/lace/clauthier/mounts/user/screenshots",
       "isOverride": false,
       "assignedAt": "2026-05-06T23:52:20.189Z"
+    },
+    "bash-history/history": {
+      "label": "bash-history/history",
+      "resolvedSource": "/home/mjr/.config/lace/clauthier/mounts/bash-history/history",
+      "isOverride": false,
+      "assignedAt": "2026-09-01T16:26:15.149Z"
+    },
+    "graphify/index": {
+      "label": "graphify/index",
+      "resolvedSource": "/home/mjr/.cache/graphify",
+      "isOverride": false,
+      "assignedAt": "2026-09-17T21:54:42.301Z"
     }
   }
 }
