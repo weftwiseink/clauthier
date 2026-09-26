@@ -16,11 +16,15 @@ last_reviewed:
 
 # Long-Lived Agent Memory Landscape: Comparators for Connectome and cdocs
 
-> BLUF(opus/connectome-research): The field has converged, from several directions at once, on **agent-edited plain files as the durable substrate, a small pinned index loaded every turn, on-demand reads for everything else, and an asynchronous consolidation pass** ("sleep-time", "dreaming", "defragmentation", "phase-2 consolidation").
-> Letta abandoned database-backed memory tools for git-backed markdown (MemFS), Anthropic ships a file-based memory tool plus offline "dreams", Claude Code and Codex both write markdown memory under a home dir, and a plain grep-over-files agent beat Mem0's graph variant on LoCoMo.
-> Graph/vector memory layers (Zep/Graphiti, mem0, cognee) remain strongest for **per-user conversational recall with temporal updates**, not for coding.
+> BLUF(opus/connectome-research): Two trends that are easy to conflate should be kept apart.
+> **Substrate:** agent harnesses and coding tools are shifting toward **plain files as the durable store, a small pinned index loaded every turn, on-demand reads for everything else, and an asynchronous consolidation pass** ("sleep-time", "dreaming", "defragmentation", "phase-2 consolidation").
+> Letta replaced database-backed memory tools with git-backed markdown (MemFS), Anthropic ships a file-based memory tool plus offline "dreams", and Claude Code, Codex, and OpenClaw all keep markdown memory on disk.
+> **Authorship:** this is *not* converging on the agent as writer. In coding tools, autonomous agent-written memory is being demoted (Cursor removed Memories, Devin deprecated Knowledge, Codex/Windsurf point must-follow guidance to rules files), and the consolidation passes that remain emit a reviewable output rather than mutating in place.
+> Outside coding tools, the most-adopted dedicated memory layers (mem0, Graphiti, cognee) are not files-first, and they remain strongest for **per-user conversational recall with temporal updates**.
+> Identity persistence is mainstream in personal-agent harnesses (OpenClaw, ~390k stars, ships an agent-editable `SOUL.md`) but unmeasured on task outcomes; it is rare only among coding tools and memory-layer SaaS.
 > For coding agents specifically the evidence is thin and sobering: repo-level context files do not reliably raise SWE-bench success and cost ~20% more tokens, while *curated, abstracted* prior experience helps and *raw* trajectories can hurt.
 > Vendor memory benchmarks (LoCoMo, LongMemEval-S) are near-saturated, fit in context, and have been publicly disputed between vendors; treat every leaderboard number as marketing unless the protocol is published.
+> That includes the result most flattering to file-based designs (a Letta grep-over-files agent beating Mem0's self-reported LoCoMo score), which is a cross-harness comparison where a full-context baseline also beats Mem0.
 > For cdocs, the transferable patterns are: a size-capped pinned index, typed/timestamped frontmatter, validity/supersession links rather than silent overwrite, an explicit human-reviewed consolidation pass, and preferring abstracted lessons over raw logs at retrieval time.
 
 ## Context / Background
@@ -28,7 +32,11 @@ last_reviewed:
 This report is unit B of the connectome research arc (see [`cdocs/devlogs/2026-09-26-connectome-research-arc.md`](../devlogs/2026-09-26-connectome-research-arc.md)).
 A sibling report covers Anima Labs' [connectome](https://animalabs.ai/connectome) itself; here it appears only as a positioning point.
 Per Anima's own description, connectome keeps "a complete, branchable record of events" and lets agents "write their own memories as their histories grow, with the original record still available", with a default "autobiographical memory strategy" whose summaries are "voiced as the agent itself" ([animalabs.ai/connectome](https://animalabs.ai/connectome)).
-That places it at the **identity-persistence** end of the space, which most production systems do not target.
+That places it at the **identity-persistence** end of the space, alongside OpenClaw, Letta persona blocks, and Honcho; coding tools and memory-layer SaaS mostly do not target that end.
+
+This report is written for the cdocs team and ends with cdocs-specific patterns.
+The survey sections (Key Findings through Evidence) aim to be a neutral landscape; cdocs-favorable inferences are confined to "Patterns That Transfer" and "Recommendations" and labelled there.
+Readers should weigh it accordingly.
 
 The question this report serves: what do other long-lived context systems do, how do they differ on explicit axes, what actually works for coding/productivity agents, and what transfers to cdocs, a git-committed, log-centric markdown doc system (devlogs, proposals, reports, reviews with frontmatter).
 
@@ -37,20 +45,26 @@ Where a claim rests on a vendor's own benchmark or a secondary blog, it is flagg
 
 ## Key Findings
 
-- **Convergence on files.** Letta (the MemGPT originators) announced in March 2026 that "memory moves from specialized memory tools that edit memory in a database to generalized computer use tools like bash that operate over memory projected into git-backed files" ([Letta's Next Phase](https://www.letta.com/blog/our-next-phase/)).
+- **Substrate is shifting toward files, within agent harnesses and coding tools.** Letta (the MemGPT originators) announced in March 2026 that "memory moves from specialized memory tools that edit memory in a database to generalized computer use tools like bash that operate over memory projected into git-backed files" ([Letta's Next Phase](https://www.letta.com/blog/our-next-phase/)).
   Anthropic's memory tool is a client-side file CRUD tool rooted at `/memories` ([docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)); Claude Code auto memory, Codex memories, OpenClaw, Hermes Agent and Basic Memory are all markdown-on-disk.
+  Limits of this claim: Letta (24.9k stars) made the MemFS switch six months before this report and published no evaluation of it; the most-adopted dedicated memory layers (mem0 66k, Graphiti 31k, cognee 31k) are vector/graph-first and show no sign of moving.
+  "Shifting toward" is the defensible wording, not "converged".
 - **Pinned index plus lazy detail is the dominant retrieval shape.** Claude Code loads the first 200 lines / 25KB of `MEMORY.md` and reads topic files on demand ([docs](https://code.claude.com/docs/en/memory)); Letta MemFS pins `system/` files and leaves the rest until read ([Context Repositories](https://www.letta.com/blog/context-repositories/)); Devin Knowledge distinguishes repo-pinned from trigger-retrieved items ([docs](https://docs.devin.ai/product-guides/knowledge)).
-- **Consolidation has become a named, asynchronous, separate pass.** Letta sleep-time agents, then MemFS "reflection" and "defragmentation" subagents; Anthropic [Dreams](https://platform.claude.com/docs/en/managed-agents/dreams) (research preview, May 2026); OpenAI ChatGPT "Dreaming" (June 2026) and Codex's two-phase extraction/consolidation pipeline ([source README](https://github.com/openai/codex/blob/main/codex-rs/memories/README.md)).
+- **Consolidation has become a named, asynchronous, separate pass.** Letta sleep-time agents, then MemFS "reflection" and "defragmentation" subagents; Anthropic [Dreams](https://platform.claude.com/docs/en/managed-agents/dreams) (research preview, beta header `dreaming-2026-04-21`); OpenAI ChatGPT "Dreaming" (June 2026) and Codex's two-phase extraction/consolidation pipeline ([source README](https://github.com/openai/codex/blob/main/codex-rs/memories/README.md)).
   The Anthropic and Codex variants both produce a reviewable diff/new store rather than mutating in place.
-- **Agent-written auto-memory in coding tools is being demoted, not promoted.** Cursor removed Memories in 2.1 (Nov 2025) and users were told to convert them to Rules ([forum](https://forum.cursor.com/t/custom-modes-and-memories-gone-in-2-1/143744)); Devin Knowledge "is being phased out in favor of Skills within Plugins" ([docs](https://docs.devin.ai/product-guides/knowledge)); Windsurf/Devin Desktop and Codex docs both say durable rules belong in rules files or `AGENTS.md`, with memories as "a helpful recall layer, not ... the only source for rules that must always apply" ([Codex memories](https://learn.chatgpt.com/docs/customization/memories?surface=app)).
-- **Coding evidence is thin and mixed.** Gloaguen et al. (ETH, Feb 2026) find context files "do not generally improve task success rates, while increasing inference cost by over 20%"; developer-written files gave +2.4pp (not significant) and LLM-generated ones slightly negative ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
+- **Authorship is not converging on the agent: agent-written auto-memory in coding tools is being demoted, not promoted.** Cursor staff confirmed "The Memories feature was intentionally removed starting from version 2.1.x" and told users "You can export your memories and move them into Rules" (Cursor team reply, 2025-11-25, [forum](https://forum.cursor.com/t/are-my-memories-gone/144057)); no stated rationale was found. Devin's docs say "Knowledge is deprecated and will be removed in a future update. Existing Knowledge is being migrated to Skills in Plugins automatically" ([docs](https://docs.devin.ai/product-guides/knowledge)); Windsurf/Devin Desktop and Codex docs both say durable rules belong in rules files or `AGENTS.md`, with memories as "a helpful recall layer, not ... the only source for rules that must always apply" ([Codex memories](https://learn.chatgpt.com/docs/customization/memories?surface=app)).
+  The direction in coding tools is toward human-owned rules plus a reviewed consolidation pass, which is a different claim from "files won" and one the file-substrate trend does not imply.
+  It also cuts against any design, cdocs included, whose corpus is mostly agent-written and only loosely reviewed.
+- **Coding evidence is thin and mixed.** Gloaguen et al. (ETH, Feb 2026) find context files "do not generally improve task success rates, while increasing inference cost by over 20%" (the >20% is mainly LLM-generated files; developer-written ones cost up to ~19%); developer-written files gave +2.4pp (not significant) and LLM-generated ones slightly negative (evaluated on SWE-bench Lite and CTXbench, a niche-repo set with developer-committed context files) ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
   SWE-ContextBench finds summarized, correctly retrieved prior experience helps while "unfiltered or incorrectly selected context provides limited or negative benefits" ([arXiv:2602.08316](https://arxiv.org/abs/2602.08316)); Kim et al. find "high-level insights generalize well, whereas low-level traces often induce negative transfer" ([arXiv:2604.14004](https://arxiv.org/abs/2604.14004)).
-- **Benchmarks are weak instruments.** LoCoMo conversations fit in context; a full-context baseline (~73%) beat Mem0's best (~68%) ([Zep critique](https://blog.getzep.com/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/)); a grep-over-files Letta agent scored 74.0% ([Letta](https://www.letta.com/blog/benchmarking-ai-agent-memory/)); Mem0 and Zep publicly disputed each other's configurations.
+- **Benchmarks are weak instruments.** LoCoMo conversations fit in context; a full-context baseline (~73%) beat Mem0's best (~68%) ([Zep critique](https://blog.getzep.com/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/)); a grep-over-files Letta agent scored 74.0%, self-run and set against Mem0's self-reported number ([Letta](https://www.letta.com/blog/benchmarking-ai-agent-memory/)); Mem0 and Zep publicly disputed each other's configurations.
+  The safe reading is that on LoCoMo almost anything that sees enough of the conversation beats Mem0's graph variant; it says little about files versus graphs.
   Independent 2026 work argues leaderboards are "not interpretable without the full protocol" ([arXiv:2607.16848](https://arxiv.org/abs/2607.16848)) and that "production failures are predominantly forgetting failures rather than recall failures, yet existing benchmarks measure only recall" ([arXiv:2606.15903](https://arxiv.org/abs/2606.15903)).
 - **Persistent memory is an attack surface.** "Sleeper memory poisoning" via external content reached up to 99.8% implant success on GPT-5.5, and retrieved poisoned memories drove attacker-intended actions in 60-89% of cases ([arXiv:2605.15338](https://arxiv.org/abs/2605.15338)).
   Human-legible, diff-reviewed memory is a real mitigation, not just an aesthetic preference (inference).
-- **Identity persistence is a niche.** Only Letta (persona blocks, e.g. the Bluesky agent "void"), Generative Agents, OpenClaw (`SOUL.md`/`IDENTITY.md`), Honcho (self-representation as observer==observed), and connectome treat the *agent's own* evolving self as a first-class memory object.
-  Everyone else models the *user* or the *project*.
+- **Identity persistence is mainstream in personal-agent harnesses, rare in coding tools and memory-layer SaaS.** OpenClaw, at ~390k stars by far the most-adopted system surveyed here, injects agent-editable `SOUL.md`/`IDENTITY.md` persona files every session; Hermes Agent plugs into Honcho (self-representation as observer==observed); Letta's lineage began with persona blocks (e.g. the Bluesky agent "void"); Generative Agents and connectome treat the *agent's own* evolving self as a first-class memory object.
+  Coding tools and memory layers (Cursor, Devin, Codex, Claude Code, mem0, Zep) model the *user* or the *project* instead.
+  What identity designs optimize for (behavioral consistency across sessions, relationship continuity with a user or community, a coherent self-model the agent can reason from) is not what any benchmark in this report measures; no study found here tests identity persistence on task outcomes, positively or negatively.
 
 ## Taxonomy
 
@@ -71,8 +85,7 @@ The comparison table below uses these codes.
 ```mermaid
 flowchart LR
   subgraph Substrate
-    L[Append-only log] --> D[Mutable docs]
-    D --> G[Graph / vector index]
+    L[Append-only log] --- D[Mutable docs] --- G[Graph / vector index]
   end
   subgraph Writer
     H[Human] --- A[Agent in-loop] --- S[Background consolidator]
@@ -147,8 +160,9 @@ Maturity data from `gh api` on 2026-09-26 unless stated.
 ### Coding-tool memory: Cursor, Devin / Windsurf, Aider
 
 - **Cursor.** Project rules in `.cursor/rules/` (always-applied, glob-scoped, or agent-requested by description), plus `AGENTS.md` support.
-  Auto "Memories" (mid-2025) were removed in 2.1 without a stated rationale; users were advised to export to Rules ([forum](https://forum.cursor.com/t/custom-modes-and-memories-gone-in-2-1/143744)).
-- **Devin Knowledge.** Items with a *trigger description* retrieved "when relevant, not all at once"; repo-pinnable; auto-suggested from chat feedback for human approval; now being migrated to Skills ([docs](https://docs.devin.ai/product-guides/knowledge)).
+  Auto "Memories" (mid-2025, background-generated with user approval) were intentionally removed in 2.1.x; Cursor staff pointed users to an "Export memories" command producing an `.mdc` file to add as user or project rules ([forum, Cursor team reply 2025-11-25](https://forum.cursor.com/t/are-my-memories-gone/144057)).
+  No rationale was found; the reporting user remarked that memories "are almost no different than .mdc files".
+- **Devin Knowledge.** Items with a *trigger description* retrieved "when relevant, not all at once"; repo-pinnable; auto-suggested from chat feedback for human approval; deprecated, with "Existing Knowledge ... being migrated to Skills in Plugins automatically" ([docs](https://docs.devin.ai/product-guides/knowledge)).
 - **Windsurf / Devin Desktop Cascade memories.** Auto-generated, workspace-scoped, machine-local in `~/.codeium/windsurf/memories/`; docs steer durable guidance to Rules/`AGENTS.md` ([docs](https://docs.devin.ai/desktop/cascade/memories)).
 - **Aider repo map.** Not memory in the episodic sense but the canonical *derived, regenerated* context: tree-sitter extracts definitions/references, a file dependency graph is ranked (PageRank-style) to select "the most important identifiers", within `--map-tokens` (default 1k) sized dynamically ([docs](https://aider.chat/docs/repomap.html)).
   Nothing to go stale because nothing is stored. `Aider-AI/aider` 49.2k stars but last push 2026-05-22: slowing.
@@ -161,6 +175,7 @@ Maturity data from `gh api` on 2026-09-26 unless stated.
   It shows a doc system can carry a lightweight graph *inside* markdown without a graph DB.
 - **OpenClaw** (390k stars, active): workspace of injected files (`AGENTS.md`, `SOUL.md` identity/tone, `USER.md`, `MEMORY.md` curated long-term, `memory/YYYY-MM-DD.md` daily logs, "read today + yesterday on session start") ([docs](https://docs.openclaw.ai/concepts/memory)).
   This is a log-plus-curated-index design with an explicit persona file: structurally the nearest mass-market cousin of both cdocs (dated logs) and connectome (identity).
+  Its adoption is the strongest evidence in this survey that users want an agent with a persistent, editable self, even though no evaluation of that self's effect was found.
 - **Hermes Agent** (Nous Research): agent-curated `MEMORY.md` with periodic nudges, auto-created and self-patched skills after 5+ tool-call tasks, optional `write_approval` staging, pluggable providers including Honcho ([docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory)).
   A 2026 paper warns self-evolving skills can drift unsafe ([arXiv:2608.12851](https://arxiv.org/pdf/2608.12851), title only checked).
 - **Honcho** (Plastic Labs, AGPL, 7.4k stars, active): stores per-(observer, observed) peer representations, so self-representation is the observer==observed case; explicit "identity" positioning and theory-of-mind reasoning ([repo](https://github.com/plastic-labs/honcho)).
@@ -171,6 +186,7 @@ Maturity data from `gh api` on 2026-09-26 unless stated.
 Codes: Writer A=agent, S=system/background, H=human.
 Retrieval P=pinned, K=keyword/grep, E=embedding, G=graph, Ag=agentic.
 Audit: 0=opaque, 1=API/UI inspectable, 2=plain files, 3=files+VCS.
+Free-text cells in Structure and Retrieval (e.g. `entity`, `trigger-Ag`, `dialectic query`, `doc store`) mark hybrids or system-specific mechanisms that the axis codes do not cover; the Systems section above describes each.
 
 | System | Unit | Writer | Structure | Retrieval | Consolidation / forgetting | Identity | Audit | Scope | State (2026-09) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -180,10 +196,10 @@ Audit: 0=opaque, 1=API/UI inspectable, 2=plain files, 3=files+VCS.
 | mem0 (2026) | extracted fact + entities | S | vector + entity index | E + K + entity | ADD-only accumulation; temporal ranking | user model | 1 | per-user/agent/session | active |
 | LangMem | fact, episode, prompt update | S (+A tools) | vector store (LangGraph) | E | background reflection; prompt rewrite | procedural (prompt) | 1 | configurable namespaces | active, pre-1.0 |
 | cognee | KG node/edge + chunk | S | graph + vector | E + G | "memify" refinement | none | 1 | per-dataset/project | active |
-| Generative Agents | observation, reflection | A (in sim) | log (stream) | recency + importance + E | reflection on importance threshold; decay | evolving self-model | 1 | per-agent | dormant research |
+| Generative Agents | observation, reflection | A (in sim) | log (stream) | recency + importance + E | reflection on importance threshold; decay | evolving self-model | 2 (JSON stream) | per-agent | dormant research |
 | A-MEM | Zettel note | S | graph of notes | E + links | memory evolution (rewrites old notes) | none | 1 | per-agent | research artifact |
 | Anthropic memory tool | file | A | doc | Ag (view first) | agent-managed; app-defined expiry | none | 2 (app-owned) | app-defined | GA tool |
-| Anthropic Dreams | memory entry | S | doc store | n/a (offline) | merge, replace contradicted, surface insights; new store for review | none | 1-2 | per-store | research preview |
+| Anthropic Dreams | memory entry | S | doc store | n/a (offline) | merge, replace contradicted, surface insights; new store, human chooses whether to adopt | none | 1-2 | per-store | research preview |
 | Claude Code CLAUDE.md + rules | instruction file | H (A on request) | doc | P + path-scoped P | manual | none | 3 (if committed) | org/user/project | active |
 | Claude Code auto memory | typed md note + index | A | doc (index + topics) | P (200 lines) + Ag | size-cap pressure; `modified` stamp | user model (`user` type) | 2 | per-repo, machine-local | active, default on |
 | ChatGPT memory | saved fact; dossier | A + S ("Dreaming") | doc (dossier) | P | background rewrite; auto-prioritize | user model | 1 (Memory Sources) | per-user | active |
@@ -198,7 +214,7 @@ Audit: 0=opaque, 1=API/UI inspectable, 2=plain files, 3=files+VCS.
 | Hermes Agent | MEMORY entry, skill | A (optional approval) | doc | P + Ag | nudged curation; skill self-patching | user model (+Honcho) | 2 | per-agent/user | active |
 | Honcho | peer representation | S | vector + reasoning store | E + dialectic query | continual derivation | evolving self/other model | 1 | per-peer pair | active |
 | *connectome (positioning)* | event + agent-voiced summary | A (own model) | branchable log + folds | pinned folds + adaptive resolution | fold/compress, original retained | evolving autobiographical self | 2-3 (inference) | per-agent, shared spaces | active (see sibling report) |
-| *cdocs (positioning)* | frontmatter md doc | A + H | log (dated) + doc | P (rules) + K + Ag | supersede via `status: evolved`, `state: archived` | none | 3 | project, shared | this repo |
+| *cdocs (positioning)* | frontmatter md doc | A (H directs; review mostly by agents) | log (dated) + doc | P (rules) + K + Ag | supersede via `status: evolved`, `state: archived` | none | 3 | project, shared | this repo |
 
 ## Evidence: What Works for Coding and Productivity Agents
 
@@ -213,13 +229,16 @@ Audit: 0=opaque, 1=API/UI inspectable, 2=plain files, 3=files+VCS.
   No major vendor number in this space has been independently replicated under a shared protocol that this report could find.
 - **Protocol dominates architecture.** Sheverev et al. show rankings flip under a retrieval budget (one top system used 2.6M characters per query) ([arXiv:2607.16848](https://arxiv.org/abs/2607.16848)); Spencer reports a "tenure crossover" where a curated-map system falls from 96% to 72% recall between three and nine weeks while a provenance-typed graph rises to 90% ([arXiv:2607.21962](https://arxiv.org/abs/2607.21962), single-author, synthetic).
 - **Forgetting is under-measured.** ForgetEval ([arXiv:2606.15903](https://arxiv.org/abs/2606.15903)) finds deterministic stores fail canonicalization, write-time LLM extraction fixes that but cannot do intent-aware deletion, and mutation-time hooks recover it (78-85%).
-- **Simple beats bespoke on the old benchmarks.** Letta's grep/open-files agent at 74.0% on LoCoMo with GPT-4o mini, and their stated reason: agents are better at filesystem tools that "appear frequently in training data" than at specialized memory APIs ([Letta](https://www.letta.com/blog/benchmarking-ai-agent-memory/)).
-  This is the single most decision-relevant result for a markdown-files system, though it is still a vendor running its own experiment.
+- **Simple matches bespoke on the old benchmarks.** Letta's grep/open-files agent scored 74.0% on LoCoMo with GPT-4o mini, and Letta's stated reason is that agents are better at filesystem tools that "appear frequently in training data" than at specialized memory APIs ([Letta](https://www.letta.com/blog/benchmarking-ai-agent-memory/)).
+  It gets the same discount as every other number here: Letta ran its own system and compared it against Mem0's self-reported 68.5%, not in a shared harness, on a benchmark whose conversations fit in context and where a full-context baseline (~73%) also beats Mem0.
+  It is weak evidence that a file-based agent is *not worse* on conversational recall, and no evidence about files versus graphs for coding.
+  The training-data-familiarity argument is plausible but untested here.
 
 ### Coding-specific evidence
 
-- **Static repo context files:** no significant success gain, +~20% cost, more steps; developer-written beat LLM-generated (p=3.8%); overviews ineffective; recommend only "specific additional instructions beyond what is already available in the codebase" ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
+- **Static repo context files:** no significant success gain; cost +20-23% for LLM-generated files and up to ~19% for developer-written ones; more steps; developer-written beat LLM-generated (p=3.8%); overviews ineffective; recommend only "specific additional instructions beyond what is already available in the codebase" ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
   Caveat: SWE-bench Lite tasks are single-shot issue fixes where cross-session memory has little to offer by construction.
+  But the study also ran CTXbench (138 instances from niche repos whose developers had committed context files), the setting closest to cdocs, and still found no significant gain; the caveat does not rescue project-level context files.
 - **Cross-task experience:** SWE-ContextBench (1,476 tasks, 51 repos) shows summarized, accurately retrieved prior experience improves resolution and cuts cost "particularly on harder tasks", while raw or mis-selected context is neutral-to-harmful ([arXiv:2602.08316](https://arxiv.org/abs/2602.08316)).
 - **Abstraction level:** cross-domain memory +3.7% on average, "primarily by transferring meta-knowledge, such as validation routines, rather than task-specific code"; low-level traces cause negative transfer ([arXiv:2604.14004](https://arxiv.org/abs/2604.14004)).
 - **Multi-session continuation:** DreamBench-SWE, where later tasks depend on non-inferable earlier-session evidence, shows no-memory at 11.7% versus 45-54% for any memory-bearing configuration, but explicitly does not establish superiority among memory architectures ([arXiv:2608.20664](https://arxiv.org/abs/2608.20664), single author, recent).
@@ -231,12 +250,16 @@ Audit: 0=opaque, 1=API/UI inspectable, 2=plain files, 3=files+VCS.
 ### Net assessment
 
 Confidence **medium-high** that for coding, (a) the presence of a durable decision/progress record matters, (b) abstracted lessons beat raw logs at retrieval time, (c) blanket pinned context has a real token cost without guaranteed accuracy gain.
-Confidence **low** in any claim that graph or vector memory layers beat plain files plus agentic search for coding; no coding benchmark isolates that comparison fairly.
+Confidence **low** in any claim that graph or vector memory layers beat plain files plus agentic search for coding, and equally low in the reverse; no coding benchmark isolates that comparison fairly.
+Confidence **medium** that coding-tool vendors are moving away from un-reviewed agent-written memory toward human-owned rules.
+**No evidence either way** on whether persistent agent identity helps or hurts task outcomes; it has not been measured.
 
 ## Patterns That Transfer to cdocs
 
-cdocs already sits at the "plain files + VCS, shared project scope, human-legible, log-centric" corner that the field is converging toward.
-The gaps are on consolidation, supersession, and retrieval shaping.
+This section is inference aimed at cdocs, not survey.
+On *substrate*, cdocs already sits at the "plain files + VCS, shared project scope, human-legible, log-centric" corner that agent harnesses and coding tools are shifting toward.
+On *authorship*, it does not: per the sibling cdocs-as-memory report, cdocs documents are written almost entirely by agents and reviewed mostly by agents, which is the pattern coding-tool vendors are retreating from.
+The gaps are on human review in the write path, consolidation, supersession, and retrieval shaping.
 
 1. **Size-capped pinned index, everything else agentic.**
    Claude Code's 200-line `MEMORY.md` cap with harness pressure, Letta's `system/` pin, and OpenClaw's "today + yesterday" all bound the per-turn tax.
@@ -252,6 +275,7 @@ The gaps are on consolidation, supersession, and retrieval shaping.
    Dreams produce a new store for approval; Codex runs its consolidator against `phase2_workspace_diff.md` inside a git baseline; Letta's defrag subagent works in a worktree.
    cdocs analogue: a periodic "distill" pass that reads recent devlogs and proposes lesson/rule updates as a normal reviewed commit, i.e. `/cdocs:triage` extended from frontmatter hygiene to content consolidation.
    This keeps humans in the write path, which is also the main defense against memory poisoning.
+   It only works if a human actually reviews the distilled output; an agent-reviewed consolidation pass reproduces the unreviewed-memory pattern that Cursor and Devin dropped.
 5. **Abstract before you retrieve.**
    Coding evidence consistently favors high-level lessons over raw trajectories.
    Devlogs are raw trajectories; reports and reviews are closer to abstractions.
@@ -259,20 +283,30 @@ The gaps are on consolidation, supersession, and retrieval shaping.
 6. **Usage-based decay signals.**
    Codex ranks by `usage_count` and drops memories unused for `max_unused_days`; Generative Agents decay by recency.
    A git-native analogue is cheap: last-referenced date derived from grep of later docs/commits, used only to *rank* or flag archive candidates, never to delete.
-7. **Keep identity out unless it is the product.**
-   Identity-persistence systems (connectome, OpenClaw `SOUL.md`, Letta persona, Honcho) serve long-lived companion or social agents.
-   For a coding/productivity doc system the "self" worth persisting is the *project's* decision history and conventions; per-agent persona files would add pinned tokens without evidence of task benefit (inference).
+7. **Treat identity as an open question with an unmeasured payoff, not a settled "no".**
+   Identity-persistence systems (OpenClaw `SOUL.md`, connectome, Letta persona, Honcho) are widely adopted, OpenClaw most of all, and optimize for behavioral consistency, relationship continuity, and a coherent self-model rather than per-task success.
+   The costs are known (pinned tokens every turn, a persona file is one more injection target); the benefits for coding work are *unmeasured*, not shown to be absent.
+   Plausible mechanisms exist: stable working style across sessions, fewer re-derived conventions, and a persistent reviewer or overseer role whose judgments stay calibrated over time.
+   For cdocs, the cheap position is that the project's decision history and conventions are the primary thing to persist; whether a persisted agent role or self-model adds value on top is an experiment worth running, not a question this evidence closes (inference).
 8. **Derived views over stored copies where the source of truth is the repo.**
    Aider's repo map is regenerated, so it cannot go stale.
    Anything cdocs could derive from code or git (file layouts, architecture summaries) should be computed on demand, matching Claude Code auto memory's rule to skip "anything it can derive from the codebase".
 
 ## Recommendations
 
-- Treat this landscape as confirming cdocs' substrate choice; do not adopt a graph or vector memory layer for coding work on current evidence.
+- Treat this landscape as consistent with cdocs' *substrate* choice (plain files + git); it does not confirm cdocs' *writer* model, and no evidence here justifies adopting a graph or vector memory layer for coding work, nor rules one out.
+- Take the coding-tool retreat from agent-written memory seriously: put a human-reviewed gate on anything that becomes pinned or rule-like.
 - Prioritize, for follow-up proposals: (a) a generated, capped index of live docs; (b) explicit supersession links in frontmatter; (c) a reviewed consolidation pass that distills devlogs into rules/reports as ordinary commits.
 - When citing any memory-system benchmark in future cdocs, require the protocol (context budget, judge, category handling) or mark the number as vendor-reported.
 - For the connectome comparison, the sharpest contrasts to carry into synthesis are **scope** (per-agent autobiographical vs project-shared), **writer** (agent's own model voicing its history vs mixed human/agent authorship with review), and **what is persisted** (an identity vs a decision record).
+  Connectome should not be scored only on coding-task metrics: its design goals (continuity, consistency, self-model coherence) need their own evaluation axis, which this report does not supply.
 
 > NOTE(opus/connectome-research): Several 2026 arXiv papers cited here (DreamBench-SWE, Ground Truth First, ForgetEval, Beyond Memory Leaderboards) are recent, some single-author, and unreviewed; they were read at abstract level via WebFetch summaries.
 > OpenAI's Dreaming page and the Memory FAQ returned 403; ChatGPT 2026 details rely on secondary coverage.
 > Honcho's benchmark figure and the LoCoMo 6.4% answer-key audit figure are unverified secondary claims.
+> Letta's 74.0% vs Mem0's 68.5% is a cross-harness comparison (self-run vs self-reported), not a head-to-head.
+> The Cursor Memories removal is sourced to a staff forum reply, not an official changelog entry; no rationale was found.
+
+> NOTE(opus/connectome-research): Round-1 revision (2026-09-26), per [the review](../reviews/2026-09-26-review-of-long-lived-agent-memory-landscape.md).
+> Split the convergence thesis into substrate (shifting toward files, scoped to harnesses/coding tools) and authorship (not converging on the agent); downgraded the Letta-vs-Mem0 LoCoMo result to the report's vendor-benchmark standard and removed it from the BLUF's evidence; rescoped identity from "niche" to "mainstream in personal-agent harnesses, unmeasured on tasks" and rewrote Pattern 7; replaced the Cursor citation with a staff reply that supports it.
+> Also: verbatim Devin quote, CTXbench and split cost figures in the ETH caveat, Dreams date from the beta header, table legend footnote, Generative Agents Audit=2, undirected mermaid substrate links, cdocs row writer aligned with the sibling report, and a Context note on the report's audience.
