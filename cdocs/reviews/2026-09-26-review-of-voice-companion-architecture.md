@@ -191,3 +191,56 @@ Four structural problems must be fixed before it can guide a build decision:
    - (A) Defer until the standalone slice is proven.
    - (B) Build the state view as a Weftwise pane from the start.
    - (C) Revisit after that proposal lands.
+
+## Round 2
+
+> BLUF: All four round-1 blocking findings are resolved and every non-blocking item was addressed.
+> I applied seven small accuracy and wording fixes directly (below). The most substantive one aligns the experiment's stated hypothesis with what its three conditions can actually attribute.
+> Verdict: **Accept**.
+
+### Round-1 blocking items
+
+1. **`claude agents --json` state feed: resolved.** The claims hold against the [agent-view docs](https://code.claude.com/docs/en/agent-view): the supported-interface quote, the `state`, `status` and `waitingFor` values, `claude logs <id>`, and peek-reply accepting dictation. Two nuances were missing and are now fixed (fixes 2 and 3 below).
+2. **Answer-path matrix: resolved.**
+   - The new table correctly marks unforked `resume` and `claude -p --resume` as unsafe against a live overseer.
+   - The Channels constraints are accurate: the development-channel flag, events queued to the next turn, and permission relay.
+   - The SDK-hosted overseer and the elicitation correction are both in.
+   - I tightened three rows (fix 4 below).
+3. **Thin-to-thick mapped to the user's framing: resolved.**
+   - The options now match the user's framing: sidecar, MCP/Channel surface, standalone app, and Weftwise.
+   - Plain VoiceMode is correctly demoted to the control condition.
+   - The option × problem table states plainly that the audio fixes come from the pipeline choice, not the option shape.
+4. **Experiment: resolved.** Pipecat + Smart Turn is pinned, it reuses VoiceMode's local servers, a headset is specified, there are three conditions, the metrics are written down in advance, and there is a concrete falsifier with two outcome branches. One remaining mismatch between the hypothesis and the design is fixed as fix 5.
+
+All round-1 non-blocking items (5-12) are addressed. The report shrank from 3761 to 3574 words, and is now 3765 after my additions.
+
+### Minor fixes applied directly (round 2)
+
+1. Diagnosis, walkie-talkie paragraph: removed the `issue #532` citation for "no interrupt path". That issue is about the maximum-duration hard cut, not interruption.
+2. State section: added the agent-view docs link to the quoted `claude agents --json` sentence.
+   Also corrected the `--bg` claim: interactive sessions are listed too, with `status` and `waitingFor` while their process is alive. Only `state`, the short `id` that `claude logs` takes, and peek-reply require a background session.
+3. State section: added a caveat. Per the docs, "a session that finished its turn and is waiting for your next instruction reads `done`, not `blocked`".
+   `/oversee` asks some questions through `AskUserQuestion`, which reads as `blocked`. Others are plain prose at the end of a turn, such as a `hold` escalation or a soft "continue?" gate, and those read as `done`.
+   The talker must treat `done` as "possibly waiting on you" and read `claude logs`.
+4. Answer-path table:
+   - Forked resume is read-only only if the fork's tools are restricted (a fork's file edits are real), and each query replays the overseer's full context, which makes it costly to poll.
+   - Channels must be enabled when the overseer is launched.
+   - Added the agent-view peek-reply row, the human write path that option (a) relies on.
+5. BLUF, Recommendation and falsifier: the hypothesis said "the state model specifically, not just faster audio".
+   None of the three conditions varies the state feed while holding the talker fixed, and conditions 1 and 3 differ in pipeline, separation and state all at once.
+   I reworded the hypothesis to what the design tests: a separate state-reading talker vs same-agent voice, plus the marginal value of semantic turn detection.
+   The falsifier now reads condition 1 vs 3 as a test of the whole package, and a sentence notes that isolating the state feed needs a further stripped-down-feed condition.
+6. Talker-Reasoner sentence: replaced an em-dash with a comma, per writing conventions.
+
+### New findings (round 2)
+
+1. [non-blocking] Condition order: all three conditions run "across the same two or three arcs", which means sequentially, at different arc phases. Rotate or counterbalance the condition order per session, and state that the sample is small and rated by one person, so this is a probe rather than a measurement.
+2. [non-blocking] Unverified: whether a background (`claude --bg`) session can be launched with `--channels` / `--dangerously-load-development-channels`. The recommended write-back ("custom Channel with permission relay") assumes both at once. Add it to the Unverified list or check it before the write-back step.
+3. [non-blocking] Optional: add the fourth condition from fix 5 (the same talker with only `claude agents --json`) if the author wants the state-content question answered in the first run rather than a follow-up.
+
+### Round-2 verdict
+
+**Accept.**
+The report now answers the user's framing directly, and its bridge claims match the docs.
+The experiment can attribute its two main questions.
+The remaining items are non-blocking refinements for the experiment write-up.

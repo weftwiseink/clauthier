@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/audio-interaction
 type: devlog
 state: live
-status: wip
+status: done
 tags: [research, oversee, voice, audio, ux]
 ---
 
@@ -59,3 +59,17 @@ Action: dispatch fresh sonnet author for a new report (`2026-09-26-voice-compani
 - v2 author returned (~3760 words). Committed draft; dispatched reviewer.
 - v2 review r1: revise. Blocking: missed `claude agents --json` state feed; unsafe concurrent-resume write-back; thin→thick options don't answer app-vs-MCP-vs-thin-layer; experiment confounds turn-taking with state model. Resumed v2 author.
 - v2 revision r1 returned (3574 words). Dispatched round-2 review.
+- v2 review r2: accept (reviewer fixed `--bg` requirement scope, `done`-but-waiting caveat, answer-path table rows, hypothesis wording).
+- Overseer folded in remaining non-blocking items: condition 4 (`claude agents --json`-only feed), order rotation / single-rater caveat, `--bg` + custom Channel added to Unverified.
+
+## Handoff (round 2)
+
+### Completed
+- `cdocs/reports/2026-09-26-voice-companion-architecture.md` accepted round 2 (~3600 words). Supersedes v1's framing; v1 kept as reference.
+
+### Decisions Made
+- Recommended first build: thin Pipecat + Smart Turn + Haiku sidecar reading `claude agents --json` / devlog / arc-state, on VoiceMode's local STT/TTS, four-condition comparison.
+
+### Open Todos
+- User decisions: bridge direction (sidecar vs SDK-hosted overseer), headset vs speakers+AEC, weftwise timing.
+- Verify `claude --bg` + custom Channel compatibility before write-back work.

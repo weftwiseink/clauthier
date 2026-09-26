@@ -8,17 +8,17 @@ state: live
 status: review_ready
 tags: [analysis, voice, audio, architecture]
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-09-26T14:13:27-07:00
-  round: 1
+  at: 2026-09-26T14:20:03-07:00
+  round: 2
 ---
 
 # Voice-companion architecture: a fast front, a slow overseer, and the bridge between them
 
 > BLUF: The clunkiness has two separable causes: **audio-stack causes** (walkie-talkie turn-taking, silence-based endpointing, no barge-in, no echo cancellation), fixed by which audio pipeline you pick, and one **architecture cause**, the same slow reasoning agent doing both the talking and the thinking with no shared state view, fixed only by a talker/thinker split.
 > Refined audio stacks exist today (Pipecat/LiveKit with semantic turn detection); Claude Code has real, if research-preview or newly-surfaced, plumbing for the architecture half (`claude agents --json`, Channels' permission relay, the Agent SDK hosting the overseer outright).
-> Recommendation: run a pre-registered, three-condition experiment (a state-reading fast talker on Pipecat + Smart Turn, the same pipeline with Smart Turn off, and plain VoiceMode as baseline) across a couple of real `/oversee` arcs to test whether the state model specifically, not just faster audio, is what the user means by refinement, before committing to a standalone app or a Weftwise integration.
+> Recommendation: run a pre-registered, three-condition experiment (a state-reading fast talker on Pipecat + Smart Turn, the same pipeline with Smart Turn off, and plain VoiceMode as baseline) across a couple of real `/oversee` arcs to test whether a separate, state-reading fast talker beats same-agent voice, and whether semantic turn detection adds to it, before committing to a standalone app or a Weftwise integration.
 
 ## Context / Background
 
@@ -39,7 +39,7 @@ Two different kinds of cause produce the same felt "clunkiness," and they need d
 
 **Walkie-talkie turn-taking vs. full duplex.** A walkie-talkie conversation has a hard baton: one side transmits, the other listens, and speaking over each other is either impossible or destructive.
 Human conversation is full duplex: both parties can vocalize simultaneously (backchannels like "mm-hmm," overlapping starts, interruption mid-sentence) without breaking down.
-`/voice` and VoiceMode's `converse` tool are both walkie-talkie: the agent (or user) finishes a complete turn, then the other side starts, with no interrupt path ([issue #532](https://github.com/mbailey/voicemode/issues/532)).
+`/voice` and VoiceMode's `converse` tool are both walkie-talkie: the agent (or user) finishes a complete turn, then the other side starts, with no interrupt path.
 
 **Silence-based endpointing vs. semantic turn detection.** "Endpointing" is deciding when a speaker is done talking.
 The naive approach just waits for N milliseconds of quiet; VoiceMode uses this (WebRTC voice-activity detection tuned by `vad_aggressiveness`), and it fails exactly when a person pauses mid-thought ("so I want to... let me think... okay so I want to").
@@ -101,7 +101,7 @@ Sesame CSM's open release is a decoder-only text-plus-audio-conditioned model, n
 
 ## The architecture the user is imagining
 
-The pattern the user describes is a **talker/thinker split**, following the shape of DeepMind's "Talker-Reasoner" framing ("Agents Thinking Fast and Slow," 2024) — distinct from Qwen2.5-Omni's internal "Thinker-Talker" module, which names the same two words for pieces inside one model, not two separate processes.
+The pattern the user describes is a **talker/thinker split**, following the shape of DeepMind's "Talker-Reasoner" framing ("Agents Thinking Fast and Slow," 2024), distinct from Qwen2.5-Omni's internal "Thinker-Talker" module, which names the same two words for pieces inside one model, not two separate processes.
 A fast conversational front owns the human, the slow overseer owns the work, and a state model plus a bridge connect them.
 
 ```mermaid
@@ -126,9 +126,9 @@ flowchart LR
     Bridge --> Overseer
 ```
 
-**What state the companion reads.** The thinnest read feed is Claude Code's own supported one, not `/oversee`-specific: **`claude agents --json`** (plus `claude logs <id>`) is "the supported way to read session state from outside Claude Code, for example from a status bar."
+**What state the companion reads.** The thinnest read feed is Claude Code's own supported one, not `/oversee`-specific: **`claude agents --json`** (plus `claude logs <id>`) is "the supported way to read session state from outside Claude Code, for example from a status bar" ([agent view docs](https://code.claude.com/docs/en/agent-view#read-session-state-from-a-script)).
 It reports `state` (`working`/`blocked`/`done`), `status`, and `waitingFor` (`permission prompt`, `input needed` for a question from Claude or an MCP server, `sandbox request`, `dialog open`).
-This needs no arc-state file and no custom instrumentation, only running `/oversee` as a background session (`claude --bg`); the agent-view peek panel already accepts dictated replies, so a companion built purely on this feed can piggyback on an existing reply path.
+This needs no arc-state file and no custom instrumentation. Interactive sessions are listed too, with `status` and `waitingFor` while their process is alive, but `state`, the short `id` that `claude logs` takes, and peek-reply apply only to background sessions, so run `/oversee` with `claude --bg` for the full feed; the agent-view peek panel already accepts dictated replies, so a companion built purely on this feed can piggyback on an existing reply path.
 
 `/oversee` additionally maintains two richer signals worth reading when available:
 
@@ -137,6 +137,7 @@ This needs no arc-state file and no custom instrumentation, only running `/overs
 
 Escalation markers (`.claude/oversee/escalations/*.json`) cover only hard stops: a `reject` verdict, an unresolvable overlap between two proposals' file footprints, or, for `/oversee full <topic>`, deciding which proposals make up the arc.
 Softer questions, a permission prompt or a judgment call, are not invisible: they surface through `claude agents --json`'s `waitingFor` field or the `Notification` hook, which is a more complete picture than reading the escalations directory alone.
+One caveat: only questions asked through a prompt (`AskUserQuestion`, a permission dialog) read as `blocked`; a question the overseer asks in plain prose at the end of its turn (for example a `hold` escalation or a soft "continue?" gate) reads as `done`, so the talker should treat `done` as "possibly waiting on you" and read the last output via `claude logs`.
 
 **How answers get back in.** Not every mechanism that reads a session can safely write into a *live* one; conflating "resume" with "attach" is the mistake to avoid.
 
@@ -144,9 +145,10 @@ Softer questions, a permission prompt or a judgment call, are not invisible: the
 |---|---|---|---|
 | `claude agents --json` / `claude logs` | Read only | Yes | Stable, documented |
 | Agent SDK `resume` (no fork) | Read/write | No: interleaves into one transcript with the live process ([sessions docs](https://code.claude.com/docs/en/sessions)) | Stable API, unsafe usage |
-| Agent SDK `resume` with `fork_session` (a branch of history the SDK can start without touching the original) | Read only | Yes | Stable |
+| Agent SDK `resume` with `fork_session` (a branch of history the SDK can start without touching the original) | Read only, if the fork's tools are restricted to read-only (a fork's file edits are real) | Yes, but each query replays the overseer's full context, so it is costly to poll | Stable |
 | `claude -p --resume <id>` | Read/write | No, same interleaving risk | Stable, wrong tool here |
-| Claude Code Channels | Read/write (push) | Yes: the only documented push into an unattended live session | Research preview |
+| Claude Code Channels | Read/write (push) | Yes: the only documented push into an unattended live session; must be enabled when the overseer is launched | Research preview |
+| Agent-view peek reply (human-driven) | Write, by the human | Yes: replies go to the live background session | Stable, documented |
 | Agent SDK hosting the overseer | Read/write (native) | Yes: the companion process IS the harness | Stable API, new integration work |
 | Custom MCP "ask the human" tool | Write (blocking) | Yes, but blocks until answered | Stable MCP, ad hoc pattern |
 
@@ -181,7 +183,7 @@ Turn-taking, barge-in, and latency come from the **audio pipeline** (Pipecat/Liv
 
 ## Recommendation
 
-Test whether the state model specifically, not just faster audio, drives felt refinement, with a design that can attribute the result.
+Test whether a separate, state-reading fast talker drives felt refinement over same-agent voice, and whether semantic turn detection adds to it, with a design that can attribute each result.
 
 **Build:** option (a), thin sidecar. Pipecat + Smart Turn as the pipeline, pointed at VoiceMode's already-installed local whisper.cpp and Kokoro servers (both OpenAI-compatible, no new STT/TTS setup). A Haiku-class model with a single job: read `claude agents --json`, the latest devlog handoff, and arc-state, and answer questions about them conversationally. Use a headset, since barge-in over open speakers needs echo cancellation this slice does not attempt.
 
@@ -190,10 +192,14 @@ Test whether the state model specifically, not just faster audio, drives felt re
 1. Pipecat + Smart Turn (full treatment).
 2. The same pipeline with Smart Turn disabled, silence-only endpointing (isolates whether semantic turn detection specifically matters, versus just having a separate fast talker at all).
 3. Plain VoiceMode `converse` inside the overseer, the zero-effort baseline above (isolates whether the talker/thinker split matters at all).
+4. Condition 1 with the talker fed only `claude agents --json` (no devlog handoff or arc-state), isolating the richer state feed's contribution.
+
+Rotate condition order across arcs; this is a small, single-rater sample, so treat results as directional.
 
 **Pre-registered metrics**, fixed before running: count of terminal-escapes to check state, count of re-asks/restatements, time-to-first-audio per turn, and a 1-5 felt-refinement rating per session, collected the same way each time, with a written threshold for "meaningfully better."
 
-**What would falsify the hypothesis:** if condition 1 doesn't clearly beat condition 3 on rating and break-out/re-ask counts, the talker/thinker split with a state model isn't what drives refinement, and the real problem is elsewhere (full-duplex audio, or the state content itself). If condition 1 doesn't beat condition 2, semantic turn detection specifically isn't pulling weight relative to a bare separate fast talker, arguing for spending less on the audio-stack half and more on the bridge/legibility half.
+**What would falsify the hypothesis:** if condition 1 doesn't clearly beat condition 3 on rating and break-out/re-ask counts, the package (separate fast talker, state feed, refined pipeline) isn't what drives refinement, and the real problem is elsewhere (full-duplex audio, or the state content itself). If condition 1 doesn't beat condition 4, the richer state feed isn't earning its integration cost over `claude agents --json` alone.
+If condition 1 doesn't beat condition 2, semantic turn detection specifically isn't pulling weight relative to a bare separate fast talker, arguing for spending less on the audio-stack half and more on the bridge/legibility half.
 
 **If it holds:** wire in a concrete write-back next, a custom Channel with permission relay, not an open menu of options. Defer the Weftwise question and the always-on-top surface question until this slice is proven.
 
@@ -208,4 +214,5 @@ Left open, not resolved here:
 ## Unverified claims
 
 - No hard latency numbers exist for VoiceMode; all vendor/community latency figures for OpenAI Realtime and Gemini Live are approximate or third-party, not authoritative single specs.
+- Whether a `claude --bg` session can also be launched with a custom Channel enabled; the recommended write-back assumes both at once.
 - VoiceMode Connect (voicemode.dev's cloud product) is mentioned only in a secondary source (Glama) and its architecture is otherwise unverified.
