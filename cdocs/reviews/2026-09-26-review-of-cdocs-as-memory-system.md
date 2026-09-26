@@ -7,7 +7,7 @@ task_list: cdocs/connectome-research
 type: review
 state: live
 status: done
-tags: [fresh_agent, factual_accuracy, source_verified, corpus_numbers, comparison_fairness, internal_consistency]
+tags: [fresh_agent, factual_accuracy, source_verified, corpus_numbers, comparison_fairness, internal_consistency, rereview_agent]
 ---
 
 # Review: CDocs as a Memory System
@@ -112,3 +112,26 @@ Everything below was re-derived from the source on 2026-09-26.
    (a) markdown-only,
    (b) markdown plus media shown as separate bars, or
    (c) word/token counts only (the most comparable to memory-system token budgets)?
+
+## Round 2 (2026-09-26)
+
+Reviewed commit `2d4448b` against this document's six blocking findings and against plugin source directly (re-read `validate-cdocs-edit-path.sh` and `frontmatter-spec.md` fresh rather than trusting the round-1 log).
+
+| Finding | Status | Verification |
+|---|---|---|
+| F1 (mechanism count) | **Resolved** | BLUF now says "five layered mechanisms"; Read/Retrieval header says "five independent, layered mechanisms" and numbers exactly five items. No remaining count mismatch. |
+| F4 (cold-start vs. O(N)) | **Resolved** | BLUF splits "session-start cost is roughly constant" from "the cost that scales with corpus size is the O(N) full-directory scan"; Units of Memory and Weaknesses restate the same split with no contradiction. |
+| F5 (media-inflated sizes) | **Resolved** | BLUF, corpus table, and Weaknesses all now report weftwise as "200M (`_media` ~159M; markdown ~44M)" and use the ~44M figure in prose comparisons (e.g., Weaknesses: "weftwise (1,979 docs, ~44M markdown)"). A footnote after the table states later comparisons use markdown-only unless stated otherwise. |
+| F2 (PreToolUse hook scope) | **Resolved** | Re-read `plugins/cdocs/hooks/validate-cdocs-edit-path.sh` directly: `CDOCS_AGENTS="triage nit-fix reviewer"`, matched by exact string against `agent_type`, path check is a single regex over the union `cdocs/(devlogs|proposals|reviews|reports)/` with no per-subdirectory mapping, and a missing `agent_type` (main session) exits 0 unconditionally. The revised Write Triggers and Auditability text ("coarse sandbox... not a per-subdirectory write ACL", "main session, implementer, and proposer are unrestricted") matches the script exactly. |
+| F3 (review lifecycle) | **Resolved** | Re-read `frontmatter-spec.md`: `status` starts at `wip` and `done` is listed as valid for "All types"; `last_reviewed` section header is explicit "(optional, not on reviews)". The revised table row ("`status`: wip -> done; no `last_reviewed` of its own, but its verdict propagates to the subject's `last_reviewed`") matches both clauses precisely. |
+| F6 (consolidation framing) | **Resolved** | Consolidation section and Weaknesses now lead with "explicit, agent-triggered, and additive - never automatic or in-place," give the same three examples (reports, devlog handoffs, `evolved` supersession) as this review suggested, and explicitly contrast with Letta sleep-time consolidation and Zep's automatic edge invalidation. |
+
+Non-blocking items also landed: typed-edge framing for `review_of`/`last_reviewed`/`task_list` (Read/Retrieval item 4), agentic-search framing distinguishing recall-limited-by-vocabulary from "no retrieval," harness-delegated cross-project memory (BLUF, Weaknesses), `agents/*.md` as persistent read-only procedural identity (Identity Model), "tamper-evident" softened to "diffable and attributable" (Strengths), snapshot dating on the corpus table, and the placeholder `first_authored.at` timestamp corrected to a plausible time (`09:14:00`).
+
+No new internal inconsistencies were introduced by the revision: the mechanism count, size figures, and consolidation language are each now used consistently across the BLUF, body sections, and Weaknesses (checked by grep for "linear", "four mechanisms", "200M", and "no consolidation" — none of the retracted phrasings remain). The revision note added under the BLUF correctly attributes the changes to the round-1 review and lists them accurately.
+
+One residual, non-blocking observation: the round-1 open question about `agent_type` namespacing (`cdocs:reviewer` vs. bare `reviewer`) was left unresolved in the document, as this review's option (c) permitted; it remains a fair thing to flag as an unverified enforcement gap in a future audit of the hook itself, but it does not block this characterization report.
+
+### Round 2 Verdict
+
+**Accept.** All six round-1 blocking findings are resolved and verified directly against `validate-cdocs-edit-path.sh` and `frontmatter-spec.md`, not merely against the round-1 review's claims. The non-blocking suggestions were folded in as well. No new errors or internal inconsistencies were introduced by the revision.
