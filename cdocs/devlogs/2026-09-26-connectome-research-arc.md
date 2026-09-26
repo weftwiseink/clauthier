@@ -33,3 +33,7 @@ Arc-state: `.claude/oversee/2026-09-26-connectome-context-research.json`.
 ## Log
 
 - No prior connectome notes found in repo or local session history (user recalled earlier work; likely outside this checkout). Starting from primary sources.
+- Dispatched A (connectome, opus), B (landscape, opus), C (cdocs-as-memory, sonnet) in parallel; footprints disjoint (one file each).
+- C (cdocs-as-memory) authored 80e2c3a; review r1 REVISE (6 blocking: mechanism count, cold-start framing, weftwise size mostly _media, hook scope, review lifecycle, consolidation undersold); revised 2d4448b; r2 review dispatched.
+- B (landscape) authored 014c8e9; review r1 REVISE (70c772c): convergence thesis overstated (format converges, authorship doesn't), grep-vs-Mem0 over-weighted, "identity is niche" contradicted by OpenClaw/SOUL.md, bad Cursor cite. Reviewer caught pro-cdocs tilt; revision dispatched with explicit anti-tilt brief.
+- A (connectome) authored 873ec4d: 5-lib stack (Chronicle, Membrane, context-manager, agent-framework, connectome-host); lossless branchable event archive + per-turn compiled view with first-person, no-hindsight summaries; cache-aware solver. Review r1 dispatched with code-level verification.
