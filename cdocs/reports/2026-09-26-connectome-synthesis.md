@@ -7,10 +7,10 @@ type: report
 state: live
 status: review_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-09-26T17:20:00-07:00
-  round: 1
+  at: 2026-09-26T18:10:00-07:00
+  round: 2
 tags: [analysis, synthesis, memory, connectome, identity, architecture]
 ---
 
@@ -214,16 +214,16 @@ Option notes:
 - **Option 4 design.** Three conditions, run on matched workstreams over several weeks:
   - *Baseline (H):* current cdocs practice, handoffs and devlogs only.
   - *Arm N (notes):* H plus a per-role working-notes file carried across workstreams (for example, one for the implementer role). Plainly attributed, hindsight allowed, every factual claim cites a commit, test run, or doc path, a separate unreviewed trust tier, never `@`-imported or rule-like, model-agnostic.
-  - *Arm S (self):* N plus a persistent first-person self-model, maintained by one long-lived specialist (a Pillar 3 specialist carried across arcs, for example a reviewer) in its own voice: what it tends to get wrong, what this human has pushed back on and why, what it is currently carrying. Self-characterizations need not cite; factual claims about work still must. The model is held fixed within the arm, so binding is controlled, not tested.
+  - *Arm S (self):* N plus a persistent first-person self-model, maintained by one long-lived specialist (a Pillar 3 specialist carried across arcs, for example a reviewer) in its own voice: what it tends to get wrong, what this human has pushed back on and why, what it is currently carrying. Self-characterizations need not cite; factual claims about work still must. The model is held fixed within the arm, so binding is controlled, not tested. Arms N and S use the same role, so S-vs-N differences are not confounded by role.
   - *Same measurements for all three:* resumption cost (re-reads, tokens, time to first correct action), an unsupported-claim audit using one method for handoffs, devlogs, notes, and self-model (sampled claims checked against git and tests), misattribution of other agents' or the human's contributions, and, for a reviewer specialist, agreement with later outcomes.
 - **What option 4 results would show.**
   - *N better than H, S no better than N:* the functions are worth having and a persistent self adds nothing measurable at this horizon. Adopt N (it doubles as the scratchpoint evaluation).
-  - *S better than N:* first internal evidence that a persistent self or voice helps coding beyond its content. Promote option 5, and try a richer Connectome-like self next.
-  - *S worse than N on unsupported claims or misattribution, relative to H:* the identity-specific risks are real in coding, not just in Connectome.
+  - *S better than N:* first internal evidence that a persistent self-model (content plus voice) helps coding. It does not isolate voice from content; an optional S′ arm (same self-model content in third person, rotated across agents) would. Promote option 5, and try a richer Connectome-like self next.
+  - *S worse than N on unsupported claims or misattribution (each measured against the H audit):* the identity-specific risks are real in coding, not just in Connectome.
   - *N no better than H:* weakly refutes agent-authored working notes beyond handoffs; says nothing about S unless S is also flat.
   - *N and S both flat:* weakly refutes the functional case and the persistent-self case *in this setting*.
   - *Would not show, under any outcome:* the effect of as-of vantage, model binding, unbounded-lifetime continuity backed by a lossless archive, or Connectome's non-coding goals. Sample sizes will be small and the horizon short, so results are directional.
-- **Option 4 falsifiers are comparative.** Arm N or S fails if its unsupported-claim rate is materially worse than the baseline audit of handoffs and devlogs (for example, double the rate, or non-overlapping intervals), or if resumption cost does not improve over H. An absolute threshold would hold the new layer to a standard the existing corpus has never been measured against. The baseline audit also yields cdocs' own unsupported-claim rate, which C does not have.
+- **Option 4 falsifiers are comparative.** Arm N or S fails if its unsupported-claim rate is materially worse than the baseline audit of handoffs and devlogs (for example, double the rate, or non-overlapping intervals), or if resumption cost does not improve over H; arm S additionally fails if it does not improve over N. An absolute threshold would hold the new layer to a standard the existing corpus has never been measured against. The baseline audit also yields cdocs' own unsupported-claim rate, which C does not have.
 - **Option 4 overlaps the unbuilt scratchpoint design** (`2026-09-22-chat-record-scratchpoint-design.md`): arm N is close to an agent-authored working-state checkpoint for the overseer and durable specialists. Decide whether arm N *is* the scratchpoint trial before building either.
 - **Option 5 depends on option 4's result.** Arm S partly subsumes it. If notes produce unsupported claims at a rate materially worse than handoffs, a persistent per-role file will likely too, compounding over longer horizons.
 - **Option 6 is listed for completeness, but its narrow variant is cheap and independent.** Connectome's best engineering is in context assembly, which cdocs does not control. The narrow variant (order `/oversee` dispatch briefs stable-prefix-first: rules, then arc context, then task) needs no harness change and can run alongside options 1-3. The full option becomes relevant only if cdocs grows an Agent SDK harness of its own. Porting Connectome for a spike would start with `hermes-autobio` (Python, SQLite + FTS5, with a Claude Code session importer per its README), not the TypeScript stack (A).
