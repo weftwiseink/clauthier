@@ -109,7 +109,7 @@ Related Anima projects that are **not** Connectome but share lineage:
 |---|---|---|---|---|---|
 | Persistence | **Chronicle** | Rust + N-API, `@animalabs/chronicle` | Append-only record log, copy-on-write branches, typed state chains, content-addressed blobs, subscriptions, WAL | `Record{id, sequence, branch, timestamp, record_type, payload, caused_by[], linked_to[]}`; `Branch{id, name, head, parent, branch_point}`; `StateStrategy ∈ {Snapshot, Delta, AppendLog, Tree, Struct}` | `chronicle/src/types.rs:139-166,216-223,235-285`; `chronicle/src/lib.rs:1-11` |
 | LLM I/O | **Membrane** | TS, `@animalabs/membrane` (MIT) | Participant-named messages (not user/assistant), provider adapters (Anthropic, Bedrock, OpenRouter, OpenAI, Gemini), prefill/XML or native formatting, cache-marker placement, yielding streams | `NormalizedMessage{participant, content[], cacheBreakpoint?}` | `ecosystem-overview/README.md` (Membrane); `membrane/docs/formatters.md:1-60` |
-| Memory | **Context Manager** | TS, `@animalabs/context-manager` 0.11.0 | Owns MessageStore (truth) and ContextLog (working set); runs a `ContextStrategy` to compile each turn's messages; background `tick()` does compression | `StoredMessage`, `ContextEntry{sourceRelation: copy/derived/referenced}`, `SummaryEntry{id, level, content, tokens, parentId}` | `context-manager/src/types/message.ts:35-84`; `src/types/context.ts:8-45`; `src/types/strategy.ts:119-186,1330-1345` |
+| Memory | **Context Manager** | TS, `@animalabs/context-manager` 0.11.0 | Owns MessageStore (truth) and ContextLog (working set); runs a `ContextStrategy` to compile each turn's messages; `tick()`, called by the framework's maintenance timer, does compression | `StoredMessage`, `ContextEntry{sourceRelation: copy/derived/referenced}`, `SummaryEntry{id, level, content, tokens, parentId}` | `context-manager/src/types/message.ts:35-84`; `src/types/context.ts:8-45`; `src/types/strategy.ts:119-186,1330-1345` |
 | Memory policy | **AutobiographicalStrategy** (+ `KnowledgeStrategy` subclass, `Passthrough`, `WindowedPassthrough`) | TS | Chunking, L1 mint, L_k merge, adaptive-resolution picker (`flat-profile`/`oldest-first`/`kv-stable`/`kv-unified`), recall-pair rendering | Per-namespace Chronicle slots `autobio:{summaries,chunks,resolutions,locks,pins,mergeQueue,counter,calibration,...}` | `autobiographical.ts:1104-1148`; `strategy.ts:1188-1205` |
 | Orchestration | **Agent Framework** | TS, `@connectome/agent-framework` (MIT) | Event queue, agent state machine, module registry, context injection, streaming inference, tool dispatch, MCPL host, EventGate, undo/redo, ephemeral subagents | `Agent`, `Module{getTools, handleToolCall, onProcess, gatherContext?, onAgentSpeech?}`, `EventResponse{addMessages, requestInference, stateUpdate}` | `agent-framework/README.md:5-120`; `src/framework.ts` (14,669 lines) |
 | Built-in modules | Workspace, History, Discord, API, Health, MCPL | TS | Workspace: Chronicle Tree-state mounted filesystem. History: read-only `stats`/`extract`/`search`/`overview` over the raw archive | Mounts `{name, path, mode}` | `src/modules/history/index.ts:1-40,272-332`; `connectome-host/ARCHITECTURE.md:160-170` |
@@ -189,6 +189,7 @@ graph TD
 
 The sequence below is the one an illustrator should draw.
 It combines `agent-framework/src/framework.ts:8260-8390` (`startAgentStream`), `context-manager/src/context-manager.ts:697-830` (`compile`), `adaptive-resolution-design.md:436-480,856-924` (picker/solver), and `autobiographical.ts:8525-8600` (render).
+The turn (steps 1-8) and summarization are two independent flows. The background maintenance loop has its own section and diagram below.
 
 1. **Event ingress.**
    - An external event (Discord message, MCPL `push/event`, heartbeat, timer, TUI input, subagent completion) enters the framework's `ProcessQueue`.
@@ -221,10 +222,41 @@ It combines `agent-framework/src/framework.ts:8260-8390` (`startAgentStream`), `
 7. **Inference.** Membrane formats participants for the provider (prefill/XML or native) and places cache markers, then streams.
    Tool calls pause the stream (`waiting_for_tools`). Results are appended and the stream resumes. A mid-stream token budget (`maxStreamTokens`) can force a "context_budget_restart" (`agent-framework/README.md:60-78`; `framework.ts:8272-8275`).
 8. **Write-back.** Agent speech, tool calls, and results are appended to the MessageStore (so to Chronicle) under the agent's participant name. `onAgentSpeech` delivers speech to external channels.
-9. **Background maintenance (asynchronous, after or between turns).**
-   - The framework's maintenance pass calls `cm.tick()` up to `MAINTENANCE_TICKS_PER_PASS` times until the strategy reports ready (`framework.ts:2123-2133`).
-   - Each tick mints L1s from chunks that aged out of the tail and runs queued merges. A speculative bottom-up pre-producer climbs levels when N siblings exist (`adaptive-resolution-design.md:379-401`).
-   - On `OverBudgetError`, a "drain breaker" runs up to 8 extra ticks (`framework.ts:11655-11680`).
+   - Each appended message also reaches the strategy's `onNewMessage`, which calls `rebuildChunks`: newly closed chunks (except the newest `l1HoldbackChunks`, default 1) are pushed onto the in-memory `compressionQueue` (`autobiographical.ts:4460-4462,10507-10611`).
+   - The turn does **not** start summarization. It only leaves work queued. Nothing at turn end kicks maintenance.
+
+The turn ends at step 8. Summarization runs in a separate loop, described next.
+
+### Background maintenance loop (periodic, turn-independent)
+
+Minting and merging are driven by a framework timer, not by turns (`agent-framework/src/framework.ts:1768-1777,2070-2133`).
+Draw this as its own clock-driven loop beside the turn sequence, sharing only the Context Manager state.
+
+**Triggers.** A maintenance pass (`startQueuedMaintenance`) starts from four places:
+1. **Timer.** `setInterval` every `maintenanceIntervalMs`, default `DEFAULT_MAINTENANCE_INTERVAL_MS` = 5000 ms (`framework.ts:729,1769-1773`). The timer is `unref`'d.
+2. **Start-up.** Once, immediately in `start()`, so a restored queue does not wait a full interval (`framework.ts:1774-1776`).
+3. **Operator.** `maintenanceTick()` (host mode) runs the same pass and awaits it (`framework.ts:3313-3321`).
+4. **OverBudget drain breaker.** When a compile throws `OverBudgetError` (or a context refusal), the inference-failure handler fires up to 8 `cm.tick()` calls for that agent directly, outside the pass machinery, one drain in flight per agent (`framework.ts:11655-11680`).
+
+At most one pass runs at a time: `startQueuedMaintenance` returns early if a pass is in flight or the framework is stopped (`framework.ts:2070-2071`).
+
+**One pass (`runQueuedMaintenance`, `framework.ts:2091-2133`), in order:**
+1. For **every** agent: compute its allowed tools and push them with `cm.setToolDefinitions(tools)`. This happens even for agents that will be skipped.
+2. Skip agents blocked by the provider gate, and agents whose CM reports `isReady()`.
+3. For the remaining agents, in parallel (`Promise.all`): call `cm.tick()` up to `MAINTENANCE_TICKS_PER_PASS` (8) times, stopping early once `cm.isReady()` (`framework.ts:731,2123-2133`). Errors are recorded per agent and raised as `context-maintenance-failed` ops alerts.
+
+**One tick (`AutobiographicalStrategy.tick`, `autobiographical.ts:4560-4640`)** does at most one unit of LLM work:
+1. Sound quarantine alarms. Return if a compression is already pending.
+2. **Priority 1, L1 mint:** if `compressionQueue` is non-empty and the speculative-L1 cap is not hit, shift one chunk and mint its L1 (`compressChunkHierarchical`). After a mint, `checkMergeThreshold` enqueues an L_{k+1} merge when enough siblings exist.
+3. **Priority 2, merge:** otherwise, if `mergeQueue` is non-empty, execute the head merge. The entry is dequeued only after success, so a failed merge retries on the next tick.
+
+**Where queue entries come from.**
+- `compressionQueue`: `rebuildChunks` on message ingest (above), and live solver demand at compile time via `handleProducedOps`, called from `selectAdaptive` (`autobiographical.ts:4269-4356,8398`). Solver demand also punches through the holdback.
+- `mergeQueue`: `checkMergeThreshold` after mints and merges (the speculative bottom-up climb), and `enqueueMergeForRange` on solver demand (`autobiographical.ts:4363-4426,7214-7300`; `adaptive-resolution-design.md:379-401`).
+
+**Tool dependency.** Mints carry the agent's live tool list. A chunk that contains tool blocks (or any chunk, for summarizer families that refuse tools-less requests) is deferred until the host has pushed tool definitions: "deferring chunk compression: host has not provided tool definitions yet" (`autobiographical.ts:5918-5926`). Step 1 of each pass is what supplies them.
+
+**Coupling to turns.** The turn and the loop share only persisted state. A compile never awaits pending compression (step 6.6), so a new L1 becomes visible at the first compile *after* its mint completes. With the 5 s default, that is usually the next turn, but nothing guarantees it.
 
 ```mermaid
 sequenceDiagram
@@ -252,7 +284,31 @@ sequenceDiagram
   Mem-->>AF: tokens / tool calls
   AF->>CM: append speech + tool results
   CM->>Chr: append
-  Note over AF,CM: later: tick() mints L1s, merges L_k to L_k+1 (background LLM calls)
+  Note over CM: onNewMessage: closed chunks queued for L1 (no LLM call yet)
+```
+
+```mermaid
+sequenceDiagram
+  participant T as Maintenance timer (every 5 s) / start() / maintenanceTick()
+  participant AF as Agent Framework
+  participant CM as Context Manager (per agent)
+  participant Mem as Membrane / provider
+  participant Chr as Chronicle
+  loop each pass (one at a time)
+    T->>AF: startQueuedMaintenance()
+    AF->>CM: setToolDefinitions(tools) (all agents)
+    AF->>CM: isReady()? (skip ready or provider-gated agents)
+    loop up to 8 ticks, until isReady()
+      AF->>CM: tick()
+      alt compressionQueue non-empty
+        CM->>Mem: L1 mint (as-of, first person)
+      else mergeQueue non-empty
+        CM->>Mem: L_k to L_k+1 merge
+      end
+      CM->>Chr: write summary, enqueue next merge if N siblings
+    end
+  end
+  Note over AF,CM: OverBudgetError on compile: drain breaker calls tick() up to 8x, outside the timer
 ```
 
 **Compiled context layout (left = oldest):**
@@ -280,10 +336,12 @@ The solver is the most distinctive engineering in the stack. Its objective is to
 - **`kv-stable` (rev 5.x)** runs one solve per turn (`adaptive-resolution-design.md:856-924`):
   - It computes an `ideal` relevance cut.
   - It then holds the previous frontier, adopts the ideal, or adopts a *suffix* of the ideal within a perturbation trust region P, with a quality-gap override.
+  - As shipped, this is "a **lexicographic branch cascade**, not the drafted `+ λ·perturbation` minimization" (rev 5.1 reconciliation, `adaptive-resolution-design.md:7,735`).
   - The design came from a production incident. An emergency path produced an "inverted resolution profile" (old history at L1, recent days at L3) that the eligibility rules then froze (`adaptive-resolution-design.md:684-718`).
 - **`kv-unified` (rev 6, newest)** is a Pareto label-setting DP with explicit, fail-closed "welfare policy" config. "Every field is required [...] there are no live defaults" (`strategy.ts:1203-1205`; `docs/unified-solve-design.md:1-40`).
   - Performance on "a production store (≈270 chunks, 260k tokens)": turns 2-4 solve in "1.7-1.9 s and under 2 GB, down from 20-21 s and 12-23 GB" (`context-manager/CHANGELOG.md:30-41`).
-  - *Inference:* solver cost alone is seconds per turn at production scale. It had regressed by an order of magnitude shortly before this snapshot.
+  - These figures are for kv-unified only, after the 0.11.0 label-key fix (#105). The changelog describes a bug that made compiles grow with the forest, so kv-unified was ~10× slower until that fix, not a regression from a faster prior state.
+  - *Inference:* kv-unified solver cost alone is seconds per turn at production scale. I found no comparable figure for kv-stable.
 - **Default and deployed.** The library default when `adaptiveResolution` is on is `flat-profile` (`strategy.ts:1191-1193`).
   The onboarding runbook describes the deployed stack as "adaptive resolution / kv-stable folding", with `flat-profile` as "the robust fallback" (`AGENT-ONBOARDING.md:29-30,470-475`).
 
@@ -292,8 +350,8 @@ The solver is the most distinctive engineering in the stack. Its objective is to
 | What | Author | When | Where | Mutable? |
 |---|---|---|---|---|
 | Raw events and messages (all participants, tool I/O, agent speech) | System (framework/modules) | On ingress and on every turn | MessageStore → Chronicle | Append-only. Branchable. Slot-level redact/edit exists. |
-| L1 recollections | **Agent's model** (or `compressionModel`), first person | Background `tick()` after a chunk leaves the tail | `autobio:summaries` | Write-once, idempotent by source hash |
-| L_k merges (k≥2) | Agent's model, first person | Speculatively when N siblings exist, or on solver demand | `autobio:summaries` | Write-once |
+| L1 recollections | **Agent's model** (or `compressionModel`), first person | Timer-driven `tick()` after the chunk closes (holdback 1) or on solver demand | `autobio:summaries` | Write-once, idempotent by source hash |
+| L_k merges (k≥2) | Agent's model, first person | Timer-driven `tick()`: speculatively when N siblings exist, or on solver demand | `autobio:summaries` | Write-once |
 | Fold resolutions | Solver (system) | Each compile | `autobio:resolutions` | Overwritten per turn, branch-scoped |
 | Pins / locks | Programmatic API. An agent `unfold` tool is spec-only | Host decision | `autobio:pins`, `autobio:locks` | Mutable |
 | Workspace files | **Agent** via `workspace--*` tools | Any turn | Chronicle Tree state + disk mounts | Mutable, versioned |
@@ -359,7 +417,10 @@ Identity has three layers. The code keeps them separate.
 - **Images decay faster.** At most `maxLiveImages` (default 6) stay live, within `imageStripDepthTokens` (default 30k) (`strategy.ts:1563-1564`; `AGENT-MEMORY-GUIDE.md:176-181`).
 - **Lessons** carry confidence and are filtered at 0.3. Nothing lowers confidence except explicit `demote`.
 - **Time awareness** comes from a `time` module (session-start timestamp plus a `time:now` tool) and heartbeat wakes (`connectome-host/ARCHITECTURE.md:74`; `heartbeat-mcpl/README.md`).
-- **Branch-scoped history.** `/undo` and `/checkpoint` create Chronicle branches. Resolution state is branch-scoped "for free" via CoW slots (`adaptive-resolution-design.md:122-129`).
+- **Branch-scoped history.** `/undo` and `/restore` create Chronicle branches. `/undo` calls `store.createBranchAt(undo/<agent>/…, current, checkpoint.sequenceBefore)` (`agent-framework/src/framework.ts:5413`).
+  `/checkpoint` creates no branch: it records a `{branchName, messageId}` position, since "A checkpoint is a *position*, not just a branch", and `/restore` later branches from that message (`connectome-host/src/commands.ts:914-920,925-960`).
+  *Inference:* checkpoints live in `app.branchState`, built by `createBranchState()` at host start (`connectome-host/src/index.ts:1179`), so they appear not to survive a host restart. I did not find persistence for them.
+  Resolution state is branch-scoped "for free" via CoW slots (`adaptive-resolution-design.md:122-129`).
   The site notes: "Branching changes the recorded trajectory; actions already taken in the outside world still have their consequences" ([/connectome/](https://animalabs.ai/connectome/)).
 
 ### Storage backend and interfaces
@@ -396,7 +457,7 @@ Anima's stated motivations are explicitly about minds, not throughput:
 | Model-integrity rule (chronicle bound to one model) | **Values** (continuity) | `DEPLOYMENTS.md:16-19` |
 | Agent-facing honest docs ("written to be honest, not reassuring") | **Values** (treating the agent as a reader) | `AGENT-MEMORY-GUIDE.md:3-7`; `ATTENTION-AND-GATING.md:1-5` |
 | Credentials never model-visible | **Both**: hygiene + "reads as exfiltration to safety classifiers" | `identity-module.ts:14-24` |
-| Lossless append-only branchable archive | **Both**: research reproducibility ("Keep the context") + undo/audit | Principles page; Chronicle README |
+| Lossless append-only branchable archive | **Both**: research reproducibility ("Keep the context") + undo/audit | Principles page; `chronicle/src/lib.rs:1-11`; `chronicle/docs/loom-of-looms.md` |
 | Large verbatim tail; fold far back | **Both**: argued from KV-cache mechanics *and* framed as protecting the agent's computational continuity | `AGENT-MEMORY-GUIDE.md:68-100`; KV-perturbation field note |
 | Cache-perturbation-priced fold solver | **Engineering** (cost, latency) with a continuity overlay | `adaptive-resolution-design.md:58-66,720-760` |
 | Participant-based messages | **Research fidelity** (honest multi-party representation) | ecosystem-overview Membrane section |
@@ -415,7 +476,8 @@ I found no measurement of behavioral continuity effects on hosted models.
 ## Practical assessment for a productivity / coding agent
 
 **Token cost.**
-- Large-tail deployments send ~160-178k tokens per turn on 200k models (`AGENT-ONBOARDING.md:444-452`), and "~450,000"-token tails on long-context models (`AGENT-MEMORY-GUIDE.md:192`).
+- The runbook recommends a `contextBudgetTokens` of about 160-178k on 200k-window models (with a 16k response cap). That is a budget ceiling to avoid silent 400s, not a measured per-turn size, but steady-state context "creeps up" toward it as a conversation grows (`AGENT-ONBOARDING.md:444-452`).
+- Long-context recipes use "~450,000"-token tails (`AGENT-MEMORY-GUIDE.md:192`).
 - Economics depend on prompt-cache hits, which is exactly what the solver protects.
 - Extra LLM spend on top of the main call:
   - One mint call per ~3-6k-token chunk.
@@ -427,13 +489,13 @@ I found no measurement of behavioral continuity effects on hosted models.
 
 **Latency.**
 - Compile is non-blocking on compression (`context-manager.ts:701-711`).
-- The solver still took 1.7-1.9 s per compile at 260k tokens after optimization, and 20 s before (`CHANGELOG.md:30-41`).
+- The kv-unified solver still took 1.7-1.9 s per compile at 260k tokens after the #105 fix, and 20 s before it (`CHANGELOG.md:30-41`). This does not generalize to kv-stable or flat-profile.
 - A "2026-07 mythos compile regression" caused "30+ s" of dead air (`framework.ts:8280-8286`).
 
 **Determinism and auditability.**
 - Strong on *records*: a lossless archive, `/debug/context`, compression JSONL logs, mint preimages, and branch time-travel.
 - Weak on *content*:
-  - Mints are separate temperature-0 inferences, but model outputs still vary across versions.
+  - Mints are separate inferences with no sampling parameters set: I found no `temperature` anywhere in `context-manager/src`, so the provider default applies (mint calls at `autobiographical.ts:6215,6236,7858,7873`). The only temperature-0 calls found are RetrievalModule's (`retrieval-module.ts:303,412`), and signed-thinking models enforce `temperature: 1` (`agent-framework/src/types/agent.ts:110`). Mint text is therefore not reproducible even on a fixed model version.
   - Fold layout depends on solver state carried across turns (`F_prev`).
   - Asynchronous background minting means "this turn doesn't have the very latest L1", so the same history can render differently depending on timing.
 - *Inference:* reproducing exactly what an agent saw requires a replay of both Chronicle state and solver state. The debug API gives a snapshot only.
@@ -441,12 +503,15 @@ I found no measurement of behavioral continuity effects on hosted models.
 **Failure modes (observed in code comments and docs, not hypothetical).**
 - **Memory drift / lossy recall.** "Recollections can drift or compress away nuance" (`AGENT-MEMORY-GUIDE.md:171-172`). Thinking blocks and tool-call details are not carried into recollections (`:168-170`).
   Mitigation: agent-written workspace notes, and the HistoryModule's raw archive search when enabled.
+- **Runaway false memories (observed).** When the L1 builder placed the head *after* the recall pairs (pre-2026-07), the head read as the most recent live conversation. For thin chunks the summarizer narrated it as fresh events ("Antra came to me to explore the transformation story again…"), "compounding across merges into runaway false memories (the '68 initiations' incident)" (`autobiographical.ts:5646-5652`).
+  The fix was ordering (head first), not a fact check. This is code-documented evidence that self-narrative drift happens and propagates up the pyramid.
 - **Sycophantic or self-flattering narrative.** First-person self-authored memory has no external check at mint time.
-  The only guard I found is the anti-padding instruction (`autobiographical.ts:210-216`) and an invitation for the agent to report inconsistencies (`AGENT-MEMORY-GUIDE.md:210-214`).
+  The "68 initiations" incident above shows the propagation mechanism. The only guard I found is the anti-padding instruction (`autobiographical.ts:210-216`) and an invitation for the agent to report inconsistencies (`AGENT-MEMORY-GUIDE.md:210-214`).
   *Inference:* the design protects voice over accuracy. For a coding agent, a memory saying "I fixed the auth bug" when tests never passed is the dangerous case. Only the verbatim tail or the archive can correct it.
 - **Stale beliefs.**
   - `derived` entries tolerate staleness by definition (`context.ts:11-12`).
   - Mints use the *current* host system prompt, not the historical one, so a changed identity policy recolors new memories of old spans (`autobiographical.ts:5941-5950`).
+  - Two further as-of leaks: the mint request carries the *current* tool definitions (pushed by each maintenance pass) and runs on the *current* `compressionModel`, neither of which is the state at the time of the chunk.
   - Lessons have no time decay.
 - **Contamination.** The model-integrity rule exists because cross-model contamination happened ("If an agent is ever contaminated onto the wrong model, delete the contaminated interlude and re-ingest", `DEPLOYMENTS.md:17-19`).
   Witnessed-voice prompts exist because merges "re-claim others' lives".
@@ -476,6 +541,7 @@ I found no measurement of behavioral continuity effects on hosted models.
 **What does not transfer well.**
 - Self-voiced, as-of narrative memory as the *primary* recall channel. Coding needs exact, verifiable state (diffs, test results, decisions with rationale), and hindsight ("the bug turned out to be X") is exactly what a coding memory should record.
 - Model-bound identity. Productivity setups routinely swap models.
+  This is operator doctrine, not a constraint of the memory layer: `compressionModel` is decoupled from the speaking model (the host defaults it to the agent model, `connectome-host/src/framework-strategy.ts:87`, and the runbook recommends a stable one). A coding deployment could pin one summarizer and swap the speaking model freely.
 - Very large tails as the main continuity mechanism: cost is linear in tail size even with caching.
 - The operational footprint and solver complexity, relative to the benefit on task-scoped sessions.
 
@@ -497,3 +563,12 @@ For the synthesis report (unit D), not decisions:
 - Treat "summarize eagerly, fold per turn under a cache-perturbation budget" and "verbatim tail, fold deep" as the two most portable ideas.
 - Treat self-voiced as-of memory as a values choice to *describe*, not adopt, for coding agents. Flag the sycophantic self-narrative risk explicitly.
 - If a hands-on spike is ever warranted, `hermes-autobio` (Python, SQLite + FTS5, with a Claude Code session importer per its README) is a much smaller entry point than the full TS stack.
+
+## Revision notes
+
+**Round 1 (2026-09-26), per `cdocs/reviews/2026-09-26-review-of-connectome-deep-dive.md`:**
+- Background maintenance rewritten as a periodic, turn-independent loop with its own section and sequence diagram (timer, start-up, operator, drain-breaker triggers; pass and tick order). The turn now ends at write-back, which only queues chunks.
+- `/checkpoint` corrected: it records a position; `/undo` and `/restore` create branches.
+- Removed the "temperature-0 mints" claim; no sampling parameters are set on mint calls.
+- Added the "68 initiations" incident to Failure modes; scoped the 1.7-1.9 s figure to kv-unified post-#105; restated 160-178k as a budget ceiling.
+- Also: replaced the nonexistent Chronicle README citation, noted `compressionModel` separability and two further as-of leaks, cited the rev 5.1 "lexicographic branch cascade" reconciliation.
