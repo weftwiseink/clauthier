@@ -18,7 +18,7 @@ last_reviewed:
 
 > BLUF: The clunkiness has two separable causes: **audio-stack causes** (walkie-talkie turn-taking, silence-based endpointing, no barge-in, no echo cancellation), fixed by which audio pipeline you pick, and one **architecture cause**, the same slow reasoning agent doing both the talking and the thinking with no shared state view, fixed only by a talker/thinker split.
 > Refined audio stacks exist today (Pipecat/LiveKit with semantic turn detection); Claude Code has real, if research-preview or newly-surfaced, plumbing for the architecture half (`claude agents --json`, Channels' permission relay, the Agent SDK hosting the overseer outright).
-> Recommendation: run a pre-registered, three-condition experiment (a state-reading fast talker on Pipecat + Smart Turn, the same pipeline with Smart Turn off, and plain VoiceMode as baseline) across a couple of real `/oversee` arcs to test whether a separate, state-reading fast talker beats same-agent voice, and whether semantic turn detection adds to it, before committing to a standalone app or a Weftwise integration.
+> Recommendation: run a pre-registered, four-condition experiment (a state-reading fast talker on Pipecat + Smart Turn, the same pipeline with Smart Turn off, the same talker fed only `claude agents --json`, and plain VoiceMode as baseline) across a couple of real `/oversee` arcs to test whether a separate, state-reading fast talker beats same-agent voice, and whether semantic turn detection adds to it, before committing to a standalone app or a Weftwise integration.
 
 ## Context / Background
 
