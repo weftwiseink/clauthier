@@ -7,6 +7,11 @@ type: report
 state: live
 status: review_ready
 tags: [meta, tooling, agent-memory, connectome, comparison]
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-09-26T12:00:00-07:00
+  round: 1
 ---
 
 # CDocs as a Memory System
