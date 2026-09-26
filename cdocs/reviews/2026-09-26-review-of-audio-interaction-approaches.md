@@ -7,7 +7,7 @@ task_list: cdocs/audio-interaction
 type: review
 state: live
 status: done
-tags: [fresh_agent, factual_accuracy, citations, hooks, oversee_grounding, recommendation_fit, brevity]
+tags: [fresh_agent, rereview_agent, factual_accuracy, citations, hooks, oversee_grounding, recommendation_fit, brevity]
 ---
 
 # Review: Audio interaction approaches for a cdocs power user
@@ -159,3 +159,52 @@ All of these can be fixed without restructuring the document.
    (b) A block-and-confirm gate that shows the corrected text for re-submit.
    (c) Plan-mode compile-then-approve, with no cleanup hook at all.
 3. Is cloud transcription acceptable, given that `/voice` and all commercial tools send audio off-machine, or should the report weight local-only options (IBus/Vosk, whisper.cpp) more heavily?
+
+## Round 2
+
+> Reviewed 2026-09-26T17:45:00-07:00 by @claude-opus-5-5 (`rereview_agent`) against the revised report (~3,850 words, new "Decision Points for the User" section).
+
+### Round-1 Action Item Status
+
+1. **Resolved, with a correction applied by the reviewer.** The report no longer claims a prompt rewrite. However, it described blocking as `permissionDecision` (`allow`/`deny`), which does not apply to `UserPromptSubmit`.
+   Per the hooks reference "UserPromptSubmit decision control", this hook blocks via top-level `decision: "block"` plus `reason`. The `reason` is shown to the user and is not added to context, and blocking erases the prompt. `additionalContext` goes under `hookSpecificOutput`.
+   `permissionDecision` belongs to the tool-permission events (`PreToolUse`, `PermissionRequest`, and similar).
+   The reviewer fixed the field names in Key Findings, the mechanics table, and Option 3.
+2. **Resolved, with one wording tweak by the reviewer.** #96353 is now framed as a desktop FR, #1198 as closed not-planned, soft/hard gates are cited to `SKILL.md`, the chief-of-staff description is softened, and the caveats are removed.
+   The survey table still grouped #96353 under "open bugs", and the reviewer reworded it.
+   The reviewer also removed a revision-meta phrase ("this distinction lives in that skill file, not in `oversee-arc.md`").
+3. **Resolved.** A new Placement paragraph, mermaid diagram, mechanics table, and Options 4-5 consistently cast the secretary as a second top-level session.
+4. **Resolved.** The pause marker is correctly a human-to-overseer STOP, escalations are described as hard-gate-only, the Notification/push path is named, and the return path is `/oversee resume` or Channels.
+5. **Resolved, with a caveat added by the reviewer.** Plan Mode and Channels are added, and the claims were verified (`Shift+Tab`, the `/plan` prefix, `Ctrl+G`, Channels as two-way with permission relay).
+   The reviewer added one sentence: per the permission-modes docs, in interactive terminal sessions where bypass permissions is available, Plan Mode's edit blocks are not enforced.
+   That matters for this user's control worry, since the gate is only advisory in a bypass-capable setup.
+6. **Resolved.** The recommendation now co-leads with options 1+2 on the input side, with option 4 as the output-side companion.
+7. **Resolved.** Talon is stated as not viable, citing OSnews.
+8. **Resolved.** Failure mode 3 is reframed as "thin review, not absent review", and the Context paragraph is framed as the user's perception.
+9. **Resolved.** The Wayland `ydotool`/`wtype` caveat is added and `ibus-speech-to-text` is promoted. The reviewer also dropped "local" from the Option 1 heading, because `/voice` is cloud-transcribed.
+10. **Resolved.** The Piper link now points to `OHF-Voice/piper1-gpl`.
+11. **Partially resolved.** The report went from about 4,566 to about 3,850 words. The escalation substrate is no longer repeated four times, and the stale Open Questions are gone.
+
+### New Findings (all non-blocking)
+
+1. **The revision-history `NOTE` callout under the BLUF breaks history-agnostic framing.** It enumerates what "this revision corrects". The review file already carries that history. Consider deleting the callout.
+2. **The Placement paragraph over-attributes a claim.** It credits `orchestration-discipline.md` with "a dispatched agent cannot hold an open-ended conversation with the human", but that rule file covers no-nested-dispatch, not human interaction. Either drop the citation for that half of the sentence or cite the harness behavior generically.
+3. **"The GNOME Shell extensions avoid this by running in-process"** (whisper-wrapper row) is plausible but unverified. Soften it or verify it against the Blurt and Speech2Text source.
+4. **Remaining trim candidates.** The first Key Findings bullet is about 190 words and restates the `/voice` survey row. The Prior art section is a single dense paragraph that could lose the consumer-product sentence. About 300-500 more words could go.
+
+### Round-2 Verdict
+
+**Accept.**
+All round-1 blocking items are resolved.
+The one factual slip introduced in revision (`permissionDecision` for `UserPromptSubmit`) and three wording issues were minor, so the reviewer fixed them directly in the report rather than requesting another round.
+The four items above are optional polish.
+
+### Reviewer Edits Applied to the Report
+
+- Key Findings, hook bullet: replaced `permissionDecision` (`allow`/`deny`) + `systemMessage` with `decision: "block"` + user-facing `reason`, plus `additionalContext`. Replaced the non-sequitur "which also means the hook input carries no voice-origin signal" with a separate sentence.
+- Key Findings, oversee bullet: removed the revision-meta parenthetical about `oversee-arc.md`.
+- Key Findings, Plan Mode bullet: added the bypass-permissions enforcement caveat.
+- Survey table, `/voice` row: #96353 reworded from "open bugs" to "a related desktop-app feature request".
+- Mechanics table and Option 3: corrected the hook field names.
+- Option 1 heading: "Zero-engineering local capture" became "Zero-engineering capture".
+- Frontmatter: `last_reviewed` set to `accepted`, round 2.
