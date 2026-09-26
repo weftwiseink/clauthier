@@ -188,3 +188,75 @@ None of these requires new research.
    - (a) The same human auditor, sampling both notes and handoffs.
    - (b) An agent audit checked against git and tests, with human spot-checks.
    - (c) Defer until an auditor is named (which blocks option 4's RFP).
+
+---
+
+## Round 2 (revision `983dd7b`)
+
+Reviewer: `@claude-opus-5-5` (fresh agent, `rereview_agent`), 2026-09-26.
+Tags this round: `rereview_agent`, `identity_fairness`, `falsifiability`, `experiment_design`.
+
+### Summary Assessment
+
+The revision resolves all five round-1 blocking items and most non-blocking ones.
+The overlap is now tiered the same way in the BLUF, Key Findings, diagram, body, and Recommendation 5.
+Risks are tagged `[shared]` or `[identity]`, and the Net draws the right conclusion from that split.
+Option 4 now includes a persistent first-person self (arm S) and says what each outcome would and would not show.
+Its falsifiers, and option 5's, are comparative.
+Option 1 is split into 1a and 1b, each graded on its own.
+Spot-checks of the new claims against A, B, and C found only one small overstatement (Letta, below).
+Verdict: **Accept**, with non-blocking suggestions.
+
+### Round-1 Action Items
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Tiered overlap | Resolved. BLUF line 22, Key Findings, diagram edges (one `==>` equivalence, two partial edges, one "no analogue"), the "fifth overlap not drawn" note, the numbered tier list, and Rec. 5 all agree. |
+| 2 | Symmetric risks; failure-modes row; DreamBench | Resolved. Each case-against item carries a tag. Poisoning and false memories are `[shared]` and name cdocs' exposure. The failure-modes consequence now says both systems can believe wrong things. DreamBench now "does not rank architectures" and "supports a lossless archive ... as much as a curated corpus". |
+| 3 | Option 4 genuinely tests identity; Net scoped | Resolved. Arms H / N / S. The Net limits a notes-only null to "agent-authored working notes beyond handoffs", and "Would not show" lists as-of vantage, model binding, unbounded lifetime, and non-coding goals. |
+| 4 | Comparative falsifiers | Resolved for option 4 (baseline audit by one method and one auditor, Rec. 3) and option 5 (against cold-start summaries of the same reviews). |
+| 5 | Option 1 split and regraded | Resolved. 1a **B** with the human-review gate graded B by product consistency and "no source measures human versus agent review" stated. 1b **C** with the specific effect marked **D**. The arXiv caveat appears in Context and above the table. |
+| 6-12 | Non-blocking | All addressed: A accepted; inference labels; Kim et al. "adjacent"; re-onboarding scoped to memory; Pillar 3 added; convergence condition stated; transcript-coverage caveat (verified: `cleanupPeriodDays: 99999` in `~/.claude/settings.json`); option 2 rank tied to the unpinned form; scratchpoint overlap noted. Rec. 9 is met by an "acknowledges ... does not meet" statement plus an "On its own terms" paragraph. |
+
+### Tilt Check
+
+No residual pro-cdocs tilt found at a blocking level.
+The report now names cdocs' own exposure in several places: its agent-written, mostly agent-reviewed corpus; its missing unsupported-claim rate; and the point that 1a corrects cdocs itself.
+The remaining asymmetries are defensible: as-of vantage and model binding really are identity-specific.
+
+### New Findings (all non-blocking)
+
+- **N1. Arm S vs N confounds the self-model's content with persistence and voice.**
+  S adds content, including a record of "what this human pushed back on" and "what it tends to get wrong".
+  So "S better than N" does not show that a self or voice helps "beyond its content".
+  Reword it as "a persistent self-model (content plus voice) helps".
+  Alternatively, add an optional S' arm: the same self-model content in third person, rotated across agents.
+- **N2. The role match between arms is ambiguous.**
+  Arm N's example is the implementer role, while arm S's example is a reviewer specialist.
+  If the two arms use different roles, S-vs-N comparisons are confounded by role.
+  State that both arms use the same role.
+- **N3. Arm S's falsifier is relative only to H.**
+  S "fails if resumption cost does not improve over H", but S contains N.
+  Add "or does not improve over N" so the falsifier matches the interpretation matrix.
+- **N4. The phrasing of the "S worse than N ... relative to H" outcome is muddled.**
+  Say "S worse than N (both measured against the H baseline)".
+- **N5. Option 1a's "approved without edits" is a weak proxy for rubber-stamping.**
+  A correct lesson can pass without edits.
+  "Agent-only review" is the cleaner signal; keep the edit rate only as a secondary indicator.
+- **N6. The option 1a evidence cell says "Dreams, Codex, Letta emit reviewable diffs".**
+  B (line 54) says this of the Anthropic and Codex variants.
+  For Letta, B records git-backed files with git history.
+  That is reviewable in principle, but B does not say Letta emits a diff for review.
+  Say "Dreams and Codex emit reviewable output; Letta's MemFS is git-backed".
+
+### Verdict
+
+**Accept.** All blocking items from round 1 are resolved, and no new unsupported claims of consequence were introduced. N1-N3 are worth folding in when option 4 is scoped as an RFP (Recommendation 3), and are not required for this report.
+
+### Action Items (round 2)
+
+1. [non-blocking] Reword the "S better than N" outcome so it does not claim an effect "beyond its content" (N1).
+2. [non-blocking] State that arms N and S use the same role (N2).
+3. [non-blocking] Add "or does not improve over N" to arm S's falsifier (N3), and fix the outcome phrasing (N4).
+4. [non-blocking] Make agent-only review the primary rubber-stamp signal in 1a's falsifier (N5).
+5. [non-blocking] Narrow the Letta attribution in 1a's evidence cell (N6).
