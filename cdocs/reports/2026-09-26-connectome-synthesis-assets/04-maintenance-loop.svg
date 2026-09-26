@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" role="img" aria-label="Background maintenance loop: a 5-second timer, start-up, or an operator call starts one pass at a time; the pass pushes tool definitions to every agent, skips ready or gated agents, then ticks each remaining agent up to 8 times; each tick mints one L1 if the compression queue has work, else runs one merge. Turns only fill the queues. An OverBudgetError fires a drain breaker that calls tick directly.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a4w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fw"/></marker>
+<marker id="a4c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fc"/></marker>
+</defs>
+<text x="20" y="28" class="h">triggers</text>
+<rect x="20" y="40" width="220" height="56" rx="3" class="b"/>
+<circle cx="44" cy="68" r="12" class="fp" stroke="currentColor" style="stroke:var(--ink)"/>
+<path d="M44,68V60M44,68L50,72" class="l" style="stroke:var(--ink)"/>
+<text x="66" y="62" class="h">timer · every 5 s</text>
+<text x="66" y="82" class="m mu">setInterval 5000 ms, unref'd</text>
+<rect x="20" y="108" width="220" height="48" rx="3" class="b"/>
+<text x="34" y="128" class="h">start()</text>
+<text x="34" y="146" class="m mu">once, at start-up</text>
+<rect x="20" y="168" width="220" height="48" rx="3" class="b"/>
+<text x="34" y="188" class="h">maintenanceTick()</text>
+<text x="34" y="206" class="m mu">operator, host mode, awaited</text>
+<rect x="270" y="40" width="200" height="66" rx="3" class="b"/>
+<text x="284" y="62" class="m">startQueuedMaintenance()</text>
+<text x="284" y="80" class="m mu">one pass at a time; returns</text>
+<text x="284" y="94" class="m mu">early if one is in flight</text>
+<path d="M240,68H266M240,132C256,132 252,96 266,92M240,192C262,192 256,104 266,100" class="l" marker-end="url(#a4)"/>
+<path d="M470,74H506" class="l" marker-end="url(#a4)"/>
+<rect x="510" y="24" width="476" height="326" rx="3" class="b"/>
+<text x="526" y="48" class="h">one pass · runQueuedMaintenance()</text>
+<text x="526" y="74" class="m">1  every agent: cm.setToolDefinitions(tools)</text>
+<text x="526" y="94" class="m">2  skip provider-gated agents and those already isReady()</text>
+<text x="526" y="114" class="m">3  the rest in parallel: tick() up to 8×, stop at isReady()</text>
+<rect x="526" y="132" width="444" height="202" rx="3" class="bc"/>
+<text x="540" y="152" class="h tc">one tick = at most one LLM call</text>
+<text x="956" y="152" class="m mu" text-anchor="end">return if a mint is pending</text>
+<rect x="540" y="164" width="220" height="52" rx="2" class="b"/>
+<text x="552" y="182" class="h">L1 mint · priority 1</text>
+<text x="552" y="198" class="m mu">if compressionQueue has work</text>
+<text x="552" y="210" class="m mu">first person, as-of</text>
+<rect x="540" y="230" width="220" height="52" rx="2" class="b"/>
+<text x="552" y="248" class="h">merge L_k → L_k+1 · priority 2</text>
+<text x="552" y="264" class="m mu">else, if mergeQueue has work</text>
+<text x="552" y="276" class="m mu">dequeued only on success</text>
+<rect x="808" y="164" width="150" height="118" rx="2" class="b"/>
+<text x="883" y="212" class="h" text-anchor="middle">autobio:</text>
+<text x="883" y="228" class="h" text-anchor="middle">summaries</text>
+<text x="883" y="246" class="m mu" text-anchor="middle">Chronicle slot</text>
+<path d="M760,190H804M760,256H804" class="lc" marker-end="url(#a4c)"/>
+<text x="782" y="184" class="m mu" text-anchor="middle">L1</text>
+<text x="782" y="250" class="m mu" text-anchor="middle">L_k+1</text>
+<text x="540" y="304" class="m mu">after each write: checkMergeThreshold</text>
+<text x="540" y="320" class="m mu">enqueues a merge at N≈6 siblings</text>
+<path d="M883,282V342H496V262H478" class="lc dsh" marker-end="url(#a4c)"/>
+<rect x="294" y="164" width="192" height="112" rx="3" class="b dsh"/>
+<text x="300" y="158" class="m mu">in-memory queues</text>
+<rect x="306" y="176" width="168" height="36" rx="2" class="b"/>
+<text x="390" y="198" class="m" text-anchor="middle">compressionQueue</text>
+<rect x="306" y="228" width="168" height="36" rx="2" class="b"/>
+<text x="390" y="250" class="m" text-anchor="middle">mergeQueue</text>
+<path d="M474,194H536" class="l" marker-end="url(#a4)"/>
+<text x="505" y="188" class="m mu" text-anchor="middle">shift 1</text>
+<path d="M474,246C500,246 510,256 536,256" class="l" marker-end="url(#a4)"/>
+<path d="M20,382H980" class="grid dsh"/>
+<text x="20" y="404" class="h">the turn · an independent flow</text>
+<rect x="20" y="420" width="200" height="60" rx="3" class="b"/>
+<text x="34" y="442" class="h">write-back</text>
+<text x="34" y="460" class="m mu">onNewMessage →</text>
+<text x="34" y="474" class="m mu">rebuildChunks</text>
+<path d="M120,420V296H270V194H302" class="l" marker-end="url(#a4)"/>
+<text x="128" y="330" class="m mu">closed chunks,</text>
+<text x="128" y="344" class="m mu">newest held back</text>
+<rect x="20" y="506" width="200" height="60" rx="3" class="b"/>
+<text x="34" y="528" class="h">compile()</text>
+<text x="34" y="546" class="m mu">never awaits compression</text>
+<path d="M220,516H440V280" class="l" marker-end="url(#a4)"/>
+<text x="448" y="470" class="m mu">solver demand: on-demand</text>
+<text x="448" y="484" class="m mu">L1s and merges, skips holdback</text>
+<rect x="520" y="506" width="180" height="60" rx="3" class="bw"/>
+<text x="534" y="528" class="h tw">OverBudgetError</text>
+<text x="534" y="546" class="m mu">rendered &gt; W × 1.02</text>
+<path d="M220,552H516" class="lw" marker-end="url(#a4w)"/>
+<text x="370" y="546" class="m tw" text-anchor="middle">throws</text>
+<rect x="740" y="506" width="240" height="60" rx="3" class="bw"/>
+<text x="754" y="526" class="h tw">drain breaker</text>
+<text x="754" y="542" class="m mu">tick() up to 8×, outside the pass</text>
+<text x="754" y="556" class="m mu">no tool-definition refresh</text>
+<path d="M700,536H736" class="lw" marker-end="url(#a4w)"/>
+<text x="718" y="528" class="m tw" text-anchor="middle">fires</text>
+<path d="M960,506V338" class="lw" marker-end="url(#a4w)"/>
+<text x="952" y="420" class="m tw" text-anchor="end">cm.tick() ×≤8</text>
+<text x="20" y="592" class="m mu">Turn and loop share only persisted state. A new L1 is visible at the first compile after its mint lands.</text>
+</svg>

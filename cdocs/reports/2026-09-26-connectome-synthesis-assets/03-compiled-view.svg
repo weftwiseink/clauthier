@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" role="img" aria-label="Per-turn compiled view: a write-once summary tree above; the fold solver picks one frontier through it; the rendered context is system prompt, verbatim head, a middle of recall pairs and raw chunks, a verbatim tail, and the user message with injections, capped by the budget W.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="24" y="24" class="h">Summary archive · write-once, idempotent by source hash</text>
+<text x="24" y="40" class="m mu">minted in the background by the agent's own model, first person, as-of the chunk</text>
+<text x="146" y="76" class="m mu" text-anchor="end">L3</text>
+<text x="146" y="117" class="m mu" text-anchor="end">L2</text>
+<text x="146" y="157" class="m mu" text-anchor="end">L1</text>
+<text x="146" y="195" class="m mu" text-anchor="end">L0 chunks</text>
+<text x="146" y="209" class="m mu" text-anchor="end">~3–6k tok</text>
+<path class="edge" d="M166.5,184V160M166.5,146V122M181.5,184V160M181.5,146V122M196.5,184V160M196.5,146V122M211.5,184V160M211.5,146V122M226.5,184V160M226.5,146V122M241.5,184V160M241.5,146V122M256.5,184V160M256.5,146V122M271.5,184V160M271.5,146V122M286.5,184V160M286.5,146V122M301.5,184V160M301.5,146V122M316.5,184V160M316.5,146V122M331.5,184V160M331.5,146V122M346.5,184V160M346.5,146V122M361.5,184V160M361.5,146V122M376.5,184V160M376.5,146V122M391.5,184V160M391.5,146V122M406.5,184V160M406.5,146V122M421.5,184V160M421.5,146V122M436.5,184V160M436.5,146V122M451.5,184V160M451.5,146V122M466.5,184V160M466.5,146V122M481.5,184V160M481.5,146V122M496.5,184V160M496.5,146V122M511.5,184V160M511.5,146V122M526.5,184V160M526.5,146V122M541.5,184V160M541.5,146V122M556.5,184V160M556.5,146V122M571.5,184V160M571.5,146V122M586.5,184V160M586.5,146V122M601.5,184V160M601.5,146V122M616.5,184V160M616.5,146V122M631.5,184V160M631.5,146V122M646.5,184V160M646.5,146V122M661.5,184V160M661.5,146V122M676.5,184V160M676.5,146V122M691.5,184V160M691.5,146V122M204,104V82M294,104V82M384,104V82M474,104V82M564,104V82M654,104V82"/>
+<rect x="162" y="62" width="534" height="20" rx="2" class="nd dsh"/>
+<text x="429" y="76" class="m mu" text-anchor="middle">L3 · minted, not selected this turn</text>
+<rect x="162" y="104" width="84" height="18" class="nd-sel"/><text x="204" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="252" y="104" width="84" height="18" class="nd-sel"/><text x="294" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="342" y="104" width="84" height="18" class="nd"/>
+<rect x="432" y="104" width="84" height="18" class="nd-sel"/><text x="474" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="522" y="104" width="84" height="18" class="nd"/>
+<rect x="612" y="104" width="84" height="18" class="nd"/>
+<g>
+<rect x="160" y="146" width="13" height="14" class="nd"/><rect x="175" y="146" width="13" height="14" class="nd"/><rect x="190" y="146" width="13" height="14" class="nd"/><rect x="205" y="146" width="13" height="14" class="nd"/><rect x="220" y="146" width="13" height="14" class="nd"/><rect x="235" y="146" width="13" height="14" class="nd"/><rect x="250" y="146" width="13" height="14" class="nd"/><rect x="265" y="146" width="13" height="14" class="nd"/><rect x="280" y="146" width="13" height="14" class="nd"/><rect x="295" y="146" width="13" height="14" class="nd"/><rect x="310" y="146" width="13" height="14" class="nd"/><rect x="325" y="146" width="13" height="14" class="nd"/>
+<rect x="340" y="146" width="13" height="14" class="nd-sel"/><rect x="355" y="146" width="13" height="14" class="nd-sel"/><rect x="370" y="146" width="13" height="14" class="nd-sel"/><rect x="385" y="146" width="13" height="14" class="nd-sel"/><rect x="400" y="146" width="13" height="14" class="nd-sel"/><rect x="415" y="146" width="13" height="14" class="nd-sel"/>
+<rect x="430" y="146" width="13" height="14" class="nd"/><rect x="445" y="146" width="13" height="14" class="nd"/><rect x="460" y="146" width="13" height="14" class="nd"/><rect x="475" y="146" width="13" height="14" class="nd"/><rect x="490" y="146" width="13" height="14" class="nd"/><rect x="505" y="146" width="13" height="14" class="nd"/>
+<rect x="520" y="146" width="13" height="14" class="nd-sel"/><rect x="535" y="146" width="13" height="14" class="nd-sel"/><rect x="550" y="146" width="13" height="14" class="nd-sel"/><rect x="565" y="146" width="13" height="14" class="nd-sel"/><rect x="580" y="146" width="13" height="14" class="nd-sel"/><rect x="595" y="146" width="13" height="14" class="nd-sel"/>
+<rect x="610" y="146" width="13" height="14" class="nd"/><rect x="625" y="146" width="13" height="14" class="nd"/><rect x="640" y="146" width="13" height="14" class="nd"/><rect x="655" y="146" width="13" height="14" class="nd"/><rect x="670" y="146" width="13" height="14" class="nd"/><rect x="685" y="146" width="13" height="14" class="nd"/>
+</g>
+<g>
+<rect x="160" y="184" width="13" height="14" class="nd"/><rect x="175" y="184" width="13" height="14" class="nd"/><rect x="190" y="184" width="13" height="14" class="nd"/><rect x="205" y="184" width="13" height="14" class="nd"/><rect x="220" y="184" width="13" height="14" class="nd"/><rect x="235" y="184" width="13" height="14" class="nd"/><rect x="250" y="184" width="13" height="14" class="nd"/><rect x="265" y="184" width="13" height="14" class="nd"/><rect x="280" y="184" width="13" height="14" class="nd"/><rect x="295" y="184" width="13" height="14" class="nd"/><rect x="310" y="184" width="13" height="14" class="nd"/><rect x="325" y="184" width="13" height="14" class="nd"/><rect x="340" y="184" width="13" height="14" class="nd"/><rect x="355" y="184" width="13" height="14" class="nd"/><rect x="370" y="184" width="13" height="14" class="nd"/><rect x="385" y="184" width="13" height="14" class="nd"/><rect x="400" y="184" width="13" height="14" class="nd"/><rect x="415" y="184" width="13" height="14" class="nd"/><rect x="430" y="184" width="13" height="14" class="nd"/><rect x="445" y="184" width="13" height="14" class="nd"/><rect x="460" y="184" width="13" height="14" class="nd"/><rect x="475" y="184" width="13" height="14" class="nd"/><rect x="490" y="184" width="13" height="14" class="nd"/><rect x="505" y="184" width="13" height="14" class="nd"/><rect x="520" y="184" width="13" height="14" class="nd"/><rect x="535" y="184" width="13" height="14" class="nd"/><rect x="550" y="184" width="13" height="14" class="nd"/><rect x="565" y="184" width="13" height="14" class="nd"/><rect x="580" y="184" width="13" height="14" class="nd"/><rect x="595" y="184" width="13" height="14" class="nd"/>
+<rect x="610" y="184" width="13" height="14" class="nd-raw"/><rect x="625" y="184" width="13" height="14" class="nd-raw"/><rect x="640" y="184" width="13" height="14" class="nd-raw"/><rect x="655" y="184" width="13" height="14" class="nd-raw"/><rect x="670" y="184" width="13" height="14" class="nd-raw"/><rect x="685" y="184" width="13" height="14" class="nd-raw"/>
+</g>
+<polygon points="160,200 248,200 176,378 150,378" class="fun"/>
+<polygon points="250,200 338,200 204,378 178,378" class="fun"/>
+<polygon points="340,200 428,200 302,378 206,378" class="fun"/>
+<polygon points="430,200 518,200 330,378 304,378" class="fun"/>
+<polygon points="520,200 608,200 428,378 332,378" class="fun"/>
+<polygon points="610,200 698,200 646,378 430,378" class="fun-raw"/>
+<text x="214" y="236" class="m tc">fold solver: one frontier through the tree</text>
+<rect x="730" y="150" width="240" height="42" rx="2" class="b"/>
+<text x="850" y="176" class="h" text-anchor="middle">raw messages (Chronicle)</text>
+<path d="M940,192V376" class="l" marker-end="url(#a3)"/>
+<text x="932" y="236" class="m mu" text-anchor="end">verbatim</text>
+<text x="700" y="262" class="m">prompt cache is exact-prefix:</text>
+<text x="700" y="278" class="m">a fold change re-bills</text>
+<text x="700" y="294" class="m">everything to its right.</text>
+<text x="700" y="314" class="m mu">solver keeps last turn's</text>
+<text x="700" y="330" class="m mu">frontier when it can</text>
+<text x="24" y="372" class="m mu">cache marks</text>
+<path d="M99,366h10l-5,10z M143,366h10l-5,10z M425,366h10l-5,10z M643,366h10l-5,10z" class="fk"/>
+<rect x="24" y="380" width="80" height="40" class="b"/>
+<text x="64" y="397" class="m" text-anchor="middle">system +</text>
+<text x="64" y="411" class="m" text-anchor="middle">injections</text>
+<rect x="106" y="380" width="40" height="40" class="bk"/>
+<text x="126" y="404" class="m" text-anchor="middle">HEAD</text>
+<rect x="150" y="380" width="26" height="40" class="bc"/>
+<rect x="178" y="380" width="26" height="40" class="bc"/>
+<rect x="206" y="380" width="14" height="40" class="bc"/><rect x="222" y="380" width="14" height="40" class="bc"/><rect x="238" y="380" width="14" height="40" class="bc"/><rect x="254" y="380" width="14" height="40" class="bc"/><rect x="270" y="380" width="14" height="40" class="bc"/><rect x="286" y="380" width="14" height="40" class="bc"/>
+<rect x="304" y="380" width="26" height="40" class="bc"/>
+<rect x="332" y="380" width="14" height="40" class="bc"/><rect x="348" y="380" width="14" height="40" class="bc"/><rect x="364" y="380" width="14" height="40" class="bc"/><rect x="380" y="380" width="14" height="40" class="bc"/><rect x="396" y="380" width="14" height="40" class="bc"/><rect x="412" y="380" width="14" height="40" class="bc"/>
+<rect x="430" y="380" width="34" height="40" class="bk"/><rect x="466" y="380" width="34" height="40" class="bk"/><rect x="502" y="380" width="34" height="40" class="bk"/><rect x="538" y="380" width="34" height="40" class="bk"/><rect x="574" y="380" width="34" height="40" class="bk"/><rect x="610" y="380" width="34" height="40" class="bk"/>
+<text x="163" y="404" class="m tc" text-anchor="middle">L2</text><text x="191" y="404" class="m tc" text-anchor="middle">L2</text><text x="317" y="404" class="m tc" text-anchor="middle">L2</text>
+<rect x="650" y="380" width="250" height="40" class="bk"/>
+<text x="775" y="397" class="m" text-anchor="middle">TAIL · verbatim recent window</text>
+<text x="775" y="412" class="m mu" text-anchor="middle">30k fallback · ~450k large-tail</text>
+<rect x="904" y="380" width="12" height="40" class="b"/>
+<rect x="918" y="380" width="32" height="40" class="bk"/>
+<text x="934" y="404" class="m" text-anchor="middle">user</text>
+<rect x="952" y="380" width="24" height="40" class="bd"/>
+<text x="106" y="438" class="m mu">head · often 0</text>
+<text x="398" y="438" class="m mu" text-anchor="middle">MIDDLE · recall pairs (L1–L2 here) + raw chunks, oldest first</text>
+<text x="976" y="438" class="m mu" text-anchor="end">lessons ≤5</text>
+<path d="M24,452V464M24,458H976M976,452V464" class="l"/>
+<text x="500" y="478" class="m" text-anchor="middle">W = contextBudgetTokens (runbook: ≈160–178k on 200k-window models)</text>
+<text x="976" y="496" class="m tw" text-anchor="end">above W × 1.02 → OverBudgetError, never silent truncation</text>
+<text x="24" y="512" class="m mu">each selected summary renders once, as a recall pair:</text>
+<text x="24" y="530" class="m">Context Manager: "What do you remember from earlier?"   →   Claude: "&lt;L2 memory, in my own words&gt;"</text>
+</svg>

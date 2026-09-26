@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 310" role="img" aria-label="The 68 initiations incident: before the fix, the verbatim head sat after the recall pairs in the mint request, so the summarizer narrated it as fresh events and merges compounded the false memory; after the fix, the head comes first and the mint covers only the chunk.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs><marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="20" y="28" class="h tw">before the fix (pre-2026-07): head placed after the recall pairs</text>
+<rect x="20" y="44" width="200" height="36" class="bc"/><text x="32" y="66" class="m">recall pairs · older memories</text>
+<rect x="224" y="44" width="170" height="36" class="bw"/><text x="236" y="66" class="m">HEAD · verbatim origin</text>
+<rect x="398" y="44" width="90" height="36" class="b"/><text x="443" y="66" class="m" text-anchor="middle">thin chunk</text>
+<text x="224" y="98" class="m tw">reads as the latest live conversation</text>
+<path d="M488,62H536" class="l" marker-end="url(#a9)"/>
+<text x="512" y="56" class="m mu" text-anchor="middle">mint</text>
+<rect x="540" y="44" width="400" height="36" class="bw"/>
+<text x="552" y="59" class="m">L1: "Antra came to me to explore the</text>
+<text x="552" y="73" class="m">transformation story again…"  (did not happen)</text>
+<path d="M560,80V96" class="l" marker-end="url(#a9)"/>
+<rect x="560" y="98" width="380" height="24" class="bw"/><text x="572" y="114" class="m">L2 merge keeps the invented event</text>
+<path d="M580,122V132" class="l" marker-end="url(#a9)"/>
+<rect x="580" y="134" width="360" height="24" class="bw"/><text x="592" y="150" class="m">higher merges: "runaway false memories"</text>
+<text x="940" y="176" class="m tw" text-anchor="end">the "68 initiations" incident</text>
+<path d="M20,190H940" class="grid dsh"/>
+<text x="20" y="214" class="h">after: the mint request as built today</text>
+<rect x="20" y="226" width="150" height="36" class="b"/><text x="32" y="248" class="m">host system prompt</text>
+<rect x="174" y="226" width="100" height="36" class="bk"/><text x="224" y="248" class="m" text-anchor="middle">HEAD</text>
+<rect x="278" y="226" width="150" height="36" class="bc"/><text x="290" y="248" class="m">recall pairs</text>
+<rect x="432" y="226" width="230" height="36" class="b"/><text x="444" y="248" class="m">"You will soon form a new memory"</text>
+<rect x="666" y="226" width="90" height="36" class="b"/><text x="711" y="248" class="m" text-anchor="middle">chunk</text>
+<path d="M756,244H798" class="l" marker-end="url(#a9)"/>
+<rect x="802" y="226" width="138" height="36" class="bc"/><text x="814" y="248" class="m">L1 of this chunk</text>
+<text x="20" y="286" class="m mu">The fix was ordering, not verification. Nothing checks a recollection against the record.</text>
+<text x="20" y="302" class="m mu">Source: context-manager autobiographical.ts:5646-5652 (commit 7959602).</text>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-label="Chronicle archive: records append on main; /checkpoint marks a position without branching; /restore branches from the checkpoint message; /undo branches from the sequence before a turn; state slots materialize from the active branch.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="24" y="28" class="m mu">Record { id, sequence, branch, timestamp, record_type, payload, caused_by[], linked_to[] }</text>
+<path d="M60,210H890" class="lk"/>
+<text x="24" y="214" class="h">main</text>
+<path d="M138,203Q186,168 234,203M282,203Q330,168 378,203M474,203Q498,182 522,203M666,203Q714,172 762,203" class="l" marker-end="url(#a2)"/>
+<text x="186" y="166" class="m mu" text-anchor="middle">caused_by</text>
+<g class="fp">
+<circle cx="90" cy="210" r="7" class="nd-raw"/><circle cx="138" cy="210" r="7" class="nd-raw"/><circle cx="186" cy="210" r="7" class="nd-raw"/><circle cx="234" cy="210" r="7" class="nd-raw"/><circle cx="282" cy="210" r="7" class="nd-raw"/><circle cx="330" cy="210" r="7" class="nd-raw"/><circle cx="378" cy="210" r="7" class="nd-raw"/><circle cx="426" cy="210" r="7" class="nd-raw"/><circle cx="474" cy="210" r="7" class="nd-raw"/><circle cx="522" cy="210" r="7" class="nd-raw"/><circle cx="570" cy="210" r="7" class="nd-raw"/><circle cx="618" cy="210" r="7" class="nd-raw"/><circle cx="666" cy="210" r="7" class="nd-raw"/><circle cx="714" cy="210" r="7" class="nd-raw"/><circle cx="762" cy="210" r="7" class="nd-raw"/><circle cx="810" cy="210" r="7" class="nd-raw"/><circle cx="858" cy="210" r="7" class="nd-raw"/>
+</g>
+<text x="90" y="234" class="m mu" text-anchor="middle">1</text>
+<text x="378" y="234" class="m mu" text-anchor="middle">7</text>
+<text x="618" y="234" class="m mu" text-anchor="middle">12</text>
+<text x="858" y="234" class="m mu" text-anchor="middle">17 · head</text>
+<path d="M378,203V146" class="l"/>
+<path d="M378,146L402,153L378,160z" class="fk"/>
+<text x="410" y="146" class="m">/checkpoint records a position</text>
+<text x="410" y="160" class="m mu">{branchName, messageId} · no branch</text>
+<path d="M378,217C378,290 410,300 450,300H770" class="lc"/>
+<circle cx="474" cy="300" r="6" class="nd-sel"/><circle cx="522" cy="300" r="6" class="nd-sel"/><circle cx="570" cy="300" r="6" class="nd-sel"/><circle cx="618" cy="300" r="6" class="nd-sel"/><circle cx="666" cy="300" r="6" class="nd-sel"/><circle cx="714" cy="300" r="6" class="nd-sel"/>
+<text x="780" y="304" class="m tc">head</text>
+<text x="474" y="330" class="m">/restore → new branch from the checkpoint message</text>
+<text x="474" y="345" class="m mu">copy-on-write: shares records 1–7 with main</text>
+<path d="M618,203C618,130 646,110 680,110H890" class="lc"/>
+<circle cx="714" cy="110" r="6" class="nd-sel"/><circle cx="762" cy="110" r="6" class="nd-sel"/><circle cx="810" cy="110" r="6" class="nd-sel"/><circle cx="858" cy="110" r="6" class="nd-sel"/>
+<text x="560" y="72" class="m">/undo → createBranchAt(undo/&lt;agent&gt;/…, sequenceBefore)</text>
+<text x="680" y="138" class="m tw">outside-world actions still stand</text>
+<path d="M120,218V360" class="l dsh" marker-end="url(#a2)"/>
+<text x="128" y="290" class="m mu">materialize</text>
+<rect x="24" y="366" width="142" height="28" rx="2" class="b"/><text x="95" y="384" class="m" text-anchor="middle">messages (AppendLog)</text>
+<rect x="178" y="366" width="124" height="28" rx="2" class="b"/><text x="240" y="384" class="m" text-anchor="middle">autobio:summaries</text>
+<rect x="314" y="366" width="237" height="28" rx="2" class="b"/><text x="432" y="384" class="m" text-anchor="middle">autobio:resolutions (branch-scoped)</text>
+<rect x="563" y="366" width="117" height="28" rx="2" class="b"/><text x="621" y="384" class="m" text-anchor="middle">workspace (Tree)</text>
+<rect x="692" y="366" width="60" height="28" rx="2" class="b"/><text x="722" y="384" class="m" text-anchor="middle">lessons</text>
+<text x="24" y="414" class="m mu">Redact and edit act on slots; the record log keeps the history of both (inference from the types).</text>
+</svg>

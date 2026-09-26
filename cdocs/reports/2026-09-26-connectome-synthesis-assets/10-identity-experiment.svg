@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 310" role="img" aria-label="Option 4 experiment: baseline H is current handoffs and devlogs; arm N adds cited per-role working notes; arm S adds a persistent first-person self-model for one long-lived specialist. All three get the same audit.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs><marker id="a10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="60" y="30" class="h">Option 4: two arms against current practice</text>
+<text x="60" y="48" class="m mu">matched workstreams over several weeks · same role in N and S · model held fixed in S</text>
+<rect x="60" y="196" width="220" height="40" class="b"/><text x="170" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="370" y="196" width="220" height="40" class="b"/><text x="480" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="370" y="152" width="220" height="40" class="bd"/><text x="480" y="170" class="m" text-anchor="middle">per-role working notes</text><text x="480" y="184" class="m mu" text-anchor="middle">hindsight ok · claims cite evidence</text>
+<rect x="680" y="196" width="220" height="40" class="b"/><text x="790" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="680" y="152" width="220" height="40" class="bd"/><text x="790" y="170" class="m" text-anchor="middle">per-role working notes</text><text x="790" y="184" class="m mu" text-anchor="middle">hindsight ok · claims cite evidence</text>
+<rect x="680" y="96" width="220" height="52" class="bc"/><text x="790" y="116" class="m" text-anchor="middle">first-person self-model</text><text x="790" y="130" class="m mu" text-anchor="middle">one long-lived specialist</text><text x="790" y="143" class="m mu" text-anchor="middle">what it gets wrong, who pushed back</text>
+<path d="M286,216H364" class="l" marker-end="url(#a10)"/><text x="325" y="208" class="m mu" text-anchor="middle">N beats H?</text>
+<path d="M596,172H674" class="l" marker-end="url(#a10)"/><text x="635" y="164" class="m mu" text-anchor="middle">S beats N?</text>
+<text x="170" y="256" class="h" text-anchor="middle">baseline H</text>
+<text x="480" y="256" class="h td" text-anchor="middle">arm N · notes</text>
+<text x="790" y="256" class="h tc" text-anchor="middle">arm S · self</text>
+<rect x="60" y="268" width="840" height="28" rx="2" class="b dsh"/>
+<text x="480" y="286" class="m" text-anchor="middle">same audit for all three: resumption cost · unsupported-claim rate · misattribution · reviewer agreement</text>
+</svg>

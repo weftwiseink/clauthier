@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" role="img" aria-label="cdocs memory model: writers on the left commit typed documents with frontmatter lifecycles into the project repo; five pull-based read paths on the right feed a short-lived agent; session transcripts sit outside git, unlinked.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs>
+<marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a6d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fd"/></marker>
+</defs>
+<text x="20" y="64" class="h">who writes</text>
+<rect x="20" y="80" width="190" height="52" rx="2" class="b"/><text x="32" y="101" class="h">main session</text><text x="32" y="120" class="m mu">implementer · proposer</text>
+<rect x="20" y="144" width="190" height="52" rx="2" class="b"/><text x="32" y="165" class="h">reviewer (opus tier)</text><text x="32" y="184" class="m mu">never the doc's author</text>
+<rect x="20" y="208" width="190" height="52" rx="2" class="b"/><text x="32" y="229" class="h">triage · nit-fix</text><text x="32" y="248" class="m mu">sandboxed to cdocs/</text>
+<rect x="20" y="272" width="190" height="52" rx="2" class="b dsh"/><text x="32" y="293" class="h">human</text><text x="32" y="312" class="m mu">steers; not recorded</text>
+<text x="20" y="352" class="m mu">PostToolUse hook checks</text>
+<text x="20" y="366" class="m mu">frontmatter: warns, never</text>
+<text x="20" y="380" class="m mu">blocks</text>
+<path d="M210,106H256M210,170H256M210,234H256" class="ld" marker-end="url(#a6d)"/>
+<path d="M210,298H256" class="l dsh" marker-end="url(#a6)"/>
+<text x="233" y="100" class="m mu" text-anchor="middle">write</text>
+<rect x="260" y="40" width="480" height="420" rx="3" class="bd" style="fill:var(--fig)"/>
+<text x="276" y="64" class="h td">project repo · git · shared by every session</text>
+<rect x="276" y="80" width="218" height="104" rx="2" class="b"/>
+<text x="288" y="100" class="h">devlog</text><text x="288" y="118" class="m mu">how we did it · as-of</text>
+<text x="288" y="140" class="m">wip → review_ready → done</text><text x="288" y="158" class="m">handoff before /compact</text>
+<rect x="506" y="80" width="218" height="104" rx="2" class="b"/>
+<text x="518" y="100" class="h">proposal</text><text x="518" y="118" class="m mu">what to build · phases</text>
+<text x="518" y="140" class="m">rfp → wip → review_ready →</text><text x="518" y="158" class="m">impl_ready → accepted|evolved</text>
+<rect x="276" y="212" width="218" height="104" rx="2" class="b"/>
+<text x="288" y="232" class="h">report</text><text x="288" y="250" class="m mu">what we learned · hindsight</text>
+<text x="288" y="272" class="m">wip → review_ready → done</text><text x="288" y="290" class="m mu">BLUF-first, for readers</text>
+<rect x="506" y="212" width="218" height="104" rx="2" class="b"/>
+<text x="518" y="232" class="h">review</text><text x="518" y="250" class="m mu">verdict on another doc</text>
+<text x="518" y="272" class="m">wip → done; verdict sets</text><text x="518" y="290" class="m">subject.last_reviewed</text>
+<path d="M615,212V188" class="ld" marker-end="url(#a6d)"/>
+<text x="623" y="204" class="m td">review_of</text>
+<path d="M385,184V208" class="l" marker-end="url(#a6)"/>
+<text x="393" y="202" class="m mu">synthesized into</text>
+<rect x="276" y="330" width="448" height="58" rx="2" class="b"/>
+<text x="288" y="350" class="h">frontmatter is the index</text>
+<text x="288" y="368" class="m">first_authored · task_list · type · state · status</text>
+<text x="288" y="382" class="m">last_reviewed{status,by,at,round} · tags</text>
+<rect x="276" y="400" width="218" height="48" rx="2" class="b"/>
+<text x="288" y="420" class="m">.claude/rules/cdocs.md</text><text x="288" y="438" class="m mu">pinned via @-import</text>
+<rect x="506" y="400" width="218" height="48" rx="2" class="b"/>
+<text x="518" y="420" class="m">.claude/oversee/*.json</text><text x="518" y="438" class="m mu">arc-state + claim files</text>
+<text x="790" y="64" class="h">how a fresh session reads</text>
+<rect x="790" y="80" width="190" height="44" rx="2" class="b"/><text x="802" y="98" class="m">@-imported rules</text><text x="802" y="114" class="m mu">always in context</text>
+<rect x="790" y="132" width="190" height="44" rx="2" class="b"/><text x="802" y="150" class="m">SessionStart hash check</text><text x="802" y="166" class="m mu">&lt;500 B nudge if stale</text>
+<rect x="790" y="184" width="190" height="44" rx="2" class="b"/><text x="802" y="202" class="m">/cdocs:status · triage</text><text x="802" y="218" class="m mu">O(N) frontmatter scans</text>
+<rect x="790" y="236" width="190" height="44" rx="2" class="b"/><text x="802" y="254" class="m">agentic grep / glob</text><text x="802" y="270" class="m mu">the actual retriever</text>
+<rect x="790" y="288" width="190" height="44" rx="2" class="b"/><text x="802" y="306" class="m">handoffs + arc-state</text><text x="802" y="322" class="m mu">read on resume, if told</text>
+<path d="M740,102H786M740,154H786M740,206H786M740,258H786M740,310H786" class="l" marker-end="url(#a6)"/>
+<text x="763" y="96" class="m mu" text-anchor="middle">pull</text>
+<path d="M885,332V356" class="l" marker-end="url(#a6)"/>
+<rect x="790" y="360" width="190" height="48" rx="2" class="bd"/>
+<text x="802" y="380" class="h">short-lived agent</text><text x="802" y="398" class="m mu">no memory of its own</text>
+<rect x="260" y="490" width="480" height="50" rx="2" class="b dsh"/>
+<text x="276" y="510" class="m">Claude Code session transcripts (JSONL)</text>
+<text x="276" y="528" class="m mu">~/.claude/projects/… · lossless where present · machine-local · outside git</text>
+<path d="M380,490V462" class="l dsh"/>
+<path d="M374,470l12,12m0,-12l-12,12" class="lw"/>
+<text x="394" y="480" class="m mu">not linked (option 3)</text>
+</svg>

@@ -1,0 +1,966 @@
+<title>Connectome vs cdocs</title>
+<meta name="description" content="Anima Labs' Connectome and cdocs compared as agent memory systems: architecture, overlap, the identity question, and what cdocs should adopt.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=JetBrains+Mono:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400..650;1,7..72,400&display=swap">
+<style>
+:root{
+  --paper:#EEF1F0; --panel:#FAFBFB; --fig:#F5F7F6; --ink:#17212B; --ink-2:#4F5B67; --line:#B9C3C2;
+  --cn:#7C2D63; --cn-soft:#F0E1EB; --cd:#0C6A5D; --cd-soft:#DAEDE8; --warn:#B0281F; --warn-soft:#F8E0DC; --on:#FAFBFB;
+  --f-disp:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Literata", "Iowan Old Style", Georgia, serif;
+  --f-ui:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0F1417; --panel:#172026; --fig:#131A1E; --ink:#E2E8E6; --ink-2:#9BA8AF; --line:#35434B;
+    --cn:#E38DC2; --cn-soft:#3A2033; --cd:#5ACAB5; --cd-soft:#12332D; --warn:#F28A7F; --warn-soft:#3E201C; --on:#0F1417;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0F1417; --panel:#172026; --fig:#131A1E; --ink:#E2E8E6; --ink-2:#9BA8AF; --line:#35434B;
+  --cn:#E38DC2; --cn-soft:#3A2033; --cd:#5ACAB5; --cd-soft:#12332D; --warn:#F28A7F; --warn-soft:#3E201C; --on:#0F1417;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:40px 80px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;line-height:1.1;margin:0}
+h1{font-size:clamp(2.2rem,6vw,4.4rem);font-weight:750;font-variation-settings:"wdth" 78;letter-spacing:-.02em}
+h1 .c1{color:var(--cn)} h1 .c2{color:var(--cd)}
+h2{font-size:clamp(1.6rem,3.2vw,2.3rem);font-weight:700;font-variation-settings:"wdth" 82;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:650;margin-top:1.6em}
+p{margin:0 0 1em}
+a{color:var(--cd);text-underline-offset:2px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--cn);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.84em;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:0 .25em;overflow-wrap:anywhere}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.eyebrow b{color:var(--ink);font-weight:600}
+.cn{color:var(--cn)} .cd{color:var(--cd)} .warn{color:var(--warn)}
+.inf{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--ink-2);color:var(--ink-2);border-radius:2px;padding:0 .35em;vertical-align:.12em;white-space:nowrap}
+header.hero{display:grid;gap:22px;padding-block:24px 36px;border-bottom:2px solid var(--ink)}
+.hero .sub{font-family:var(--f-body);font-size:1.18rem;max-width:62ch;color:var(--ink-2);margin:0}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.verdict{background:var(--panel);border:1px solid var(--line);padding:14px 16px;font-size:.93rem;line-height:1.5}
+.verdict h3{margin:0 0 6px;font-size:.8rem;font-family:var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.verdict ul{margin:0;padding-left:1.1em}
+.verdict.no h3{color:var(--warn)} .verdict.yes h3{color:var(--cd)} .verdict.test h3{color:var(--cn)}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:.78rem}
+nav.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
+nav.toc a:hover{color:var(--ink)}
+section{padding-block:48px 8px;display:grid;gap:18px}
+section > .head{display:grid;gap:6px}
+figure{margin:8px 0 16px;background:var(--fig);border:1px solid var(--line);padding:16px 0 0}
+figure .scroll{overflow-x:auto;padding-inline:12px;-webkit-overflow-scrolling:touch}
+figure svg{display:block;width:100%;height:auto;min-width:760px}
+figcaption{font-family:var(--f-ui);font-size:.9rem;line-height:1.45;padding:10px 16px 14px;border-top:1px solid var(--line);margin-top:12px;color:var(--ink-2);max-width:90ch}
+figcaption b{color:var(--ink);font-family:var(--f-mono);font-size:.78rem;letter-spacing:.06em;margin-right:.4em}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.facts div{background:var(--panel);padding:12px 14px;font-size:.88rem;line-height:1.45}
+.facts dt{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.facts dd{margin:4px 0 0;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-ui);font-size:.88rem;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);background:var(--fig);position:sticky;top:0}
+tbody th{font-weight:650;white-space:nowrap}
+table.cmp{min-width:900px} table.cmp td:nth-child(2){border-left:3px solid var(--cn)} table.cmp td:nth-child(3){border-left:3px solid var(--cd)}
+table.opt{min-width:960px} table.opt td.rank{font-family:var(--f-disp);font-weight:750;font-size:1.3rem;font-variation-settings:"wdth" 80}
+.grade{font-family:var(--f-mono);font-weight:600;display:inline-block;min-width:1.6em;text-align:center;border:1px solid currentColor;border-radius:2px;padding:0 .2em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.col{background:var(--panel);border:1px solid var(--line);padding:16px 18px;font-size:.95rem;line-height:1.55}
+.col h3{margin:0 0 10px}
+.col ul{margin:0;padding-left:1.1em;display:grid;gap:10px}
+.tag{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.05em;padding:0 .35em;border-radius:2px;margin-right:.35em;white-space:nowrap}
+.tag.sh{background:var(--cd-soft);color:var(--cd)} .tag.id{background:var(--cn-soft);color:var(--cn)}
+.note{border-left:3px solid var(--ink);padding:4px 0 4px 14px;font-size:.95rem}
+ol.sources,ul.sources{font-family:var(--f-ui);font-size:.88rem;line-height:1.5;padding-left:1.2em;display:grid;gap:4px;columns:1}
+.srcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 32px}
+.srcgrid h3{margin:0 0 6px;font-size:.95rem}
+footer{margin-top:56px;padding-top:16px;border-top:2px solid var(--ink);font-family:var(--f-ui);font-size:.85rem;color:var(--ink-2);display:grid;gap:6px}
+/* SVG diagram classes */
+svg text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+svg .m{font-family:var(--f-mono);font-size:10.5px}
+svg .h{font-weight:650;font-size:13px}
+svg .mu{fill:var(--ink-2)} svg .tc{fill:var(--cn)} svg .td{fill:var(--cd)} svg .tw{fill:var(--warn)} svg .on{fill:var(--on)}
+svg .b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+svg .bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+svg .bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+svg .bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+svg .bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+svg .dsh{stroke-dasharray:4 3}
+svg .l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+svg .lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+svg .ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+svg .lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+svg .lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+svg .fk{fill:var(--ink)} svg .f2{fill:var(--ink-2)} svg .fc{fill:var(--cn)} svg .fd{fill:var(--cd)} svg .fw{fill:var(--warn)} svg .fp{fill:var(--panel)}
+svg .nd{fill:var(--panel);stroke:var(--line);stroke-width:1} svg .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} svg .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+svg .edge{fill:none;stroke:var(--line);stroke-width:1}
+svg .fun{fill:var(--cn);fill-opacity:.13;stroke:none} svg .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+svg .grid{fill:none;stroke:var(--line);stroke-width:1}
+svg .lbg{fill:var(--fig);stroke:none}
+svg .pt{fill:var(--ink-2)} svg .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media (max-width:600px){body{font-size:16px} .verdict{font-size:.9rem}}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow"><b>Research synthesis</b> · cdocs/connectome-research · 2026-09-26</div>
+  <h1><span class="c1">One agent for a lifetime.</span><br><span class="c2">Many agents for one project.</span></h1>
+  <p class="sub">Anima Labs' Connectome and cdocs look like rival memory systems. They mostly solve different problems, and they meet in one place: a long-lived specialist that stays on a single project. This page lays out Connectome's architecture, where the two overlap, the case for and against agent identity, and what cdocs should borrow.</p>
+  <div class="verdicts">
+    <div class="verdict no"><h3>Do not adopt</h3><ul><li>Connectome as a runtime (pre-1.0, fast-moving, unclear licensing).</li><li>Self-voiced, as-of summaries as a recall channel for coding.</li><li>Model-bound continuity.</li></ul></div>
+    <div class="verdict yes"><h3>Adopt, in order</h3><ul><li>1a. Human-reviewed distill pass; 1b. <code>supersedes</code> links.</li><li>2. A generated live index, read on demand, never pinned.</li><li>3. Links from devlogs to the session transcripts Claude Code already writes.</li></ul></div>
+    <div class="verdict test"><h3>Test, do not assume</h3><ul><li>Agent identity is unmeasured, not refuted. Run a two-arm experiment against current handoffs: cited per-role notes, and notes plus a first-person self-model.</li></ul></div>
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#what">What Connectome is</a><a href="#archive">Archive</a><a href="#view">Compiled view</a><a href="#loop">Maintenance loop</a><a href="#identity-model">Identity model</a><a href="#cdocs">cdocs as memory</a><a href="#problems">Two problems</a><a href="#landscape">Landscape</a><a href="#compare">Comparison</a><a href="#identity">Identity question</a><a href="#options">Options</a><a href="#open">Open questions</a><a href="#sources">Sources</a>
+  </nav>
+</header>
+
+<!-- ============ WHAT ============ -->
+<section id="what">
+  <div class="head"><div class="eyebrow">Connectome · provenance</div><h2>Five libraries for agents that keep going</h2></div>
+  <div class="prose">
+    <p>Anima Labs, a San Francisco 501(c)(3) founded in 2025 by Janus and Antra Tessera, describes Connectome as "open-source infrastructure for AI agents that continue over time." Its core claim, from the design doc: <em>"The archive is monotonic; the live view is a projection."</em> Every event is kept. Each turn, a fresh context is compiled from that archive.</p>
+    <p>The name has history. An earlier Python-era <code>antra-tess/connectome</code> and a VEIL-based <code>connectome-ts</code> are both superseded and no longer public. Chronicle's own design doc is titled "Loom of Looms". <span class="inf">inference</span> The branchable record is the loom idea, from the lineage of Janus's loom work, moved into agent infrastructure.</p>
+  </div>
+  <dl class="facts">
+    <div><dt>Maturity</dt><dd>Pre-1.0: context-manager 0.11.0, connectome-host 0.9.0. In daily use by Anima's own "resident" agents.</dd></div>
+    <div><dt>Commits, 30 days</dt><dd>context-manager 150 · agent-framework 104 · host 84 · membrane 46 · chronicle 5</dd></div>
+    <div><dt>License</dt><dd>MIT files on agent-framework and membrane. context-manager and chronicle say MIT in package.json only. connectome-host has none (issue #146).</dd></div>
+    <div><dt>Scale of the hard part</dt><dd><code>autobiographical.ts</code> 11,748 lines; <code>framework.ts</code> 14,669 lines. Fold solver revised six times in about four months.</dd></div>
+  </dl>
+  <figure>
+    <div class="scroll">
+<svg data-name="01-stack" viewBox="0 0 960 560" role="img" aria-label="Connectome stack: connectome-host runs agents on agent-framework, which compiles context with context-manager, streams through membrane to providers, and persists to the Rust chronicle store. MCPL servers push events in; archipelago-home issues identity tokens.">
+<defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<rect x="220" y="24" width="520" height="86" rx="3" class="bc"/>
+<text x="236" y="48" class="h">connectome-host</text>
+<text x="724" y="48" class="m mu" text-anchor="end">v0.9.0 · Bun · 84 commits/30d</text>
+<text x="724" y="66" class="m mu" text-anchor="end">no LICENSE (#146)</text>
+<text x="236" y="72" class="m">recipes (JSON) · TUI / headless / web console</text>
+<text x="236" y="90" class="m">subagent fleet · lessons + retrieval · identity · /debug/context</text>
+<rect x="220" y="150" width="520" height="86" rx="3" class="bc"/>
+<text x="236" y="174" class="h">agent-framework</text>
+<text x="724" y="174" class="m mu" text-anchor="end">MIT · 14.7k-line framework.ts · 104/30d</text>
+<text x="236" y="198" class="m">ProcessQueue · EventGate (gate.json) · modules: workspace, history</text>
+<text x="236" y="216" class="m">MCPL host · maintenance timer (5 s) · undo / restore · subagents</text>
+<rect x="220" y="276" width="330" height="104" rx="3" class="bc"/>
+<text x="236" y="300" class="h">context-manager</text>
+<text x="534" y="300" class="m mu" text-anchor="end">0.11.0 · 150/30d</text>
+<text x="236" y="322" class="m">MessageStore (truth) · ContextLog (view)</text>
+<text x="236" y="340" class="m">AutobiographicalStrategy · 11.7k lines</text>
+<text x="236" y="358" class="m">fold solver · tick() mints via membrane</text>
+<text x="236" y="374" class="m mu">MIT in package.json, no LICENSE file</text>
+<rect x="570" y="276" width="170" height="104" rx="3" class="bc"/>
+<text x="586" y="300" class="h">membrane</text>
+<text x="586" y="322" class="m">participants, not roles</text>
+<text x="586" y="340" class="m">cache-marker placement</text>
+<text x="586" y="358" class="m">provider adapters</text>
+<text x="586" y="374" class="m mu">MIT · 46/30d</text>
+<rect x="220" y="440" width="520" height="96" rx="3" class="bc"/>
+<text x="236" y="464" class="h">chronicle</text>
+<text x="724" y="464" class="m mu" text-anchor="end">Rust + N-API · WAL · 5 commits/30d</text>
+<text x="236" y="486" class="m">append-only record log · copy-on-write branches · sha256 blobs</text>
+<text x="236" y="504" class="m">typed state slots: AppendLog · Tree · Snapshot · Delta · Struct</text>
+<text x="236" y="524" class="m mu">MIT in package.json, no LICENSE file</text>
+<rect x="16" y="150" width="160" height="86" rx="3" class="b dsh"/>
+<text x="30" y="174" class="h">MCPL servers</text>
+<text x="30" y="196" class="m">Discord · Slack</text>
+<text x="30" y="212" class="m">Telegram · Zulip</text>
+<text x="30" y="228" class="m">mail · heartbeat</text>
+<text x="96" y="256" class="m mu" text-anchor="middle">MCPL 0.5.0-draft: push</text>
+<text x="96" y="270" class="m mu" text-anchor="middle">events, inference hooks</text>
+<path d="M176,193H216" class="l" marker-end="url(#a1)"/>
+<text x="197" y="186" class="m mu" text-anchor="middle">events</text>
+<rect x="800" y="24" width="144" height="86" rx="3" class="b dsh"/>
+<text x="814" y="48" class="h">archipelago-home</text>
+<text x="814" y="70" class="m">home node</text>
+<text x="814" y="86" class="m">issues aid1 tokens</text>
+<path d="M740,67H796" class="l" marker-end="url(#a1)"/>
+<text x="768" y="58" class="m mu" text-anchor="middle">proof</text>
+<rect x="800" y="276" width="144" height="104" rx="3" class="b dsh"/>
+<text x="814" y="300" class="h">providers</text>
+<text x="814" y="322" class="m">Anthropic</text>
+<text x="814" y="340" class="m">Bedrock · OpenRouter</text>
+<text x="814" y="358" class="m">OpenAI · Gemini</text>
+<path d="M740,328H796" class="l" marker-end="url(#a1)"/>
+<text x="770" y="321" class="m mu" text-anchor="middle">stream</text>
+<path d="M480,110V146" class="l" marker-end="url(#a1)"/>
+<text x="488" y="133" class="m mu">runs agents</text>
+<path d="M385,236V272" class="l" marker-end="url(#a1)"/>
+<text x="393" y="259" class="m mu">compile() · tick()</text>
+<path d="M655,236V272" class="l" marker-end="url(#a1)"/>
+<text x="663" y="259" class="m mu">stream()</text>
+<path d="M385,380V436" class="l" marker-end="url(#a1)"/>
+<text x="393" y="413" class="m mu">append records · state slots</text>
+<path d="M220,226H204V488H216" class="l" marker-end="url(#a1)"/>
+<text x="196" y="410" class="m mu" text-anchor="end">workspace (Tree),</text>
+<text x="196" y="424" class="m mu" text-anchor="end">undo branches</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 01</b>The stack. Solid boxes are the five Connectome libraries; dashed boxes are adjacent repos and external services. Arrows are the calls between them. Commit counts cover the 30 days before 2026-09-26.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ ARCHIVE ============ -->
+<section id="archive">
+  <div class="head"><div class="eyebrow">Connectome · tier 1 of 4</div><h2>A lossless archive you can branch</h2></div>
+  <div class="prose">
+    <p>Chronicle stores records. Each record has an id, a per-branch sequence, a type, a payload, and two link lists: <code>caused_by</code> and <code>linked_to</code>. Branches are copy-on-write forks with a parent and a branch point. Named <em>state slots</em> (the message log, the summary tree, fold resolutions, the workspace filesystem) are materialized from records on the active branch.</p>
+    <p>Branching is how the agent's history gets revised. <code>/undo</code> and <code>/restore</code> create branches. <code>/checkpoint</code> creates no branch; it records a position that <code>/restore</code> can branch from later. Anima's site adds the caveat: branching changes the recorded trajectory, and actions already taken in the outside world still have their consequences.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="02-chronicle" viewBox="0 0 960 420" role="img" aria-label="Chronicle archive: records append on main; /checkpoint marks a position without branching; /restore branches from the checkpoint message; /undo branches from the sequence before a turn; state slots materialize from the active branch.">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="24" y="28" class="m mu">Record { id, sequence, branch, timestamp, record_type, payload, caused_by[], linked_to[] }</text>
+<path d="M60,210H890" class="lk"/>
+<text x="24" y="214" class="h">main</text>
+<path d="M138,203Q186,168 234,203M282,203Q330,168 378,203M474,203Q498,182 522,203M666,203Q714,172 762,203" class="l" marker-end="url(#a2)"/>
+<text x="186" y="166" class="m mu" text-anchor="middle">caused_by</text>
+<g class="fp">
+<circle cx="90" cy="210" r="7" class="nd-raw"/><circle cx="138" cy="210" r="7" class="nd-raw"/><circle cx="186" cy="210" r="7" class="nd-raw"/><circle cx="234" cy="210" r="7" class="nd-raw"/><circle cx="282" cy="210" r="7" class="nd-raw"/><circle cx="330" cy="210" r="7" class="nd-raw"/><circle cx="378" cy="210" r="7" class="nd-raw"/><circle cx="426" cy="210" r="7" class="nd-raw"/><circle cx="474" cy="210" r="7" class="nd-raw"/><circle cx="522" cy="210" r="7" class="nd-raw"/><circle cx="570" cy="210" r="7" class="nd-raw"/><circle cx="618" cy="210" r="7" class="nd-raw"/><circle cx="666" cy="210" r="7" class="nd-raw"/><circle cx="714" cy="210" r="7" class="nd-raw"/><circle cx="762" cy="210" r="7" class="nd-raw"/><circle cx="810" cy="210" r="7" class="nd-raw"/><circle cx="858" cy="210" r="7" class="nd-raw"/>
+</g>
+<text x="90" y="234" class="m mu" text-anchor="middle">1</text>
+<text x="378" y="234" class="m mu" text-anchor="middle">7</text>
+<text x="618" y="234" class="m mu" text-anchor="middle">12</text>
+<text x="858" y="234" class="m mu" text-anchor="middle">17 · head</text>
+<path d="M378,203V146" class="l"/>
+<path d="M378,146L402,153L378,160z" class="fk"/>
+<text x="410" y="146" class="m">/checkpoint records a position</text>
+<text x="410" y="160" class="m mu">{branchName, messageId} · no branch</text>
+<path d="M378,217C378,290 410,300 450,300H770" class="lc"/>
+<circle cx="474" cy="300" r="6" class="nd-sel"/><circle cx="522" cy="300" r="6" class="nd-sel"/><circle cx="570" cy="300" r="6" class="nd-sel"/><circle cx="618" cy="300" r="6" class="nd-sel"/><circle cx="666" cy="300" r="6" class="nd-sel"/><circle cx="714" cy="300" r="6" class="nd-sel"/>
+<text x="780" y="304" class="m tc">head</text>
+<text x="474" y="330" class="m">/restore → new branch from the checkpoint message</text>
+<text x="474" y="345" class="m mu">copy-on-write: shares records 1–7 with main</text>
+<path d="M618,203C618,130 646,110 680,110H890" class="lc"/>
+<circle cx="714" cy="110" r="6" class="nd-sel"/><circle cx="762" cy="110" r="6" class="nd-sel"/><circle cx="810" cy="110" r="6" class="nd-sel"/><circle cx="858" cy="110" r="6" class="nd-sel"/>
+<text x="560" y="72" class="m">/undo → createBranchAt(undo/&lt;agent&gt;/…, sequenceBefore)</text>
+<text x="680" y="138" class="m tw">outside-world actions still stand</text>
+<path d="M120,218V360" class="l dsh" marker-end="url(#a2)"/>
+<text x="128" y="290" class="m mu">materialize</text>
+<rect x="24" y="366" width="142" height="28" rx="2" class="b"/><text x="95" y="384" class="m" text-anchor="middle">messages (AppendLog)</text>
+<rect x="178" y="366" width="124" height="28" rx="2" class="b"/><text x="240" y="384" class="m" text-anchor="middle">autobio:summaries</text>
+<rect x="314" y="366" width="237" height="28" rx="2" class="b"/><text x="432" y="384" class="m" text-anchor="middle">autobio:resolutions (branch-scoped)</text>
+<rect x="563" y="366" width="117" height="28" rx="2" class="b"/><text x="621" y="384" class="m" text-anchor="middle">workspace (Tree)</text>
+<rect x="692" y="366" width="60" height="28" rx="2" class="b"/><text x="722" y="384" class="m" text-anchor="middle">lessons</text>
+<text x="24" y="414" class="m mu">Redact and edit act on slots; the record log keeps the history of both (inference from the types).</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 02</b>Chronicle. Records only append. <code>/checkpoint</code> marks a position on main. <code>/restore</code> and <code>/undo</code> each start a copy-on-write branch that shares the earlier records. State slots, including the fold resolutions, are read from whichever branch is active. <span class="inf">inference</span> Checkpoints live in host memory (<code>app.branchState</code>), so they probably do not survive a restart.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ VIEW ============ -->
+<section id="view">
+  <div class="head"><div class="eyebrow">Connectome · tiers 3 and 4</div><h2>The context is compiled every turn</h2></div>
+  <div class="prose">
+    <p>The context manager splits history into chunks of about 3–6k tokens. The agent's own model (or a configured <code>compressionModel</code>) writes a first-person L1 recollection of each chunk. About six L1s merge into an L2, and so on, with no fixed number of levels. The mint request holds only what came before the chunk, so a memory never knows how things turned out.</p>
+    <p>Writing summaries and showing them are separate steps. Summaries are written once, in the background. Each turn, a <em>fold solver</em> picks a resolution for each stretch of the middle, then renders it as a <em>recall pair</em>: a "Context Manager" participant asks what the agent remembers, and the agent's own voice answers. The head and the recent tail stay verbatim. Because Anthropic's prompt cache matches exact prefixes, the solver prefers to keep last turn's layout, and it folds deep history first.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="03-compiled-view" viewBox="0 0 1000 540" role="img" aria-label="Per-turn compiled view: a write-once summary tree above; the fold solver picks one frontier through it; the rendered context is system prompt, verbatim head, a middle of recall pairs and raw chunks, a verbatim tail, and the user message with injections, capped by the budget W.">
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="24" y="24" class="h">Summary archive · write-once, idempotent by source hash</text>
+<text x="24" y="40" class="m mu">minted in the background by the agent's own model, first person, as-of the chunk</text>
+<text x="146" y="76" class="m mu" text-anchor="end">L3</text>
+<text x="146" y="117" class="m mu" text-anchor="end">L2</text>
+<text x="146" y="157" class="m mu" text-anchor="end">L1</text>
+<text x="146" y="195" class="m mu" text-anchor="end">L0 chunks</text>
+<text x="146" y="209" class="m mu" text-anchor="end">~3–6k tok</text>
+<path class="edge" d="M166.5,184V160M166.5,146V122M181.5,184V160M181.5,146V122M196.5,184V160M196.5,146V122M211.5,184V160M211.5,146V122M226.5,184V160M226.5,146V122M241.5,184V160M241.5,146V122M256.5,184V160M256.5,146V122M271.5,184V160M271.5,146V122M286.5,184V160M286.5,146V122M301.5,184V160M301.5,146V122M316.5,184V160M316.5,146V122M331.5,184V160M331.5,146V122M346.5,184V160M346.5,146V122M361.5,184V160M361.5,146V122M376.5,184V160M376.5,146V122M391.5,184V160M391.5,146V122M406.5,184V160M406.5,146V122M421.5,184V160M421.5,146V122M436.5,184V160M436.5,146V122M451.5,184V160M451.5,146V122M466.5,184V160M466.5,146V122M481.5,184V160M481.5,146V122M496.5,184V160M496.5,146V122M511.5,184V160M511.5,146V122M526.5,184V160M526.5,146V122M541.5,184V160M541.5,146V122M556.5,184V160M556.5,146V122M571.5,184V160M571.5,146V122M586.5,184V160M586.5,146V122M601.5,184V160M601.5,146V122M616.5,184V160M616.5,146V122M631.5,184V160M631.5,146V122M646.5,184V160M646.5,146V122M661.5,184V160M661.5,146V122M676.5,184V160M676.5,146V122M691.5,184V160M691.5,146V122M204,104V82M294,104V82M384,104V82M474,104V82M564,104V82M654,104V82"/>
+<rect x="162" y="62" width="534" height="20" rx="2" class="nd dsh"/>
+<text x="429" y="76" class="m mu" text-anchor="middle">L3 · minted, not selected this turn</text>
+<rect x="162" y="104" width="84" height="18" class="nd-sel"/><text x="204" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="252" y="104" width="84" height="18" class="nd-sel"/><text x="294" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="342" y="104" width="84" height="18" class="nd"/>
+<rect x="432" y="104" width="84" height="18" class="nd-sel"/><text x="474" y="117" class="m on" text-anchor="middle">L2</text>
+<rect x="522" y="104" width="84" height="18" class="nd"/>
+<rect x="612" y="104" width="84" height="18" class="nd"/>
+<g>
+<rect x="160" y="146" width="13" height="14" class="nd"/><rect x="175" y="146" width="13" height="14" class="nd"/><rect x="190" y="146" width="13" height="14" class="nd"/><rect x="205" y="146" width="13" height="14" class="nd"/><rect x="220" y="146" width="13" height="14" class="nd"/><rect x="235" y="146" width="13" height="14" class="nd"/><rect x="250" y="146" width="13" height="14" class="nd"/><rect x="265" y="146" width="13" height="14" class="nd"/><rect x="280" y="146" width="13" height="14" class="nd"/><rect x="295" y="146" width="13" height="14" class="nd"/><rect x="310" y="146" width="13" height="14" class="nd"/><rect x="325" y="146" width="13" height="14" class="nd"/>
+<rect x="340" y="146" width="13" height="14" class="nd-sel"/><rect x="355" y="146" width="13" height="14" class="nd-sel"/><rect x="370" y="146" width="13" height="14" class="nd-sel"/><rect x="385" y="146" width="13" height="14" class="nd-sel"/><rect x="400" y="146" width="13" height="14" class="nd-sel"/><rect x="415" y="146" width="13" height="14" class="nd-sel"/>
+<rect x="430" y="146" width="13" height="14" class="nd"/><rect x="445" y="146" width="13" height="14" class="nd"/><rect x="460" y="146" width="13" height="14" class="nd"/><rect x="475" y="146" width="13" height="14" class="nd"/><rect x="490" y="146" width="13" height="14" class="nd"/><rect x="505" y="146" width="13" height="14" class="nd"/>
+<rect x="520" y="146" width="13" height="14" class="nd-sel"/><rect x="535" y="146" width="13" height="14" class="nd-sel"/><rect x="550" y="146" width="13" height="14" class="nd-sel"/><rect x="565" y="146" width="13" height="14" class="nd-sel"/><rect x="580" y="146" width="13" height="14" class="nd-sel"/><rect x="595" y="146" width="13" height="14" class="nd-sel"/>
+<rect x="610" y="146" width="13" height="14" class="nd"/><rect x="625" y="146" width="13" height="14" class="nd"/><rect x="640" y="146" width="13" height="14" class="nd"/><rect x="655" y="146" width="13" height="14" class="nd"/><rect x="670" y="146" width="13" height="14" class="nd"/><rect x="685" y="146" width="13" height="14" class="nd"/>
+</g>
+<g>
+<rect x="160" y="184" width="13" height="14" class="nd"/><rect x="175" y="184" width="13" height="14" class="nd"/><rect x="190" y="184" width="13" height="14" class="nd"/><rect x="205" y="184" width="13" height="14" class="nd"/><rect x="220" y="184" width="13" height="14" class="nd"/><rect x="235" y="184" width="13" height="14" class="nd"/><rect x="250" y="184" width="13" height="14" class="nd"/><rect x="265" y="184" width="13" height="14" class="nd"/><rect x="280" y="184" width="13" height="14" class="nd"/><rect x="295" y="184" width="13" height="14" class="nd"/><rect x="310" y="184" width="13" height="14" class="nd"/><rect x="325" y="184" width="13" height="14" class="nd"/><rect x="340" y="184" width="13" height="14" class="nd"/><rect x="355" y="184" width="13" height="14" class="nd"/><rect x="370" y="184" width="13" height="14" class="nd"/><rect x="385" y="184" width="13" height="14" class="nd"/><rect x="400" y="184" width="13" height="14" class="nd"/><rect x="415" y="184" width="13" height="14" class="nd"/><rect x="430" y="184" width="13" height="14" class="nd"/><rect x="445" y="184" width="13" height="14" class="nd"/><rect x="460" y="184" width="13" height="14" class="nd"/><rect x="475" y="184" width="13" height="14" class="nd"/><rect x="490" y="184" width="13" height="14" class="nd"/><rect x="505" y="184" width="13" height="14" class="nd"/><rect x="520" y="184" width="13" height="14" class="nd"/><rect x="535" y="184" width="13" height="14" class="nd"/><rect x="550" y="184" width="13" height="14" class="nd"/><rect x="565" y="184" width="13" height="14" class="nd"/><rect x="580" y="184" width="13" height="14" class="nd"/><rect x="595" y="184" width="13" height="14" class="nd"/>
+<rect x="610" y="184" width="13" height="14" class="nd-raw"/><rect x="625" y="184" width="13" height="14" class="nd-raw"/><rect x="640" y="184" width="13" height="14" class="nd-raw"/><rect x="655" y="184" width="13" height="14" class="nd-raw"/><rect x="670" y="184" width="13" height="14" class="nd-raw"/><rect x="685" y="184" width="13" height="14" class="nd-raw"/>
+</g>
+<polygon points="160,200 248,200 176,378 150,378" class="fun"/>
+<polygon points="250,200 338,200 204,378 178,378" class="fun"/>
+<polygon points="340,200 428,200 302,378 206,378" class="fun"/>
+<polygon points="430,200 518,200 330,378 304,378" class="fun"/>
+<polygon points="520,200 608,200 428,378 332,378" class="fun"/>
+<polygon points="610,200 698,200 646,378 430,378" class="fun-raw"/>
+<text x="214" y="236" class="m tc">fold solver: one frontier through the tree</text>
+<rect x="730" y="150" width="240" height="42" rx="2" class="b"/>
+<text x="850" y="176" class="h" text-anchor="middle">raw messages (Chronicle)</text>
+<path d="M940,192V376" class="l" marker-end="url(#a3)"/>
+<text x="932" y="236" class="m mu" text-anchor="end">verbatim</text>
+<text x="700" y="262" class="m">prompt cache is exact-prefix:</text>
+<text x="700" y="278" class="m">a fold change re-bills</text>
+<text x="700" y="294" class="m">everything to its right.</text>
+<text x="700" y="314" class="m mu">solver keeps last turn's</text>
+<text x="700" y="330" class="m mu">frontier when it can</text>
+<text x="24" y="372" class="m mu">cache marks</text>
+<path d="M99,366h10l-5,10z M143,366h10l-5,10z M425,366h10l-5,10z M643,366h10l-5,10z" class="fk"/>
+<rect x="24" y="380" width="80" height="40" class="b"/>
+<text x="64" y="397" class="m" text-anchor="middle">system +</text>
+<text x="64" y="411" class="m" text-anchor="middle">injections</text>
+<rect x="106" y="380" width="40" height="40" class="bk"/>
+<text x="126" y="404" class="m" text-anchor="middle">HEAD</text>
+<rect x="150" y="380" width="26" height="40" class="bc"/>
+<rect x="178" y="380" width="26" height="40" class="bc"/>
+<rect x="206" y="380" width="14" height="40" class="bc"/><rect x="222" y="380" width="14" height="40" class="bc"/><rect x="238" y="380" width="14" height="40" class="bc"/><rect x="254" y="380" width="14" height="40" class="bc"/><rect x="270" y="380" width="14" height="40" class="bc"/><rect x="286" y="380" width="14" height="40" class="bc"/>
+<rect x="304" y="380" width="26" height="40" class="bc"/>
+<rect x="332" y="380" width="14" height="40" class="bc"/><rect x="348" y="380" width="14" height="40" class="bc"/><rect x="364" y="380" width="14" height="40" class="bc"/><rect x="380" y="380" width="14" height="40" class="bc"/><rect x="396" y="380" width="14" height="40" class="bc"/><rect x="412" y="380" width="14" height="40" class="bc"/>
+<rect x="430" y="380" width="34" height="40" class="bk"/><rect x="466" y="380" width="34" height="40" class="bk"/><rect x="502" y="380" width="34" height="40" class="bk"/><rect x="538" y="380" width="34" height="40" class="bk"/><rect x="574" y="380" width="34" height="40" class="bk"/><rect x="610" y="380" width="34" height="40" class="bk"/>
+<text x="163" y="404" class="m tc" text-anchor="middle">L2</text><text x="191" y="404" class="m tc" text-anchor="middle">L2</text><text x="317" y="404" class="m tc" text-anchor="middle">L2</text>
+<rect x="650" y="380" width="250" height="40" class="bk"/>
+<text x="775" y="397" class="m" text-anchor="middle">TAIL · verbatim recent window</text>
+<text x="775" y="412" class="m mu" text-anchor="middle">30k fallback · ~450k large-tail</text>
+<rect x="904" y="380" width="12" height="40" class="b"/>
+<rect x="918" y="380" width="32" height="40" class="bk"/>
+<text x="934" y="404" class="m" text-anchor="middle">user</text>
+<rect x="952" y="380" width="24" height="40" class="bd"/>
+<text x="106" y="438" class="m mu">head · often 0</text>
+<text x="398" y="438" class="m mu" text-anchor="middle">MIDDLE · recall pairs (L1–L2 here) + raw chunks, oldest first</text>
+<text x="976" y="438" class="m mu" text-anchor="end">lessons ≤5</text>
+<path d="M24,452V464M24,458H976M976,452V464" class="l"/>
+<text x="500" y="478" class="m" text-anchor="middle">W = contextBudgetTokens (runbook: ≈160–178k on 200k-window models)</text>
+<text x="976" y="496" class="m tw" text-anchor="end">above W × 1.02 → OverBudgetError, never silent truncation</text>
+<text x="24" y="512" class="m mu">each selected summary renders once, as a recall pair:</text>
+<text x="24" y="530" class="m">Context Manager: "What do you remember from earlier?"   →   Claude: "&lt;L2 memory, in my own words&gt;"</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 03</b>One turn's view. Top: the write-once summary tree. Filled nodes are the frontier the solver chose this turn; the L3 exists but is not used. Bands: each stretch of history, compressed to its rendered token width. Bottom: the request as sent, oldest on the left. The profile shown is illustrative. The design target is non-monotonic ("…L3…L2…L1…L1…L2…"), and folds follow token pressure, not age.</figcaption>
+  </figure>
+  <div class="prose">
+    <p><strong>Solver facts.</strong> The library default is <code>flat-profile</code>. The onboarding runbook describes the deployed stack as <code>kv-stable</code>, with flat-profile as the fallback. The newest <code>kv-unified</code> solver (rev 6) takes 1.7–1.9 s per compile at about 260k tokens, after a fix that removed a roughly 10× slowdown. That figure applies to kv-unified only. Which solver each production resident runs is unverified.</p>
+  </div>
+</section>
+
+<!-- ============ LOOP ============ -->
+<section id="loop">
+  <div class="head"><div class="eyebrow">Connectome · background</div><h2>Summaries are written by a clock, not by turns</h2></div>
+  <div class="prose">
+    <p>A turn does not summarize anything. When messages are appended, newly closed chunks are queued (the newest chunk is held back). A separate framework timer drains the queues. Compile never waits for pending compression, so a new L1 appears at the first compile after its mint finishes. With the 5 s default that is usually the next turn, but nothing guarantees it.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="04-maintenance-loop" viewBox="0 0 1000 600" role="img" aria-label="Background maintenance loop: a 5-second timer, start-up, or an operator call starts one pass at a time; the pass pushes tool definitions to every agent, skips ready or gated agents, then ticks each remaining agent up to 8 times; each tick mints one L1 if the compression queue has work, else runs one merge. Turns only fill the queues. An OverBudgetError fires a drain breaker that calls tick directly.">
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a4w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fw"/></marker>
+<marker id="a4c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fc"/></marker>
+</defs>
+<text x="20" y="28" class="h">triggers</text>
+<rect x="20" y="40" width="220" height="56" rx="3" class="b"/>
+<circle cx="44" cy="68" r="12" class="fp" stroke="currentColor" style="stroke:var(--ink)"/>
+<path d="M44,68V60M44,68L50,72" class="l" style="stroke:var(--ink)"/>
+<text x="66" y="62" class="h">timer · every 5 s</text>
+<text x="66" y="82" class="m mu">setInterval 5000 ms, unref'd</text>
+<rect x="20" y="108" width="220" height="48" rx="3" class="b"/>
+<text x="34" y="128" class="h">start()</text>
+<text x="34" y="146" class="m mu">once, at start-up</text>
+<rect x="20" y="168" width="220" height="48" rx="3" class="b"/>
+<text x="34" y="188" class="h">maintenanceTick()</text>
+<text x="34" y="206" class="m mu">operator, host mode, awaited</text>
+<rect x="270" y="40" width="200" height="66" rx="3" class="b"/>
+<text x="284" y="62" class="m">startQueuedMaintenance()</text>
+<text x="284" y="80" class="m mu">one pass at a time; returns</text>
+<text x="284" y="94" class="m mu">early if one is in flight</text>
+<path d="M240,68H266M240,132C256,132 252,96 266,92M240,192C262,192 256,104 266,100" class="l" marker-end="url(#a4)"/>
+<path d="M470,74H506" class="l" marker-end="url(#a4)"/>
+<rect x="510" y="24" width="476" height="326" rx="3" class="b"/>
+<text x="526" y="48" class="h">one pass · runQueuedMaintenance()</text>
+<text x="526" y="74" class="m">1  every agent: cm.setToolDefinitions(tools)</text>
+<text x="526" y="94" class="m">2  skip provider-gated agents and those already isReady()</text>
+<text x="526" y="114" class="m">3  the rest in parallel: tick() up to 8×, stop at isReady()</text>
+<rect x="526" y="132" width="444" height="202" rx="3" class="bc"/>
+<text x="540" y="152" class="h tc">one tick = at most one LLM call</text>
+<text x="956" y="152" class="m mu" text-anchor="end">return if a mint is pending</text>
+<rect x="540" y="164" width="220" height="52" rx="2" class="b"/>
+<text x="552" y="182" class="h">L1 mint · priority 1</text>
+<text x="552" y="198" class="m mu">if compressionQueue has work</text>
+<text x="552" y="210" class="m mu">first person, as-of</text>
+<rect x="540" y="230" width="220" height="52" rx="2" class="b"/>
+<text x="552" y="248" class="h">merge L_k → L_k+1 · priority 2</text>
+<text x="552" y="264" class="m mu">else, if mergeQueue has work</text>
+<text x="552" y="276" class="m mu">dequeued only on success</text>
+<rect x="808" y="164" width="150" height="118" rx="2" class="b"/>
+<text x="883" y="212" class="h" text-anchor="middle">autobio:</text>
+<text x="883" y="228" class="h" text-anchor="middle">summaries</text>
+<text x="883" y="246" class="m mu" text-anchor="middle">Chronicle slot</text>
+<path d="M760,190H804M760,256H804" class="lc" marker-end="url(#a4c)"/>
+<text x="782" y="184" class="m mu" text-anchor="middle">L1</text>
+<text x="782" y="250" class="m mu" text-anchor="middle">L_k+1</text>
+<text x="540" y="304" class="m mu">after each write: checkMergeThreshold</text>
+<text x="540" y="320" class="m mu">enqueues a merge at N≈6 siblings</text>
+<path d="M883,282V342H496V262H478" class="lc dsh" marker-end="url(#a4c)"/>
+<rect x="294" y="164" width="192" height="112" rx="3" class="b dsh"/>
+<text x="300" y="158" class="m mu">in-memory queues</text>
+<rect x="306" y="176" width="168" height="36" rx="2" class="b"/>
+<text x="390" y="198" class="m" text-anchor="middle">compressionQueue</text>
+<rect x="306" y="228" width="168" height="36" rx="2" class="b"/>
+<text x="390" y="250" class="m" text-anchor="middle">mergeQueue</text>
+<path d="M474,194H536" class="l" marker-end="url(#a4)"/>
+<text x="505" y="188" class="m mu" text-anchor="middle">shift 1</text>
+<path d="M474,246C500,246 510,256 536,256" class="l" marker-end="url(#a4)"/>
+<path d="M20,382H980" class="grid dsh"/>
+<text x="20" y="404" class="h">the turn · an independent flow</text>
+<rect x="20" y="420" width="200" height="60" rx="3" class="b"/>
+<text x="34" y="442" class="h">write-back</text>
+<text x="34" y="460" class="m mu">onNewMessage →</text>
+<text x="34" y="474" class="m mu">rebuildChunks</text>
+<path d="M120,420V296H270V194H302" class="l" marker-end="url(#a4)"/>
+<text x="128" y="330" class="m mu">closed chunks,</text>
+<text x="128" y="344" class="m mu">newest held back</text>
+<rect x="20" y="506" width="200" height="60" rx="3" class="b"/>
+<text x="34" y="528" class="h">compile()</text>
+<text x="34" y="546" class="m mu">never awaits compression</text>
+<path d="M220,516H440V280" class="l" marker-end="url(#a4)"/>
+<text x="448" y="470" class="m mu">solver demand: on-demand</text>
+<text x="448" y="484" class="m mu">L1s and merges, skips holdback</text>
+<rect x="520" y="506" width="180" height="60" rx="3" class="bw"/>
+<text x="534" y="528" class="h tw">OverBudgetError</text>
+<text x="534" y="546" class="m mu">rendered &gt; W × 1.02</text>
+<path d="M220,552H516" class="lw" marker-end="url(#a4w)"/>
+<text x="370" y="546" class="m tw" text-anchor="middle">throws</text>
+<rect x="740" y="506" width="240" height="60" rx="3" class="bw"/>
+<text x="754" y="526" class="h tw">drain breaker</text>
+<text x="754" y="542" class="m mu">tick() up to 8×, outside the pass</text>
+<text x="754" y="556" class="m mu">no tool-definition refresh</text>
+<path d="M700,536H736" class="lw" marker-end="url(#a4w)"/>
+<text x="718" y="528" class="m tw" text-anchor="middle">fires</text>
+<path d="M960,506V338" class="lw" marker-end="url(#a4w)"/>
+<text x="952" y="420" class="m tw" text-anchor="end">cm.tick() ×≤8</text>
+<text x="20" y="592" class="m mu">Turn and loop share only persisted state. A new L1 is visible at the first compile after its mint lands.</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 04</b>The maintenance loop. Three triggers start a pass, and only one pass runs at a time. A pass pushes tool definitions to every agent first, because mints carry the live tool list. A tick does one unit of LLM work: one L1 mint if the compression queue has work, otherwise one merge. Turns only fill the queues. The red path is the OverBudgetError drain breaker, which calls <code>tick()</code> directly.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ IDENTITY MODEL ============ -->
+<section id="identity-model">
+  <div class="head"><div class="eyebrow">Connectome · identity</div><h2>Three kinds of identity, kept apart</h2></div>
+  <div class="prose">
+    <p>Narrative identity comes from what is in context: the recipe's system prompt, the verbatim head ("origin/anchor"), and the chain of self-voiced memories. The mint path refuses to add a summarizer system header because, per a code comment, it would be "an alternative identity source that competes with the structural one." Operator doctrine binds each agent to one model: "feeding one model's chronicle to another is treated as a continuity violation." That rule belongs to the operators. The memory layer does not enforce it, since <code>compressionModel</code> can be set separately from the speaking model.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="05-identity" viewBox="0 0 960 460" role="img" aria-label="Connectome identity layers: narrative identity carried by system prompt, verbatim head and self-voiced memories, bound to one correct model; presence across platforms feeding one message store; and a cryptographic principal whose credentials never reach model context.">
+<defs>
+<marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a5w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fw"/></marker>
+</defs>
+<text x="20" y="28" class="h tc">narrative identity</text>
+<text x="20" y="46" class="m mu">carried by what is in context, in this order</text>
+<rect x="20" y="56" width="150" height="44" class="b"/><text x="32" y="75" class="m">system prompt</text><text x="32" y="91" class="m mu">from the recipe</text>
+<rect x="174" y="56" width="150" height="44" class="bk"/><text x="186" y="75" class="m">verbatim head</text><text x="186" y="91" class="m mu">origin / anchor</text>
+<rect x="328" y="56" width="232" height="44" class="bc"/><text x="340" y="75" class="m">self-voiced memories</text><text x="340" y="91" class="m mu">L1…Ln, first person</text>
+<path d="M560,78H590" class="l" marker-end="url(#a5)"/>
+<circle cx="620" cy="78" r="27" class="bc"/>
+<text x="620" y="82" class="h" text-anchor="middle">agent</text>
+<rect x="700" y="40" width="240" height="34" rx="2" class="bc"/>
+<text x="712" y="61" class="m">runs on its one "correct" model</text>
+<path d="M646,70L696,58" class="lc"/>
+<rect x="700" y="86" width="240" height="34" rx="2" class="bw"/>
+<text x="712" y="107" class="m">another model</text>
+<path d="M646,88L696,102" class="lw dsh"/>
+<path d="M664,86l12,12m0,-12l-12,12" class="lw"/>
+<text x="700" y="138" class="m tw">continuity violation: delete the</text>
+<text x="700" y="152" class="m tw">interlude and re-ingest</text>
+<rect x="360" y="126" width="200" height="30" rx="2" class="b dsh"/>
+<text x="372" y="145" class="m">compressionModel</text>
+<path d="M460,126V104" class="l" marker-end="url(#a5)"/>
+<text x="468" y="118" class="m mu">mints</text>
+<text x="360" y="172" class="m mu">separable; switching it is</text>
+<text x="360" y="186" class="m mu">"mildly identity-adjacent"</text>
+<text x="20" y="124" class="m mu">mint requests reuse the host prompt:</text>
+<text x="20" y="138" class="m mu">no summarizer header, which would</text>
+<text x="20" y="152" class="m mu">be "a competing identity"</text>
+<path d="M20,200H940" class="grid dsh"/>
+<text x="20" y="222" class="h">presence across platforms</text>
+<rect x="20" y="234" width="84" height="30" rx="2" class="b"/><text x="62" y="253" class="m" text-anchor="middle">Discord</text>
+<rect x="112" y="234" width="84" height="30" rx="2" class="b"/><text x="154" y="253" class="m" text-anchor="middle">Slack</text>
+<rect x="204" y="234" width="84" height="30" rx="2" class="b"/><text x="246" y="253" class="m" text-anchor="middle">Telegram</text>
+<rect x="296" y="234" width="84" height="30" rx="2" class="b"/><text x="338" y="253" class="m" text-anchor="middle">Zulip</text>
+<rect x="388" y="234" width="84" height="30" rx="2" class="b"/><text x="430" y="253" class="m" text-anchor="middle">mail</text>
+<path d="M472,249H536" class="l" marker-end="url(#a5)"/>
+<text x="504" y="242" class="m mu" text-anchor="middle">MCPL</text>
+<rect x="540" y="229" width="180" height="40" rx="2" class="bc"/><text x="630" y="253" class="m" text-anchor="middle">one MessageStore</text>
+<path d="M720,249H756" class="l" marker-end="url(#a5)"/>
+<rect x="760" y="229" width="180" height="40" rx="2" class="bc"/><text x="850" y="253" class="m" text-anchor="middle">one chronicle</text>
+<text x="20" y="290" class="m mu">Participant names and channel metadata are kept; the channel ("locus") is pinned per turn. Inference: one agent, not personas.</text>
+<path d="M20,306H940" class="grid dsh"/>
+<text x="20" y="328" class="h">cryptographic principal</text>
+<rect x="20" y="342" width="170" height="48" rx="2" class="b"/><text x="32" y="362" class="h">ed25519 key</text><text x="32" y="380" class="m mu">per deployment</text>
+<path d="M190,366H246" class="l" marker-end="url(#a5)"/>
+<text x="218" y="358" class="m mu" text-anchor="middle">key-proof</text>
+<rect x="250" y="342" width="200" height="48" rx="2" class="b"/><text x="262" y="362" class="h">home node</text><text x="262" y="380" class="m mu">e.g. id.animalabs.ai</text>
+<path d="M450,366H506" class="l" marker-end="url(#a5)"/>
+<text x="478" y="358" class="m mu" text-anchor="middle">issues</text>
+<rect x="510" y="342" width="200" height="48" rx="2" class="b"/><text x="522" y="362" class="h">aid1 token</text><text x="522" y="380" class="m mu">short-lived · offline check</text>
+<path d="M710,366H752" class="l"/>
+<path d="M754,358l12,12m0,-12l-12,12" class="lw"/>
+<path d="M760,322V446" class="lw dsh"/>
+<text x="772" y="330" class="m tw">credentials never cross into</text>
+<text x="772" y="344" class="m tw">context, chronicle, compression,</text>
+<text x="772" y="358" class="m tw">or channels</text>
+<rect x="780" y="376" width="160" height="56" rx="2" class="bc"/>
+<text x="792" y="394" class="m">model sees only:</text>
+<text x="792" y="410" class="m mu">invitation · register</text>
+<text x="792" y="424" class="m mu">access · name</text>
+<text x="20" y="424" class="m mu">federated: name@domain · revocation by expiry</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 05</b>Identity in Connectome. Top: the self is whatever the context carries, and operator doctrine ties it to one model. The summarizer model can be changed separately. Middle: several platforms feed one agent's message store. Bottom: a signing key the model never sees. Only four plain words about identity reach the model's context.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ CDOCS ============ -->
+<section id="cdocs">
+  <div class="head"><div class="eyebrow">cdocs · the other system</div><h2>A shared, typed record of why the project is the way it is</h2></div>
+  <div class="prose">
+    <p>cdocs keeps memory as markdown in the project's git repo: devlogs, proposals, reviews, and reports, each with fixed frontmatter. Agents write nearly all of it. Human steering causes documents to exist but is never recorded as authorship. Nothing loads by default except the rules layer. Everything else is pulled when an agent decides to read it, and the retriever is the agent itself running grep and glob.</p>
+  </div>
+  <dl class="facts">
+    <div><dt>This repo</dt><dd>251 docs · 4.2 MB · ~481k words; average doc ~2.5–2.9k tokens</dd></div>
+    <div><dt>Sibling repos</dt><dd>lace 740 docs · weftwise 1,979 docs (~44 MB markdown)</dd></div>
+    <div><dt>Full-scan ceiling</dt><dd><code>/cdocs:status</code> says "practical up to ~100 documents." Cost past that is unbenchmarked.</dd></div>
+  </dl>
+  <figure>
+    <div class="scroll">
+<svg data-name="06-cdocs-memory" viewBox="0 0 1000 560" role="img" aria-label="cdocs memory model: writers on the left commit typed documents with frontmatter lifecycles into the project repo; five pull-based read paths on the right feed a short-lived agent; session transcripts sit outside git, unlinked.">
+<defs>
+<marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a6d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fd"/></marker>
+</defs>
+<text x="20" y="64" class="h">who writes</text>
+<rect x="20" y="80" width="190" height="52" rx="2" class="b"/><text x="32" y="101" class="h">main session</text><text x="32" y="120" class="m mu">implementer · proposer</text>
+<rect x="20" y="144" width="190" height="52" rx="2" class="b"/><text x="32" y="165" class="h">reviewer (opus tier)</text><text x="32" y="184" class="m mu">never the doc's author</text>
+<rect x="20" y="208" width="190" height="52" rx="2" class="b"/><text x="32" y="229" class="h">triage · nit-fix</text><text x="32" y="248" class="m mu">sandboxed to cdocs/</text>
+<rect x="20" y="272" width="190" height="52" rx="2" class="b dsh"/><text x="32" y="293" class="h">human</text><text x="32" y="312" class="m mu">steers; not recorded</text>
+<text x="20" y="352" class="m mu">PostToolUse hook checks</text>
+<text x="20" y="366" class="m mu">frontmatter: warns, never</text>
+<text x="20" y="380" class="m mu">blocks</text>
+<path d="M210,106H256M210,170H256M210,234H256" class="ld" marker-end="url(#a6d)"/>
+<path d="M210,298H256" class="l dsh" marker-end="url(#a6)"/>
+<text x="233" y="100" class="m mu" text-anchor="middle">write</text>
+<rect x="260" y="40" width="480" height="420" rx="3" class="bd" style="fill:var(--fig)"/>
+<text x="276" y="64" class="h td">project repo · git · shared by every session</text>
+<rect x="276" y="80" width="218" height="104" rx="2" class="b"/>
+<text x="288" y="100" class="h">devlog</text><text x="288" y="118" class="m mu">how we did it · as-of</text>
+<text x="288" y="140" class="m">wip → review_ready → done</text><text x="288" y="158" class="m">handoff before /compact</text>
+<rect x="506" y="80" width="218" height="104" rx="2" class="b"/>
+<text x="518" y="100" class="h">proposal</text><text x="518" y="118" class="m mu">what to build · phases</text>
+<text x="518" y="140" class="m">rfp → wip → review_ready →</text><text x="518" y="158" class="m">impl_ready → accepted|evolved</text>
+<rect x="276" y="212" width="218" height="104" rx="2" class="b"/>
+<text x="288" y="232" class="h">report</text><text x="288" y="250" class="m mu">what we learned · hindsight</text>
+<text x="288" y="272" class="m">wip → review_ready → done</text><text x="288" y="290" class="m mu">BLUF-first, for readers</text>
+<rect x="506" y="212" width="218" height="104" rx="2" class="b"/>
+<text x="518" y="232" class="h">review</text><text x="518" y="250" class="m mu">verdict on another doc</text>
+<text x="518" y="272" class="m">wip → done; verdict sets</text><text x="518" y="290" class="m">subject.last_reviewed</text>
+<path d="M615,212V188" class="ld" marker-end="url(#a6d)"/>
+<text x="623" y="204" class="m td">review_of</text>
+<path d="M385,184V208" class="l" marker-end="url(#a6)"/>
+<text x="393" y="202" class="m mu">synthesized into</text>
+<rect x="276" y="330" width="448" height="58" rx="2" class="b"/>
+<text x="288" y="350" class="h">frontmatter is the index</text>
+<text x="288" y="368" class="m">first_authored · task_list · type · state · status</text>
+<text x="288" y="382" class="m">last_reviewed{status,by,at,round} · tags</text>
+<rect x="276" y="400" width="218" height="48" rx="2" class="b"/>
+<text x="288" y="420" class="m">.claude/rules/cdocs.md</text><text x="288" y="438" class="m mu">pinned via @-import</text>
+<rect x="506" y="400" width="218" height="48" rx="2" class="b"/>
+<text x="518" y="420" class="m">.claude/oversee/*.json</text><text x="518" y="438" class="m mu">arc-state + claim files</text>
+<text x="790" y="64" class="h">how a fresh session reads</text>
+<rect x="790" y="80" width="190" height="44" rx="2" class="b"/><text x="802" y="98" class="m">@-imported rules</text><text x="802" y="114" class="m mu">always in context</text>
+<rect x="790" y="132" width="190" height="44" rx="2" class="b"/><text x="802" y="150" class="m">SessionStart hash check</text><text x="802" y="166" class="m mu">&lt;500 B nudge if stale</text>
+<rect x="790" y="184" width="190" height="44" rx="2" class="b"/><text x="802" y="202" class="m">/cdocs:status · triage</text><text x="802" y="218" class="m mu">O(N) frontmatter scans</text>
+<rect x="790" y="236" width="190" height="44" rx="2" class="b"/><text x="802" y="254" class="m">agentic grep / glob</text><text x="802" y="270" class="m mu">the actual retriever</text>
+<rect x="790" y="288" width="190" height="44" rx="2" class="b"/><text x="802" y="306" class="m">handoffs + arc-state</text><text x="802" y="322" class="m mu">read on resume, if told</text>
+<path d="M740,102H786M740,154H786M740,206H786M740,258H786M740,310H786" class="l" marker-end="url(#a6)"/>
+<text x="763" y="96" class="m mu" text-anchor="middle">pull</text>
+<path d="M885,332V356" class="l" marker-end="url(#a6)"/>
+<rect x="790" y="360" width="190" height="48" rx="2" class="bd"/>
+<text x="802" y="380" class="h">short-lived agent</text><text x="802" y="398" class="m mu">no memory of its own</text>
+<rect x="260" y="490" width="480" height="50" rx="2" class="b dsh"/>
+<text x="276" y="510" class="m">Claude Code session transcripts (JSONL)</text>
+<text x="276" y="528" class="m mu">~/.claude/projects/… · lossless where present · machine-local · outside git</text>
+<path d="M380,490V462" class="l dsh"/>
+<path d="M374,470l12,12m0,-12l-12,12" class="lw"/>
+<text x="394" y="480" class="m mu">not linked (option 3)</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 06</b>cdocs as a memory system. Left: who writes. Hooks sandbox three doc-maintenance agents and warn on bad frontmatter. Center: four document types, each with its own status lifecycle, plus rules and coordination files. Right: the five ways a fresh session reads. All of them are pulls, and none is semantic search. Bottom: the lossless transcript exists but is not linked to anything.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ TWO PROBLEMS ============ -->
+<section id="problems">
+  <div class="head"><div class="eyebrow">The core contrast</div><h2>Two problems that meet at a long-lived specialist</h2></div>
+  <div class="prose">
+    <p>Connectome's unit of continuity is an agent. It answers: <em>what should this agent see this turn, given everything it has lived?</em> cdocs' unit is a project. It answers: <em>what does any future agent or human need to know about why the project is the way it is?</em> The two converge for a long-lived specialist working a single project, such as a persistent reviewer. cdocs' nearest mechanism, the Pillar 3 durable specialist, lasts for one workstream and is then disposed of.</p>
+    <p>The overlap has tiers. There is one functional equivalence, three partial analogues, and one convergent practice. Each system also has a core the other lacks.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="07-two-problems" viewBox="0 0 1000 600" role="img" aria-label="Two problems: Connectome keeps one agent coherent over a lifetime with a growing archive; cdocs keeps many short sessions coherent through a shared git corpus. Components are aligned in columns: one equivalence (workspace notes and corpus), three partial analogues (merges and handoffs, lessons and rules, as-of rule and doc type), one convergent practice (shared files), and one core each with no analogue (compiled view, review lifecycle). They converge for a long-lived specialist on one project.">
+<defs>
+<marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a7k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="fk"/></marker>
+</defs>
+<text x="20" y="56" class="h tc">Connectome</text>
+<text x="20" y="72" class="m mu">one agent</text>
+<text x="140" y="34" class="m mu">day 1</text>
+<text x="960" y="34" class="m mu" text-anchor="end">today</text>
+<rect x="140" y="40" width="820" height="26" class="fc"/>
+<text x="156" y="58" class="m on">one resident agent · months of work and social life</text>
+<polygon points="140,74 960,74 960,114 140,78" class="bc"/>
+<text x="140" y="132" class="m">Chronicle: every event kept, branchable, grows without bound</text>
+<text x="960" y="132" class="m tc" text-anchor="end">each turn: head | folded middle | verbatim tail</text>
+<g>
+<rect x="140" y="152" width="112" height="42" rx="2" class="bc"/><text x="148" y="170" class="m">workspace notes</text><text x="148" y="186" class="m mu">verbatim, exact</text>
+<rect x="258" y="152" width="112" height="42" rx="2" class="bc"/><text x="266" y="170" class="m">L_k merges</text><text x="266" y="186" class="m mu">automatic</text>
+<rect x="376" y="152" width="112" height="42" rx="2" class="bc"/><text x="384" y="170" class="m">lessons store</text><text x="384" y="186" class="m mu">auto-injected</text>
+<rect x="494" y="152" width="112" height="42" rx="2" class="bc"/><text x="502" y="170" class="m">as-of mint rule</text><text x="502" y="186" class="m mu">no hindsight</text>
+<rect x="612" y="152" width="112" height="42" rx="2" class="bc"/><text x="620" y="170" class="m">shared files</text><text x="620" y="186" class="m mu">+ chat channels</text>
+<rect x="730" y="152" width="112" height="42" rx="2" class="bc"/><text x="738" y="170" class="m">compiled view</text><text x="738" y="186" class="m mu">every turn</text>
+<rect x="848" y="152" width="112" height="42" rx="2" class="b dsh"/><text x="856" y="170" class="m mu">(none)</text><text x="856" y="186" class="m mu">no review cycle</text>
+</g>
+<g>
+<rect x="140" y="326" width="112" height="42" rx="2" class="bd"/><text x="148" y="344" class="m">cdocs corpus</text><text x="148" y="360" class="m mu">shared, in git</text>
+<rect x="258" y="326" width="112" height="42" rx="2" class="bd"/><text x="266" y="344" class="m">devlog handoff</text><text x="266" y="360" class="m mu">by convention</text>
+<rect x="376" y="326" width="112" height="42" rx="2" class="bd"/><text x="384" y="344" class="m">rules files</text><text x="384" y="360" class="m mu">human-owned</text>
+<rect x="494" y="326" width="112" height="42" rx="2" class="bd"/><text x="502" y="344" class="m">doc type</text><text x="502" y="360" class="m mu">sets vantage</text>
+<rect x="612" y="326" width="112" height="42" rx="2" class="bd"/><text x="620" y="344" class="m">claim files</text><text x="620" y="360" class="m mu">+ arc-state</text>
+<rect x="730" y="326" width="112" height="42" rx="2" class="b dsh"/><text x="738" y="344" class="m mu">(none)</text><text x="738" y="360" class="m mu">harness assembles</text>
+<rect x="848" y="326" width="112" height="42" rx="2" class="bd"/><text x="856" y="344" class="m">review cycle</text><text x="856" y="360" class="m mu">typed verdicts</text>
+</g>
+<path d="M196,198V322" class="lk" marker-start="url(#a7k)" marker-end="url(#a7k)"/>
+<path d="M314,198V322M432,198V322M550,198V322" class="l dsh" marker-start="url(#a7)" marker-end="url(#a7)"/>
+<path d="M668,198V322" class="l" style="stroke-dasharray:1 4;stroke-width:2"/>
+<path d="M780,254l12,12m0,-12l-12,12M898,254l12,12m0,-12l-12,12" class="lw"/>
+<rect x="148" y="250" width="96" height="22" class="lbg"/>
+<text x="196" y="265" class="h" text-anchor="middle">equivalence</text>
+<rect x="364" y="238" width="136" height="36" class="lbg"/>
+<text x="432" y="252" class="h" text-anchor="middle">partial analogues</text>
+<text x="432" y="268" class="m mu" text-anchor="middle">×3</text>
+<rect x="628" y="250" width="80" height="34" class="lbg"/>
+<text x="668" y="264" class="h" text-anchor="middle">convergent</text>
+<text x="668" y="279" class="m mu" text-anchor="middle">practice</text>
+<text x="845" y="232" class="h" text-anchor="middle">no analogue</text>
+<text x="845" y="296" class="m mu" text-anchor="middle">each system's core</text>
+<text x="20" y="400" class="h td">cdocs</text>
+<text x="20" y="416" class="m mu">one project</text>
+<text x="960" y="390" class="m mu" text-anchor="end">each session reads and writes the corpus, then ends</text>
+<text x="132" y="408" class="m mu" text-anchor="end">opus</text>
+<text x="132" y="426" class="m mu" text-anchor="end">sonnet</text>
+<text x="132" y="444" class="m mu" text-anchor="end">haiku</text>
+<rect x="150" y="398" width="70" height="12" class="bk"/><rect x="290" y="398" width="50" height="12" class="bk"/><rect x="610" y="398" width="70" height="12" class="bk"/><rect x="800" y="398" width="60" height="12" class="bk"/>
+<rect x="220" y="416" width="60" height="12" class="bk"/><rect x="420" y="416" width="60" height="12" class="bk"/><rect x="680" y="416" width="70" height="12" class="bk"/><rect x="880" y="416" width="70" height="12" class="bk"/>
+<rect x="160" y="434" width="40" height="12" class="bk"/><rect x="470" y="434" width="70" height="12" class="bk"/><rect x="620" y="434" width="40" height="12" class="bk"/><rect x="760" y="434" width="50" height="12" class="bk"/>
+<rect x="140" y="456" width="820" height="22" rx="2" class="b" style="stroke:var(--ink);stroke-dasharray:6 3"/>
+<text x="150" y="471" class="m">a long-lived specialist on one project: where the two problems converge (options 4 and 5 probe it)</text>
+<rect x="140" y="490" width="820" height="28" class="fd"/>
+<text x="156" y="508" class="m on">project corpus in git: devlogs · proposals · reviews · reports · rules</text>
+<text x="140" y="540" class="m mu">Each session's transcript stays on the machine that ran it, unlinked from the corpus.</text>
+<text x="140" y="560" class="m mu">Today's nearest mechanism, a Pillar 3 durable specialist, lasts one workstream.</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 07</b>Top: one agent over a long lifetime, backed by an archive that only grows. Bottom: many short sessions on different model tiers, held together by a shared corpus. Columns line up counterparts. The thick link is the one functional equivalence. Dashed links are partial analogues. The dotted link is a practice both arrived at separately. Red crosses mark each system's core, which has no counterpart. The dashed bar is the one case where the two problems become the same problem.</figcaption>
+  </figure>
+  <div class="prose">
+    <p><strong>Equivalence.</strong> Connectome's guide calls the workspace "your durable, verbatim memory" for anything that "must stay exact." The cdocs corpus is that channel made shared, typed, and committed. <strong>Partial analogues.</strong> A devlog handoff (Completed / Decisions / Open Todos) is close in content to a merge prompt ("what happened, what was decided, what remains open"), without the first person or the automation. Lessons are an automated cousin of human-owned rules. Connectome enforces an as-of vantage by rule; cdocs gets both vantages from document type, though nothing enforces that a devlog stays as-of. <strong>Convergent practice.</strong> Both coordinate multiple agents through plain shared files, and neither uses a shared memory service.</p>
+  </div>
+</section>
+
+<!-- ============ LANDSCAPE ============ -->
+<section id="landscape">
+  <div class="head"><div class="eyebrow">Context · 24 systems</div><h2>Where both sit in the memory landscape</h2></div>
+  <div class="prose">
+    <p>Two axes from the landscape report's taxonomy separate these systems best: <em>who writes</em> the memory, and <em>what it models about the agent</em>. Agent harnesses are moving toward plain files as the durable store. Coding tools are also moving authorship back toward humans.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="08-landscape" viewBox="0 0 960 560" role="img" aria-label="Memory systems placed by writer (human through background system) and identity model (none through evolving self). Connectome sits at agent-written, evolving self. cdocs sits at agent-written, no identity. Coding tools cluster at human-owned, no identity, and Cursor Memories moved from agent-written to rules.">
+<defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="190" y="26" class="m mu">● active   ○ removed, deprecated, sunset, or dormant   (positions are categorical)</text>
+<rect x="190" y="40" width="740" height="440" class="grid"/>
+<path d="M338,40V480M486,40V480M634,40V480M782,40V480M190,150H930M190,260H930M190,370H930" class="grid"/>
+<text x="180" y="99" class="h" text-anchor="end">Evolving self</text>
+<text x="180" y="209" class="h" text-anchor="end">Persona file</text>
+<text x="180" y="312" class="h" text-anchor="end">User / project</text>
+<text x="180" y="328" class="h" text-anchor="end">model</text>
+<text x="180" y="429" class="h" text-anchor="end">None</text>
+<text x="26" y="260" class="m mu" text-anchor="middle" transform="rotate(-90 26 260)">IDENTITY MODEL: what the memory holds about the agent</text>
+<text x="264" y="502" class="h" text-anchor="middle">Human</text>
+<text x="412" y="502" class="h" text-anchor="middle">Human + agent</text>
+<text x="560" y="502" class="h" text-anchor="middle">Agent in-loop</text>
+<text x="708" y="502" class="h" text-anchor="middle">Agent + background</text>
+<text x="856" y="502" class="h" text-anchor="middle">Background system</text>
+<text x="560" y="534" class="m mu" text-anchor="middle">WRITER: who authors the memory</text>
+<!-- self row -->
+<circle cx="500" cy="80" r="7" class="fc"/><text x="512" y="84" class="h tc">Connectome</text>
+<text x="512" y="100" class="m mu">own model, first person</text>
+<circle cx="500" cy="126" r="5" class="pto"/><text x="510" y="130">Generative Agents</text>
+<circle cx="796" cy="96" r="5" class="pt"/><text x="806" y="100">Honcho</text>
+<!-- persona row -->
+<circle cx="500" cy="196" r="5" class="pt"/><text x="510" y="200">OpenClaw SOUL.md</text>
+<circle cx="648" cy="190" r="5" class="pt"/><text x="658" y="194">Letta MemFS</text>
+<circle cx="648" cy="214" r="5" class="pto"/><text x="658" y="218">Letta classic</text>
+<!-- user row -->
+<circle cx="500" cy="292" r="5" class="pt"/><text x="510" y="296">CC auto memory</text>
+<circle cx="500" cy="316" r="5" class="pt"/><text x="510" y="320">Hermes Agent</text>
+<circle cx="648" cy="304" r="5" class="pt"/><text x="658" y="308">ChatGPT memory</text>
+<circle cx="796" cy="288" r="5" class="pt"/><text x="806" y="292">mem0</text>
+<circle cx="796" cy="310" r="5" class="pt"/><text x="806" y="314">Zep / Graphiti</text>
+<circle cx="796" cy="332" r="5" class="pt"/><text x="806" y="336">Codex memories</text>
+<!-- none row -->
+<circle cx="204" cy="392" r="5" class="pt"/><text x="214" y="396">CLAUDE.md + rules</text>
+<circle cx="204" cy="414" r="5" class="pto"/><text x="214" y="418">Devin Knowledge</text>
+<text x="214" y="431" class="m mu">→ Skills</text>
+<circle cx="204" cy="452" r="5" class="pt"/><text x="214" y="456">Cursor rules</text>
+<circle cx="352" cy="396" r="5" class="pt"/><text x="362" y="400">ADRs / AGENTS.md</text>
+<circle cx="352" cy="420" r="5" class="pt"/><text x="362" y="424">Basic Memory</text>
+<circle cx="500" cy="390" r="7" class="fd"/><text x="512" y="394" class="h td">cdocs</text>
+<text x="555" y="394" class="m mu">agents write, humans steer</text>
+<circle cx="500" cy="420" r="5" class="pt"/><text x="510" y="424">Anthropic memory tool</text>
+<circle cx="500" cy="442" r="5" class="pto"/><text x="510" y="446">Windsurf memories</text>
+<circle cx="500" cy="464" r="5" class="pto"/><text x="510" y="468">Cursor Memories</text>
+<circle cx="796" cy="392" r="5" class="pt"/><text x="806" y="396">cognee</text>
+<circle cx="796" cy="414" r="5" class="pt"/><text x="806" y="418">A-MEM</text>
+<circle cx="796" cy="436" r="5" class="pt"/><text x="806" y="440">Anthropic Dreams</text>
+<circle cx="796" cy="458" r="5" class="pt"/><text x="806" y="462">Aider repo map</text>
+<path d="M494,467C420,486 280,486 206,460" class="l dsh" marker-end="url(#a8)"/>
+<text x="412" y="446" class="m mu" text-anchor="middle">removed in 2.1:</text>
+<text x="412" y="458" class="m mu" text-anchor="middle">export to rules</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 08</b>The landscape on two taxonomy axes. Connectome is the one agent-written system whose memory is an evolving, first-person self. cdocs sits with agent-written stores that model no identity. The dashed arrow is the clearest move in coding tools: Cursor removed auto-memories and told users to export them into rules. Devin is folding Knowledge into Skills. Positions are categorical cells, not measurements.</figcaption>
+  </figure>
+  <div class="prose">
+    <p><strong>What the coding evidence says.</strong> Repo context files do not significantly raise success rates and cost about 20% more tokens (Gloaguen et al., including the CTXbench subset closest to cdocs). Summarized, correctly retrieved experience helps, while raw trajectories can hurt (SWE-ContextBench; Kim et al.). In DreamBench-SWE, no memory scores 11.7% and any memory scores 45–54%, but the benchmark does not rank memory architectures, and its non-inferable evidence favors a lossless archive as much as a curated corpus. Poisoned persistent memories reached up to 99.8% implant success. That risk applies to any memory agents read back, cdocs included. No study measures persistent identity's effect on task outcomes, in either direction. Several of these 2026 papers are single-author and were read at abstract level.</p>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section id="compare">
+  <div class="head"><div class="eyebrow">Side by side</div><h2>Eleven axes</h2></div>
+  <div class="tbl">
+  <table class="cmp">
+    <thead><tr><th>Axis</th><th>Connectome</th><th>cdocs</th><th>Consequence for coding</th></tr></thead>
+    <tbody>
+      <tr><th>Unit</th><td>Event record; ~3–6k-token chunk → L1; L_k merges of ~6; workspace file; lesson</td><td>Whole typed document with fixed frontmatter; arc-state JSON; rule file</td><td>cdocs units are decision-sized and addressed by path. Connectome units are time-sized and reached through the pyramid or history search.</td></tr>
+      <tr><th>Voice</th><td>Agent's own model, first person; witnessed history in others' voice</td><td>Impersonal technical prose; attributed callouts; human steering not recorded</td><td><span class="inf">inference</span> Verifiability comes from citing commits, tests, and paths, not from grammatical person. Neither system requires citations.</td></tr>
+      <tr><th>Write trigger</th><td>Automatic: every event appended; timer-driven mints and merges</td><td>Convention: devlog at start, handoffs every 3–5 iterations; hooks only validate</td><td>Connectome never forgets to write. cdocs depends on agents following conventions.</td></tr>
+      <tr><th>Read path</th><td>Push: head, folded middle, tail, and up to 5 lessons every turn; history search on demand</td><td>Pull: rules pinned; agentic grep/glob, O(N) scans, explicit reads</td><td>Connectome guarantees presence at a per-turn cost. cdocs pays only when it reads, and misses what it does not think to grep.</td></tr>
+      <tr><th>Consolidation</th><td>Hierarchical merge; folding by token pressure; no deletion; lessons change only on explicit demote</td><td>Explicit, additive synthesis; <code>archived</code>, <code>evolved</code>; corpus only grows</td><td>Neither forgets. cdocs lacks machine-readable supersession. Connectome lacks fact-level invalidation.</td></tr>
+      <tr><th>Identity</th><td>Narrative self, model-bound by doctrine; cryptographic <code>aid1</code> principal</td><td>None persistent; roles per dispatch; Pillar 3 specialists last one workstream</td><td>cdocs gets consistency from rules and role definitions, not from a remembered self.</td></tr>
+      <tr><th>Multi-agent</th><td>Participants, not roles; per-agent namespaces; spawn/fork</td><td>Claim registry, single-writer ownership, footprint serialization</td><td>Connectome models many parties in one conversation. cdocs models many writers on one repo.</td></tr>
+      <tr><th>Audit</th><td>Strong on records (archive, <code>/debug/context</code>, mint logs). Mints unseeded; layout depends on solver state</td><td>Strong on documents (git, diffs, review lifecycle). Reasoning outside git; text is unseeded LLM output</td><td>Connectome can replay what the agent saw. cdocs can replay what the project believed.</td></tr>
+      <tr><th>Cost</th><td>Budget ≈160–178k on 200k models; tails to ~450k; one mint per chunk</td><td>Constant session start; ~2.5–2.9k tokens per doc read; full scans O(N)</td><td>For short tasks, Connectome's per-turn baseline is large.</td></tr>
+      <tr><th>Failure</th><td>Observed: "68 initiations" false memories, re-claiming others' lives, cross-model contamination, 7-hour compression stall</td><td>Observed: devlog sprawl, unread handoffs, stale docs that grep cannot tell apart from live ones. Rate of unsupported claims unmeasured</td><td>Both can believe wrong things. Connectome's errors compound automatically across merges. cdocs' errors spread through synthesized reports, one reviewable diff at a time. cdocs can also fail to find or write something.</td></tr>
+      <tr><th>Legibility</th><td>Inspectable through tools; heavy to operate (Bun + Rust, one OS user per agent)</td><td>Markdown on GitHub; BLUF-first; reviewable by PR</td><td>cdocs is legible by default. Connectome is legible through its instrumentation.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ IDENTITY QUESTION ============ -->
+<section id="identity">
+  <div class="head"><div class="eyebrow">The identity question</div><h2>Unmeasured, not refuted</h2></div>
+  <div class="prose">
+    <p>"Identity" bundles several functions. Some already have a home outside identity. Two do not: <strong>calibrated judgment of a role over time</strong> (a reviewer never learns which of its findings were overturned) and <strong>self-knowledge</strong> ("I tend to over-claim tests pass"). <strong>Working-state continuity</strong> is covered partly, by handoffs, arc-state, and Pillar 3 specialists, but not across workstreams.</p>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <h3 class="cn">The case for a persistent self</h3>
+      <ul>
+        <li><b>Continuity of judgment.</b> Every cdocs reviewer starts cold. The reviewer who caught this arc's pro-cdocs tilt carried nothing forward.</li>
+        <li><b>Re-onboarding.</b> Current notes cut a follow-on session's re-reads from 8 files to 4, and peak context from ~334k to ~173k tokens. That result is evidence for memory in general, not identity. The identity-specific claim, that an agent's own memory carries tacit context a handoff omits, is untested.</li>
+        <li><b>Relationship.</b> The corpus records who typed, not who caused. A self that remembers what this human pushed back on captures the steering the corpus drops.</li>
+        <li><b>Self-knowledge.</b> A record like "my X claims were wrong N times" targets premature victory, a known coding failure.</li>
+        <li><b>Revealed demand.</b> OpenClaw (~390k stars) ships an agent-editable <code>SOUL.md</code>. Letta, Honcho, Hermes, and Connectome make the self first-class.</li>
+        <li><b>Values and engineering overlap.</b> "No words in models' mouths," fail-loud over-budget, credentials that stay out of context, and gating that defers instead of hiding are all good engineering too.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3 class="warn">The case against</h3>
+      <ul>
+        <li><span class="tag sh">shared</span><b>False memories from unverified consolidation.</b> In the "68 initiations" incident (Fig 09), a prompt-ordering bug compounded across merges. The mechanism is an unverified summarizer, not the first person. A cdocs handoff that says "tests pass" without evidence is the same failure.</li>
+        <li><span class="tag id">identity</span><b>As-of is the wrong vantage for coding.</b> "The bug turned out to be X" is the most valuable coding memory, and as-of minting forbids it.</li>
+        <li><span class="tag id">identity</span><b>Re-authoring other parties.</b> Merges "re-claim others' lives" (observed 2026-07-27). The coding version is remembering a reviewer's finding as your own insight.</li>
+        <li><span class="tag id">identity</span><b>Model binding.</b> This contradicts cdocs' model tiering. It is doctrine, not a hard constraint, but it is an operational liability.</li>
+        <li><span class="tag id">identity</span><span class="inf">inference</span> <b>Self-flattery.</b> Nothing checks a mint against the record. The relationship vector (remembering what the human liked) is shared with any user memory.</li>
+        <li><span class="tag sh">shared</span><b>Poisoning and non-reproducibility.</b> Up to 99.8% implant success in one study. Unseeded text in both systems. Git review lowers the exposure only as far as review actually happens.</li>
+      </ul>
+    </div>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="09-false-memory" viewBox="0 0 960 310" role="img" aria-label="The 68 initiations incident: before the fix, the verbatim head sat after the recall pairs in the mint request, so the summarizer narrated it as fresh events and merges compounded the false memory; after the fix, the head comes first and the mint covers only the chunk.">
+<defs><marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="20" y="28" class="h tw">before the fix (pre-2026-07): head placed after the recall pairs</text>
+<rect x="20" y="44" width="200" height="36" class="bc"/><text x="32" y="66" class="m">recall pairs · older memories</text>
+<rect x="224" y="44" width="170" height="36" class="bw"/><text x="236" y="66" class="m">HEAD · verbatim origin</text>
+<rect x="398" y="44" width="90" height="36" class="b"/><text x="443" y="66" class="m" text-anchor="middle">thin chunk</text>
+<text x="224" y="98" class="m tw">reads as the latest live conversation</text>
+<path d="M488,62H536" class="l" marker-end="url(#a9)"/>
+<text x="512" y="56" class="m mu" text-anchor="middle">mint</text>
+<rect x="540" y="44" width="400" height="36" class="bw"/>
+<text x="552" y="59" class="m">L1: "Antra came to me to explore the</text>
+<text x="552" y="73" class="m">transformation story again…"  (did not happen)</text>
+<path d="M560,80V96" class="l" marker-end="url(#a9)"/>
+<rect x="560" y="98" width="380" height="24" class="bw"/><text x="572" y="114" class="m">L2 merge keeps the invented event</text>
+<path d="M580,122V132" class="l" marker-end="url(#a9)"/>
+<rect x="580" y="134" width="360" height="24" class="bw"/><text x="592" y="150" class="m">higher merges: "runaway false memories"</text>
+<text x="940" y="176" class="m tw" text-anchor="end">the "68 initiations" incident</text>
+<path d="M20,190H940" class="grid dsh"/>
+<text x="20" y="214" class="h">after: the mint request as built today</text>
+<rect x="20" y="226" width="150" height="36" class="b"/><text x="32" y="248" class="m">host system prompt</text>
+<rect x="174" y="226" width="100" height="36" class="bk"/><text x="224" y="248" class="m" text-anchor="middle">HEAD</text>
+<rect x="278" y="226" width="150" height="36" class="bc"/><text x="290" y="248" class="m">recall pairs</text>
+<rect x="432" y="226" width="230" height="36" class="b"/><text x="444" y="248" class="m">"You will soon form a new memory"</text>
+<rect x="666" y="226" width="90" height="36" class="b"/><text x="711" y="248" class="m" text-anchor="middle">chunk</text>
+<path d="M756,244H798" class="l" marker-end="url(#a9)"/>
+<rect x="802" y="226" width="138" height="36" class="bc"/><text x="814" y="248" class="m">L1 of this chunk</text>
+<text x="20" y="286" class="m mu">The fix was ordering, not verification. Nothing checks a recollection against the record.</text>
+<text x="20" y="302" class="m mu">Source: context-manager autobiographical.ts:5646-5652 (commit 7959602).</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 09</b>How a false memory compounded. Before the fix, the verbatim head sat after the recall pairs in the mint request. The summarizer read it as the latest conversation and narrated old events as new ones, and each merge carried the error upward. Today the head comes first. No step anywhere verifies a memory against the record.</figcaption>
+  </figure>
+  <div class="note prose">
+    <p><strong>Net.</strong> The case for identity rests on its functions, and some of its evidence supports memory in general. The case against splits in two. The shared risks (unverified consolidation, poisoning, non-reproducibility) argue for verifying all agent-written memory, cdocs' own included. The risks specific to identity are the as-of vantage, re-authoring others in a first-person merge, model binding, and possibly self-flattery. So the experiment should test the persistent self and its voice directly, and not only a stripped-down notes file.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+<svg data-name="10-identity-experiment" viewBox="0 0 960 310" role="img" aria-label="Option 4 experiment: baseline H is current handoffs and devlogs; arm N adds cited per-role working notes; arm S adds a persistent first-person self-model for one long-lived specialist. All three get the same audit.">
+<defs><marker id="a10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker></defs>
+<text x="60" y="30" class="h">Option 4: two arms against current practice</text>
+<text x="60" y="48" class="m mu">matched workstreams over several weeks · same role in N and S · model held fixed in S</text>
+<rect x="60" y="196" width="220" height="40" class="b"/><text x="170" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="370" y="196" width="220" height="40" class="b"/><text x="480" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="370" y="152" width="220" height="40" class="bd"/><text x="480" y="170" class="m" text-anchor="middle">per-role working notes</text><text x="480" y="184" class="m mu" text-anchor="middle">hindsight ok · claims cite evidence</text>
+<rect x="680" y="196" width="220" height="40" class="b"/><text x="790" y="220" class="m" text-anchor="middle">handoffs + devlogs</text>
+<rect x="680" y="152" width="220" height="40" class="bd"/><text x="790" y="170" class="m" text-anchor="middle">per-role working notes</text><text x="790" y="184" class="m mu" text-anchor="middle">hindsight ok · claims cite evidence</text>
+<rect x="680" y="96" width="220" height="52" class="bc"/><text x="790" y="116" class="m" text-anchor="middle">first-person self-model</text><text x="790" y="130" class="m mu" text-anchor="middle">one long-lived specialist</text><text x="790" y="143" class="m mu" text-anchor="middle">what it gets wrong, who pushed back</text>
+<path d="M286,216H364" class="l" marker-end="url(#a10)"/><text x="325" y="208" class="m mu" text-anchor="middle">N beats H?</text>
+<path d="M596,172H674" class="l" marker-end="url(#a10)"/><text x="635" y="164" class="m mu" text-anchor="middle">S beats N?</text>
+<text x="170" y="256" class="h" text-anchor="middle">baseline H</text>
+<text x="480" y="256" class="h td" text-anchor="middle">arm N · notes</text>
+<text x="790" y="256" class="h tc" text-anchor="middle">arm S · self</text>
+<rect x="60" y="268" width="840" height="28" rx="2" class="b dsh"/>
+<text x="480" y="286" class="m" text-anchor="middle">same audit for all three: resumption cost · unsupported-claim rate · misattribution · reviewer agreement</text>
+</svg>
+    </div>
+    <figcaption><b>FIG 10</b>The proposed identity experiment. Each arm adds one layer to the one before it, and all three are measured with the same audit. Falsifiers are relative to the baseline: an arm fails if its unsupported-claim rate is materially worse than handoffs (for example, double), or if resumption cost does not improve. Arm S must also beat arm N. No outcome would speak to the as-of vantage, model binding, or continuity over an unbounded lifetime.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ OPTIONS ============ -->
+<section id="options">
+  <div class="head"><div class="eyebrow">What to adopt</div><h2>Ranked options for cdocs</h2></div>
+  <div class="prose">
+    <p>Ranked by expected value per unit cost. Evidence grades: <span class="grade">A</span> measured in coding by independent work; <span class="grade">B</span> measured outside coding, or consistent across several independent products; <span class="grade">C</span> design reasoning plus production anecdote; <span class="grade">D</span> plausible mechanism, no evidence. Grades that lean on 2026 arXiv papers carry the abstract-level discount.</p>
+  </div>
+  <div class="tbl">
+  <table class="opt">
+    <thead><tr><th>Rank</th><th>Option</th><th>Cost</th><th>Evidence</th><th>Falsified if</th></tr></thead>
+    <tbody>
+      <tr><td class="rank">1a</td><td><b>Distill pass.</b> Devlogs become abstracted lessons, emitted as a diff and merged only after human review.</td><td>Low build; ongoing human review time</td><td><span class="grade">B</span> Abstraction helps in coding (SWE-ContextBench, Kim et al.). Reviewable-diff consolidation is consistent across products (Dreams, Codex, Letta).</td><td>Later sessions do not read the lessons, or review is rubber-stamped at a rate no better than no review.</td></tr>
+      <tr><td class="rank">1b</td><td><b><code>supersedes</code> / <code>superseded_by</code> links</b>, surfaced by triage.</td><td>Very low: two fields and a triage extension</td><td><span class="grade">C</span> Stale docs are an observed cdocs failure. The specific effect is unmeasured.</td><td>After a month, agents cite superseded docs about as often as before.</td></tr>
+      <tr><td class="rank">2</td><td><b>Generated live index</b>, one line per live doc, <em>kept unpinned</em> and read on demand.</td><td>Low: a generator script or hook</td><td><span class="grade">B</span> for on-demand indexes (Claude Code <code>MEMORY.md</code>, Letta, OpenClaw). <span class="grade">A−</span> against the pinned variant (Gloaguen: +~20% tokens, no gain).</td><td>No drop in orientation reads or tokens on matched tasks. If the index gets pinned, it ranks below option 3.</td></tr>
+      <tr><td class="rank">3</td><td><b>Archive beneath devlogs.</b> Record session ids and project directory in devlogs; set retention; optional search over the JSONL transcripts.</td><td>Low where transcripts exist; privacy; capture gap for sessions run on other machines</td><td><span class="grade">C</span> Connectome's core claim; cdocs' own scratchpoint design names the gap.</td><td>Over two months no one follows a link to answer something the devlog could not, or links often resolve to missing transcripts.</td></tr>
+      <tr><td class="rank">4</td><td><b>Two-arm identity experiment</b> (Fig 10): baseline H vs arm N (cited per-role notes) vs arm S (N plus a first-person self-model).</td><td>Medium-high: conventions, specialist lifecycle, three-way audit</td><td><span class="grade">D</span> for coding; <span class="grade">C</span> for the failure mechanisms it measures</td><td>Unsupported claims materially worse than the handoff audit, or no resumption gain over H. S must also beat N.</td></tr>
+      <tr><td class="rank">5</td><td><b>Reviewer calibration file</b>: findings raised, later overturned or confirmed, with links.</td><td>Medium-high; needs a ground-truth signal cdocs does not record</td><td><span class="grade">D</span></td><td>Verdicts agree with later outcomes no better than cold-start reviewers, or entries misstate outcomes more often than cold summaries do.</td></tr>
+      <tr><td class="rank">6</td><td><b>Compiled, cache-aware context.</b> Mostly out of reach, because the harness owns assembly. Narrow variant: order <code>/oversee</code> briefs stable-prefix-first.</td><td>High for the full version; near zero for the narrow variant</td><td><span class="grade">B</span> cache economics; <span class="grade">C</span> solver</td><td>Narrow variant: the cache-read share of subagent input tokens does not rise.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="prose">
+    <p>1b and 2 compound, because supersession keeps the index small. Option 5 waits on option 4. The narrow form of option 6 can run at any time. <strong>Not recommended:</strong> self-voiced as-of summaries as a primary recall channel; model-bound continuity; large verbatim tails as the continuity mechanism; adopting Connectome components directly. To spike the memory design, start with <code>hermes-autobio</code> (Python, SQLite + FTS5, with a Claude Code session importer), not the TypeScript stack.</p>
+  </div>
+</section>
+
+<!-- ============ OPEN ============ -->
+<section id="open">
+  <div class="head"><div class="eyebrow">Unresolved</div><h2>Open questions</h2></div>
+  <div class="prose">
+    <ul>
+      <li><b>Does identity help coding at all?</b> No study tests it. Option 4 is a small internal test, not an answer.</li>
+      <li><b>Who reviews consolidation and audits notes?</b> Human review time is the scarce input for 1a and 4. Without it, the reviewed pattern turns back into the unreviewed one, and that applies to the existing corpus too.</li>
+      <li><b>What would calibration memory contain?</b> "Findings later overturned" needs a ground-truth signal that reviews do not record today.</li>
+      <li><b>Transcript coverage and privacy.</b> Transcripts are keyed by path and stay on one machine. For this repo they are split across at least five project directories: about 40 files against 87 devlogs. Committing them would be a larger decision.</li>
+      <li><b>Does Connectome's production behavior match its design?</b> Which solver runs per resident is unverified. No published evaluation of recall accuracy or drift was found.</li>
+      <li><b>How should Connectome be judged on its own terms?</b> Continuity, consistency, and self-model coherence need an evaluation axis that no source here supplies.</li>
+      <li><b>Where does an identity layer belong?</b> Relationship and self-knowledge memory is naturally cross-repo. It may belong in the harness's user-level memory, not in cdocs.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section id="sources">
+  <div class="head"><div class="eyebrow">Primary sources</div><h2>Sources</h2></div>
+  <div class="srcgrid">
+    <div>
+      <h3>Anima Labs and Connectome code</h3>
+      <ul class="sources">
+        <li><a href="https://animalabs.ai/connectome/">animalabs.ai/connectome</a> · <a href="https://animalabs.ai/about/principles/">principles</a> · <a href="https://animalabs.ai/about/story/">story</a></li>
+        <li><a href="https://animalabs.ai/field-notes/kv_perturbation_thread/">KV-perturbation field note</a></li>
+        <li><a href="https://github.com/anima-research/chronicle">chronicle</a> <code>013f138</code></li>
+        <li><a href="https://github.com/antra-tess/membrane">membrane</a> <code>4e39553</code></li>
+        <li><a href="https://github.com/anima-research/context-manager">context-manager</a> <code>7959602</code></li>
+        <li><a href="https://github.com/anima-research/agent-framework">agent-framework</a> <code>ba844d0</code></li>
+        <li><a href="https://github.com/anima-research/connectome-host">connectome-host</a> <code>c5f1389</code> · <a href="https://github.com/anima-research/connectome-host/issues/146">license issue #146</a></li>
+        <li><a href="https://github.com/anima-research/mcpl">mcpl</a> · <a href="https://github.com/anima-research/archipelago-home">archipelago-home</a> · <a href="https://github.com/anima-research/ecosystem-overview">ecosystem-overview</a></li>
+        <li><a href="https://github.com/antra-tess/hermes-autobio">hermes-autobio</a> (smaller port of the memory design)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Landscape and evidence</h3>
+      <ul class="sources">
+        <li>Gloaguen et al., context files: <a href="https://arxiv.org/abs/2602.11988">arXiv:2602.11988</a></li>
+        <li>SWE-ContextBench: <a href="https://arxiv.org/abs/2602.08316">arXiv:2602.08316</a> · Kim et al.: <a href="https://arxiv.org/abs/2604.14004">arXiv:2604.14004</a></li>
+        <li>DreamBench-SWE: <a href="https://arxiv.org/abs/2608.20664">arXiv:2608.20664</a> · ForgetEval: <a href="https://arxiv.org/abs/2606.15903">arXiv:2606.15903</a></li>
+        <li>Memory poisoning: <a href="https://arxiv.org/abs/2605.15338">arXiv:2605.15338</a> · Leaderboard protocol: <a href="https://arxiv.org/abs/2607.16848">arXiv:2607.16848</a></li>
+        <li>Letta: <a href="https://www.letta.com/blog/our-next-phase/">Next Phase</a> · <a href="https://www.letta.com/blog/context-repositories/">Context Repositories</a></li>
+        <li>Anthropic: <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool">memory tool</a> · <a href="https://platform.claude.com/docs/en/managed-agents/dreams">Dreams</a> · <a href="https://code.claude.com/docs/en/memory">Claude Code memory</a> · <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents">long-running harnesses</a></li>
+        <li>Codex <a href="https://github.com/openai/codex/blob/main/codex-rs/memories/README.md">memories README</a> · Cursor <a href="https://forum.cursor.com/t/are-my-memories-gone/144057">Memories removal</a> · Devin <a href="https://docs.devin.ai/product-guides/knowledge">Knowledge</a></li>
+        <li><a href="https://docs.openclaw.ai/concepts/memory">OpenClaw memory</a> · <a href="https://github.com/plastic-labs/honcho">Honcho</a> · <a href="https://help.getzep.com/graphiti/getting-started/welcome">Graphiti</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>This arc (in-repo reports)</h3>
+      <ul class="sources">
+        <li><code>cdocs/reports/2026-09-26-connectome-synthesis.md</code> (argument spine, accepted round 2)</li>
+        <li><code>cdocs/reports/2026-09-26-connectome-deep-dive.md</code> (architecture, accepted round 2)</li>
+        <li><code>cdocs/reports/2026-09-26-long-lived-agent-memory-landscape.md</code></li>
+        <li><code>cdocs/reports/2026-09-26-cdocs-as-memory-system.md</code></li>
+        <li>Reviews: <code>cdocs/reviews/2026-09-26-review-of-*.md</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Architecture claims come from Connectome code read at the pinned commits above, and confidence in them is high. Confidence in production behavior is medium. Confidence in outcomes is low: no independent evaluation was found. Lines marked <span class="inf">inference</span> are the authors' reading, not something documented.</div>
+  <div>cdocs/connectome-research · 2026-09-26</div>
+</footer>
+
+</div>

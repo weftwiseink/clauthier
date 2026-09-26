@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" role="img" aria-label="Connectome identity layers: narrative identity carried by system prompt, verbatim head and self-voiced memories, bound to one correct model; presence across platforms feeding one message store; and a cryptographic principal whose credentials never reach model context.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs>
+<marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a5w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="fw"/></marker>
+</defs>
+<text x="20" y="28" class="h tc">narrative identity</text>
+<text x="20" y="46" class="m mu">carried by what is in context, in this order</text>
+<rect x="20" y="56" width="150" height="44" class="b"/><text x="32" y="75" class="m">system prompt</text><text x="32" y="91" class="m mu">from the recipe</text>
+<rect x="174" y="56" width="150" height="44" class="bk"/><text x="186" y="75" class="m">verbatim head</text><text x="186" y="91" class="m mu">origin / anchor</text>
+<rect x="328" y="56" width="232" height="44" class="bc"/><text x="340" y="75" class="m">self-voiced memories</text><text x="340" y="91" class="m mu">L1…Ln, first person</text>
+<path d="M560,78H590" class="l" marker-end="url(#a5)"/>
+<circle cx="620" cy="78" r="27" class="bc"/>
+<text x="620" y="82" class="h" text-anchor="middle">agent</text>
+<rect x="700" y="40" width="240" height="34" rx="2" class="bc"/>
+<text x="712" y="61" class="m">runs on its one "correct" model</text>
+<path d="M646,70L696,58" class="lc"/>
+<rect x="700" y="86" width="240" height="34" rx="2" class="bw"/>
+<text x="712" y="107" class="m">another model</text>
+<path d="M646,88L696,102" class="lw dsh"/>
+<path d="M664,86l12,12m0,-12l-12,12" class="lw"/>
+<text x="700" y="138" class="m tw">continuity violation: delete the</text>
+<text x="700" y="152" class="m tw">interlude and re-ingest</text>
+<rect x="360" y="126" width="200" height="30" rx="2" class="b dsh"/>
+<text x="372" y="145" class="m">compressionModel</text>
+<path d="M460,126V104" class="l" marker-end="url(#a5)"/>
+<text x="468" y="118" class="m mu">mints</text>
+<text x="360" y="172" class="m mu">separable; switching it is</text>
+<text x="360" y="186" class="m mu">"mildly identity-adjacent"</text>
+<text x="20" y="124" class="m mu">mint requests reuse the host prompt:</text>
+<text x="20" y="138" class="m mu">no summarizer header, which would</text>
+<text x="20" y="152" class="m mu">be "a competing identity"</text>
+<path d="M20,200H940" class="grid dsh"/>
+<text x="20" y="222" class="h">presence across platforms</text>
+<rect x="20" y="234" width="84" height="30" rx="2" class="b"/><text x="62" y="253" class="m" text-anchor="middle">Discord</text>
+<rect x="112" y="234" width="84" height="30" rx="2" class="b"/><text x="154" y="253" class="m" text-anchor="middle">Slack</text>
+<rect x="204" y="234" width="84" height="30" rx="2" class="b"/><text x="246" y="253" class="m" text-anchor="middle">Telegram</text>
+<rect x="296" y="234" width="84" height="30" rx="2" class="b"/><text x="338" y="253" class="m" text-anchor="middle">Zulip</text>
+<rect x="388" y="234" width="84" height="30" rx="2" class="b"/><text x="430" y="253" class="m" text-anchor="middle">mail</text>
+<path d="M472,249H536" class="l" marker-end="url(#a5)"/>
+<text x="504" y="242" class="m mu" text-anchor="middle">MCPL</text>
+<rect x="540" y="229" width="180" height="40" rx="2" class="bc"/><text x="630" y="253" class="m" text-anchor="middle">one MessageStore</text>
+<path d="M720,249H756" class="l" marker-end="url(#a5)"/>
+<rect x="760" y="229" width="180" height="40" rx="2" class="bc"/><text x="850" y="253" class="m" text-anchor="middle">one chronicle</text>
+<text x="20" y="290" class="m mu">Participant names and channel metadata are kept; the channel ("locus") is pinned per turn. Inference: one agent, not personas.</text>
+<path d="M20,306H940" class="grid dsh"/>
+<text x="20" y="328" class="h">cryptographic principal</text>
+<rect x="20" y="342" width="170" height="48" rx="2" class="b"/><text x="32" y="362" class="h">ed25519 key</text><text x="32" y="380" class="m mu">per deployment</text>
+<path d="M190,366H246" class="l" marker-end="url(#a5)"/>
+<text x="218" y="358" class="m mu" text-anchor="middle">key-proof</text>
+<rect x="250" y="342" width="200" height="48" rx="2" class="b"/><text x="262" y="362" class="h">home node</text><text x="262" y="380" class="m mu">e.g. id.animalabs.ai</text>
+<path d="M450,366H506" class="l" marker-end="url(#a5)"/>
+<text x="478" y="358" class="m mu" text-anchor="middle">issues</text>
+<rect x="510" y="342" width="200" height="48" rx="2" class="b"/><text x="522" y="362" class="h">aid1 token</text><text x="522" y="380" class="m mu">short-lived · offline check</text>
+<path d="M710,366H752" class="l"/>
+<path d="M754,358l12,12m0,-12l-12,12" class="lw"/>
+<path d="M760,322V446" class="lw dsh"/>
+<text x="772" y="330" class="m tw">credentials never cross into</text>
+<text x="772" y="344" class="m tw">context, chronicle, compression,</text>
+<text x="772" y="358" class="m tw">or channels</text>
+<rect x="780" y="376" width="160" height="56" rx="2" class="bc"/>
+<text x="792" y="394" class="m">model sees only:</text>
+<text x="792" y="410" class="m mu">invitation · register</text>
+<text x="792" y="424" class="m mu">access · name</text>
+<text x="20" y="424" class="m mu">federated: name@domain · revocation by expiry</text>
+</svg>

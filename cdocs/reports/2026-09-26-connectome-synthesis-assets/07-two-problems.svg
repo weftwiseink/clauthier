@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" role="img" aria-label="Two problems: Connectome keeps one agent coherent over a lifetime with a growing archive; cdocs keeps many short sessions coherent through a shared git corpus. Components are aligned in columns: one equivalence (workspace notes and corpus), three partial analogues (merges and handoffs, lessons and rules, as-of rule and doc type), one convergent practice (shared files), and one core each with no analogue (compiled view, review lifecycle). They converge for a long-lived specialist on one project.">
+<style>
+:root,svg{--paper:#EEF1F0;--panel:#FAFBFB;--fig:#F5F7F6;--ink:#17212B;--ink-2:#4F5B67;--line:#B9C3C2;--cn:#7C2D63;--cn-soft:#F0E1EB;--cd:#0C6A5D;--cd-soft:#DAEDE8;--warn:#B0281F;--warn-soft:#F8E0DC;--on:#FAFBFB;--f-ui:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root,svg{--paper:#0F1417;--panel:#172026;--fig:#131A1E;--ink:#E2E8E6;--ink-2:#9BA8AF;--line:#35434B;--cn:#E38DC2;--cn-soft:#3A2033;--cd:#5ACAB5;--cd-soft:#12332D;--warn:#F28A7F;--warn-soft:#3E201C;--on:#0F1417}}
+/* SVG diagram classes */
+text{font-family:var(--f-ui);font-size:12px;fill:var(--ink)}
+.m{font-family:var(--f-mono);font-size:10.5px}
+.h{font-weight:650;font-size:13px}
+.mu{fill:var(--ink-2)} .tc{fill:var(--cn)} .td{fill:var(--cd)} .tw{fill:var(--warn)} .on{fill:var(--on)}
+.b{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.bc{fill:var(--cn-soft);stroke:var(--cn);stroke-width:1.2}
+.bd{fill:var(--cd-soft);stroke:var(--cd);stroke-width:1.2}
+.bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+.dsh{stroke-dasharray:4 3}
+.l{fill:none;stroke:var(--ink-2);stroke-width:1.3}
+.lc{fill:none;stroke:var(--cn);stroke-width:1.3}
+.ld{fill:none;stroke:var(--cd);stroke-width:1.3}
+.lw{fill:none;stroke:var(--warn);stroke-width:1.5}
+.lk{fill:none;stroke:var(--ink);stroke-width:2.6}
+.fk{fill:var(--ink)} .f2{fill:var(--ink-2)} .fc{fill:var(--cn)} .fd{fill:var(--cd)} .fw{fill:var(--warn)} .fp{fill:var(--panel)}
+.nd{fill:var(--panel);stroke:var(--line);stroke-width:1} .nd-sel{fill:var(--cn);stroke:var(--cn);stroke-width:1} .nd-raw{fill:var(--panel);stroke:var(--ink);stroke-width:1}
+.edge{fill:none;stroke:var(--line);stroke-width:1}
+.fun{fill:var(--cn);fill-opacity:.13;stroke:none} .fun-raw{fill:var(--ink);fill-opacity:.07;stroke:none}
+.grid{fill:none;stroke:var(--line);stroke-width:1}
+.lbg{fill:var(--fig);stroke:none}
+.pt{fill:var(--ink-2)} .pto{fill:var(--fig);stroke:var(--ink-2);stroke-width:1.4}
+</style>
+<defs>
+<marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" class="f2"/></marker>
+<marker id="a7k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="fk"/></marker>
+</defs>
+<text x="20" y="56" class="h tc">Connectome</text>
+<text x="20" y="72" class="m mu">one agent</text>
+<text x="140" y="34" class="m mu">day 1</text>
+<text x="960" y="34" class="m mu" text-anchor="end">today</text>
+<rect x="140" y="40" width="820" height="26" class="fc"/>
+<text x="156" y="58" class="m on">one resident agent · months of work and social life</text>
+<polygon points="140,74 960,74 960,114 140,78" class="bc"/>
+<text x="140" y="132" class="m">Chronicle: every event kept, branchable, grows without bound</text>
+<text x="960" y="132" class="m tc" text-anchor="end">each turn: head | folded middle | verbatim tail</text>
+<g>
+<rect x="140" y="152" width="112" height="42" rx="2" class="bc"/><text x="148" y="170" class="m">workspace notes</text><text x="148" y="186" class="m mu">verbatim, exact</text>
+<rect x="258" y="152" width="112" height="42" rx="2" class="bc"/><text x="266" y="170" class="m">L_k merges</text><text x="266" y="186" class="m mu">automatic</text>
+<rect x="376" y="152" width="112" height="42" rx="2" class="bc"/><text x="384" y="170" class="m">lessons store</text><text x="384" y="186" class="m mu">auto-injected</text>
+<rect x="494" y="152" width="112" height="42" rx="2" class="bc"/><text x="502" y="170" class="m">as-of mint rule</text><text x="502" y="186" class="m mu">no hindsight</text>
+<rect x="612" y="152" width="112" height="42" rx="2" class="bc"/><text x="620" y="170" class="m">shared files</text><text x="620" y="186" class="m mu">+ chat channels</text>
+<rect x="730" y="152" width="112" height="42" rx="2" class="bc"/><text x="738" y="170" class="m">compiled view</text><text x="738" y="186" class="m mu">every turn</text>
+<rect x="848" y="152" width="112" height="42" rx="2" class="b dsh"/><text x="856" y="170" class="m mu">(none)</text><text x="856" y="186" class="m mu">no review cycle</text>
+</g>
+<g>
+<rect x="140" y="326" width="112" height="42" rx="2" class="bd"/><text x="148" y="344" class="m">cdocs corpus</text><text x="148" y="360" class="m mu">shared, in git</text>
+<rect x="258" y="326" width="112" height="42" rx="2" class="bd"/><text x="266" y="344" class="m">devlog handoff</text><text x="266" y="360" class="m mu">by convention</text>
+<rect x="376" y="326" width="112" height="42" rx="2" class="bd"/><text x="384" y="344" class="m">rules files</text><text x="384" y="360" class="m mu">human-owned</text>
+<rect x="494" y="326" width="112" height="42" rx="2" class="bd"/><text x="502" y="344" class="m">doc type</text><text x="502" y="360" class="m mu">sets vantage</text>
+<rect x="612" y="326" width="112" height="42" rx="2" class="bd"/><text x="620" y="344" class="m">claim files</text><text x="620" y="360" class="m mu">+ arc-state</text>
+<rect x="730" y="326" width="112" height="42" rx="2" class="b dsh"/><text x="738" y="344" class="m mu">(none)</text><text x="738" y="360" class="m mu">harness assembles</text>
+<rect x="848" y="326" width="112" height="42" rx="2" class="bd"/><text x="856" y="344" class="m">review cycle</text><text x="856" y="360" class="m mu">typed verdicts</text>
+</g>
+<path d="M196,198V322" class="lk" marker-start="url(#a7k)" marker-end="url(#a7k)"/>
+<path d="M314,198V322M432,198V322M550,198V322" class="l dsh" marker-start="url(#a7)" marker-end="url(#a7)"/>
+<path d="M668,198V322" class="l" style="stroke-dasharray:1 4;stroke-width:2"/>
+<path d="M780,254l12,12m0,-12l-12,12M898,254l12,12m0,-12l-12,12" class="lw"/>
+<rect x="148" y="250" width="96" height="22" class="lbg"/>
+<text x="196" y="265" class="h" text-anchor="middle">equivalence</text>
+<rect x="364" y="238" width="136" height="36" class="lbg"/>
+<text x="432" y="252" class="h" text-anchor="middle">partial analogues</text>
+<text x="432" y="268" class="m mu" text-anchor="middle">×3</text>
+<rect x="628" y="250" width="80" height="34" class="lbg"/>
+<text x="668" y="264" class="h" text-anchor="middle">convergent</text>
+<text x="668" y="279" class="m mu" text-anchor="middle">practice</text>
+<text x="845" y="232" class="h" text-anchor="middle">no analogue</text>
+<text x="845" y="296" class="m mu" text-anchor="middle">each system's core</text>
+<text x="20" y="400" class="h td">cdocs</text>
+<text x="20" y="416" class="m mu">one project</text>
+<text x="960" y="390" class="m mu" text-anchor="end">each session reads and writes the corpus, then ends</text>
+<text x="132" y="408" class="m mu" text-anchor="end">opus</text>
+<text x="132" y="426" class="m mu" text-anchor="end">sonnet</text>
+<text x="132" y="444" class="m mu" text-anchor="end">haiku</text>
+<rect x="150" y="398" width="70" height="12" class="bk"/><rect x="290" y="398" width="50" height="12" class="bk"/><rect x="610" y="398" width="70" height="12" class="bk"/><rect x="800" y="398" width="60" height="12" class="bk"/>
+<rect x="220" y="416" width="60" height="12" class="bk"/><rect x="420" y="416" width="60" height="12" class="bk"/><rect x="680" y="416" width="70" height="12" class="bk"/><rect x="880" y="416" width="70" height="12" class="bk"/>
+<rect x="160" y="434" width="40" height="12" class="bk"/><rect x="470" y="434" width="70" height="12" class="bk"/><rect x="620" y="434" width="40" height="12" class="bk"/><rect x="760" y="434" width="50" height="12" class="bk"/>
+<rect x="140" y="456" width="820" height="22" rx="2" class="b" style="stroke:var(--ink);stroke-dasharray:6 3"/>
+<text x="150" y="471" class="m">a long-lived specialist on one project: where the two problems converge (options 4 and 5 probe it)</text>
+<rect x="140" y="490" width="820" height="28" class="fd"/>
+<text x="156" y="508" class="m on">project corpus in git: devlogs · proposals · reviews · reports · rules</text>
+<text x="140" y="540" class="m mu">Each session's transcript stays on the machine that ran it, unlinked from the corpus.</text>
+<text x="140" y="560" class="m mu">Today's nearest mechanism, a Pillar 3 durable specialist, lasts one workstream.</text>
+</svg>
