@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/audio-interaction
 type: devlog
 state: live
-status: done
+status: wip
 tags: [research, oversee, voice, audio, ux]
 ---
 
@@ -49,3 +49,11 @@ No arc-state JSON: a single unit with a single file footprint does not need resu
 
 ### Open Todos
 - User to answer decision points; likely next step is a proposal for the `/brief` input experiment and/or an escalation-digest secretary session.
+
+## Round 2: reframe
+
+User feedback: v1 missed the point. Plan mode / transcript review are clunky patches, not the goal; "escalation files" jargon was opaque; the VoiceMode MCP (the "Claude voice mode" they meant) was not surveyed at all.
+Clarified target: a separate app with continuous duplex audio I/O that triages context, maintains a user-interpretable view of active state (eventually a weftwise integration), and bridges to the overseer session (making requests legible, condensing/formatting user responses).
+Open question from user: separate app vs. MCP tool vs. a thinner translation layer.
+Action: dispatch fresh sonnet author for a new report (`2026-09-26-voice-companion-architecture.md`); v1 stays as reference, cross-linked.
+- v2 author returned (~3760 words). Committed draft; dispatched reviewer.
