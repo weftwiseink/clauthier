@@ -40,3 +40,5 @@ Arc-state: `.claude/oversee/2026-09-26-connectome-context-research.json`.
 - C accepted r2 (65cf3bf).
 - B accepted r2 (fd252ab). A review r1 REVISE-light (41984da): maintenance is timer-driven not per-turn; /checkpoint doesn't branch (/undo,/restore do); temp-0 unsupported. Revision dispatched.
 - A revised dc31da0 (timer-driven maintenance section, branching fixed, temp-0 removed); r2 review dispatched. Synthesis (D) dispatched in parallel.
+- A accepted r2. Note: a concurrent session (audio-interaction arc, same worktree) swept our r2 review + devlog lines into its commit a2b9e3a; content intact. Subsequent briefs require explicit-path `git add`.
+- D synthesis authored 373b211: different problems (one agent over lifetime vs many ephemeral agents over one project); overlap = verbatim notes/workspace ≈ cdocs corpus. Don't adopt runtime or no-hindsight self-summaries for coding recall; adopt archive/view discipline (supersedes + reviewed consolidation, capped live index, devlog→transcript links); identity value unmeasured → one bounded experiment (per-role working notes). Review r1 + artifact build dispatched in parallel.
