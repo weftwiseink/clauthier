@@ -25,6 +25,8 @@ tags: [analysis, synthesis, memory, connectome, identity, architecture]
 > Treat agent identity as **unmeasured, not refuted**, and test it with a two-arm experiment against current handoffs: cited per-role working notes alone, and the same notes plus a persistent first-person self-model for a long-lived specialist.
 > The main risks of identity (unverified consolidation producing false memories, memory poisoning) apply to any agent-written memory, cdocs included. The risks specific to identity are the as-of vantage, re-authoring other parties' contributions, and model binding.
 
+> Illustrated companion: [Connectome vs cdocs](https://claude.ai/artifact/6mdteEvHWFpv37x5NpnoRm) (source: `2026-09-26-connectome-synthesis-assets/connectome-vs-cdocs.html`; standalone SVGs alongside).
+
 > **Revision note (round 1):** Revised per `cdocs/reviews/2026-09-26-review-of-connectome-synthesis.md` (verdict: Revise).
 > Tiered the overlap consistently across BLUF, Key Findings, diagram, body, and Recommendations.
 > Tagged each risk in "The case against" as identity-specific or shared with cdocs, fixed the failure-modes row, and replaced "cdocs already captures that value" with DreamBench's own non-discrimination caveat.

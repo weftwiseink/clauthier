@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/connectome-research
 type: devlog
 state: live
-status: wip
+status: done
 tags: [research, oversee, memory, connectome, anima]
 ---
 
@@ -42,3 +42,19 @@ Arc-state: `.claude/oversee/2026-09-26-connectome-context-research.json`.
 - A revised dc31da0 (timer-driven maintenance section, branching fixed, temp-0 removed); r2 review dispatched. Synthesis (D) dispatched in parallel.
 - A accepted r2. Note: a concurrent session (audio-interaction arc, same worktree) swept our r2 review + devlog lines into its commit a2b9e3a; content intact. Subsequent briefs require explicit-path `git add`.
 - D synthesis authored 373b211: different problems (one agent over lifetime vs many ephemeral agents over one project); overlap = verbatim notes/workspace ≈ cdocs corpus. Don't adopt runtime or no-hindsight self-summaries for coding recall; adopt archive/view discipline (supersedes + reviewed consolidation, capped live index, devlog→transcript links); identity value unmeasured → one bounded experiment (per-role working notes). Review r1 + artifact build dispatched in parallel.
+- D review r1 REVISE (136ec2e: overlap inconsistent, asymmetric risks, Option 4 couldn't test identity, asymmetric falsifiers, Option 1 over-graded) → revised 983dd7b → r2 ACCEPT (9e6be38); overseer folded N1-N3 (content-vs-voice confound, same-role arms, S-vs-N falsifier).
+- Artifact built (b40ba63, 10 bespoke SVGs); overseer read in full, added content-vs-voice caveat to Fig 10, published: https://claude.ai/artifact/6mdteEvHWFpv37x5NpnoRm
+
+## Handoff
+
+### Completed
+- Four reports, each reviewer-accepted: connectome deep dive (r2), memory landscape (r2), cdocs-as-memory (r2), synthesis (r2).
+- Illustrated Artifact published; linked from the synthesis report.
+
+### Decisions Made
+- Research arc run under `/oversee` with reports as units (terminal = reviewer accept).
+- Reviewers explicitly briefed to check pro-cdocs tilt; two of four reports were materially corrected for it (landscape convergence thesis, synthesis risk symmetry + identity experiment design).
+
+### Open Todos
+- Ranked adoption options (synthesis §options): 1a distill pass, 1b `supersedes` links, 2 unpinned live index, 3 devlog→transcript links; 4 two-arm identity experiment should be scoped as an RFP with comparative falsifiers.
+- Unverified: which fold solver each Anima resident runs; licensing on several Connectome repos; no independent eval of Connectome recall/drift.
