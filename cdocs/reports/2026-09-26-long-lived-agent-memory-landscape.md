@@ -8,10 +8,10 @@ state: live
 status: review_ready
 tags: [research, landscape, memory, context-management, connectome]
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-09-26T13:30:00-07:00
-  round: 1
+  at: 2026-09-26T14:15:00-07:00
+  round: 2
 ---
 
 # Long-Lived Agent Memory Landscape: Comparators for Connectome and cdocs

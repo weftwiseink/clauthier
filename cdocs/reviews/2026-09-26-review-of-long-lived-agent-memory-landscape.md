@@ -7,7 +7,7 @@ task_list: cdocs/connectome-research
 type: review
 state: live
 status: done
-tags: [fresh_agent, source_verified, citation_integrity, motivated_reasoning, identity_fairness, internal_consistency]
+tags: [fresh_agent, source_verified, citation_integrity, motivated_reasoning, identity_fairness, internal_consistency, rereview_agent]
 ---
 
 # Review: Long-Lived Agent Memory Landscape
@@ -140,3 +140,38 @@ The research is solid and most citations check out, but three framing and citati
    - (a) Yes, add it here.
    - (b) Defer it to the connectome sibling report.
    - (c) Out of scope.
+
+## Round 2 (2026-09-26)
+
+Reviewed commit 59c7cf3 ("docs(connectome): revise memory landscape per review"), which addresses this review's round-1 findings.
+Method: re-read the full revised document, and independently re-fetched the new Cursor source (`forum.cursor.com/t/are-my-memories-gone/144057`) via WebFetch rather than trusting the citation on its face.
+
+### Blocking findings, re-checked
+
+1. **Convergence thesis (was blocking): resolved.** The BLUF now opens "Two trends that are easy to conflate should be kept apart" and gives separate **Substrate** ("shifting toward... plain files") and **Authorship** ("this is *not* converging on the agent as writer") paragraphs. Key Finding 1 says "'Shifting toward' is the defensible wording, not 'converged'." Key Finding 4 states authorship is demoted in coding tools. The Patterns intro (`## Patterns That Transfer to cdocs`) now states the substrate/authorship split explicitly ("On *authorship*, it does not [converge]... which is the pattern coding-tool vendors are retreating from") rather than the old single-line overstatement. Recommendation 1 is scoped to substrate and explicitly declines to confirm the writer model. No residual "converged" language found via grep.
+2. **Letta-vs-Mem0 weighting (was blocking): resolved.** The BLUF still surfaces the result (reasonable, since it is discussed either way) but now frames it as a caveat rather than a pillar: "That includes the result most flattering to file-based designs..., which is a cross-harness comparison where a full-context baseline also beats Mem0." The Benchmark section (line ~232-235) drops "single most decision-relevant" and instead concludes "It is weak evidence that a file-based agent is *not worse*... and no evidence about files versus graphs for coding." The closing NOTE repeats the self-run-vs-self-reported caveat. Consistent treatment throughout; no remaining place asserts it as a positive result for files.
+3. **Identity "niche" claim (was blocking): resolved.** BLUF: "Identity persistence is mainstream in personal-agent harnesses (OpenClaw...) but unmeasured on task outcomes; it is rare only among coding tools and memory-layer SaaS." Key Findings and the Net Assessment echo this. Pattern 7 is rewritten to "Treat identity as an open question with an unmeasured payoff, not a settled 'no'" and explicitly states what identity systems optimize for (behavioral consistency, relationship continuity, self-model coherence), matching the action item.
+4. **Cursor citation (was blocking): resolved and independently verified.** I re-fetched `forum.cursor.com/t/are-my-memories-gone/144057` directly. The report now quotes the staff reply verbatim: "The Memories feature was intentionally removed starting from version 2.1.x," correctly attributes it to a named staff member's 2025-11-25 reply, and accurately describes the export-to-Rules guidance and the "no rationale found" framing. The report's added detail that a user called the exported files "almost no different than .mdc files" also checks out verbatim against the source. This is now a fully supported citation.
+
+### Non-blocking items, spot-checked
+
+5. Devin quote is now verbatim ("Existing Knowledge is being migrated to Skills in Plugins automatically"). Resolved.
+6. ETH caveat now names CTXbench and splits the cost figure ("+20-23% for LLM-generated files and up to ~19% for developer-written ones"). Resolved.
+7. Table gets a legend footnote for free-text hybrid cells; Generative Agents Audit changed to 2. Resolved.
+8. No "May 2026" language remains for Dreams; the beta header date (`dreaming-2026-04-21`) is used consistently. Resolved.
+9. Mermaid Substrate subgraph now uses undirected `---` links. Resolved.
+
+### New issues found this round
+
+None blocking. Two small observations, both non-blocking:
+- The BLUF and closing NOTE each carry a caveat about the Letta/Mem0 result; this is intentional redundancy given how load-bearing the original miscitation was, and is acceptable, but a future pass could consolidate to one place per the "say it once" convention.
+- The two `NOTE(opus/connectome-research)` callouts at the end (verification caveats, then the round-1 revision log) are good practice and consistent with the writing conventions' allowance for chronological framing in exceptional cases; no change needed.
+
+No new citation, consistency, or framing errors were found. The revision is a faithful, complete resolution of every blocking and non-blocking action item from round 1.
+
+### Round 2 Verdict
+
+**Accept.**
+All four round-1 blocking findings are resolved, including independent re-verification of the previously-uncited Cursor claim against its source.
+All five non-blocking suggestions were also addressed.
+No new pro-cdocs tilt, citation gap, or internal inconsistency was introduced in the revision.
