@@ -57,3 +57,4 @@ Clarified target: a separate app with continuous duplex audio I/O that triages c
 Open question from user: separate app vs. MCP tool vs. a thinner translation layer.
 Action: dispatch fresh sonnet author for a new report (`2026-09-26-voice-companion-architecture.md`); v1 stays as reference, cross-linked.
 - v2 author returned (~3760 words). Committed draft; dispatched reviewer.
+- v2 review r1: revise. Blocking: missed `claude agents --json` state feed; unsafe concurrent-resume write-back; thin→thick options don't answer app-vs-MCP-vs-thin-layer; experiment confounds turn-taking with state model. Resumed v2 author.
