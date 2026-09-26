@@ -37,3 +37,6 @@ Arc-state: `.claude/oversee/2026-09-26-connectome-context-research.json`.
 - C (cdocs-as-memory) authored 80e2c3a; review r1 REVISE (6 blocking: mechanism count, cold-start framing, weftwise size mostly _media, hook scope, review lifecycle, consolidation undersold); revised 2d4448b; r2 review dispatched.
 - B (landscape) authored 014c8e9; review r1 REVISE (70c772c): convergence thesis overstated (format converges, authorship doesn't), grep-vs-Mem0 over-weighted, "identity is niche" contradicted by OpenClaw/SOUL.md, bad Cursor cite. Reviewer caught pro-cdocs tilt; revision dispatched with explicit anti-tilt brief.
 - A (connectome) authored 873ec4d: 5-lib stack (Chronicle, Membrane, context-manager, agent-framework, connectome-host); lossless branchable event archive + per-turn compiled view with first-person, no-hindsight summaries; cache-aware solver. Review r1 dispatched with code-level verification.
+- C accepted r2 (65cf3bf).
+- B accepted r2 (fd252ab). A review r1 REVISE-light (41984da): maintenance is timer-driven not per-turn; /checkpoint doesn't branch (/undo,/restore do); temp-0 unsupported. Revision dispatched.
+- A revised dc31da0 (timer-driven maintenance section, branching fixed, temp-0 removed); r2 review dispatched. Synthesis (D) dispatched in parallel.

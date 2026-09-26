@@ -7,7 +7,7 @@ task_list: cdocs/connectome-research
 type: review
 state: live
 status: done
-tags: [fresh_agent, architecture, source_verified, provenance, lifecycle_accuracy]
+tags: [fresh_agent, rereview_agent, architecture, source_verified, provenance, lifecycle_accuracy]
 ---
 
 # Review: Anima Labs' Connectome: architecture deep dive
@@ -145,3 +145,36 @@ Three factual corrections are required before this feeds diagrams and the synthe
    (a) kv-stable, per the runbook, with kv-unified as the direction of travel.
    (b) kv-unified, per changelog activity.
    (c) Present both, explicitly unresolved (recommended until production config is confirmed).
+
+## Round 2 (revision commit dc31da0)
+
+Re-verified each round-1 blocking finding directly against the scratchpad clones (`/tmp/claude-1000/.../scratchpad/{agent-framework,context-manager,connectome-host}`), with particular attention to the new background-maintenance section and branching semantics.
+
+**1. Maintenance trigger (was blocking).** Resolved.
+The report now gives maintenance its own section ("Background maintenance loop (periodic, turn-independent)") and a separate sequence diagram, with the turn-flow diagram ending at write-back and an explicit line: "The turn does **not** start summarization. It only leaves work queued. Nothing at turn end kicks maintenance."
+Verified against code: `setInterval(..., maintenanceIntervalMs)` with `DEFAULT_MAINTENANCE_INTERVAL_MS = 5000` (`framework.ts:729,1769-1773`), a `start()`-time immediate call (`framework.ts:1774-1776`), `maintenanceTick()` for the operator path (`framework.ts:3313-3321`), and the OverBudget drain breaker capped at 8 ticks (`framework.ts:11667-11680`, confirmed `while (ticks < 8)`).
+`runQueuedMaintenance` matches exactly as described: pushes tool definitions to every agent first (`cm.setToolDefinitions(tools)`), then skips provider-gated and `isReady()` agents, then runs up to `MAINTENANCE_TICKS_PER_PASS` (8, confirmed at `framework.ts:731`) ticks per remaining agent in parallel via `Promise.all` (`framework.ts:2091-2133`).
+`AutobiographicalStrategy.tick` (`autobiographical.ts:4560-4610`) confirmed as priority-1-mint-then-priority-2-merge, one LLM call per tick, matching the report's "Priority 1 / Priority 2" description and the recall/dequeue-after-success semantics.
+This is the recommended illustrator answer from round 1's question 1(a): a separate clock-driven loop, not a `par` block.
+
+**2. `/checkpoint` vs `/undo`/`/restore` branching (was blocking).** Resolved.
+`connectome-host/src/commands.ts:914-920` confirmed: `/checkpoint` stores `{branchName, messageId}` in `app.branchState.checkpoints` and creates no branch; the code comment "A checkpoint is a *position*, not just a branch" is quoted accurately.
+`/restore` (`commands.ts:925-965`) branches from the recorded message id when present, matching the report's "and `/restore` later branches from that message."
+`/undo` calls `store.createBranchAt(undoBranchName, currentBranch.name, checkpoint.sequenceBefore)` (`framework.ts:5413`, confirmed).
+The report's added inference that `branchState` (built by `createBranchState()` at host start) likely does not survive a restart is a reasonable, clearly-labeled inference; not verified further but not contradicted by anything found.
+
+**3. Temperature-0 mints (was blocking).** Resolved.
+Confirmed no `temperature` field appears in `context-manager/src`; all four cited mint/merge call sites (`autobiographical.ts:6215,6236,7858,7873`) are `ctx.membrane.complete(request, { formatter: this.nativeFormatter })` with no sampling parameter, exactly as the revised text states.
+`agent-framework/src/types/agent.ts:110` confirmed: signed-thinking mode "enforces `temperature: 1`" is a real code comment, correctly cited as the report's counter-example to any determinism claim.
+
+**No new errors surfaced.** The new maintenance section's own citations (`framework.ts:729,1769-1780,2065-2135,3305-3325,11660-11685`) all check out line-for-line against the clone, including the exact constant names (`DEFAULT_MAINTENANCE_INTERVAL_MS`, `MAINTENANCE_TICKS_PER_PASS`) and control flow (early-return on in-flight pass, `unref()` on the timer).
+The non-blocking action items from round 1 (68-initiations incident, kv-unified/#105 qualification, 160-178k budget-ceiling reword, dead README citation, `compressionModel` separability, rev 5.1 lexicographic-cascade note) are all also present in the current text (lines 339, 355 area, 460, 496-514), addressed beyond what was strictly required.
+
+### Verdict (Round 2)
+
+**Accept.**
+All three round-1 blocking findings are resolved and verified against the code at the pinned commits; no regressions or new factual errors were found in the revised or surrounding text.
+
+### Action Items (Round 2)
+
+None blocking. Optional future polish (non-blocking, not required for acceptance): the "Coupling to turns" paragraph could note explicitly that the drain-breaker path bypasses the `setToolDefinitions` refresh step 1 gives the timer-driven pass, since it calls `cm.tick()` directly — a corner case, low stakes, safe to leave for a future pass.

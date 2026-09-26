@@ -35,3 +35,4 @@ No arc-state JSON: a single unit with a single file footprint does not need resu
 - Dispatched sonnet author.
 - Author returned; report review_ready. Unverified: Talon Wayland status, /voice issue numbers. Dispatched reviewer.
 - Review r1: revise. Blocking: UserPromptSubmit cannot rewrite prompts; citation misdescriptions; secretary must be top-level session not dispatched specialist; triage return path wrong (pause marker, hard-gate-only escalations); missing plan mode + Channels; first experiment should target input precision. Dispatched author for revision.
+- Revision r1 returned (3851 words). Dispatched round-2 review; flagged possible permissionDecision (PreToolUse field) misuse for UserPromptSubmit block.
