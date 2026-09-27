@@ -20,6 +20,8 @@ last_reviewed:
 > Refined audio stacks exist today (Pipecat/LiveKit with semantic turn detection); Claude Code has real, if research-preview or newly-surfaced, plumbing for the architecture half (`claude agents --json`, Channels' permission relay, the Agent SDK hosting the overseer outright).
 > Recommendation: run a pre-registered, four-condition experiment (a state-reading fast talker on Pipecat + Smart Turn, the same pipeline with Smart Turn off, the same talker fed only `claude agents --json`, and plain VoiceMode as baseline) across a couple of real `/oversee` arcs to test whether a separate, state-reading fast talker beats same-agent voice, and whether semantic turn detection adds to it, before committing to a standalone app or a Weftwise integration.
 
+> NOTE(claude-opus-5-5/audio-interaction): The bridge analysis here (answer-path table, options (a)/(b)) is superseded by [`2026-09-27-claude-code-inter-session-messaging.md`](2026-09-27-claude-code-inter-session-messaging.md), which covers native cross-session messaging, the inbox socket, and subscription constraints; see its revisions list.
+
 ## Context / Background
 
 A prior report, [`2026-09-26-audio-interaction-approaches.md`](2026-09-26-audio-interaction-approaches.md), surveyed `/voice` dictation and a "secretary" pattern for compiling rambling speech into structured briefs.

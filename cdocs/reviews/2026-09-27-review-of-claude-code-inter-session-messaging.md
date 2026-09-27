@@ -159,3 +159,69 @@ The author must re-rank the companion designs now that the CLI-hosted overseer i
    - (A) `crossSessionInbound: "accept"` via `--settings` at overseer launch.
    - (B) `accept` in user settings, which applies to every session.
    - (C) Run the companion in bypass mode too.
+
+## Round 2
+
+> BLUF: Both blocking items are resolved.
+> The new specifics are mostly accurate, with three corrections applied inline: the `--permission-prompt-tool` argument, the `AskUserQuestion` routing claim, and the advice to publish the messaging token. `/oversee`-under-`-p` behavior is now scoped as documented or untested.
+> Verdict: **Accept**.
+
+### Round-1 items
+
+- **B1 (re-rank with CLI hosting): resolved.**
+  Design 0 ranks the CLI-hosted overseer first, conditional on the user accepting the companion as launcher, and states that cost plainly.
+  The Recommended combination branches on that condition. The SDK-package gray area is stated with correct scope.
+- **B2 (direct socket posting): resolved.**
+  Design 2 drops the proxy session for both the read and write legs. It correctly notes that a non-Claude process cannot *receive* overseer-initiated pushes, and it flags the wire format for empirical verification.
+- **Non-blocking items 3-7: all addressed.**
+  - Idle wake and bypass hold are now stated once each.
+  - The overseer's `ListAgents` reach is cited as primary evidence.
+  - The bypass-mode companion trade-off is named.
+  - The `CLAUDE_CODE_SUBAGENT_MODEL` aside and the routines existing-session claim are gone.
+  - `notify_when_idle` re-subscription is stated.
+  - The tool-description sourcing is labeled.
+
+  The report is 3366 words, now 3506 after the fixes below.
+
+### Verification of new specifics
+
+- **`CLAUDE_CODE_MESSAGING_SOCKET` / `CLAUDE_CODE_MESSAGING_TOKEN`: names correct.**
+  Per the cross-session docs, the socket path is exported to hooks and Bash commands "before any hook runs, including `SessionStart`", so publishing it from a `SessionStart` hook works.
+  **Corrected:** the report suggested publishing the token too.
+  - The auth line is optional on Linux, so the token is unnecessary.
+  - The docs use the token as own-child evidence on macOS, in PID-1 containers and on native Windows. A poster verified as the session's own child is delivered even to a bypass-mode session when no `crossSessionInbound` value applies.
+  - Publishing the token therefore risks letting any same-user process skip the default hold. The report now advises against it.
+- **`--permission-prompt-tool`: partly corrected.**
+  The CLI reference defines it as "an MCP tool to handle permission prompts in non-interactive mode". The report's `<mcp-tool-or-stdio>` argument is not documented; `stdio` is the SDK's internal control path. It is now `<mcp_tool_name>`.
+  Two related facts the report leaves out but that are worth knowing:
+  - `--permission-prompts host` (the default) sends prompts to that tool.
+  - The tool cannot approve MCP tools marked as requiring user interaction.
+- **"Every `AskUserQuestion` natively": softened.**
+  Docs confirm `AskUserQuestion` reaches the SDK's `canUseTool` callback. Nothing documents it reaching a CLI `--permission-prompt-tool` MCP tool. The tools reference lists `AskUserQuestion` as not requiring permission, so it may not route there at all.
+  This matters, because `/oversee` asks via `AskUserQuestion`. It is now marked as needing verification in design 0, the table row, and the Unverified list.
+- **`/oversee` subagent dispatch under `-p` stream-json: not addressed by the report; now scoped inline.** Per the headless docs:
+  - User-invoked skills expand in `-p`.
+  - Background subagents keep a `-p` run open until they finish, with a 10-minute idle ceiling once stdin closes (`CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`).
+  - Subagent messages are tagged in the stream with `parent_tool_use_id`.
+  - Terminal-only built-ins are unavailable.
+  - Agent teams never spawn under `-p`, which does not affect `/oversee`'s subagent dispatch.
+
+  A full arc (background dispatch, `SendMessage` to subagents, proactive `/compact`) under `-p` stream-json is untested. That is added to the Unverified list.
+
+### Minor fixes applied directly (round 2)
+
+1. `notify_when_idle` maturity: "GA" became "On by default", for consistency.
+2. Design 0: the `--permission-prompt-tool` argument, the `AskUserQuestion` hedge, and the `-p` behavior scoping.
+3. Inventory table: the CLI-hosting delivery cell now hedges on `AskUserQuestion`; the direct-socket cell advises against publishing the token.
+4. Unverified list: added the design 0 specifics.
+
+### Remaining non-blocking
+
+1. Before building design 0, run a scratch arc under `claude -p --input-format stream-json` with a stub MCP prompt tool. That settles both the `AskUserQuestion` routing and `/oversee`'s behavior in one step.
+2. Before building design 2, do the `socat` wire-format test. Also confirm that a published socket-path file is readable only by the user; the socket itself is already user-restricted.
+
+### Round-2 verdict
+
+**Accept.**
+The report answers the native-interface and subscription questions accurately, and it ranks designs on correct premises.
+It honestly scopes the two design-specific unknowns as pre-build verification steps.

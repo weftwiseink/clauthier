@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/audio-interaction
 type: devlog
 state: live
-status: wip
+status: done
 tags: [research, oversee, messaging, claude-code]
 ---
 
@@ -32,3 +32,18 @@ User asked for more detail on Channels and other message-passing affordances, su
 - Author returned: cross-session messaging is GA, subscription-compatible, documented at /docs/en/cross-session-messaging; idle receivers are woken; Agent SDK disallowed on subscription OAuth (invalidates v2 SDK-hosted option). Dispatched reviewer.
 - Review r1: revise. SDK-on-subscription overstated (third-party-offering restriction; own-use grey; `claude -p` fine). Blocking: re-rank with CLI-hosted overseer (stream-json + --permission-prompt-tool); add script-posts-to-inbox-socket path (needs empirical test). Resumed author.
 - Revision r1 returned (3366 words): design 0 = companion-hosted `claude -p` stream-json overseer; design 2 = Pipecat posts to inbox socket. Dispatched round-2 review.
+- Review r2: accept (reviewer corrected: don't publish messaging token; `--permission-prompt-tool` takes an MCP tool; AskUserQuestion routing to that tool unverified; `/oversee` under `-p` scoped note).
+- Overseer added supersession NOTE to the voice-companion report's bridge analysis.
+
+## Handoff
+
+### Completed
+- `cdocs/reports/2026-09-27-claude-code-inter-session-messaging.md` accepted round 2 (~3500 words).
+
+### Decisions Made
+- Design 0 (companion hosts `/oversee` via `claude -p` stream-json + MCP permission tool) ranked first conditional on user giving up terminal-launched `/oversee`; design 2 (Pipecat posts to inbox socket) as the keep-your-terminal alternative.
+
+### Open Todos
+- Spike A: scratch arc under `claude -p --input-format stream-json` with stub MCP permission tool (does subagent dispatch work; does AskUserQuestion reach the tool).
+- Spike B: `socat` probe of the inbox-socket wire format.
+- User decisions carried from v2: bridge direction, headset vs speakers, weftwise timing.
