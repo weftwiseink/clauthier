@@ -6,6 +6,11 @@ task_list: cdocs/audio-interaction
 type: report
 state: live
 status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-5-5"
+  at: 2026-09-27T11:40:10-07:00
+  round: 2
 tags: [analysis, voice, voicemode, messaging, devcontainer]
 ---
 
@@ -136,9 +141,11 @@ By contrast, `SendMessage` is model-judged and spends overseer tokens per messag
 
 **Recommendation: `Stop` hook as primary push for status/liveness, `SendMessage` for content the model judges worth escalating** (findings, decisions, questions): a peer pairing, since the hook is free but dumb and the convention is smart but costly and only as reliable as the model's judgment.
 
-**`Notification`, corrected:** it cannot inject a decision into its own session's turn, but its script can post to another session's socket exactly like `Stop`'s can; the reason to still prefer `Stop` is a thinner payload, not an inability to post.
+**`Notification`:** it cannot inject a decision into its own session's turn, but its script can post to another session's socket exactly like `Stop`'s can.
+The reason to prefer `Stop` is a thinner payload, not an inability to post.
 
-**`notify_when_idle`, cost restated:** each notice starts a new turn in an idle conversationalist, which typically re-subscribes in that same turn, a small but real tax, and drops the status entirely under `hold` on either side.
+**`notify_when_idle` cost:** each notice starts a new turn in an idle conversationalist, which typically re-subscribes in that same turn, a small but real tax.
+It drops the status entirely under `hold` on either side.
 If `Stop` is adopted, it becomes largely redundant for hook-equipped overseers, worth keeping only as a fallback for those without the hook.
 
 **Payloads.**
@@ -158,15 +165,19 @@ Add to `oversee/SKILL.md`/`CLAUDE.md`: if a session named `conversationalist` (o
 Cheapest, weakest to enforce, working only if the model reliably follows the written rule.
 
 **Tier 2: a deny-and-redirect `PreToolUse` hook.**
-A roughly ten-line hook matching `tool_name == "AskUserQuestion"`, active only when a conversationalist socket path is published, returning `permissionDecision: "deny"` with `permissionDecisionReason: "a voice conversationalist is attached; SendMessage the question to it instead."`
+A roughly ten-line hook matching `tool_name == "AskUserQuestion"`, active only when a conversationalist socket path is published.
+It first checks that the conversationalist is alive: the socket connects, or the session appears in `claude agents --json`.
+Only then it returns `permissionDecision: "deny"` with `permissionDecisionReason: "a voice conversationalist is attached; SendMessage the question to it instead."`
+Otherwise it falls through to allow, so a stale socket-path file from a crashed conversationalist never blackholes `AskUserQuestion`.
 A `deny` reason is shown to Claude, deterministically forcing the fallback the convention only hopes for, at the cost of one small hook file.
 
 **Tier 3: a full answer-relay hook.**
 The hooks docs document answering `AskUserQuestion` from a hook directly: `permissionDecision: "allow"` paired with `updatedInput` echoing the original `questions` plus `answers: {"<question>": "<label>"}` runs the tool with no local prompt.
 A relay hook posts the question into the conversationalist's socket, waits on a reply file, and returns the answer via `updatedInput.answers`, within the default 600s command-hook timeout (configurable).
+A timed-out hook lets the tool call proceed, so a stuck relay falls back to the local prompt rather than hanging.
 Keeps the overseer's native tool and framing, at the highest dev cost of the three; `defer` is `-p`-only, unusable by an interactive overseer to buy extra time.
 
-**Corrected reading of the cited issues, since the previous pass misread all three.**
+**Reading of the cited issues.**
 [claude-plugins-official#4260](https://github.com/anthropics/claude-plugins-official/issues/4260) is a bug in the third-party **hookify** plugin's own deny branch, and cites the docs stating the reason reaches the model: not evidence Claude Code drops it.
 [nimbalyst#1577](https://github.com/nimbalyst/nimbalyst/issues/1577) is a rendering bug in Nimbalyst's own Electron UI, not the Claude Code terminal, and states "Claude Code honours the deny."
 [wxtsky/CodeIsland#340](https://github.com/wxtsky/CodeIsland/issues/340) is a closed third-party-bridge bug; the hooks docs already list `AskUserQuestion` as a matchable tool outright, so no third-party evidence is needed for matchability.
@@ -180,17 +191,22 @@ Tier 3 differs: the overseer sees a normal native tool result via `updatedInput.
 
 ## Recommended minimal bridge v0
 
-Answering the review's core objection directly: **lace-contained overseers are out of reach for v0 as designed, and this must be stated rather than dropped silently.**
-Options, cheapest first:
+**Lace-contained overseers are out of reach for v0 as designed, and this must be stated rather than dropped silently.**
+v0 stays minimal: host-run voice-attached overseers only.
 - **(a) Run voice-attached overseers on the host.** Zero new plumbing; `SendMessage`/`Stop`-hook posting both work as documented between host sessions.
-- **(b) A file relay through the one thing lace already shares: the `~/.claude` bind mount.** A container overseer's `Stop` hook writes a line to `~/.claude/conversationalist/inbox/<overseer>.jsonl`; a host-side watcher tails it and posts into the conversationalist's socket using the same wire format as the direct `Stop`-hook path. The reverse direction is a small container-side poster into the overseer's own *local* socket, entirely inside that container. Uses only documented socket posting plus the existing mount, no `connectto`/SELinux work, no dependency on the sender-endpoint checks a direct cross-boundary `SendMessage` would hit.
-- **(c) Remote Control on both ends.** Unverified (Q1); adds server-hop latency and an unconfirmed in-container client path.
+- **(c) Remote Control, as a fallback.** Unverified (Q1); adds server-hop latency and an unconfirmed in-container client path.
+
+**First v0.1 follow-up: a file relay through the one thing lace already shares, the `~/.claude` bind mount.**
+Justified once a container overseer such as `weftwise` needs voice, not before.
+A container overseer's `Stop` hook writes a line to `~/.claude/conversationalist/inbox/<overseer>.jsonl`; a host-side watcher tails it and posts into the conversationalist's socket using the same wire format as the direct `Stop`-hook path.
+The reverse leg is an overseer `SessionStart` hook launching a background poster using `$CLAUDE_CODE_MESSAGING_SOCKET`; as a child of that session it is verified own-child, so delivery needs no `accept`.
+> WARN(sonnet/audio-interaction): the inbox is a shared bind mount, so any process in any lace container can write to it and inject text into the host conversationalist. The conversationalist's own `--tools` restriction is the mitigation, not the relay's access control.
 
 1. **Audio-out stays single-source:** only the conversationalist calls `converse()`.
-2. **Pick a stance on lace-contained overseers rather than defaulting to host-only:** (a) is cheapest; (b) is the only option reaching a session like the user's live `weftwise` container without new mounts or SELinux changes.
+2. **v0 is host-only; container overseers wait for the file relay in v0.1.**
 3. **Ledger file, no specialists:** one JSON file per actively-conversing overseer under `.claude/conversationalist/ledger/<name>.json`, read/written inline by the top level.
 4. **Turn-end: adopt the `Stop` hook as primary**, `SendMessage` for model-judged findings/decisions/questions, `notify_when_idle` only as a fallback.
-5. **Question relay: pick one of Q4's three tiers deliberately**, tier 2 at minimal extra cost for deterministic enforcement.
+5. **Question relay: pick one of Q4's three tiers deliberately**, tier 2 at minimal extra cost for deterministic enforcement, gated on the conversationalist being alive and failing open to the local prompt otherwise.
 
 **Shared prerequisite:** the conversationalist's `SessionStart` hook publishing its socket path to a known file, needed by the `Stop`-hook path, the file relay, and any hotkey wake path alike.
 
@@ -199,9 +215,9 @@ Options, cheapest first:
 The review raised three open questions; recommendations follow, referencing the option letters/tiers above.
 
 1. **Where do voice-attached overseers run** (host-only / often lace-contained / both)?
-   Recommendation: both, per v0 options (a)+(b): live sessions include lace-contained overseers today, and the file relay is small enough to build alongside the host-only path.
-2. **Turn-end push mechanism for v0** (Q3's a/b/c)?
-   Recommendation: (c), the `Stop` hook for routine status plus `SendMessage` for content needing the model's own judgment.
+   Recommendation: both over time. v0 ships host-only; the file relay lands in v0.1 once a container overseer such as `weftwise` needs voice.
+2. **Turn-end push mechanism for v0:** a `Stop` hook posting `last_assistant_message`, the `SendMessage` convention, or a hook for status paired with convention for findings and questions?
+   Recommendation: the `Stop` hook for routine status plus `SendMessage` for content needing the model's own judgment.
 3. **`AskUserQuestion` handling for v0** (Q4's tiers 1/2/3)?
    Recommendation: tier 2, which costs one small hook file over the convention and removes dependence on the model following instructions; tier 3 is worth it once voice question-answering is frequent.
 
@@ -209,7 +225,7 @@ The review raised three open questions; recommendations follow, referencing the 
 
 1. The devcontainer cross-boundary test from Q1 (registry-appears-once-or-twice check included), without messaging any real overseer.
 2. A single `socat` post of the documented wire format into a scratch session's own socket, confirming delivery and the inbound-controls outcome.
-3. The file-relay path from v0 option (b): a scratch container `Stop` hook writing to the shared mount, a host-side watcher posting it onward.
+3. The v0.1 file-relay path: a scratch container `Stop` hook writing to the shared mount, a host-side watcher posting it onward.
 4. Whether a host `SendMessage` to a bind-mounted container socket is refused, and against which sender-endpoint check.
 5. End-to-end `ListAgents`-based "attached conversationalist" detection with a real named session.
 
@@ -217,6 +233,6 @@ The review raised three open questions; recommendations follow, referencing the 
 
 - Whether Claude Code prunes a `ListAgents` entry whose registered socket is unreachable.
 - Whether Remote Control's client works from inside a lace container, and whether such a session appears once or twice in `ListAgents`.
-- Whether lace's mount tooling could safely bind-mount a live, growing `/run/user/1000/cc-socks` tmpfs past the `connectto` boundary and sender-endpoint checks; not attempted, and now expected to fail regardless.
+- Whether lace's mount tooling could safely bind-mount a live, growing `/run/user/1000/cc-socks` tmpfs past the `connectto` boundary and sender-endpoint checks; not attempted, and expected to fail regardless.
 - Whether peek-reply in agent view can answer a pending `AskUserQuestion`.
 - The exact default-timeout-and-default-answer convention for a batched, unanswered voice question; no source establishes one.

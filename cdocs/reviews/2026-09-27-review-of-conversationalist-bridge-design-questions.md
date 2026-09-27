@@ -7,7 +7,7 @@ task_list: cdocs/audio-interaction
 type: review
 state: live
 status: done
-tags: [fresh_agent, source_verification, docs_verification, hooks, devcontainer, askuserquestion, incrementalism]
+tags: [fresh_agent, rereview_agent, source_verification, docs_verification, hooks, devcontainer, askuserquestion, incrementalism]
 ---
 
 # Review: conversationalist bridge design questions
@@ -207,3 +207,52 @@ Correcting them may or may not change the v0 picks, but the tradeoffs have to be
    (a) Convention only.
    (b) Convention enforced by a deny-redirect `PreToolUse` hook.
    (c) A full relay hook that answers via `updatedInput.answers` (most dev time, keeps the native tool).
+
+## Round 2
+
+> Reviewed at 2026-09-27T11:40:10-07:00 against the revised report (3598 words).
+
+### Prior action items
+
+| # | Status | Notes |
+|---|--------|-------|
+| 1 [blocking] `Stop` hook / cross-socket | **Resolved** | Q3 now cites the "script or hook to post into a session" section, the non-child "asserts no permission class" rule, and `last_assistant_message`. The wire format matches the binary's debug log line. The tradeoffs (filtering, `From:` stamping, `accept`, no lace crossing) are stated. `Stop` is primary and `SendMessage` is reserved for model-judged content. |
+| 2 [blocking] AskUserQuestion evidence / `updatedInput.answers` | **Resolved** | All three issues are re-read correctly. Tier 3 semantics match the docs: `allow` plus `updatedInput` echoing `questions` and adding `answers: {question: label}`. Both caveats are included: the 600s configurable timeout and `defer` being `-p`-only. The statement that a deny reason is shown to Claude is accurate. |
+| 3 [blocking] PID-namespace claim, `connectto`, v0 container gap | **Resolved** | The errors-doc sender checks and the binary's foreign-PID-domain handling are cited. SELinux is framed correctly as process-domain `connectto`. The own-child point is correct: a container poster is never the host session's child. v0 states the gap and gives options (a), (b), (c) cheapest first. |
+| 4 hint-table citation | Resolved | `:103-108`, with the security comment at `:90-102`. |
+| 5 `wait_for_conch=false` | Resolved | Cites `converse.py:3026-3029`. Removed from the unverified and test lists. |
+| 6 "three of four" | Resolved | |
+| 7 queue behind `converse()` | Resolved | In the Q2 body and the BLUF. |
+| 8 `Notification`, `notify_when_idle` cost | Resolved | |
+| 9 PID 1, `node` vs `ubuntu`, registry collision | Resolved | Also added to test 1. |
+| 10 one to four questions | Resolved | |
+| 11 sentence-per-line, timestamp | Mostly resolved | A few v0 option bullets still pack several sentences per line. |
+
+### New content checked
+
+- **Wire format.** `{"type":"auth",...}` (optional on Linux) then `{"type":"user","message":{"role":"user","content":...}}` over `socat UNIX-CONNECT` matches the `[uds-messaging] Inject messages` string in `claude` 2.1.283. It is still an undocumented, debug-log-sourced contract, and Empirical test 2 is the right hedge.
+- **Tier 2 deny-redirect.** It is accurate that a deny reason reaches Claude. See finding R2-1 for the liveness pitfall.
+- **Tier 3.** Accurate. A timed-out `PreToolUse` command hook lets the tool call continue, so a relay timeout degrades to the local prompt rather than hanging. That is worth one sentence (R2-3).
+- **`connectto` framing.** Correct in substance. The exact target domain depends on how the host session was launched (`unconfined_t` for a normal login shell), which is fine as an illustration.
+- **Recommendations.** Stop-primary with `SendMessage` for content, and tier 2 for questions, are well-argued and consistent with the constraints.
+
+### Round-2 findings (all non-blocking)
+
+- **R2-1: the tier 2 hook needs a liveness check, not just the presence of a path file.** A crashed or exited conversationalist leaves its published socket path behind. A hook keyed on "path file exists" would then deny every `AskUserQuestion` and redirect the overseer to a dead peer, whose `SendMessage` fails as a stale address. The overseer would then be unable to ask the user anything. Gate the hook on a successful connect to the socket (or on the registry PID being alive), and fail open.
+- **R2-2: the v0 option (b) file relay widens the trust boundary.** Any process in any lace container can write to the shared `~/.claude/conversationalist/inbox/` and so inject text into the host conversationalist. Add a `WARN` callout, and keep the conversationalist's tool restriction (`--tools`, per the deep-dive) as the mitigation.
+  A concrete sketch for the reverse leg: an overseer `SessionStart` hook launches a background poster using `$CLAUDE_CODE_MESSAGING_SOCKET`. Being a child of that session, it is verified as own-child, so delivery needs no `accept`. Say so.
+- **R2-3:** Add to tier 3 that a hook timeout falls through to the normal local prompt.
+- **R2-4: v0 scope.** Decision point 1 recommends (a)+(b) together. Option (b) needs a host watcher, a container poster, and hooks, which is more than "minimal". Consider (a) for v0 and (b) as v0.1, or say explicitly why (b) belongs in v0 (the live `weftwise` overseer).
+- **R2-5: history-agnostic framing.** Several phrases narrate the revision rather than the current state: line 139 "`Notification`, corrected", line 141 "cost restated", line 169 "since the previous pass misread all three", line 183 "Answering the review's core objection directly", line 220 "now expected to fail". Drop the revision narration. Line 203's "Q3's a/b/c" refers to lettering that exists only in this review, so restate the three options inline.
+
+### Round-2 verdict
+
+**Accept.** All three blocking items and all eight non-blocking items (4-11) from round 1 are resolved, and the new content is accurate against the docs and the binary. R2-1 is the one finding worth fixing before implementation, because it describes a failure mode of the recommended tier 2 hook. The rest are polish.
+
+### Round-2 action items
+
+1. [non-blocking] Gate the tier 2 deny-redirect hook on a live socket connect, and fail open (R2-1).
+2. [non-blocking] Add a `WARN` on file-relay injection scope, and the own-child `SessionStart` poster sketch (R2-2).
+3. [non-blocking] Note that a tier 3 hook timeout falls through to the local prompt (R2-3).
+4. [non-blocking] Justify (b) in v0 or move it to v0.1 (R2-4).
+5. [non-blocking] Strip revision narration, and fix the dangling "Q3's a/b/c" (R2-5).
