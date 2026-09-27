@@ -31,3 +31,4 @@ User follow-ups (2026-09-27) on `2026-09-27-voicemode-deep-dive.md`:
 
 - Dispatched sonnet author for `cdocs/reports/2026-09-27-conversationalist-bridge-design-questions.md`.
 - Author returned (3271 words). Key: lace mounts ~/.claude (registry) but not /run/user/1000 (sockets) → host↔container messaging broken today. Dispatched fresh reviewer.
+- Review r1: revise. Stop-hook→socket is documented (wire format found in claude 2.1.283 debug log; last_assistant_message in Stop input); AskUserQuestion PreToolUse deny reason is shown to Claude and updatedInput.answers enables full answer relay; container v0 gap + PID/connectto checks. Resumed author.
