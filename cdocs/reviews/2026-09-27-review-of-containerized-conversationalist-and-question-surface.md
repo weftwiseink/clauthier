@@ -7,7 +7,7 @@ task_list: cdocs/audio-interaction
 type: review
 state: live
 status: done
-tags: [fresh_agent, source_verification, docs_verification, devcontainer, audio_passthrough, askuserquestion, inline_fixes]
+tags: [fresh_agent, rereview_agent, source_verification, docs_verification, devcontainer, audio_passthrough, askuserquestion, inline_fixes]
 ---
 
 # Review: containerized conversationalist and AskUserQuestion question surface
@@ -151,3 +151,50 @@ The same-container messaging conclusion, the channels scoping, the tier-3 fallba
    (a) Bind `0.0.0.0` and add a firewalld rule restricting to the pasta path.
    (b) Run STT/TTS inside each container (GPU passthrough, more cost).
    (c) Accept LAN exposure.
+
+## Round 2
+
+> Reviewed at 2026-09-27T12:26:32-07:00 against the revised report (2609 words).
+
+### Prior action items
+
+| # | Status | Notes |
+|---|--------|-------|
+| 1 [blocking] audio recipe | **Resolved** | The PortAudio to ALSA to `pulse` plugin chain is stated correctly, with the Debian 12 image gap, a devcontainer snippet, and `asound.conf`. See the snippet check below. |
+| 2 `waitingFor` generic | Resolved | About 15 dialog kinds, with a dialog-kind gate required. |
+| 3 tmux topology | Resolved | |
+| 4 container-local path | Resolved | Inline fix: renamed the path file to `.sockpath` and noted it must be a plain file, not a symlink (the sender refuses symlink targets). |
+| 5 project-scoped hooks | Resolved | |
+| 6 pulse over pipewire, mic grant | Resolved | |
+| 7 firewall WARN | Resolved | Inline fix to the remedy; see below. |
+| 8 tier-3 tradeoffs, silent exit | Resolved | Silent `exit 0` self-timed under `timeout`, not `ask`. Both costs, the presence-file gate, the reply file, and the "preference, not dominance" framing are all present. |
+| 9 channels wording | Resolved | "Not documented as covered". |
+
+### Snippet correctness
+
+- **Debian 12 package names.** `libportaudio2`, `libasound2-plugins`, `libpulse0` and `ffmpeg` all exist in bookworm under those names, and they cover what `sounddevice` needs (it loads `libportaudio.so.2` via ctypes).
+- **`asound.conf`.** `pcm.!default { type pulse }` / `ctl.!default { type pulse }` is the standard override syntax, and `type pulse` resolves to the `libasound2-plugins` module.
+  Inline additions:
+  - write the file from `postCreateCommand` so it survives rebuilds;
+  - the override is the safe choice, because the default-to-pulse snippet normally comes with `pulseaudio` or `pipewire-alsa`, not the plugins package.
+- **Mount.** `--mount type=bind,src=/run/user/1000/pulse/native,dst=/run/user/1000/pulse/native` matches the verified Wayland form.
+  Inline note: *merge* it into `weftwise`'s existing `runArgs` (Wayland mount plus `--shm-size`) rather than replacing that array.
+  `label=disable` is already in effect on `weftwise`, so repeating it is harmless.
+- **`PULSE_SERVER`.** `unix:/run/user/1000/pulse/native` is the correct form.
+  **Correction of my own round-1 claim (inline fix):** it is *not* load-bearing in `weftwise`. libpulse defaults to `$XDG_RUNTIME_DIR/pulse/native`, and `weftwise` sets `XDG_RUNTIME_DIR=/run/user/1000` (verified). It is belt-and-braces there, and required only for containers that lack `XDG_RUNTIME_DIR`.
+- **Missing env (inline fix).** The snippet lacked `VOICEMODE_TTS_BASE_URLS` and `VOICEMODE_STT_BASE_URLS` pointing at `host.containers.internal`. I added them, with a note that they replace VoiceMode's default lists, including the OpenAI fallback.
+- **Firewall remedy (inline fix).** "Bind to the pasta-visible host address" does not reduce exposure: under pasta, that address is the host's LAN interface (the container even mirrors `192.168.0.65`). I replaced it with a firewalld rich rule accepting only local-origin traffic, or testing pasta's `--map-host-loopback` so loopback-bound services become reachable (unverified).
+
+### Remaining non-blocking notes
+
+- Project-scoped hooks in `.claude/settings.local.json` also fire for any *host* session opened in the same project directory, since the workspace is a bind mount. A guard on the container-local `.sockpath` file covers this.
+- No end-to-end in-container audio run has been done. Empirical test 1 is the gate before building the conversationalist skill on it.
+
+### Round-2 verdict
+
+**Accept.** The blocking audio-recipe item is resolved, non-blocking items 2-9 are resolved, and the snippets are correct after the small inline fixes above. The remaining risks are properly listed as unverified and test-gated.
+
+### Round-2 action items
+
+1. [non-blocking] Run Empirical test 1 (`sd.query_devices()` shows `pulse`) before any conversationalist-skill work depends on in-container audio.
+2. [non-blocking] Guard the project hooks on the `.sockpath` file so host sessions in the same workspace do not fire them.

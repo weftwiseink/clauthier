@@ -7,10 +7,10 @@ type: report
 state: live
 status: review_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-09-27T12:20:25-07:00
-  round: 1
+  at: 2026-09-27T12:26:32-07:00
+  round: 2
 tags: [analysis, voice, devcontainer, askuserquestion]
 ---
 
@@ -38,7 +38,7 @@ The parent report's finding was scoped to *host-to-container* messaging; it does
 Verified/empirical: `weftwise`'s `/run/user/1000` (container-private, on the container's own filesystem; only `wayland-0` inside it is a bind-mounted tmpfs) is live and non-empty, not unset as the task brief risked.
 `/run/user/1000/cc-socks` holds six sockets, five backed by live `claude --dangerously-skip-permissions` processes and one stale, all in one PID namespace: multiple concurrent sessions already coexist in this container with working inbox sockets, exactly the case the docs describe as working ("two sessions inside the same container can still message each other").
 **Consequence:** the parent report's v0.1 file-relay design is unneeded here; it solved host-to-container delivery, and in-container delivery needs nothing beyond what already ships.
-The structural change: the conversationalist's `SessionStart` hook must publish its socket path somewhere container-local, not under the shared `~/.claude` mount, since that directory is bind-mounted into every lace container and the host and would leak the path across projects; a path like `/run/user/1000/conversationalist.sock` avoids that.
+The structural change: the conversationalist's `SessionStart` hook must publish its socket path somewhere container-local, not under the shared `~/.claude` mount, since that directory is bind-mounted into every lace container and the host and would leak the path across projects; a plain-text path file like `/run/user/1000/conversationalist.sockpath` avoids that (a file holding the path, not a symlink to the socket: Claude Code's sender refuses `reply target is a symlink`).
 
 ### Audio passthrough
 
@@ -60,7 +60,11 @@ Debian's `libportaudio2` is built against ALSA, not PulseAudio directly, so the 
 ],
 "postCreateCommand": "sudo apt-get update && sudo apt-get install -y libportaudio2 libasound2-plugins libpulse0 ffmpeg && curl -LsSf https://astral.sh/uv/install.sh | sh",
 "postStartCommand": "sudo mkdir -p /run/user/1000 && sudo chown node:node /run/user/1000 && sudo chmod 700 /run/user/1000",
-"containerEnv": { "PULSE_SERVER": "unix:/run/user/1000/pulse/native" }
+"containerEnv": {
+  "PULSE_SERVER": "unix:/run/user/1000/pulse/native",
+  "VOICEMODE_TTS_BASE_URLS": "http://host.containers.internal:8880/v1",
+  "VOICEMODE_STT_BASE_URLS": "http://host.containers.internal:2022/v1"
+}
 ```
 
 ```
@@ -69,9 +73,11 @@ pcm.!default { type pulse }
 ctl.!default { type pulse }
 ```
 
-`libasound2-plugins` may already drop an equivalent `alsa.conf.d` snippet; check before duplicating it.
+Merge these keys into the project's existing `runArgs`/`containerEnv` (`weftwise` already has a `runArgs` array with the Wayland mount and `--shm-size`) rather than replacing them.
+Write `/etc/asound.conf` from `postCreateCommand` (e.g. `printf ... | sudo tee /etc/asound.conf`) so it survives rebuilds; `libasound2-plugins` defines the `pulse` PCM but in Debian the default-to-pulse `99-*` snippet typically comes with the `pulseaudio`/`pipewire-alsa` packages, not the plugins package, so the explicit override is the safe choice (harmless if redundant).
+The two `VOICEMODE_*_BASE_URLS` values replace VoiceMode's default lists, which also contain an OpenAI fallback; append `,https://api.openai.com/v1` to keep it.
 `uv` is VoiceMode's own installer prerequisite, layered via `postCreateCommand` like `weftwise`'s other per-feature tooling.
-`PULSE_SERVER` is load-bearing here, unlike the Wayland precedent: host `pactl info` resolves that path by default, but that default isn't sourced from `$PULSE_SERVER` itself, so the container must set it explicitly.
+`PULSE_SERVER` is belt-and-braces in `weftwise`: libpulse's default is `$XDG_RUNTIME_DIR/pulse/native`, and `weftwise` already sets `XDG_RUNTIME_DIR=/run/user/1000` (verified), so the bind-mounted socket resolves either way; it becomes required in a project container that doesn't set `XDG_RUNTIME_DIR`.
 `weftwise` runs as uid 1000 (`node`), matching the host's `mjr`; the host pulse socket is `mjr:mjr`, world-read/writable, so no uid remapping is needed beyond the ownership fix already in `postStartCommand`.
 Empirical test 1 should assert `sd.query_devices()` reports a `pulse`/`default` device, not merely that the call doesn't error; no in-container run was performed, so end-to-end capture remains unverified/empirical.
 Verified/source: every VoiceMode module doing device I/O imports `sounddevice`/PortAudio, never raw ALSA or ffmpeg directly; `PULSE_SERVER` appears in VoiceMode's own tree only in WSL troubleshooting material, so the Debian routing above is this report's inference from the PortAudio/ALSA chain, not a VoiceMode-documented step.
@@ -82,7 +88,7 @@ VoiceMode's STT/TTS clients default to `http://127.0.0.1:8880/v1` (Kokoro) and `
 Pointing the container at `host.containers.internal` on those ports is simpler than duplicating GPU-hungry model servers per container.
 Verified/empirical: from `weftwise`, `curl` reaches host listeners bound to a wildcard address but is refused for ones bound to `127.0.0.1`, so host STT/TTS must bind non-loopback; VoiceMode's whisper launcher already binds `0.0.0.0`, Kokoro's bind address is upstream and unverified.
 > WARN(sonnet/audio-interaction): Fedora's default firewalld zone opens ports 1025-65535, so a `0.0.0.0`-bound whisper/Kokoro is LAN-exposed, not merely container-reachable.
-> Bind to the pasta-visible host address instead of the wildcard, or scope 2022/8880 to the pasta zone in firewalld.
+> Binding to the host's specific interface address doesn't help (under pasta that is the LAN address); scope 2022/8880 with a firewalld rich rule accepting only local-origin traffic, or test pasta's `--map-host-loopback` (via podman's `--network pasta:...` options) so loopback-bound services become reachable without any off-loopback bind (unverified).
 
 ### Expressing this in lace, and consequences
 
