@@ -30,3 +30,4 @@ Question: what to reuse from VoiceMode's design, or can we use it directly with 
 
 - Dispatched sonnet author for `cdocs/reports/2026-09-27-voicemode-deep-dive.md`.
 - Author returned (3422 words). Commit draft; dispatched fresh reviewer (source-level checks against scratchpad clone).
+- Review r1: revise. Blocking: always-listening converse loop burns ~180-360 model calls/hour idle; redesign around idle-wake + explicit user wake. Reviewer fixed checklist inline (plugin scope, match overseer permission mode, --name/--tools, ledger path). Resumed author.
