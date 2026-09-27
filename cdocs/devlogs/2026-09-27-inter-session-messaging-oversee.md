@@ -30,3 +30,4 @@ User asked for more detail on Channels and other message-passing affordances, su
 
 - Dispatched sonnet author for `cdocs/reports/2026-09-27-claude-code-inter-session-messaging.md`.
 - Author returned: cross-session messaging is GA, subscription-compatible, documented at /docs/en/cross-session-messaging; idle receivers are woken; Agent SDK disallowed on subscription OAuth (invalidates v2 SDK-hosted option). Dispatched reviewer.
+- Review r1: revise. SDK-on-subscription overstated (third-party-offering restriction; own-use grey; `claude -p` fine). Blocking: re-rank with CLI-hosted overseer (stream-json + --permission-prompt-tool); add script-posts-to-inbox-socket path (needs empirical test). Resumed author.
