@@ -156,3 +156,42 @@ That is a short addition, after which this should be acceptable.
    - (A) Yes: run the conversationalist in bypass mode.
    - (B) No: leave it prompting.
    - (C) Mixed: use `crossSessionInbound: "accept"` via `--settings` on the conversationalist, and accept that overseer-side holds may need approval.
+
+## Round 2
+
+> BLUF: B1 is resolved. The idle-wake default, the opt-in hands-free mode, the quantified cost, and the `--model` recommendation are all in, and every round-1 inline fix survived.
+> One new factual error is corrected inline: a spoken hotword via VoiceMode's control channel cannot wake an idle session, because that channel only controls in-flight playback. My own round-1 question 1 carried the same error.
+> Verdict: **Accept**.
+
+### Round-1 items
+
+- **B1 (loop cost and idle design): resolved.**
+  - There is a new "Interaction shape" section with active and idle states, idle-wake from overseer messages, and a table of ways for the user to wake it.
+  - Hands-free mode is an explicit opt-in, and the 180-360 calls per hour of silence is quantified.
+  - `--model` is set to a Sonnet/Haiku-class model, with the talker/thinker framing that this realizes report 1's split cheaply.
+  - Options (A) and (B) now default to idle-wake.
+- **N1-N3:** N1 is done (option (C) cites direct socket posting). N2 is trivial and was left as is. N3 (`reply-to` field) was not taken, which is fine.
+- **Round-1 inline fixes: all survived.** Plugin scope, systemd user units, the MCP `env` block, `--name`, `--tools`, the ledger path, the overseer-side reply wording, auto-backgrounding, `stop_event`, the VM-970 wording, LiveKit residue, and the `statistics` tools note.
+
+### Verification of new claims
+
+- **"No hotword listener ships": accurate.** No wake-word or keyword-spotter code exists in `voice_mode/`. `docs/reference/control-channel.md` shows only a pseudo-handler for an external spotter.
+- **But the wake path was wrong (fixed inline).** The table routed a spoken hotword *through VoiceMode's control channel*. That channel's schema is `pause`/`resume`/`stop`/`skip_forward`/`skip_back` (`control_channel.py:21`), all acting on in-flight playback.
+  - With the conversationalist idle, no `converse()` is running, so the command has nothing to act on and nothing starts a Claude turn.
+  - A hotword daemon must instead post to the conversationalist's **inbox socket**, the same mechanism as the hotkey row. The table row and the decision point are corrected.
+  - My round-1 question 1 option (C) made the same mistake. This round supersedes it.
+- **"Idle, zero cost": accurate as scoped.** An idle session makes no calls, and idle-wake is harness-driven. Each wake then costs one turn. That is inherent and fine, and the report implies it.
+  - Minor wording fix: the per-hour cost line said each loop iteration is "a full model turn". A `converse()` inside a loop is a tool call followed by a model call within one turn, so it now says "followed by a model call".
+- **Checklist coherence:** coherent after two clarifications, applied inline.
+  - The bypass-plus-`accept` default is correct, but the report did not say *why* both are needed:
+    - `accept` governs messages coming in (and makes hotkey posts deliver regardless of mode);
+    - bypass is what lets the conversationalist's *outgoing* messages through to bypass-mode overseers, which would otherwise hold them.
+  - Now stated, with a note that bypass lets its `Write` (ledger) run unprompted, which is acceptable under the `--tools` restriction.
+  - Added step 6: the `SessionStart` hook that publishes the socket path (not the token) for the hotkey path, which the table relied on but no step created.
+- **The bypass-default inference is thin but reasonable.** It rests on one observed overseer running in bypass mode, and the decision point keeps it open for the user.
+
+### Round-2 verdict
+
+**Accept.**
+The report now gives an incremental, low-cost, correctly configured first slice: one skill file plus a launch configuration.
+Its remaining unknowns (delivery timing around `converse()`, the socket message format, PipeWire) are listed as pre-build checks.

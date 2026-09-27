@@ -8,10 +8,10 @@ state: live
 status: review_ready
 tags: [analysis, voice, voicemode, messaging]
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-09-27T09:48:25-07:00
-  round: 1
+  at: 2026-09-27T09:55:27-07:00
+  round: 2
 ---
 
 # VoiceMode deep dive: what it actually does, and whether it can be the voice<>overseer bridge
@@ -78,7 +78,7 @@ This matters only while an exchange is actually active. When the conversationali
 
 The always-listening short-window loop (re-issuing `converse()` every 10-20s "in case something was said") is a real mitigation for latency *during* an exchange, but it is the wrong **default** shape for the whole session: it has an ongoing cost even when nobody is talking to it.
 
-**Quantified cost of always-listening.** At a 10-20s `listen_duration_max` looping continuously, that's roughly 180-360 `converse()` calls per hour of silence — each a full model turn on the subscription, each adding to the transcript toward compaction, for a conversationalist meant to sit quietly beside an `/oversee` arc for hours.
+**Quantified cost of always-listening.** At a 10-20s `listen_duration_max` looping continuously, that's roughly 180-360 `converse()` calls per hour of silence — each followed by a model call on the subscription to decide the next step, each adding to the transcript toward compaction, for a conversationalist meant to sit quietly beside an `/oversee` arc for hours.
 
 **Default design: idle-wake, not idle-poll.**
 
@@ -90,8 +90,8 @@ The always-listening short-window loop (re-issuing `converse()` every 10-20s "in
 | Wake path | Mechanism | Effort | Notes |
 |---|---|---|---|
 | Type in its terminal | Typing a prompt is itself a wake | None | Zero build. Requires being at that terminal. |
-| Hotkey/script → inbox socket | A hotkey-bound script writes to the session's inbox socket, path published via `CLAUDE_CODE_MESSAGING_SOCKET` (report 2's direct-socket path) | Small: one script + one keybinding | Message-line wire format after the auth line is undocumented — **needs empirical verification** (report 2 flagged this too). |
-| Spoken hotword via VoiceMode's control channel | `VOICEMODE_CONTROL_CHANNEL_ENABLED=true` accepts commands from "a Stream Deck press, a media key, a spoken keyword, or any local process" (`control_socket.py`) | Medium-large | **Verified in source: no hotword listener ships.** "Spoken keyword" names a category of external trigger, not a feature — would need a separate always-on wake-word process (e.g. openWakeWord) posting to the socket. |
+| Hotkey/script → inbox socket | A hotkey-bound script writes to the session's inbox socket, whose path a `SessionStart` hook publishes to a file from `CLAUDE_CODE_MESSAGING_SOCKET` (report 2's direct-socket path); with `crossSessionInbound: "accept"` set, the post is delivered and starts a turn | Small: one script + one keybinding | Message-line wire format after the auth line is undocumented — **needs empirical verification** (report 2 flagged this too). |
+| Spoken hotword → inbox socket | An always-on wake-word process (e.g. openWakeWord) that, on its keyword, posts to the conversationalist's inbox socket exactly like the hotkey row | Medium-large | **Verified in source: no hotword listener ships** (`docs/reference/control-channel.md` shows only a pseudo-handler). VoiceMode's control channel is *not* a wake path: it accepts only `pause`/`resume`/`stop`/`skip_forward`/`skip_back` for in-flight playback (`control_channel.py:21`), so with no `converse()` running it has nothing to act on and cannot start a Claude turn. |
 
 **Recommendation: type-in-terminal as the default** (zero build), inbox-socket hotkey as the natural next step once verified. Hotword is the only genuinely hands-free option and the most expensive; defer it.
 
@@ -115,8 +115,9 @@ The always-listening short-window loop (re-issuing `converse()` every 10-20s "in
 1. **Install without touching other sessions**: the plugin route registers VoiceMode's MCP server *and* six earcon hooks in every session where it's enabled, so a user-scope install would add tools and sounds to every `/oversee` session. Choose **local scope** installing from the conversationalist's own directory, or skip the plugin and run `uvx voice-mode-install` (services only) plus an MCP entry (step 3). System deps: `sudo dnf install alsa-lib-devel ffmpeg gcc portaudio portaudio-devel python3-devel`.
 2. **Local services**: `voicemode whisper install` + `enable` (whisper.cpp STT, port 2022); `voicemode kokoro install` + `enable` (Kokoro TTS, port 8880). Both register systemd **user** units (`voice_mode/templates/systemd/`, `systemctl --user`).
 3. **MCP config scoped to only the conversationalist**: its own directory, an MCP config declaring only `voicemode` (`uvx --refresh --from voice-mode voicemode-mcp-launcher`), launched with `claude --mcp-config <path> --strict-mcp-config` (ignores all other MCP configs for *this* session; isolation of *other* sessions comes from step 1, not this flag). `VOICEMODE_TOOLS_ENABLED=converse,service` in the MCP entry's `env` block keeps the footprint at ~7K tokens instead of ~25K. Add `--name conversationalist`, `--model` set to Sonnet/Haiku-class (rationale above), and `--tools` restricted (e.g. `ListAgents,SendMessage,Read,Write`, keeping `Read`/`Write` only for the ledger below).
-4. **Permission mode: default to matching this overseer's own setup.** This report is itself running inside an `/oversee` session in bypass-permissions mode — evidence the user's overseers commonly run `--dangerously-skip-permissions`. The inbound-hold rule depends on *both* sides (a bypass-mode receiver holds everything except messages from another bypass-mode sender; a prompting receiver holds only bypass-mode senders' messages), so bypass mode does not by itself sidestep holds. Default: **run the conversationalist in bypass mode too**, matching the overseers, plus `crossSessionInbound: "accept"` via `--settings` at its launch (project/local `accept` is ignored; user settings would apply to every session). If overseers prompt instead, leave the conversationalist prompting, same match-the-overseer rule.
+4. **Permission mode: default to matching this overseer's own setup.** This report is itself running inside an `/oversee` session in bypass-permissions mode — evidence the user's overseers commonly run `--dangerously-skip-permissions`. The inbound-hold rule depends on *both* sides (a bypass-mode receiver holds everything except messages from another bypass-mode sender; a prompting receiver holds only bypass-mode senders' messages), so bypass mode does not by itself sidestep holds. Default: **run the conversationalist in bypass mode too**, matching the overseers, plus `crossSessionInbound: "accept"` via `--settings` at its launch (project/local `accept` is ignored; user settings would apply to every session). The two settings cover different directions: `accept` makes the conversationalist take every inbound message, including hotkey posts, regardless of mode, while bypass mode is what lets its *outbound* messages through to bypass-mode overseers, which would otherwise hold them. Bypass also means its `Write` (ledger) runs unprompted, acceptable given the `--tools` restriction. If overseers prompt instead, leave the conversationalist prompting, same match-the-overseer rule.
 5. **Headset recommended, control channel left off.** Barge-in needs echo cancellation (report 1); VoiceMode's own barge-in needs `VOICEMODE_CONTROL_CHANNEL_ENABLED=true` plus an external trigger this report found no built-in source for. Skip both for the first slice.
+6. **If using the hotkey wake path**: add a `SessionStart` hook to the conversationalist's settings that writes `$CLAUDE_CODE_MESSAGING_SOCKET` (not the token) to a user-only file the hotkey script reads.
 
 ## The prep-and-send component: a sketch, not a proposal
 
@@ -140,7 +141,7 @@ The verbatim quote matters because `SendMessage` content is explicitly untrusted
 
 ## Decision points for the user
 
-- **Preferred wake method for an idle conversationalist**: type in its terminal (default, zero build), a hotkey/script into its inbox socket (small build, wire format needs verification), or a spoken hotword through VoiceMode's control channel (real new software: no hotword listener ships).
+- **Preferred wake method for an idle conversationalist**: type in its terminal (default, zero build), a hotkey/script into its inbox socket (small build, wire format needs verification), or a spoken hotword via a separate wake-word process posting to that same inbox socket (real new software: no hotword listener ships, and VoiceMode's control channel cannot wake a session).
 - **Overseer permission mode**: do `/oversee` sessions normally run with `--dangerously-skip-permissions`? If yes, the conversationalist should default to bypass mode too (this report's default, above). If no, or mixed, it should prompt instead, and cross-session sends between mismatched modes may need manual approval.
 
 ## Unverified claims

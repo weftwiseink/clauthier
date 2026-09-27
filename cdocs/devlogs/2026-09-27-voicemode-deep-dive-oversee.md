@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/audio-interaction
 type: devlog
 state: live
-status: wip
+status: done
 tags: [research, oversee, voice, voicemode]
 ---
 
@@ -32,3 +32,17 @@ Question: what to reuse from VoiceMode's design, or can we use it directly with 
 - Author returned (3422 words). Commit draft; dispatched fresh reviewer (source-level checks against scratchpad clone).
 - Review r1: revise. Blocking: always-listening converse loop burns ~180-360 model calls/hour idle; redesign around idle-wake + explicit user wake. Reviewer fixed checklist inline (plugin scope, match overseer permission mode, --name/--tools, ledger path). Resumed author.
 - Revision r1 returned (3597 words): idle-wake default, hands-free opt-in, wake-options table, --model rec, bypass-default checklist. Dispatched round-2 review.
+- Review r2: accept. Reviewer fixed hotword wake path (control channel only handles playback; hotword must post to inbox socket like the hotkey) and added checklist step 6 (SessionStart hook writes socket path, not token).
+
+## Handoff
+
+### Completed
+- `cdocs/reports/2026-09-27-voicemode-deep-dive.md` accepted round 2 (~3600 words).
+
+### Decisions Made
+- Recommended first step: option (A), unmodified VoiceMode in a dedicated `--name conversationalist` session (local-scope plugin, smaller model), plus one cdocs bridge skill; idle-wake default, hands-free loop opt-in; (B) config tuning next.
+
+### Open Todos
+- User decisions: wake method (terminal / hotkey / hotword via inbox socket); overseer permission mode.
+- Empirical checks before build: message timing around `converse()`, inbox-socket wire format, PipeWire audio path.
+- Candidate next unit: proposal for the conversationalist bridge skill.
