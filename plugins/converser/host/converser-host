@@ -286,24 +286,32 @@ install_file() {
   echo 1
 }
 
-write_units() {
-  mode=$1
-  mkdir -p "$QUADLET_DIR" "$UNIT_DIR"
+# render_units <mode> <dir>: write the two .container files for <mode> into <dir>.
+render_units() {
   # The sources carry the GPU digests; they must match the pins above.
   grep -qxF "Image=$WHISPER_GPU_IMAGE" "$SRC/converser-whisper.container" ||
     die "converser-whisper.container Image= does not match WHISPER_GPU_IMAGE"
   grep -qxF "Image=$KOKORO_GPU_IMAGE" "$SRC/converser-kokoro.container" ||
     die "converser-kokoro.container Image= does not match KOKORO_GPU_IMAGE"
-  stage=$(mktemp -d)
-  if [ "$mode" = cpu ]; then
+  if [ "$1" = cpu ]; then
     sed -e "s|^Image=.*|Image=$WHISPER_CPU_IMAGE|" -e '/^AddDevice=/d' \
         -e "s|/models/$GPU_MODEL|/models/$CPU_MODEL|" \
-        "$SRC/converser-whisper.container" > "$stage/converser-whisper.container"
+        "$SRC/converser-whisper.container" > "$2/converser-whisper.container"
     sed -e "s|^Image=.*|Image=$KOKORO_CPU_IMAGE|" -e '/^AddDevice=/d' \
-        "$SRC/converser-kokoro.container" > "$stage/converser-kokoro.container"
+        "$SRC/converser-kokoro.container" > "$2/converser-kokoro.container"
+  else
+    cp "$SRC/converser-whisper.container" "$SRC/converser-kokoro.container" "$2/"
+  fi
+}
+
+write_units() {
+  mode=$1
+  mkdir -p "$QUADLET_DIR" "$UNIT_DIR"
+  stage=$(mktemp -d)
+  render_units "$mode" "$stage"
+  if [ "$mode" = cpu ]; then
     whisper_img=$WHISPER_CPU_IMAGE kokoro_img=$KOKORO_CPU_IMAGE
   else
-    cp "$SRC/converser-whisper.container" "$SRC/converser-kokoro.container" "$stage/"
     whisper_img=$WHISPER_GPU_IMAGE kokoro_img=$KOKORO_GPU_IMAGE
   fi
   cw=$(install_file "$stage/converser-whisper.container" "$QUADLET_DIR/converser-whisper.container")
