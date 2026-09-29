@@ -1,0 +1,593 @@
+#!/bin/sh
+# converser-host: host side of the clauthier converser.
+# Installs VoiceMode `serve` (uv tool) plus whisper.cpp and Kokoro (rootless
+# Quadlet containers), mints one loopback `serve` instance and token per
+# container project, and checks host hygiene.
+#
+# Invariants: never runs sudo; never binds or publishes off loopback; never puts
+# a token on any command line (tokens move through files, the environment, or
+# `printf` builtin output on a pipe); runs from an installed copy of a clean,
+# committed tree. See README.md beside this file.
+set -eu
+# Parsed tool output must be plain: the host environment may force color.
+unset FORCE_COLOR CLICOLOR_FORCE
+export NO_COLOR=1
+
+# ---------------------------------------------------------------- pins
+VOICEMODE_REQ='voice-mode==8.12.0'
+VOICEMODE_PY=3.12
+# uv --exclude-newer: transitive deps resolve as on the verification date.
+UV_EXCLUDE_NEWER_DATE='2026-09-29T00:00:00Z'
+
+WHISPER_GPU_IMAGE='ghcr.io/ggml-org/whisper.cpp@sha256:8a9def3eea0615dbee85cac1e0fa3898dce214fe9bb7955635ba25667da3884a'  # :main-cuda
+WHISPER_CPU_IMAGE='ghcr.io/ggml-org/whisper.cpp@sha256:070afe9654a204cb0b60848c47d25f6f9d052fd3a1e198de8462201233381391'  # :main
+KOKORO_GPU_IMAGE='ghcr.io/remsky/kokoro-fastapi-gpu@sha256:9ba150465c6b8f5d6b1c62b54de83eb9aa0a1444aad8a1a9c8948eed60564b76'  # v0.9.0
+KOKORO_CPU_IMAGE='ghcr.io/remsky/kokoro-fastapi-cpu@sha256:ee3111d6a2c903ed62f3b4fa19543c6901205ed39fce3c177e895b34a8386b9c'  # latest
+
+MODEL_URL_BASE='https://huggingface.co/ggerganov/whisper.cpp/resolve/main'
+GPU_MODEL='ggml-large-v3-turbo.bin'
+GPU_MODEL_SHA256='1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69'
+CPU_MODEL='ggml-base.en.bin'
+CPU_MODEL_SHA256='a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002'
+
+SEBOOL=container_use_xserver_devices
+PORT_MIN=8765
+PORT_MAX=8799
+CHECK_PORT=8800          # install's throwaway serve; outside the instance range
+CONTAINER_PORT=8765      # fixed in-container port (the container contract)
+DEFAULT_UID=1000
+EXPECTED_TOOLS='converse pause_conversation'
+UPSTREAM_UNITS='voicemode-whisper.service voicemode-kokoro.service voicemode-serve.service'
+
+# ---------------------------------------------------------------- paths
+# Fixed under $HOME: the unit files reference the same paths through %h.
+SHARE="$HOME/.local/share/converser-host"
+SRC="$SHARE/src"
+MODELS="$SHARE/models"
+CONF="$HOME/.config/converser-host"
+INSTANCES="$CONF/instances"
+QUADLET_DIR="$HOME/.config/containers/systemd"
+UNIT_DIR="$HOME/.config/systemd/user"
+BIN_DIR="$HOME/.local/bin"
+VOICEMODE="$BIN_DIR/voicemode"
+
+# ---------------------------------------------------------------- helpers
+say() { printf 'converser-host: %s\n' "$*"; }
+die() { printf 'converser-host: error: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+usage: converser-host install [--cpu]
+       converser-host instance add <project> [--port N] [--uid U]
+       converser-host status [<project> [<container>]]
+
+install        self-install from a clean commit, install VoiceMode, run the
+               scoping stop-check, fetch the whisper model, write and start
+               the units, verify loopback-only exposure.
+instance add   mint (or repair) the serve instance, token, and podman secret
+               for <project>; print the devcontainer runArgs to add.
+status         host hygiene checks, then per-instance checks; given a
+               container, also check its forward and secret.
+EOF
+}
+
+# Print the tool venv's python (the interpreter behind `voicemode`).
+tool_python() {
+  printf '%s/voice-mode/bin/python\n' "$(uv tool dir --color never)"
+}
+
+# MCP over curl. The bearer token never reaches argv: the printf builtin writes
+# a curl config line to a pipe, and `curl -K -` reads it from stdin.
+#   mcp_post <port> <token or ''> <json> <header-dump-file> [extra curl args]
+# Prints the response body; returns curl's status.
+mcp_post() {
+  _port=$1 _tok=$2 _body=$3 _hdr=$4
+  shift 4
+  if [ -n "$_tok" ]; then
+    printf 'header = "Authorization: Bearer %s"\n' "$_tok"
+  fi | curl -sS -K - -D "$_hdr" -X POST "http://127.0.0.1:$_port/mcp" \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json, text/event-stream' \
+      --max-time 20 "$@" --data "$_body"
+}
+
+# JSON-RPC payloads from an SSE or plain-JSON response body on stdin.
+mcp_payloads() { sed -n -e 's/^data: *//p' -e t -e '/^[[:space:]]*{/p'; }
+
+# HTTP status of an unauthenticated POST to /mcp ("000" if unreachable).
+mcp_unauth_code() {
+  curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$1/mcp" \
+    --max-time 10 || :
+}
+
+# Sorted, space-joined tool names from initialize + tools/list, or empty.
+#   mcp_tool_names <port> <token>
+mcp_tool_names() {
+  _mp=$1 _mt=$2
+  _d=$(mktemp -d)
+  _init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"converser-host","version":"1"}}}'
+  mcp_post "$_mp" "$_mt" "$_init" "$_d/h1" > "$_d/b1" || { rm -rf "$_d"; return 1; }
+  _sid=$(tr -d '\r' < "$_d/h1" | sed -n 's/^[Mm][Cc][Pp]-[Ss]ession-[Ii][Dd]: *//p' | head -n 1)
+  _pv=$(mcp_payloads < "$_d/b1" | jq -r 'select(.id==1) | .result.protocolVersion // empty' | head -n 1)
+  set --
+  [ -n "$_sid" ] && set -- "$@" -H "Mcp-Session-Id: $_sid"
+  [ -n "$_pv" ] && set -- "$@" -H "MCP-Protocol-Version: $_pv"
+  mcp_post "$_mp" "$_mt" '{"jsonrpc":"2.0","method":"notifications/initialized"}' "$_d/h2" "$@" > /dev/null || :
+  mcp_post "$_mp" "$_mt" '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' "$_d/h3" "$@" > "$_d/b3" ||
+    { rm -rf "$_d"; return 1; }
+  mcp_payloads < "$_d/b3" | jq -r 'select(.id==2) | .result.tools[]?.name' | sort | tr '\n' ' ' | sed 's/ $//'
+  rm -rf "$_d"
+  _mt=
+}
+
+# The scoping check shared by install and status:
+# 401 without the token, then exactly $EXPECTED_TOOLS with it.
+#   scoping_check <port> <token>
+scoping_check() {
+  _code=$(mcp_unauth_code "$1")
+  if [ "$_code" != 401 ]; then
+    say "FAIL :$1 unauthenticated POST /mcp answered '$_code', expected 401"
+    return 1
+  fi
+  say "ok   :$1 unauthenticated POST /mcp answered 401"
+  _names=$(mcp_tool_names "$1" "$2") || _names='<request failed>'
+  if [ "$_names" != "$EXPECTED_TOOLS" ]; then
+    say "FAIL :$1 tools/list is '$_names', expected exactly '$EXPECTED_TOOLS'"
+    return 1
+  fi
+  say "ok   :$1 tools/list is exactly '$_names'"
+}
+
+# Every TCP listener on <port> is loopback, and there is at least one.
+loopback_only() {
+  _addrs=$(ss -ltnH "( sport = :$1 )" | awk '{print $4}')
+  if [ -z "$_addrs" ]; then say "FAIL :$1 nothing listening"; return 1; fi
+  for _a in $_addrs; do
+    case $_a in
+      "127.0.0.1:$1") ;;
+      *) say "FAIL :$1 listener on $_a (not 127.0.0.1)"; return 1 ;;
+    esac
+  done
+  say "ok   :$1 listens on 127.0.0.1 only"
+}
+
+port_in_use() { [ -n "$(ss -ltnH "( sport = :$1 )")" ]; }
+
+valid_project() {
+  case $1 in
+    ''|*[!a-z0-9_.-]*|[!a-z0-9]*) return 1 ;;
+  esac
+}
+
+# Value of KEY in an unquoted KEY=value env file.
+env_get() { sed -n "s/^$2=//p" "$1" | head -n 1; }
+
+# ---------------------------------------------------------------- install
+self_install() {
+  here=$(dirname -- "$(readlink -f -- "$0")")
+  top=$(git -C "$here" rev-parse --show-toplevel 2>/dev/null) ||
+    die "not running from a git checkout; run 'sh plugins/converser/host/converser-host install' from the clauthier checkout"
+  rel=${here#"$top"/}
+  [ "$rel" = plugins/converser/host ] || die "unexpected source path $here"
+  dirty=$(git -C "$top" status --porcelain -- "$rel")
+  if [ -n "$dirty" ]; then
+    printf '%s\n' "$dirty" >&2
+    die "$rel has uncommitted or untracked changes; install only runs a clean, committed tree"
+  fi
+  rev=$(git -C "$top" rev-parse HEAD)
+  prev=
+  [ -f "$SHARE/installed-rev" ] && prev=$(cat "$SHARE/installed-rev")
+  if [ -n "$prev" ]; then
+    say "review before installing: git -C $top log -p $prev..$rev -- $rel/"
+  else
+    say "first install; review: git -C $top log -p $rev -- $rel/"
+  fi
+  mkdir -p "$SHARE" "$BIN_DIR"
+  rm -rf "$SRC.new"
+  mkdir -p "$SRC.new"
+  git -C "$top" archive "$rev" "$rel" | tar -x -C "$SRC.new" --strip-components=3
+  [ -x "$SRC.new/converser-host" ] || die "archived converser-host is not executable"
+  rm -rf "$SRC"
+  mv "$SRC.new" "$SRC"
+  ln -sfn "$SRC/converser-host" "$BIN_DIR/converser-host"
+  printf '%s\n' "$rev" > "$SHARE/installed-rev"
+  say "installed $rev into $SRC; $BIN_DIR/converser-host links to it"
+}
+
+gpu_gate() {
+  out=$(getsebool "$SEBOOL" 2>&1) || die "getsebool $SEBOOL failed: $out"
+  case $out in
+    *'--> on') say "ok   SELinux boolean $SEBOOL is on" ;;
+    *)
+      printf '%s\n' \
+        "converser-host: $SEBOOL is off; the GPU containers cannot open the NVIDIA device nodes." \
+        "Run once (host sudo, persistent):" \
+        "    sudo setsebool -P $SEBOOL on" \
+        "or install on CPU instead: converser-host install --cpu" >&2
+      exit 1 ;;
+  esac
+}
+
+install_voicemode() {
+  [ "$(uv tool dir --bin --color never)" = "$BIN_DIR" ] ||
+    die "uv tool bin dir is $(uv tool dir --bin --color never), expected $BIN_DIR (the serve unit runs $VOICEMODE)"
+  log=$(mktemp)
+  say "uv tool install $VOICEMODE_REQ (python $VOICEMODE_PY, excluding simpleaudio)"
+  if ! uv tool install --python "$VOICEMODE_PY" \
+      --excludes "$SRC/uv-excludes.txt" \
+      --exclude-newer "$UV_EXCLUDE_NEWER_DATE" \
+      "$VOICEMODE_REQ" > "$log" 2>&1; then
+    tail -n 25 "$log" >&2
+    rm -f "$log"
+    die "uv tool install failed (last lines above name the failing package)"
+  fi
+  rm -f "$log"
+  py=$(tool_python)
+  uv pip freeze --python "$py" > "$SHARE/installed-deps"
+  say "recorded resolved deps in $SHARE/installed-deps"
+  "$VOICEMODE" --version || die "voicemode --version failed"
+}
+
+# Throwaway serve on $CHECK_PORT with a temp HOME, BASE_DIR, and working dir.
+scoping_stopcheck() {
+  port_in_use "$CHECK_PORT" && die "port $CHECK_PORT is in use; the scoping check needs it"
+  tmp=$(mktemp -d)
+  check_tok=$(openssl rand -hex 32)
+  # export is a builtin: the token reaches serve's environment, never an argv.
+  # HOME is the temp dir too, because importing VoiceMode creates ~/.voicemode/.
+  ( cd "$tmp"
+    export HOME="$tmp" VOICEMODE_BASE_DIR="$tmp/base" VOICEMODE_SERVE_TOKEN="$check_tok"
+    export VOICEMODE_TOOLS_ENABLED=converse \
+      VOICEMODE_STT_BASE_URLS=http://127.0.0.1:2022/v1 \
+      VOICEMODE_TTS_BASE_URLS=http://127.0.0.1:8880/v1 \
+      VOICEMODE_AUTO_START_KOKORO=false
+    exec "$VOICEMODE" serve --host 127.0.0.1 --port "$CHECK_PORT" --transport streamable-http
+  ) > "$tmp/serve.log" 2>&1 &
+  pid=$!
+  # shellcheck disable=SC2064  # expand now: pid and tmp are fixed for this check
+  trap "kill $pid 2>/dev/null; rm -rf '$tmp'" EXIT HUP INT TERM
+  i=0
+  while [ "$(mcp_unauth_code "$CHECK_PORT")" = 000 ]; do
+    kill -0 "$pid" 2>/dev/null || { cat "$tmp/serve.log" >&2; die "throwaway serve exited"; }
+    i=$((i + 1)); [ "$i" -le 60 ] || die "throwaway serve not reachable on :$CHECK_PORT after 60s"
+    sleep 1
+  done
+  rc=0
+  scoping_check "$CHECK_PORT" "$check_tok" || rc=1
+  check_tok=
+  kill "$pid" 2>/dev/null || :
+  wait "$pid" 2>/dev/null || :
+  rm -rf "$tmp"
+  trap - EXIT HUP INT TERM
+  [ "$rc" = 0 ] || die "scoping stop-check failed; nothing further installed"
+  say "ok   scoping stop-check passed"
+}
+
+fetch_model() {
+  name=$1 sum=$2
+  mkdir -p "$MODELS"
+  dest="$MODELS/$name"
+  if [ -f "$dest" ] && printf '%s  %s\n' "$sum" "$dest" | sha256sum -c --status; then
+    say "ok   model $name present, sha256 matches"
+    return
+  fi
+  say "downloading $name"
+  curl -fL --retry 3 -o "$dest.part" "$MODEL_URL_BASE/$name"
+  printf '%s  %s\n' "$sum" "$dest.part" | sha256sum -c --status ||
+    { rm -f "$dest.part"; die "$name sha256 mismatch (expected $sum)"; }
+  mv "$dest.part" "$dest"
+  say "ok   model $name sha256 verified"
+}
+
+# install_file <src> <dest>: copy if different; prints 1 if changed, else 0.
+install_file() {
+  if [ -f "$2" ] && cmp -s "$1" "$2"; then echo 0; return; fi
+  cp "$1" "$2.tmp" && mv "$2.tmp" "$2"
+  echo 1
+}
+
+write_units() {
+  mode=$1
+  mkdir -p "$QUADLET_DIR" "$UNIT_DIR"
+  # The sources carry the GPU digests; they must match the pins above.
+  grep -qxF "Image=$WHISPER_GPU_IMAGE" "$SRC/converser-whisper.container" ||
+    die "converser-whisper.container Image= does not match WHISPER_GPU_IMAGE"
+  grep -qxF "Image=$KOKORO_GPU_IMAGE" "$SRC/converser-kokoro.container" ||
+    die "converser-kokoro.container Image= does not match KOKORO_GPU_IMAGE"
+  stage=$(mktemp -d)
+  if [ "$mode" = cpu ]; then
+    sed -e "s|^Image=.*|Image=$WHISPER_CPU_IMAGE|" -e '/^AddDevice=/d' \
+        -e "s|/models/$GPU_MODEL|/models/$CPU_MODEL|" \
+        "$SRC/converser-whisper.container" > "$stage/converser-whisper.container"
+    sed -e "s|^Image=.*|Image=$KOKORO_CPU_IMAGE|" -e '/^AddDevice=/d' \
+        "$SRC/converser-kokoro.container" > "$stage/converser-kokoro.container"
+    whisper_img=$WHISPER_CPU_IMAGE kokoro_img=$KOKORO_CPU_IMAGE
+  else
+    cp "$SRC/converser-whisper.container" "$SRC/converser-kokoro.container" "$stage/"
+    whisper_img=$WHISPER_GPU_IMAGE kokoro_img=$KOKORO_GPU_IMAGE
+  fi
+  cw=$(install_file "$stage/converser-whisper.container" "$QUADLET_DIR/converser-whisper.container")
+  ck=$(install_file "$stage/converser-kokoro.container" "$QUADLET_DIR/converser-kokoro.container")
+  cs=$(install_file "$SRC/converser-serve@.service" "$UNIT_DIR/converser-serve@.service")
+  rm -rf "$stage"
+  systemctl --user daemon-reload
+  say "pulling pinned images (several GB on first install)"
+  podman pull "$whisper_img"
+  podman pull "$kokoro_img"
+  for u in whisper kokoro; do
+    if [ "$u" = whisper ]; then changed=$cw; else changed=$ck; fi
+    if [ "$changed" = 1 ] && systemctl --user -q is-active "converser-$u.service"; then
+      say "restarting converser-$u (unit changed)"
+      systemctl --user restart "converser-$u.service"
+    else
+      say "starting converser-$u (waits for its healthcheck)"
+      systemctl --user start "converser-$u.service"
+    fi
+  done
+  if [ "$cs" = 1 ]; then
+    systemctl --user try-restart 'converser-serve@*.service' || :
+  fi
+  # Guard: route VoiceMode's own service paths through systemctl, which refuses.
+  for u in $UPSTREAM_UNITS; do
+    if [ -f "$UNIT_DIR/$u" ] && [ ! -L "$UNIT_DIR/$u" ]; then
+      die "$UNIT_DIR/$u is a regular file (a VoiceMode installer ran?); inspect it before masking"
+    fi
+  done
+  # shellcheck disable=SC2086  # word splitting of the unit list is intended
+  systemctl --user mask $UPSTREAM_UNITS
+}
+
+# Gate-q host checks shared by install and status. Returns non-zero on any FAIL.
+host_checks() {
+  hrc=0
+  for p in 2022 8880; do loopback_only "$p" || hrc=1; done
+  for c in converser-whisper converser-kokoro; do
+    if bind=$(podman inspect "$c" --format '{{json .HostConfig.PortBindings}}' 2>/dev/null); then
+      if printf '%s' "$bind" | jq -e '[.[][]?.HostIp] | length > 0 and all(. == "127.0.0.1")' > /dev/null; then
+        say "ok   $c published ports are 127.0.0.1 only"
+      else
+        say "FAIL $c port bindings: $bind"; hrc=1
+      fi
+    else
+      say "FAIL $c: no such container"; hrc=1
+    fi
+    st=$(systemctl --user is-active "$c.service" || :)
+    if [ "$st" = active ]; then say "ok   $c.service active (healthy)"; else say "FAIL $c.service is $st"; hrc=1; fi
+  done
+  for u in $UPSTREAM_UNITS; do
+    # is-enabled exits 1 for masked units: compare output, never the exit code.
+    st=$(systemctl --user is-enabled "$u" 2>/dev/null || :)
+    if [ "$st" = masked ]; then say "ok   $u masked"; else say "FAIL $u is '${st:-unknown}', expected masked"; hrc=1; fi
+  done
+  hmode=gpu
+  [ -f "$SHARE/mode" ] && hmode=$(cat "$SHARE/mode")
+  for c in converser-whisper converser-kokoro; do
+    line=$(journalctl --user -u "$c.service" -b --no-pager 2>/dev/null |
+      grep -i -m1 -E 'cuda|ggml_cuda|backend' || :)
+    if [ -n "$line" ]; then
+      say "info $c backend: $(printf '%s' "$line" | cut -c1-160)"
+    elif [ "$hmode" = gpu ]; then
+      say "WARN $c journal names no CUDA/backend line (gate u; GPU denied?)"
+    fi
+  done
+  return "$hrc"
+}
+
+cmd_install() {
+  mode=gpu
+  from_installed=0
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --cpu) mode=cpu ;;
+      --from-installed) from_installed=1 ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    shift
+  done
+  if [ "$from_installed" = 0 ]; then
+    if [ "$(readlink -f -- "$0")" = "$(readlink -f -- "$SRC/converser-host" 2>/dev/null || :)" ]; then
+      die "this is the installed copy; to install or update, run 'sh plugins/converser/host/converser-host install' from a clean clauthier checkout"
+    fi
+    # 1. Self-install, then continue from the installed copy, which no container mounts.
+    self_install
+    if [ "$mode" = cpu ]; then set -- --cpu; else set --; fi
+    exec "$SRC/converser-host" install --from-installed "$@"
+  fi
+  for t in uv podman systemctl curl jq openssl ss sha256sum getsebool; do
+    command -v "$t" > /dev/null || die "missing host tool: $t"
+  done
+  # 2. GPU gate: fail before any download.
+  [ "$mode" = cpu ] || gpu_gate
+  # 3. VoiceMode, then the scoping stop-check.
+  install_voicemode
+  scoping_stopcheck
+  # 4. Model.
+  if [ "$mode" = cpu ]; then fetch_model "$CPU_MODEL" "$CPU_MODEL_SHA256"
+  else fetch_model "$GPU_MODEL" "$GPU_MODEL_SHA256"; fi
+  printf '%s\n' "$mode" > "$SHARE/mode"
+  # 5. Units.
+  write_units "$mode"
+  # 6. Verify.
+  host_checks || die "host checks failed (see FAIL lines)"
+  say "install complete ($mode). Next: converser-host instance add <project>"
+}
+
+# ---------------------------------------------------------------- instance add
+cmd_instance() {
+  [ "${1:-}" = add ] || { usage >&2; exit 2; }
+  shift
+  project=${1:-}
+  valid_project "$project" || die "project must match [a-z0-9][a-z0-9_.-]*"
+  shift
+  port='' uid=$DEFAULT_UID
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --port) port=${2:?--port needs a value}; shift ;;
+      --uid) uid=${2:?--uid needs a value}; shift ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    shift
+  done
+  case $uid in ''|*[!0-9]*) die "--uid must be numeric" ;; esac
+  [ -f "$UNIT_DIR/converser-serve@.service" ] || die "converser-serve@.service not installed; run install first"
+  envf="$INSTANCES/$project.env"
+  tokf="$INSTANCES/$project.token"
+  umask 077
+  mkdir -p "$INSTANCES"
+  chmod 700 "$CONF" "$INSTANCES"
+  if [ -f "$envf" ]; then
+    [ -z "$port" ] || die "$project exists; --port is refused on an existing project (instance rm, then add)"
+    port=$(env_get "$envf" VOICEMODE_SERVE_PORT)
+    tok=$(env_get "$envf" VOICEMODE_SERVE_TOKEN)
+    [ -n "$port" ] && [ "${#tok}" -ge 32 ] || die "$envf is missing VOICEMODE_SERVE_PORT or a valid token"
+    say "repairing existing instance $project (port $port)"
+  else
+    if [ -n "$port" ]; then
+      case $port in ''|*[!0-9]*) die "--port must be numeric" ;; esac
+      [ "$port" -ge "$PORT_MIN" ] && [ "$port" -le "$PORT_MAX" ] || die "--port must be in $PORT_MIN-$PORT_MAX"
+      port_taken "$port" && die "port $port is taken"
+    else
+      port=$PORT_MIN
+      while port_taken "$port"; do
+        port=$((port + 1))
+        [ "$port" -le "$PORT_MAX" ] || die "no free port in $PORT_MIN-$PORT_MAX"
+      done
+    fi
+    tok=$(openssl rand -hex 32)
+    printf 'VOICEMODE_SERVE_PORT=%s\nVOICEMODE_SERVE_TOKEN=%s\n' "$port" "$tok" > "$envf"
+    say "wrote $envf (port $port)"
+  fi
+  if [ ! -f "$tokf" ]; then
+    printf '%s' "$tok" > "$tokf"
+    say "wrote $tokf"
+  fi
+  tok=
+  chmod 600 "$envf" "$tokf"
+  if podman secret exists "converser-$project"; then
+    say "ok   podman secret converser-$project exists"
+  else
+    # The value is read from the file, never argv.
+    podman secret create "converser-$project" "$tokf" > /dev/null
+    say "created podman secret converser-$project"
+  fi
+  systemctl --user enable --now "converser-serve@$project.service"
+  say "converser-serve@$project enabled and started"
+  cat <<EOF
+
+Add to the project's .devcontainer/devcontainer.json as a local, uncommitted
+edit (then: git update-index --skip-worktree .devcontainer/devcontainer.json),
+and recreate the container (lace up --rebuild):
+
+"runArgs": [
+  "--network", "pasta:-T,$CONTAINER_PORT:$port",
+  "--secret", "converser-$project,target=/run/secrets/converser-token,uid=$uid,mode=0400"
+]
+EOF
+}
+
+# A port is taken if another instance records it or anything listens on it.
+port_taken() {
+  if [ -d "$INSTANCES" ]; then
+    for f in "$INSTANCES"/*.env; do
+      [ -f "$f" ] || continue
+      [ "$(env_get "$f" VOICEMODE_SERVE_PORT)" = "$1" ] && return 0
+    done
+  fi
+  port_in_use "$1"
+}
+
+# ---------------------------------------------------------------- status
+instance_checks() {
+  project=$1 container=${2:-}
+  envf="$INSTANCES/$project.env"
+  tokf="$INSTANCES/$project.token"
+  [ -f "$envf" ] || { say "FAIL $project: no $envf"; return 1; }
+  irc=0
+  unit="converser-serve@$project.service"
+  port=$(env_get "$envf" VOICEMODE_SERVE_PORT)
+  st=$(systemctl --user is-active "$unit" || :)
+  if [ "$st" = active ]; then say "ok   $unit active"; else say "FAIL $unit is $st"; return 1; fi
+  loopback_only "$port" || irc=1
+  if [ -r "$tokf" ]; then
+    inst_tok=$(cat "$tokf")
+    scoping_check "$port" "$inst_tok" || irc=1
+    inst_tok=
+  else
+    say "FAIL $tokf missing"; irc=1
+  fi
+  pid=$(systemctl --user show -p MainPID --value "$unit")
+  if [ -n "$pid" ] && [ "$pid" != 0 ] && [ -r "/proc/$pid/environ" ]; then
+    envs=$(tr '\0' '\n' < "/proc/$pid/environ")
+    for kv in VOICEMODE_TOOLS_ENABLED=converse \
+              VOICEMODE_STT_BASE_URLS=http://127.0.0.1:2022/v1 \
+              VOICEMODE_TTS_BASE_URLS=http://127.0.0.1:8880/v1 \
+              VOICEMODE_SERVE_ALLOW_TAILSCALE=false \
+              VOICEMODE_SERVE_ALLOW_ANTHROPIC=false \
+              VOICEMODE_AUTO_START_KOKORO=false \
+              VOICEMODE_CONCH_TIMEOUT=60 \
+              VOICEMODE_CONTROL_CHANNEL_ENABLED=true; do
+      printf '%s\n' "$envs" | grep -qxF "$kv" || { say "FAIL $unit environ lacks $kv"; irc=1; }
+    done
+    printf '%s\n' "$envs" | grep -qx "VOICEMODE_BASE_DIR=.*/converser-serve/$project" ||
+      { say "FAIL $unit environ lacks VOICEMODE_BASE_DIR=.../converser-serve/$project"; irc=1; }
+    envs=
+    [ "$irc" = 0 ] && say "ok   $unit environment holds the pins"
+  else
+    say "FAIL $unit: cannot read /proc/<MainPID>/environ (MainPID '$pid')"; irc=1
+  fi
+  procs=$(ps -eo args=)
+  if printf '%s\n' "$procs" | grep -F voicemode | grep -qF -- '--token'; then
+    say "FAIL a voicemode process has --token on its command line"; irc=1
+  else
+    say "ok   no voicemode process has --token on argv"
+  fi
+  if [ -n "$container" ]; then
+    cc=$(podman inspect "$container" --format '{{json .Config.CreateCommand}}' 2>/dev/null) ||
+      { say "FAIL container $container not found"; return 1; }
+    if printf '%s' "$cc" | jq -e --arg f "pasta:-T,$CONTAINER_PORT:$port" 'any(.[]; contains($f))' > /dev/null; then
+      say "ok   $container CreateCommand forwards $CONTAINER_PORT to host :$port"
+    else
+      say "FAIL $container CreateCommand lacks pasta:-T,$CONTAINER_PORT:$port"; irc=1
+    fi
+    if printf '%s' "$cc" | jq -e --arg s "converser-$project" \
+        'index("--secret") != null and any(.[]; . == $s or startswith($s + ","))' > /dev/null; then
+      say "ok   $container CreateCommand carries --secret converser-$project"
+    else
+      say "FAIL $container CreateCommand lacks --secret converser-$project"; irc=1
+    fi
+  fi
+  return "$irc"
+}
+
+cmd_status() {
+  overall=0
+  host_checks || overall=1
+  if [ $# -ge 1 ]; then
+    valid_project "$1" || die "bad project name"
+    instance_checks "$1" "${2:-}" || overall=1
+  elif [ -d "$INSTANCES" ]; then
+    for f in "$INSTANCES"/*.env; do
+      [ -f "$f" ] || continue
+      p=$(basename "$f" .env)
+      instance_checks "$p" || overall=1
+    done
+  fi
+  if [ "$overall" = 0 ]; then say "status: all checks passed"; else say "status: FAILED"; fi
+  return "$overall"
+}
+
+# ---------------------------------------------------------------- main
+main() {
+  cmd=${1:-}
+  [ $# -gt 0 ] && shift
+  case $cmd in
+    install) cmd_install "$@" ;;
+    instance) cmd_instance "$@" ;;
+    status) cmd_status "$@" ;;
+    -h|--help|help) usage ;;
+    *) usage >&2; exit 2 ;;
+  esac
+}
+
+# CONVERSER_HOST_SOURCED=1 lets a test harness source the functions without running main.
+[ "${CONVERSER_HOST_SOURCED:-}" = 1 ] || main "$@"
