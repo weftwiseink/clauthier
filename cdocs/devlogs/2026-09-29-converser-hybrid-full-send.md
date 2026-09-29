@@ -58,6 +58,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | rev-r8 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-r8-review-of-converser-host-voicemode-serve.md | 18:10 | fresh |
 | return | rev-r8 | review | 18:25 | revise, 5ac7ea3 |
 | dispatch | prop-r6 (warm) | proposal | 18:25 | r9 revision |
+| return | prop-r6 | proposal | 18:30 | r9 1eb4b6c |
+| dispatch | rev-r9 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-r9-review-of-converser-host-voicemode-serve.md | 18:30 | fresh |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
