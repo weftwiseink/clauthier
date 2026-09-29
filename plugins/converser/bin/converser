@@ -19,7 +19,7 @@ tokf=${CONVERSER_TOKEN_FILE:-/run/secrets/converser-token}
 [ -r "$tokf" ] || { echo "converser: no token at $tokf (runArgs --secret missing?)" >&2; exit 1; }
 # Preflight without the token: 401 means the forward and serve are up
 # (TokenAuthMiddleware answers before MCP parsing; verified/source, cli.py).
-code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port/mcp" || :)
+code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -X POST "http://127.0.0.1:$port/mcp" || :)
 [ "$code" = 401 ] || { echo "converser: voice server on 127.0.0.1:$port answered '$code', expected 401" >&2; exit 1; }
 umask 077
 trap 'rm -f "$run/mcp.json" "$run/prompt.md" "$run/converser.sockpath"' EXIT HUP INT TERM
