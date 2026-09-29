@@ -1,0 +1,46 @@
+#!/bin/sh
+# converser: start the voice converser session in this container.
+# Contract (plugins/converser/host/README.md): token file at
+# /run/secrets/converser-token, serve at http://127.0.0.1:8765/mcp, run dir
+# ${XDG_RUNTIME_DIR:-/tmp}/converser-$(id -u). Extra arguments pass through to
+# claude (e.g. -p '...' --output-format stream-json --verbose).
+# CONVERSER_VOICE=off removes converse client-side (text-only mode).
+set -eu
+here=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)    # plugins/converser
+run="${XDG_RUNTIME_DIR:-/tmp}/converser-$(id -u)"
+# Owner-checked and never a symlink: the /tmp fallback is shared with other users.
+[ -d "$run" ] || mkdir -m 700 "$run"
+[ ! -L "$run" ] && [ "$(stat -c %u "$run")" = "$(id -u)" ] || { echo "converser: $run not mine" >&2; exit 1; }
+chmod 700 "$run"
+exec 9>"$run/lock"
+flock -n 9 || { echo "converser already running" >&2; exit 1; }
+port=${CONVERSER_PORT:-8765}
+tokf=${CONVERSER_TOKEN_FILE:-/run/secrets/converser-token}
+[ -r "$tokf" ] || { echo "converser: no token at $tokf (runArgs --secret missing?)" >&2; exit 1; }
+# Preflight without the token: 401 means the forward and serve are up
+# (TokenAuthMiddleware answers before MCP parsing; verified/source, cli.py).
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port/mcp" || :)
+[ "$code" = 401 ] || { echo "converser: voice server on 127.0.0.1:$port answered '$code', expected 401" >&2; exit 1; }
+umask 077
+trap 'rm -f "$run/mcp.json" "$run/prompt.md" "$run/converser.sockpath"' EXIT HUP INT TERM
+# CONVERSER_VOICE=off removes converse client-side: no code path can open the mic or speakers.
+deny='mcp__claude_ai_*,mcp__voicemode__pause_conversation'
+cp "$here/launcher/SYSTEM_PROMPT.md" "$run/prompt.md"
+if [ "${CONVERSER_VOICE:-on}" = off ]; then
+  deny="$deny,mcp__voicemode__converse"
+  printf '\nVoice is off. Treat each typed line (except one prefixed "Converser, do not relay:") as the user'"'"'s speech; print readbacks instead of speaking them.\n' >> "$run/prompt.md"
+fi
+# printf is a shell builtin, so the token never reaches argv; `cat` sees only the path.
+# Do not swap in /usr/bin/printf or jq --arg, both of which would put it on a command line.
+printf '{"mcpServers":{"voicemode":{"type":"http","url":"http://127.0.0.1:%s/mcp","headers":{"Authorization":"Bearer %s"},"timeout":600000}}}' \
+  "$port" "$(cat "$tokf")" > "$run/mcp.json"
+printf '{"crossSessionInbound":"accept","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"%s/launcher/record-sockpath.sh"}]}]}}' \
+  "$here" > "$run/settings.json"
+CONVERSER_SESSION=1 ENABLE_TOOL_SEARCH=false claude \
+  --name converser --model sonnet --permission-mode bypassPermissions \
+  --tools ListAgents,SendMessage \
+  --disallowedTools "$deny" \
+  --strict-mcp-config --mcp-config "$run/mcp.json" \
+  --settings "$run/settings.json" \
+  --append-system-prompt-file "$run/prompt.md" \
+  "$@"
