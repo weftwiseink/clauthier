@@ -468,19 +468,22 @@ cmd_instance() {
     printf 'VOICEMODE_SERVE_PORT=%s\nVOICEMODE_SERVE_TOKEN=%s\n' "$port" "$tok" > "$envf"
     say "wrote $envf (port $port)"
   fi
-  if [ ! -f "$tokf" ]; then
+  # The env file is the source of truth: the .token file and the secret must
+  # carry the same value, or serve and the container would disagree.
+  if [ ! -f "$tokf" ] || [ "$(cat "$tokf")" != "$tok" ]; then
     printf '%s' "$tok" > "$tokf"
-    say "wrote $tokf"
+    say "wrote $tokf from $envf"
   fi
-  tok=
   chmod 600 "$envf" "$tokf"
-  if podman secret exists "converser-$project"; then
-    say "ok   podman secret converser-$project exists"
+  if podman secret exists "converser-$project" &&
+     [ "$(podman secret inspect --showsecret --format '{{.SecretData}}' "converser-$project")" = "$tok" ]; then
+    say "ok   podman secret converser-$project matches"
   else
-    # The value is read from the file, never argv.
-    podman secret create "converser-$project" "$tokf" > /dev/null
+    # The value is read from the file, never argv. --replace fixes a stale secret.
+    podman secret create --replace "converser-$project" "$tokf" > /dev/null
     say "created podman secret converser-$project"
   fi
+  tok=
   systemctl --user enable --now "converser-serve@$project.service"
   say "converser-serve@$project enabled and started"
   cat <<EOF
