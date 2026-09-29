@@ -27,7 +27,8 @@ tags: [voice, converser, full-send, containers]
 | round | author | reviewer | verdict | review_path | notes |
 |---|---|---|---|---|---|
 | r6 | prop-r6 (opus) | rev-r6 (opus) | revise | cdocs/reviews/2026-09-29-r6-review-of-converser-host-voicemode-serve.md | hybrid revision, b5b163e; review 9738ced: simpleaudio needs ALSA headers; 1.4 session driver unspecified |
-| r7 | prop-r6 (opus, warm) | rev-r7 (opus) | pending | cdocs/reviews/2026-09-29-r7-review-of-converser-host-voicemode-serve.md | |
+| r7 | prop-r6 (opus, warm) | rev-r7 (opus) | revise | cdocs/reviews/2026-09-29-r7-review-of-converser-host-voicemode-serve.md | 9189588; review 44cc7ab: text-only mode needed for unattended harness; tmux -L must use -f /dev/null |
+| r8 | prop-r6 (opus, warm) | rev-r8 (opus) | pending | cdocs/reviews/2026-09-29-r8-review-of-converser-host-voicemode-serve.md | |
 
 ## Iteration Log
 
@@ -50,6 +51,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | prop-r6 (warm) | proposal | 17:30 | r7 revision |
 | return | prop-r6 | proposal | 17:45 | r7 9189588; simpleaudio excluded via uv --excludes; tmux -L converser harness; pause_conversation found exposed |
 | dispatch | rev-r7 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-r7-review-of-converser-host-voicemode-serve.md | 17:45 | fresh |
+| return | rev-r7 | review | 18:00 | revise, 44cc7ab |
+| dispatch | prop-r6 (warm) | proposal | 18:00 | r8 revision |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
