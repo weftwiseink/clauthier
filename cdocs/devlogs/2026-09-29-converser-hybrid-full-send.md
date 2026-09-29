@@ -26,6 +26,7 @@ tags: [voice, converser, full-send, containers]
 
 | round | author | reviewer | verdict | review_path | notes |
 |---|---|---|---|---|---|
+| r6 | prop-r6 (opus) | rev-r6 (opus) | pending | cdocs/reviews/2026-09-29-r6-review-of-converser-host-voicemode-serve.md | hybrid revision, b5b163e |
 
 ## Iteration Log
 
@@ -42,6 +43,8 @@ tags: [voice, converser, full-send, containers]
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-r6 (cdocs:proposer, opus) | cdocs/proposals/2026-09-29-converser-host-voicemode-serve.md | 17:00 | hybrid revision |
+| return | prop-r6 | proposal | 17:15 | b5b163e, review_ready |
+| dispatch | rev-r6 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-r6-review-of-converser-host-voicemode-serve.md | 17:15 | fresh |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
