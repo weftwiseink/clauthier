@@ -1,0 +1,31 @@
+# converser TTS: Kokoro-FastAPI, rootless, loopback-published.
+# Source of truth: plugins/converser/host/ in clauthier. `converser-host install`
+# copies this file into ~/.config/containers/systemd/; --cpu rewrites the Image=
+# digest and drops AddDevice=.
+[Unit]
+Description=converser TTS (Kokoro-FastAPI)
+
+[Container]
+ContainerName=converser-kokoro
+# kokoro-fastapi-gpu v0.9.0 (digest only: tag-plus-digest references are rejected
+# by skopeo and podman manifest inspect).
+Image=ghcr.io/remsky/kokoro-fastapi-gpu@sha256:9ba150465c6b8f5d6b1c62b54de83eb9aa0a1444aad8a1a9c8948eed60564b76
+AddDevice=nvidia.com/gpu=all
+PublishPort=127.0.0.1:8880:8880
+# The model is baked into the image; never fetch it at start. A missing model fails loudly.
+Environment=DOWNLOAD_MODEL=false
+# No Exec=: the image's Cmd (./entrypoint.sh) runs.
+HealthCmd=curl -fsS http://127.0.0.1:8880/health
+HealthInterval=5s
+HealthStartPeriod=60s
+Notify=healthy
+NoNewPrivileges=true
+DropCapability=all
+
+[Service]
+# on-failure suffices: the image's uvicorn has no request limit and never exits 0 by design.
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

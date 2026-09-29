@@ -1,0 +1,31 @@
+# converser STT: whisper.cpp server, rootless, loopback-published.
+# Source of truth: plugins/converser/host/ in clauthier. `converser-host install`
+# copies this file into ~/.config/containers/systemd/; --cpu rewrites the Image=
+# digest, drops AddDevice=, and swaps the model for base.en.
+[Unit]
+Description=converser STT (whisper.cpp server)
+
+[Container]
+ContainerName=converser-whisper
+# main-cuda at authoring; --cpu writes :main's digest and base.en instead.
+Image=ghcr.io/ggml-org/whisper.cpp@sha256:8a9def3eea0615dbee85cac1e0fa3898dce214fe9bb7955635ba25667da3884a
+AddDevice=nvidia.com/gpu=all
+Volume=%h/.local/share/converser-host/models:/models:ro,Z
+# Host exposure is set here: loopback only. The in-container bind is namespace-local.
+PublishPort=127.0.0.1:2022:2022
+# One string: the entrypoint is `bash -c`.
+Exec="whisper-server --host 0.0.0.0 --port 2022 --model /models/ggml-large-v3-turbo.bin --inference-path /v1/audio/transcriptions --threads 4 --convert"
+HealthCmd=curl -fsS http://127.0.0.1:2022/health
+HealthInterval=5s
+# large-v3-turbo takes a while to load; failures before this do not count.
+HealthStartPeriod=60s
+Notify=healthy
+NoNewPrivileges=true
+DropCapability=all
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
