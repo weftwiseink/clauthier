@@ -7,10 +7,10 @@ type: proposal
 state: live
 status: review_ready
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-5-5"
-  at: 2026-09-29T10:07:46-07:00
-  round: 5
+  at: 2026-09-29T15:50:00-07:00
+  round: 6
 tags: [voice, architecture, security, networking, packaging, podman, claude_plugins, future_work]
 ---
 
