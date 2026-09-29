@@ -401,6 +401,9 @@ cmd_install() {
     if [ "$mode" = cpu ]; then set -- --cpu; else set --; fi
     exec "$SRC/converser-host" install --from-installed "$@"
   fi
+  # --from-installed is internal: honored only when this is the installed copy.
+  [ "$(readlink -f -- "$0")" = "$(readlink -f -- "$SRC/converser-host")" ] ||
+    die "--from-installed is internal; run 'sh plugins/converser/host/converser-host install'"
   for t in uv podman systemctl curl jq openssl ss sha256sum getsebool; do
     command -v "$t" > /dev/null || die "missing host tool: $t"
   done
