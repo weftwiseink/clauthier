@@ -5,7 +5,7 @@ first_authored:
 task_list: voice/converser-lace-feature
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
