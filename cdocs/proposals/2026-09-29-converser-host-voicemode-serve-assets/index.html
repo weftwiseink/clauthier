@@ -784,11 +784,11 @@ td.res{min-width:24ch}
   </div>
   <div class="answer">
     <div class="k">"The entire development surface is in clauthier"</div>
-    <p><strong>Confirmed for versioned code, with three qualifications.</strong> Every file the design authors and keeps goes in clauthier <code>plugins/converser/</code>. That covers the <code>host/</code> tooling in stage 1 and the plugin proper in stage 3a. The qualifications:</p>
+    <p><strong>Confirmed for versioned code and the design record, with two qualifications.</strong> Every file the design authors and keeps goes in clauthier <code>plugins/converser/</code>. That covers the <code>host/</code> tooling in stage 1 and the plugin proper in stage 3a. The qualifications:</p>
     <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
       <li>Through stages 1–2 the container side is hand-placed, container-local and unversioned: the launcher, <code>settings.json</code>, <code>SYSTEM_PROMPT.md</code>, and the managed file. Each rebuild destroys these files. Nothing in clauthier holds them until 3a turns them into plugin content.</li>
       <li>Weftwise gets one uncommitted <code>runArgs</code> line.</li>
-      <li>The design record (proposal, reviews, reports, devlogs, this page) lives in <strong>clauthier</strong> <code>cdocs/</code>.</li>
+      
     </ul>
   </div>
   <div class="tscroll">
