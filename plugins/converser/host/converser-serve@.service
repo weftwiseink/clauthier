@@ -1,0 +1,36 @@
+# One VoiceMode MCP server per container project (%i).
+# Source of truth: plugins/converser/host/ in clauthier. `converser-host install`
+# copies this file into ~/.config/systemd/user/; `converser-host instance add`
+# writes the env file and enables the instance.
+[Unit]
+Description=VoiceMode MCP server for container project %i
+Wants=converser-whisper.service converser-kokoro.service
+After=converser-whisper.service converser-kokoro.service
+
+[Service]
+Type=simple
+StateDirectory=converser-serve/%i
+WorkingDirectory=%S/converser-serve/%i
+# Port and token only; security pins are on the command line,
+# so no EnvironmentFile or drop-in line can override them.
+EnvironmentFile=%h/.config/converser-host/instances/%i.env
+ExecStart=/usr/bin/env \
+  VOICEMODE_TOOLS_ENABLED=converse \
+  VOICEMODE_STT_BASE_URLS=http://127.0.0.1:2022/v1 \
+  VOICEMODE_TTS_BASE_URLS=http://127.0.0.1:8880/v1 \
+  VOICEMODE_SERVE_ALLOW_TAILSCALE=false \
+  VOICEMODE_SERVE_ALLOW_ANTHROPIC=false \
+  VOICEMODE_AUTO_START_KOKORO=false \
+  VOICEMODE_CONCH_TIMEOUT=60 \
+  VOICEMODE_CONTROL_CHANNEL_ENABLED=true \
+  VOICEMODE_BASE_DIR=%S/converser-serve/%i \
+  %h/.local/bin/voicemode serve --host 127.0.0.1 --port ${VOICEMODE_SERVE_PORT} --transport streamable-http
+# Refuse to start with an empty or short token: serve treats an empty token as
+# "no auth" (cli.py:2152). $$ keeps systemd from substituting the value into argv.
+ExecStartPre=/bin/sh -c 'test $${#VOICEMODE_SERVE_TOKEN} -ge 32'
+# on-failure, not upstream's always: a clean exit means a deliberate stop.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
