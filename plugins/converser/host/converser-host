@@ -163,18 +163,21 @@ valid_project() {
 env_get() { sed -n "s/^$2=//p" "$1" | head -n 1; }
 
 # ---------------------------------------------------------------- install
+# The repo config is container-writable: never let it run programs on the host.
+host_git() { git -c core.fsmonitor=false -c core.hooksPath=/dev/null "$@"; }
+
 self_install() {
   here=$(dirname -- "$(readlink -f -- "$0")")
-  top=$(git -C "$here" rev-parse --show-toplevel 2>/dev/null) ||
+  top=$(host_git -C "$here" rev-parse --show-toplevel 2>/dev/null) ||
     die "not running from a git checkout; run 'sh plugins/converser/host/converser-host install' from the clauthier checkout"
   rel=${here#"$top"/}
   [ "$rel" = plugins/converser/host ] || die "unexpected source path $here"
-  dirty=$(git -C "$top" status --porcelain -- "$rel")
+  dirty=$(host_git -C "$top" status --porcelain -- "$rel")
   if [ -n "$dirty" ]; then
     printf '%s\n' "$dirty" >&2
     die "$rel has uncommitted or untracked changes; install only runs a clean, committed tree"
   fi
-  rev=$(git -C "$top" rev-parse HEAD)
+  rev=$(host_git -C "$top" rev-parse HEAD)
   prev=
   [ -f "$SHARE/installed-rev" ] && prev=$(cat "$SHARE/installed-rev")
   if [ -n "$prev" ]; then
@@ -185,7 +188,7 @@ self_install() {
   mkdir -p "$SHARE" "$BIN_DIR"
   rm -rf "$SRC.new"
   mkdir -p "$SRC.new"
-  git -C "$top" archive "$rev" "$rel" | tar -x -C "$SRC.new" --strip-components=3
+  host_git -C "$top" archive "$rev" "$rel" | tar -x -C "$SRC.new" --strip-components=3
   [ -x "$SRC.new/converser-host" ] || die "archived converser-host is not executable"
   rm -rf "$SRC"
   mv "$SRC.new" "$SRC"

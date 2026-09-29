@@ -8,7 +8,8 @@ Nothing here holds secrets.
 
 ## Review before install
 
-The clauthier checkout is writable from the `clauthier` container, so the host never runs it in place.
+The clauthier checkout is writable from the `clauthier` container, so the host never runs its code in place.
+One caveat: `install` still runs host `git` against that repo, whose config a container session could edit. `install` disables `core.fsmonitor` and `core.hooksPath`, but not every exec-capable key (for example `filter.*` drivers), so check `git config --list --show-origin` before each install.
 `install` refuses a dirty `plugins/converser/host/`, copies the committed tree (`git archive HEAD`) to `~/.local/share/converser-host/src/`, links `~/.local/bin/converser-host` to that copy, records the commit in `~/.local/share/converser-host/installed-rev`, and re-executes from the copy.
 Every later command runs from the installed copy.
 
