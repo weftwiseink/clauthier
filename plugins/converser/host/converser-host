@@ -284,7 +284,8 @@ fetch_model() {
 # install_file <src> <dest>: copy if different; prints 1 if changed, else 0.
 install_file() {
   if [ -f "$2" ] && cmp -s "$1" "$2"; then echo 0; return; fi
-  cp "$1" "$2.tmp" && mv "$2.tmp" "$2"
+  cp "$1" "$2.tmp" || return 1
+  mv "$2.tmp" "$2" || return 1
   echo 1
 }
 
@@ -316,9 +317,12 @@ write_units() {
   else
     whisper_img=$WHISPER_GPU_IMAGE kokoro_img=$KOKORO_GPU_IMAGE
   fi
-  cw=$(install_file "$stage/converser-whisper.container" "$QUADLET_DIR/converser-whisper.container")
-  ck=$(install_file "$stage/converser-kokoro.container" "$QUADLET_DIR/converser-kokoro.container")
-  cs=$(install_file "$SRC/converser-serve@.service" "$UNIT_DIR/converser-serve@.service")
+  cw=$(install_file "$stage/converser-whisper.container" "$QUADLET_DIR/converser-whisper.container") ||
+    die "cannot write $QUADLET_DIR/converser-whisper.container"
+  ck=$(install_file "$stage/converser-kokoro.container" "$QUADLET_DIR/converser-kokoro.container") ||
+    die "cannot write $QUADLET_DIR/converser-kokoro.container"
+  cs=$(install_file "$SRC/converser-serve@.service" "$UNIT_DIR/converser-serve@.service") ||
+    die "cannot write $UNIT_DIR/converser-serve@.service"
   rm -rf "$stage"
   systemctl --user daemon-reload
   say "pulling pinned images (several GB on first install)"
