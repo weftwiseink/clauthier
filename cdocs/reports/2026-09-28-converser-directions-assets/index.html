@@ -1,0 +1,1195 @@
+<title>Converser Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#EDF0EE; --surface:#F8FAF9; --surface-2:#E2E8E5; --ink:#142220; --ink-2:#3C4C49; --mute:#62716C;
+  --rule:#C3CDC9; --rule-2:#D6DEDB;
+  --accent:#0B6B70; --accent-soft:#D2E6E5; --audio:#A1336A; --audio-soft:#F2DDE7; --msg:#3950A0; --msg-soft:#DDE3F4;
+  --good:#2C7439; --good-soft:#DAEADC; --warn:#8F5E00; --warn-soft:#F3E6CA; --crit:#AE2E28; --crit-soft:#F5DAD7;
+  --track:#D3DBD8; --cost:#3C4C49; --focus:#0B6B70;
+  --f-disp:"Chakra Petch","Bahnschrift","DIN Alternate","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1413; --surface:#151D1C; --surface-2:#1C2725; --ink:#DCE6E3; --ink-2:#B0BFBB; --mute:#83938E;
+    --rule:#2D3A38; --rule-2:#243130;
+    --accent:#56C2C6; --accent-soft:#143A3B; --audio:#E583B4; --audio-soft:#3C1D2D; --msg:#93A6F2; --msg-soft:#1E2748;
+    --good:#72C681; --good-soft:#173322; --warn:#E3AE4A; --warn-soft:#3A2C12; --crit:#F2786D; --crit-soft:#3E1D1B;
+    --track:#283432; --cost:#B0BFBB; --focus:#56C2C6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#151D1C; --surface-2:#1C2725; --ink:#DCE6E3; --ink-2:#B0BFBB; --mute:#83938E;
+  --rule:#2D3A38; --rule-2:#243130;
+  --accent:#56C2C6; --accent-soft:#143A3B; --audio:#E583B4; --audio-soft:#3C1D2D; --msg:#93A6F2; --msg-soft:#1E2748;
+  --good:#72C681; --good-soft:#173322; --warn:#E3AE4A; --warn-soft:#3A2C12; --crit:#F2786D; --crit-soft:#3E1D1B;
+  --track:#283432; --cost:#B0BFBB; --focus:#56C2C6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.55 var(--f-body);margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:140ch;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 64px;display:flex;flex-direction:column;gap:56px}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:2px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--surface-2);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;letter-spacing:.005em}
+h1{font-size:clamp(2.1rem,5vw,3.3rem);font-weight:700;line-height:1.02}
+h2{font-size:1.65rem;font-weight:600;line-height:1.15}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+.prose{max-width:82ch;display:flex;flex-direction:column;gap:.8em}
+.eyebrow{font:500 .74rem/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{display:flex;flex-direction:column;gap:18px;padding-block:8px 0}
+.trace{width:100%;height:46px;display:block}
+.trace path{fill:none;stroke:var(--accent);stroke-width:1.6}
+.trace .base{stroke:var(--rule);stroke-width:1}
+.bluf{border-block:1px solid var(--rule);padding-block:18px;display:grid;grid-template-columns:auto 1fr;gap:6px 22px;max-width:110ch}
+.bluf .tag{font:600 .78rem/1.6 var(--f-mono);letter-spacing:.1em;color:var(--accent);padding-top:3px}
+.bluf p{font-size:1.06rem;line-height:1.6}
+@media (max-width:640px){.bluf{grid-template-columns:1fr}}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 18px;font:500 .82rem/1.4 var(--f-mono)}
+nav.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule)}
+nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+section{display:flex;flex-direction:column;gap:18px;scroll-margin-top:16px}
+.sec-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:12px}
+.lede{color:var(--ink-2);max-width:82ch}
+
+/* tables */
+.tscroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface);border-radius:3px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule-2)}
+thead th{font:600 .72rem/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--mute);background:var(--surface-2);border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-weight:600;min-width:15ch}
+td.name small{display:block;font-weight:400;color:var(--mute);font-size:.8rem}
+tr.rec td{background:color-mix(in srgb,var(--good-soft) 55%,transparent)}
+table.wide{min-width:1120px}
+td.dcell{min-width:22ch}
+.dt{display:block;margin-top:6px;font-size:.8rem;color:var(--ink-2);line-height:1.4}
+.dt code{font-size:.95em}
+table.mid{min-width:860px}
+table.small{min-width:620px}
+
+/* meters: segmented, like a level meter */
+.mt{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.meter{--v:0;--c:var(--accent);display:inline-block;width:60px;height:10px;
+  background:linear-gradient(to right,var(--c) calc(var(--v)*20%),var(--track) 0);
+  -webkit-mask:repeating-linear-gradient(to right,#000 0 10px,transparent 10px 12.5px);
+  mask:repeating-linear-gradient(to right,#000 0 10px,transparent 10px 12.5px)}
+.meter.cost{--c:var(--cost)}
+.mt b{font:500 .78rem var(--f-mono);color:var(--mute);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font:600 .7rem/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 7px 4px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.chip.good{color:var(--good);background:var(--good-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.crit{color:var(--crit);background:var(--crit-soft)}
+.chip.neutral{color:var(--ink-2);background:var(--surface-2)}
+.chip.acc{color:var(--accent);background:var(--accent-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.82rem;color:var(--ink-2);align-items:center}
+
+/* facts */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,40ch),1fr));gap:0 28px;margin:0;padding:0;list-style:none}
+.facts li{padding:10px 0 10px 18px;border-bottom:1px solid var(--rule-2);position:relative;font-size:.94rem}
+.facts li::before{content:"";position:absolute;left:0;top:18px;width:8px;height:2px;background:var(--accent)}
+
+/* figures */
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.fscroll{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:10px}
+.fscroll svg{display:block;width:100%;height:auto;min-width:900px}
+.fscroll.narrow svg{min-width:640px;max-width:900px;margin-inline:auto}
+figcaption{font-size:.86rem;color:var(--ink-2);max-width:100ch}
+figcaption b{font-family:var(--f-mono);font-weight:600;color:var(--ink);font-size:.8rem;letter-spacing:.05em;margin-right:6px}
+
+/* svg vocabulary */
+svg text{font-family:var(--f-body);fill:var(--ink);font-size:13px}
+svg .th{font-family:var(--f-disp);font-weight:600;font-size:15px}
+svg .ts{font-size:11.5px;fill:var(--ink-2)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink-2)}
+svg .tml{font-family:var(--f-mono);font-size:11px;fill:var(--mute);letter-spacing:.06em}
+svg .ta{fill:var(--audio)} svg .tn{fill:var(--accent)} svg .tg{fill:var(--msg)} svg .tc{fill:var(--crit)} svg .tok{fill:var(--good)} svg .tw{fill:var(--warn)}
+svg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+svg .host{fill:var(--bg);stroke:var(--rule);stroke-width:1.2}
+svg .ctr{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.4;stroke-dasharray:7 5}
+svg .node{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}
+svg .n-aud{fill:var(--audio-soft);stroke:var(--audio);stroke-width:1.3}
+svg .n-acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.3}
+svg .n-msg{fill:var(--msg-soft);stroke:var(--msg);stroke-width:1.3}
+svg .n-good{fill:var(--good-soft);stroke:var(--good);stroke-width:1.3}
+svg .n-warn{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.3}
+svg .n-crit{fill:var(--crit-soft);stroke:var(--crit);stroke-width:1.3}
+svg .band{fill:var(--surface-2);stroke:none}
+svg .life{fill:none;stroke:var(--rule);stroke-width:1.2;stroke-dasharray:3 4}
+svg .e-aud{fill:none;stroke:var(--audio);stroke-width:2.4}
+svg .e-net{fill:none;stroke:var(--accent);stroke-width:2.2}
+svg .e-loop{fill:none;stroke:var(--ink-2);stroke-width:1.4}
+svg .e-msg{fill:none;stroke:var(--msg);stroke-width:2}
+svg .e-ret{fill:none;stroke:var(--msg);stroke-width:1.8;stroke-dasharray:6 4}
+svg .e-crit{fill:none;stroke:var(--crit);stroke-width:2.2}
+svg .e-warn{fill:none;stroke:var(--warn);stroke-width:2}
+svg .e-good{fill:none;stroke:var(--good);stroke-width:2;stroke-dasharray:6 4}
+svg .e-tw{fill:none;stroke:var(--warn);stroke-width:1.2;stroke-dasharray:4 4}
+svg .track{fill:none;stroke:var(--accent);stroke-width:3}
+svg .grid{fill:none;stroke:var(--rule-2);stroke-width:1}
+svg .axis{fill:none;stroke:var(--ink-2);stroke-width:1.2}
+svg .mk-aud{fill:var(--audio)} svg .mk-net{fill:var(--accent)} svg .mk-msg{fill:var(--msg)} svg .mk-crit{fill:var(--crit)} svg .mk-loop{fill:var(--ink-2)} svg .mk-good{fill:var(--good)} svg .mk-warn{fill:var(--warn)}
+svg .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+svg .dot-good{fill:var(--good);stroke:var(--surface);stroke-width:2}
+svg .dot-warn{fill:var(--warn);stroke:var(--surface);stroke-width:2}
+svg .dot-crit{fill:var(--crit);stroke:var(--surface);stroke-width:2}
+svg .dot-n{fill:var(--ink-2);stroke:var(--surface);stroke-width:2}
+svg .stage{fill:var(--surface);stroke:var(--accent);stroke-width:2.4}
+svg .stage-t{font-family:var(--f-disp);font-weight:700;font-size:15px;fill:var(--accent)}
+svg .sw-line{fill:none;stroke-width:3}
+
+/* decision blocks */
+.decision{display:flex;flex-direction:column;gap:14px}
+.callout{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;padding:12px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:3px;max-width:110ch}
+.callout .k{font:600 .72rem/1.6 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--good)}
+@media (max-width:560px){.callout{grid-template-columns:1fr}}
+
+details{border:1px solid var(--rule);border-radius:3px;background:var(--surface)}
+details>summary{cursor:pointer;list-style:none;padding:10px 14px 10px 36px;position:relative;font:500 .9rem/1.4 var(--f-body);color:var(--ink)}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";position:absolute;left:15px;top:50%;width:0;height:0;margin-top:-5px;border-left:7px solid var(--accent);border-block:5px solid transparent;transition:transform .15s ease}
+details[open]>summary::before{transform:rotate(90deg)}
+details>summary .hint{font:400 .74rem var(--f-mono);color:var(--mute);margin-left:8px;letter-spacing:.03em}
+details[open]>summary{border-bottom:1px solid var(--rule-2)}
+.dbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;font-size:.93rem}
+.dbody ul,.dbody ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:5px;max-width:95ch}
+.dbody p{max-width:95ch}
+.dbody .tscroll{background:var(--bg)}
+.dbody thead th{background:var(--surface)}
+
+/* open decisions */
+.odl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,52ch),1fr));gap:12px}
+.odl li{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.odl .q{font-weight:600}
+.odl .opts{font-size:.86rem;color:var(--ink-2)}
+.odl .rec{font-size:.9rem}
+.odl .rec::before{content:"Recommend ";font:600 .7rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--good);margin-right:4px}
+
+/* checklist */
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.checks li{display:grid;grid-template-columns:auto 4.2em 1fr auto;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--rule-2)}
+.checks li:last-child{border-bottom:0}
+.checks input{accent-color:var(--accent);width:15px;height:15px;transform:translateY(2px)}
+.checks .g{font:600 .8rem var(--f-mono);color:var(--accent)}
+.checks label{cursor:pointer}
+@media (max-width:560px){.checks li{grid-template-columns:auto 3.4em 1fr}.checks li .chip{grid-column:2/-1;justify-self:start}}
+.checks h4{margin:10px 0 2px;font:600 .74rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+
+footer{border-top:2px solid var(--ink);padding-top:12px;display:flex;flex-direction:column;gap:10px;font-size:.86rem;color:var(--ink-2)}
+footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+footer code{background:transparent;padding:0}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">lace · voice/converser-lace-feature · decision review · 2026-09-28</div>
+  <h1>Converser Directions</h1>
+  <svg class="trace" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true">
+    <path class="base" d="M0 23 H1200"/>
+    <path d="M0 23 H180 L190 23 196 14 202 32 208 8 214 38 220 18 226 27 232 23 H430 L436 20 442 27 448 11 454 35 460 5 466 41 472 15 478 30 484 21 490 24 H700 L706 19 712 29 718 16 724 31 730 23 H1200"/>
+  </svg>
+  <div class="bluf">
+    <div class="tag">BLUF</div>
+    <p>Start with <strong>host <code>voicemode serve</code>, one process and token per container, against an unmodified <code>weftwise</code> container</strong>. It is config only (1.5–3 person-days) and it takes the pulse socket, monitor-source capture, inode pinning and the in-container audio install out of the container. Because every host <code>serve</code> process shares the hardcoded conch, it also closes cross-container talk-over. Run it for a week and package a lace feature only if voice gets used. Keep the amended in-container proposal as the fallback. Use the tier-2 question redirect in v0, since the 12&nbsp;s tier-3 relay cannot beat a ~15&nbsp;s voice round trip. A VoiceMode fork or an owned broker waits for a named tripwire, and Android starts with Remote Control plus phone dictation while VoiceMode Connect's Android client matures upstream.</p>
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#overview">Directions</a><a href="#facts">Settled facts</a><a href="#arch">Architecture</a><a href="#flow">Message flow</a>
+    <a href="#audio">Where audio lives</a><a href="#net">Networking</a><a href="#iso">Isolation</a><a href="#relay">Question relay</a>
+    <a href="#fork">Fork vs reuse</a><a href="#android">Android</a><a href="#threat">Threat map</a><a href="#roadmap">Roadmap</a>
+    <a href="#risks">Risks</a><a href="#decide">Open decisions</a><a href="#gates">Gates</a><a href="#sources">Sources</a>
+  </nav>
+</header>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview">
+  <div class="sec-head">
+    <div class="eyebrow">Overview</div>
+    <h2>Candidate directions</h2>
+  </div>
+  <p class="lede">Seven directions scored on the same five axes. Ratings are relative judgments that synthesize the four reports and their reviews; dev-time figures come from the fork and broker reports.</p>
+  <div class="legend">
+    <span class="mt"><span class="meter cost" style="--v:3"></span>Difficulty: more segments means more work</span>
+    <span class="mt"><span class="meter" style="--v:3"></span>Other axes: more segments is better</span>
+  </div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Direction</th><th>Difficulty · dev-time</th><th>Flexibility</th><th>Long-term viability</th><th>Security posture</th><th>Android / remote</th><th>Upstream dependence</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Accepted proposal as-is<small>P · in-container VoiceMode + pulse file mount</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:3"></span><b>3</b></span><small class="dt">Phases 0–5 still ahead: pulse gate, audio packages, <code>asound.conf</code>, hooks, <code>converser-io</code></small></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:1"></span><b>1</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:1"></span><b>1</b></span></td>
+          <td>Medium: VoiceMode stdio pin, Claude Code messaging churn</td>
+          <td><span class="chip crit">Amend first</span><br><small>False <code>label=disable</code> claim, 12&nbsp;s tier 3, no arbitration</small></td>
+        </tr>
+        <tr>
+          <td class="name">Amended proposal<small>P+ · 12 vetting amendments applied</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:3"></span><b>3</b></span><small class="dt">Same phases plus directory mount, Stop guards, trace, canary</small></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:1"></span><b>1</b></span></td>
+          <td>Medium</td>
+          <td><span class="chip warn">Fallback</span><br><small>Use if host <code>serve</code> proves unstable</small></td>
+        </tr>
+        <tr class="rec">
+          <td class="name">Host <code>voicemode serve</code> per container<small>S · fork report option (a), broker option 2</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:1"></span><b>1</b></span><small class="dt">1.5–3 person-days, config only</small></td>
+          <td><span class="mt"><span class="meter" style="--v:4"></span><b>4</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td>High on VoiceMode <code>serve</code>, zero patches; #521/#522 open</td>
+          <td><span class="chip good">Run first</span><br><small>One process, port and token per container</small></td>
+        </tr>
+        <tr>
+          <td class="name">Unix-socket broker<small>Broker option 1 · bespoke protocol</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:2"></span><b>2</b></span><small class="dt">Days: host daemon, wire protocol, stdio relay shim</small></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:1"></span><b>1</b></span></td>
+          <td>None; all maintenance is ours</td>
+          <td><span class="chip neutral">Skip</span><br><small>Removes loopback-peer ambiguity only</small></td>
+        </tr>
+        <tr>
+          <td class="name">Maintained VoiceMode fork<small>Fork option (c) · targeted patches</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:3"></span><b>3</b></span><small class="dt">3–6 person-days, then 0.5–2 per release</small></td>
+          <td><span class="mt"><span class="meter" style="--v:4"></span><b>4</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td>Diverging: rebase tax on a 4,620-line <code>converse.py</code></td>
+          <td><span class="chip neutral">Tripwire only</span></td>
+        </tr>
+        <tr>
+          <td class="name">Bespoke own broker<small>Fork option (d), broker option 3 · HTTP/gRPC</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:4"></span><b>4</b></span><small class="dt">15–25 person-days for rough parity, edge cases extra</small></td>
+          <td><span class="mt"><span class="meter" style="--v:4"></span><b>4</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:2"></span><b>2</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td>None; loses conch, failover, fixed platform bugs</td>
+          <td><span class="chip neutral">Tripwire only</span></td>
+        </tr>
+        <tr>
+          <td class="name">Pipecat / LiveKit broker + Android client<small>Broker option 4 · WebRTC</small></td>
+          <td class="dcell"><span class="mt"><span class="meter cost" style="--v:5"></span><b>5</b></span><small class="dt">Weeks: pipeline, transport, app packaging</small></td>
+          <td><span class="mt"><span class="meter" style="--v:5"></span><b>5</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:4"></span><b>4</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:3"></span><b>3</b></span></td>
+          <td><span class="mt"><span class="meter" style="--v:5"></span><b>5</b></span></td>
+          <td>Framework; reuses nothing from VoiceMode</td>
+          <td><span class="chip acc">Eventual shape</span><br><small>Barge-in, semantic turns, maintained Android SDK</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure>
+    <div class="fscroll narrow">
+      <svg viewBox="0 0 900 460" role="img" aria-labelledby="sc-t sc-d">
+        <title id="sc-t">Difficulty against long-term viability</title>
+        <desc id="sc-d">Scatter of the seven directions using the table's difficulty and viability ratings. Host serve sits at difficulty 1, viability 3. Pipecat sits at 5, 4.</desc>
+        <!-- plot: x = 90 + (d-0.5)*154 ; y = 390 - (v-0.5)*70 -->
+        <g>
+          <path class="grid" d="M167 40 V390 M321 40 V390 M475 40 V390 M629 40 V390 M783 40 V390"/>
+          <path class="grid" d="M90 355 H860 M90 285 H860 M90 215 H860 M90 145 H860 M90 75 H860"/>
+          <path class="axis" d="M90 40 V390 H860"/>
+        </g>
+        <g class="tm" text-anchor="middle">
+          <text x="167" y="410">1</text><text x="321" y="410">2</text><text x="475" y="410">3</text><text x="629" y="410">4</text><text x="783" y="410">5</text>
+        </g>
+        <g class="tm" text-anchor="end">
+          <text x="80" y="359">1</text><text x="80" y="289">2</text><text x="80" y="219">3</text><text x="80" y="149">4</text><text x="80" y="79">5</text>
+        </g>
+        <text class="tml" x="475" y="442" text-anchor="middle">DIFFICULTY (MORE WORK →)</text>
+        <text class="tml" x="26" y="215" text-anchor="middle" transform="rotate(-90 26 215)">LONG-TERM VIABILITY →</text>
+        <text class="ts" x="100" y="58">cheap and durable</text>
+        <!-- points -->
+        <circle class="dot-good" cx="167" cy="215" r="9"/><text class="halo" x="182" y="211" font-weight="600">S · host serve</text><text class="ts halo" x="182" y="228">run first</text>
+        <circle class="dot-n" cx="321" cy="285" r="7"/><text class="halo" x="334" y="281">Unix-socket broker</text>
+        <circle class="dot-crit" cx="475" cy="285" r="8"/><text class="halo" x="488" y="289">P as-is · fork (c)</text>
+        <circle class="dot-warn" cx="475" cy="215" r="8"/><text class="halo" x="488" y="219">P+ amended (fallback)</text>
+        <circle class="dot-n" cx="629" cy="285" r="7"/><text class="halo" x="642" y="289">own broker (d)</text>
+        <circle class="dot" cx="783" cy="145" r="8"/><text class="halo" x="770" y="125" text-anchor="end">Pipecat / LiveKit + Android</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG E</b>Difficulty against viability, from the table ratings. P as-is and the fork share a point. Host <code>serve</code> is the only cheap option that holds up; Pipecat buys durability and the Android story with weeks of work.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ FACTS ============ -->
+<section id="facts">
+  <div class="sec-head">
+    <div class="eyebrow">Ground truth</div>
+    <h2>Facts the reviews settled</h2>
+  </div>
+  <p class="lede">These corrections from the review rounds change which options differ from each other. Everything below builds on them.</p>
+  <ul class="facts">
+    <li><strong>No differentiator in <code>label=disable</code>.</strong> The devcontainer CLI 0.87.0 applies it to every podman container, together with <code>--userns=keep-id</code>. No design gains or loses SELinux confinement.</li>
+    <li><strong>The token is the only gate.</strong> <code>pasta -T</code> traffic arrives as <code>127.0.0.1</code>, so <code>serve</code>'s allowlist admits everything. That means one <code>serve</code> process and one token per container.</li>
+    <li><strong>Default <code>serve</code> is too wide.</strong> It exposes <code>converse</code> and <code>service</code> (host systemd control), and STT falls back to OpenAI. Set <code>VOICEMODE_TOOLS_ENABLED=converse</code> and loopback-only STT/TTS URLs.</li>
+    <li><strong>Host conch is shared automatically.</strong> The path is hardcoded to <code>~/.voicemode/conch</code>, so all same-user host <code>serve</code> processes serialize. A per-project <code>VOICEMODE_BASE_DIR</code> isolates transcripts and logs.</li>
+    <li><strong>Concurrency bugs are open.</strong> #521 (shared-process guard) and #522 (reconnect mid-listen) have no maintainer response. PR #523 addresses #522's stream-death symptom and is not a concurrency fix.</li>
+    <li><strong>First experiment is host <code>serve</code>.</strong> The container stays unmodified apart from one <code>pasta -T</code> line. The in-container stack is the fallback.</li>
+    <li><strong>Separate OS user: feasible, rejected for v0.</strong> An own-child poster relay makes it work. The cost is two poster kinds, a second login and a new send tool.</li>
+    <li><strong>Tier 3 deferred.</strong> The 12&nbsp;s relay timeout is infeasible against a ~15&nbsp;s optimistic floor, plus up to 120&nbsp;s waiting behind an open listen. v0 uses tier 2.</li>
+    <li><strong>Stop-hook volume is up to 50–150 wakes/h.</strong> That is a coincident-peak upper bound for five overseers (24–30 turns/h peak, 8–16 typical). Every wake is a Sonnet turn on the same subscription.</li>
+  </ul>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section id="arch">
+  <div class="sec-head">
+    <div class="eyebrow">Architecture</div>
+    <h2>Baseline against the host-serve split</h2>
+  </div>
+  <p class="lede">The whole difference is where the microphone lives. In the baseline the container holds a raw pulse socket. In the split it holds an HTTP URL and a bearer token.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 734" role="img" aria-labelledby="ar-t ar-d">
+        <title id="ar-t">Architecture: in-container baseline and host serve split</title>
+        <desc id="ar-d">Left: host runs PipeWire, whisper and Kokoro on loopback; the container mounts the pulse socket and reaches STT and TTS through two pasta forwards; the conch is per project. Right: host runs voicemode serve with a token and a shared conch; the container reaches it through one pasta forward on port 8765.</desc>
+        <defs>
+          <marker id="a1-aud" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-aud" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a1-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a1-msg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-msg" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a1-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-loop" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+
+        <!-- ===== LEFT: baseline ===== -->
+        <text class="th" x="12" y="28">Baseline · accepted proposal (in-container VoiceMode)</text>
+        <rect class="host" x="10" y="42" width="580" height="650" rx="3"/>
+        <text class="tml" x="24" y="62">HOST · FEDORA · PIPEWIRE + PIPEWIRE-PULSE</text>
+        <rect class="n-aud" x="40" y="76" width="170" height="60" rx="3"/>
+        <text class="th" x="125" y="101" text-anchor="middle">Mic + speaker</text>
+        <text class="tm" x="125" y="121" text-anchor="middle">pulse/native</text>
+        <rect class="node" x="222" y="76" width="160" height="60" rx="3"/>
+        <text class="th" x="302" y="101" text-anchor="middle">whisper.cpp</text>
+        <text class="tm" x="302" y="121" text-anchor="middle">127.0.0.1:2022</text>
+        <rect class="node" x="398" y="76" width="170" height="60" rx="3"/>
+        <text class="th" x="483" y="101" text-anchor="middle">Kokoro</text>
+        <text class="tm" x="483" y="121" text-anchor="middle">127.0.0.1:8880</text>
+
+        <rect class="ctr" x="26" y="262" width="548" height="364" rx="3"/>
+        <text class="tml" x="40" y="614">LACE DEVCONTAINER · LABEL=DISABLE + KEEP-ID (CLI DEFAULTS)</text>
+
+        <path class="e-aud" d="M125 138 V296" marker-start="url(#a1-aud)" marker-end="url(#a1-aud)"/>
+        <path class="e-net" d="M302 138 V296" marker-start="url(#a1-net)" marker-end="url(#a1-net)"/>
+        <path class="e-net" d="M483 138 V296" marker-start="url(#a1-net)" marker-end="url(#a1-net)"/>
+        <text class="ts ta" x="134" y="205">raw PCM + control</text>
+        <text class="ts tn" x="311" y="205">HTTP</text>
+        <text class="ts tn" x="492" y="205">HTTP</text>
+        <rect class="n-aud" x="60" y="250" width="130" height="24" rx="2"/>
+        <text class="tm" x="125" y="266" text-anchor="middle">pulse/native bind</text>
+        <rect class="n-acc" x="242" y="250" width="120" height="24" rx="2"/>
+        <text class="tm" x="302" y="266" text-anchor="middle">pasta -T 2022</text>
+        <rect class="n-acc" x="423" y="250" width="120" height="24" rx="2"/>
+        <text class="tm" x="483" y="266" text-anchor="middle">pasta -T 8880</text>
+
+        <rect class="n-acc" x="46" y="298" width="510" height="104" rx="3"/>
+        <text class="th" x="60" y="321">converser · claude, bypass mode</text>
+        <text class="ts" x="60" y="342">VoiceMode in-container (stdio MCP) · PortAudio → ALSA pulse plugin</text>
+        <text class="ts" x="60" y="361">converser-io MCP: ledger_append, ledger_read, reply (fixed paths)</text>
+        <text class="ts" x="60" y="380">tools: ListAgents · SendMessage · converse</text>
+
+        <path class="e-msg" d="M200 404 V444" marker-end="url(#a1-msg)"/>
+        <text class="ts tg" x="210" y="428">SendMessage</text>
+        <path class="e-msg" d="M420 444 V404" marker-end="url(#a1-msg)"/>
+        <text class="ts tg" x="430" y="428">Stop post</text>
+
+        <rect class="n-msg" x="46" y="446" width="510" height="56" rx="3"/>
+        <text class="th" x="60" y="469">overseers ×N · bypass mode</text>
+        <text class="ts" x="60" y="489">Stop + PreToolUse hooks via managed-settings.d/50-converser.json</text>
+
+        <rect class="n-crit" x="46" y="514" width="245" height="78" rx="3"/>
+        <text class="th" x="58" y="535">conch per project</text>
+        <text class="tm" x="58" y="554">~/.voicemode-&lt;project&gt;</text>
+        <text class="ts" x="58" y="574">no lock across containers</text>
+        <rect class="n-crit" x="301" y="514" width="255" height="78" rx="3"/>
+        <text class="th" x="313" y="535">pulse socket exposure</text>
+        <text class="ts" x="313" y="554">any process: mic + monitor sources</text>
+        <text class="ts" x="313" y="573">file bind pins the socket inode</text>
+
+        <rect class="n-warn" x="26" y="638" width="548" height="40" rx="3"/>
+        <text class="ts" x="40" y="662">Host bind mounts: workspace · ~/.claude · ~/.claude.json · nvim · dotfiles · AWS creds</text>
+
+        <!-- ===== RIGHT: split ===== -->
+        <text class="th" x="612" y="28">Recommended first · host voicemode serve per container</text>
+        <rect class="host" x="610" y="42" width="580" height="650" rx="3"/>
+        <text class="tml" x="624" y="62">HOST · AUDIO NEVER LEAVES THIS BOX</text>
+        <rect class="n-aud" x="640" y="76" width="120" height="60" rx="3"/>
+        <text class="th" x="700" y="101" text-anchor="middle">Mic + speaker</text>
+        <text class="tm" x="700" y="121" text-anchor="middle">PipeWire</text>
+        <rect class="node" x="770" y="76" width="118" height="60" rx="3"/>
+        <text class="th" x="829" y="101" text-anchor="middle">whisper.cpp</text>
+        <text class="tm" x="829" y="121" text-anchor="middle">:2022 loopback</text>
+        <rect class="node" x="898" y="76" width="118" height="60" rx="3"/>
+        <text class="th" x="957" y="101" text-anchor="middle">Kokoro</text>
+        <text class="tm" x="957" y="121" text-anchor="middle">:8880 loopback</text>
+        <rect class="n-good" x="1026" y="76" width="146" height="60" rx="3"/>
+        <text class="th" x="1099" y="101" text-anchor="middle">conch (flock)</text>
+        <text class="tm" x="1099" y="121" text-anchor="middle">~/.voicemode/conch</text>
+
+        <path class="e-aud" d="M700 138 V150" marker-end="url(#a1-aud)"/>
+        <path class="e-loop" d="M829 138 V150" marker-end="url(#a1-loop)"/>
+        <path class="e-loop" d="M957 138 V150" marker-end="url(#a1-loop)"/>
+        <path class="e-good" d="M1099 138 V152"/>
+
+        <rect class="n-acc" x="640" y="152" width="532" height="76" rx="3"/>
+        <text class="th" x="654" y="174">voicemode serve · 127.0.0.1:8765 · --token T₁ (one per container)</text>
+        <text class="tm" x="654" y="194">VOICEMODE_TOOLS_ENABLED=converse · STT/TTS URLs loopback-only</text>
+        <text class="tm" x="654" y="213">VOICEMODE_BASE_DIR=~/.voicemode-&lt;project&gt; (transcripts, logs)</text>
+
+        <path class="e-net" d="M840 230 V296" marker-start="url(#a1-net)" marker-end="url(#a1-net)"/>
+        <text class="ts tn" x="849" y="245">MCP over HTTP</text>
+        <text class="ts" x="960" y="241" font-size="10.5">peer arrives as 127.0.0.1, so the</text>
+        <text class="ts" x="960" y="254" font-size="10.5">allowlist admits all; token is the gate</text>
+
+        <rect class="ctr" x="626" y="262" width="548" height="364" rx="3"/>
+        <text class="tml" x="640" y="614">LACE DEVCONTAINER · UNMODIFIED + ONE RUNARGS LINE</text>
+        <rect class="n-acc" x="780" y="250" width="120" height="24" rx="2"/>
+        <text class="tm" x="840" y="266" text-anchor="middle">pasta -T 8765</text>
+
+        <rect class="n-acc" x="646" y="298" width="510" height="104" rx="3"/>
+        <text class="th" x="660" y="321">converser · claude, bypass mode</text>
+        <text class="ts" x="660" y="342">HTTP MCP client → 127.0.0.1:8765 · token T₁ in --mcp-config</text>
+        <text class="ts" x="660" y="361">no audio packages · no pulse socket · no asound.conf</text>
+        <text class="ts" x="660" y="380">tools: ListAgents · SendMessage · converse</text>
+
+        <path class="e-msg" d="M800 404 V444" marker-end="url(#a1-msg)"/>
+        <text class="ts tg" x="810" y="428">SendMessage</text>
+        <path class="e-msg" d="M1020 444 V404" marker-end="url(#a1-msg)"/>
+        <text class="ts tg" x="1030" y="428">Stop post</text>
+
+        <rect class="n-msg" x="646" y="446" width="510" height="56" rx="3"/>
+        <text class="th" x="660" y="469">overseers ×N · bypass mode</text>
+        <text class="ts" x="660" y="489">same hooks; tier-2 PreToolUse redirect for AskUserQuestion</text>
+
+        <rect class="n-warn" x="646" y="514" width="245" height="78" rx="3"/>
+        <text class="th" x="658" y="535">token T₁ exposure</text>
+        <text class="ts" x="658" y="554">readable by any container process:</text>
+        <text class="ts" x="658" y="573">room transcription + TTS</text>
+        <rect class="n-good" x="901" y="514" width="255" height="78" rx="3"/>
+        <text class="th" x="913" y="535">removed from container</text>
+        <text class="ts" x="913" y="554">raw PCM, monitor sources, pulse control</text>
+        <text class="ts" x="913" y="573">one client per serve avoids #521</text>
+
+        <rect class="n-warn" x="626" y="638" width="548" height="40" rx="3"/>
+        <text class="ts" x="640" y="662">Host bind mounts: unchanged (workspace · ~/.claude · nvim · dotfiles · AWS creds)</text>
+
+        <!-- legend -->
+        <g transform="translate(12 716)">
+          <path class="e-aud" d="M0 0 H34"/><text class="ts" x="42" y="4">raw audio</text>
+          <path class="e-net" d="M150 0 H184"/><text class="ts" x="192" y="4">HTTP via pasta forward</text>
+          <path class="e-loop" d="M360 0 H394"/><text class="ts" x="402" y="4">host loopback</text>
+          <path class="e-msg" d="M520 0 H554"/><text class="ts" x="562" y="4">cross-session message</text>
+          <rect class="ctr" x="730" y="-8" width="34" height="16"/><text class="ts" x="772" y="4">container boundary</text>
+          <rect class="n-crit" x="920" y="-7" width="16" height="14"/><text class="ts" x="942" y="4">exposure</text>
+          <rect class="n-good" x="1030" y="-7" width="16" height="14"/><text class="ts" x="1052" y="4">gain</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>FIG A</b>Both containers carry <code>label=disable</code> because the devcontainer CLI injects it, so it differentiates nothing. The split removes the pulse socket and the two STT/TTS forwards, and gains a shared conch. In exchange the container holds a token that can transcribe the room on demand.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ FLOW ============ -->
+<section id="flow">
+  <div class="sec-head">
+    <div class="eyebrow">Message flow</div>
+    <h2>A spoken request, the reply, and a redirected question</h2>
+  </div>
+  <p class="lede">The converser is woken twice per exchange: once by the user's voice, once by the overseer's Stop post. The v0 question path denies <code>AskUserQuestion</code> and asks the overseer to route the question through the converser. No relay hook waits on a timeout.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 800" role="img" aria-labelledby="sq-t sq-d">
+        <title id="sq-t">Sequence: voice request, turn-end reply, tier-2 redirect</title>
+        <desc id="sq-d">Five lifelines: user, host serve, converser, overseer hooks, overseer. Steps 1 to 9 show a spoken request going to the overseer and the Stop hook reply coming back as speech. Steps 10 to 15 show AskUserQuestion denied by a PreToolUse hook and re-routed through the converser.</desc>
+        <defs>
+          <marker id="a2-aud" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-aud" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a2-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a2-msg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-msg" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a2-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-crit" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <!-- lane heads -->
+        <g>
+          <rect class="n-aud" x="20" y="14" width="140" height="44" rx="3"/><text class="th" x="90" y="41" text-anchor="middle">User (voice)</text>
+          <rect class="n-acc" x="245" y="14" width="170" height="44" rx="3"/><text class="th" x="330" y="34" text-anchor="middle">voicemode serve</text><text class="tm" x="330" y="50" text-anchor="middle">host · STT/TTS</text>
+          <rect class="n-acc" x="495" y="14" width="170" height="44" rx="3"/><text class="th" x="580" y="34" text-anchor="middle">Converser</text><text class="tm" x="580" y="50" text-anchor="middle">container</text>
+          <rect class="node" x="745" y="14" width="170" height="44" rx="3"/><text class="th" x="830" y="34" text-anchor="middle">Overseer hooks</text><text class="tm" x="830" y="50" text-anchor="middle">Stop · PreToolUse</text>
+          <rect class="n-msg" x="995" y="14" width="170" height="44" rx="3"/><text class="th" x="1080" y="34" text-anchor="middle">Overseer</text><text class="tm" x="1080" y="50" text-anchor="middle">/oversee · bypass</text>
+        </g>
+        <path class="life" d="M90 58 V790 M330 58 V790 M580 58 V790 M830 58 V790 M1080 58 V790"/>
+
+        <rect class="band" x="10" y="74" width="1180" height="24"/>
+        <text class="tml" x="20" y="91">A · SPOKEN REQUEST AND TURN-END REPLY</text>
+
+        <path class="e-aud" d="M90 125 H326" marker-end="url(#a2-aud)"/>
+        <text class="ts halo" x="100" y="118">1  speech at the host mic</text>
+        <path class="e-net" d="M330 165 H576" marker-end="url(#a2-net)"/>
+        <text class="ts halo" x="340" y="158">2  converse() returns transcript</text>
+        <text class="tm halo" x="340" y="180">VAD 1 s + STT 0.3–1.5 s</text>
+
+        <rect class="n-warn" x="484" y="190" width="192" height="40" rx="3"/>
+        <text class="ts" x="496" y="207">3  verbatim echo, spoken</text>
+        <text class="ts" x="496" y="222">confirmation for imperatives</text>
+
+        <path class="e-msg" d="M580 252 H1076" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="600" y="245">4  SendMessage · bypass class passes the overseer's hold</text>
+
+        <rect class="n-msg" x="992" y="266" width="176" height="36" rx="3"/>
+        <text class="ts" x="1004" y="289">5  turn runs · 0 s to minutes</text>
+
+        <path class="e-msg" d="M1080 330 H834" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="1070" y="323" text-anchor="end">6  turn ends · Stop hook fires</text>
+        <path class="e-msg" d="M830 370 H584" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="820" y="363" text-anchor="end">7  post last_assistant_message</text>
+        <text class="tm halo" x="820" y="386" text-anchor="end">async · From: stamped · skip if background_tasks</text>
+        <path class="e-net" d="M580 420 H334" marker-end="url(#a2-net)"/>
+        <text class="ts halo" x="570" y="413" text-anchor="end">8  converse(condensed reply)</text>
+        <path class="e-aud" d="M330 455 H94" marker-end="url(#a2-aud)"/>
+        <text class="ts halo" x="320" y="448" text-anchor="end">9  TTS · first audio 3–7 s after Stop</text>
+
+        <rect class="band" x="10" y="482" width="1180" height="24"/>
+        <text class="tml" x="20" y="499">B · ASKUSERQUESTION · TIER-2 REDIRECT (V0)</text>
+
+        <path class="e-msg" d="M1080 535 H834" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="1070" y="528" text-anchor="end">10  AskUserQuestion → PreToolUse</text>
+        <path class="e-crit" d="M830 575 H1076" marker-end="url(#a2-crit)"/>
+        <text class="ts halo tc" x="840" y="568">11  deny: SendMessage it to the converser</text>
+        <text class="tm halo" x="840" y="591">only if converser is alive; else allow</text>
+        <path class="e-msg" d="M1080 625 H584" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="1070" y="618" text-anchor="end">12  SendMessage(question + options)</text>
+        <path class="e-net" d="M580 660 H334" marker-end="url(#a2-net)"/>
+        <text class="ts halo" x="570" y="653" text-anchor="end">13  converse(question)</text>
+        <path class="e-aud" d="M330 682 H94" marker-end="url(#a2-aud)"/>
+        <text class="ts halo" x="320" y="676" text-anchor="end">spoken question</text>
+        <path class="e-aud" d="M90 715 H326" marker-end="url(#a2-aud)"/>
+        <text class="ts halo" x="100" y="708">14  spoken answer</text>
+        <path class="e-net" d="M330 738 H576" marker-end="url(#a2-net)"/>
+        <text class="ts halo" x="340" y="731">transcript</text>
+        <path class="e-msg" d="M580 772 H1076" marker-end="url(#a2-msg)"/>
+        <text class="ts halo" x="600" y="765">15  SendMessage(answer + the user's exact words)</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG B</b>Step numbers are the real order. The overseer never blocks on a hook in path B. If the converser is dead, the hook allows the call and the local dialog appears. Loop throttling in cross-session messaging stops ack ping-pong; the converser never acks status posts.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ DECISION: AUDIO ============ -->
+<section id="audio" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Where audio lives</h2>
+  </div>
+  <p class="lede">Every option leaves the container able to transcribe the room and speak on demand. The question is how narrow that channel is and who maintains it.</p>
+  <div class="callout"><span class="k">Recommend</span><span>Host <code>serve</code>, one process per container. The in-container stack (P+) is the fallback. Bespoke brokers wait for a tripwire.</span></div>
+  <div class="tscroll">
+    <table class="mid">
+      <thead><tr><th>Placement</th><th>Container holds</th><th>Removed from container</th><th>New cost</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">In-container VoiceMode</td><td>Pulse socket, PortAudio/ALSA stack, VoiceMode</td><td>Nothing</td><td>Audio packages, <code>asound.conf</code>, mount; no host process</td><td><span class="chip warn">Fallback</span></td></tr>
+        <tr class="rec"><td class="name">Host <code>serve</code> per container</td><td>An HTTP URL and token T₁</td><td>Raw PCM, monitor sources, pulse control, audio stack, 2022/8880 forwards</td><td>Host process lifecycle, per-container port + token provisioning</td><td><span class="chip good">Run first</span></td></tr>
+        <tr><td class="name">Unix-socket broker</td><td>A bind-mounted broker socket + <code>socat</code> shim</td><td>Same as <code>serve</code>, plus loopback-peer ambiguity</td><td>Bespoke daemon and protocol; no Android story</td><td><span class="chip neutral">Skip</span></td></tr>
+        <tr><td class="name">Own HTTP/gRPC broker</td><td>A four-call API (speak, listen, converse, barge_in)</td><td>Same as <code>serve</code></td><td class="num">15–25 person-days; VoiceMode's fixed edge cases become ours</td><td><span class="chip neutral">Tripwire</span></td></tr>
+        <tr><td class="name">Pipecat / LiveKit</td><td>A WebRTC or WebSocket client</td><td>Same as <code>serve</code></td><td>Weeks; adopt a pipeline model, reuse nothing from VoiceMode</td><td><span class="chip acc">Later</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Host <code>serve</code> configuration and the smallest experiment <span class="hint">required env, success criteria</span></summary>
+    <div class="dbody">
+      <p>Run on the host, one per container:</p>
+      <ul>
+        <li><code>voicemode serve --host 127.0.0.1 --port 8765 --token &lt;random&gt;</code>. Never bind <code>0.0.0.0</code>: with only <code>LOCAL_CIDRS</code> active, the banner omits its security section and every RFC1918 peer gets the full tool surface.</li>
+        <li><code>VOICEMODE_TOOLS_ENABLED=converse</code>. The unset default is <code>converse,service</code>, and <code>service</code> starts and stops host <code>systemd --user</code> units.</li>
+        <li><code>VOICEMODE_STT_BASE_URLS</code> and <code>VOICEMODE_TTS_BASE_URLS</code> pinned to loopback. The default list ends in <code>api.openai.com</code>, so stopping whisper would fail audio over to the cloud.</li>
+        <li>A per-project <code>VOICEMODE_BASE_DIR</code> for transcripts, audio and logs. The conch stays shared. Only a per-process <code>HOME</code> override would split it, which reopens double capture.</li>
+        <li>Keep <code>listen_duration_max</code> short and the client tool timeout above the server's longest <code>converse()</code>, so the client never abandons a live call (the #522 trigger).</li>
+      </ul>
+      <p><strong>Pre-check in a throwaway container</strong>, no real <code>devcontainer.json</code> touched: <code>podman run --rm --network pasta:-T,8765 …</code>, then <code>claude mcp add --transport http</code> with a bearer header, or <code>voicemode mcp-bridge</code>. Pass criteria:</p>
+      <ul>
+        <li>a raw <code>tools/list</code> with no token returns 401;</li>
+        <li>with the token it lists only <code>converse</code>;</li>
+        <li>one <code>converse()</code> completes end to end;</li>
+        <li>two containers with their own <code>serve</code> processes serialize on the shared conch.</li>
+      </ul>
+      <p>Then the real first experiment: one <code>--network pasta:-T,8765</code> line in <code>weftwise</code>'s <code>runArgs</code> and an HTTP MCP entry for the converser.</p>
+    </div>
+  </details>
+  <details>
+    <summary>What the pulse socket costs under the in-container fallback <span class="hint">verified live in jif</span></summary>
+    <div class="dbody">
+      <ul>
+        <li><strong>Monitor sources.</strong> <code>pactl list short sources</code> in <code>jif</code> lists every sink's <code>.monitor</code>, so any container process can record system output as well as the mic.</li>
+        <li><strong>Module loading.</strong> A pulse client can plausibly reconfigure the host audio server. This was not tested because the test would mutate host state.</li>
+        <li><strong>Inode pinning.</strong> A file bind breaks with <code>ConnectionRefusedError</code> after the socket is recreated, while a directory bind survives. Amendment 4: mount <code>/run/user/1000/pulse</code> as a directory. A logout with <code>Linger=no</code> breaks both styles.</li>
+        <li><strong>Double capture.</strong> Per-project conch directories mean two hands-free conversers transcribe one utterance and both act. Bind-mounting one conch directory into several containers is untested, and its <code>psutil.pid_exists</code> stale-reclaim cannot see PIDs in another container's namespace.</li>
+        <li><strong><code>jif</code> audio works today.</strong> <code>pactl info</code> returns protocol 35, which corrects the proposal's "plausibly non-functional" claim.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ DECISION: NETWORK ============ -->
+<section id="net" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Networking and exposure</h2>
+  </div>
+  <p class="lede">The container needs to reach one host service. The choice is how much of the host's loopback and LAN surface comes along with it.</p>
+  <div class="callout"><span class="k">Recommend</span><span>Loopback bind plus an explicit <code>pasta:-T</code> forward: port 8765 under host <code>serve</code>, or 2022 and 8880 under the fallback. Fall back to firewalld rules if lace ingress breaks under the custom <code>--network</code>.</span></div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Option</th><th>Exposure surface</th><th>Host mutation</th><th>Fragility</th><th>Evidence</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">A · <code>0.0.0.0</code>, no firewall</td><td>Whole LAN, unauthenticated (Fedora's default zone opens 1025–65535)</td><td>None</td><td>Re-exposed on every network join</td><td>Verified: container reaches wildcard listener</td><td><span class="chip crit">Reject</span></td></tr>
+        <tr><td class="name">B · <code>0.0.0.0</code> + firewalld rich rules</td><td>Host-only if rules hold</td><td>sudo, <code>--permanent</code> + reload</td><td>Rule priority footgun; pasta source address untested</td><td>Syntax standard; pasta interaction unverified</td><td><span class="chip warn">Fallback</span></td></tr>
+        <tr class="rec"><td class="name">C · loopback + <code>pasta:-T,&lt;port&gt;</code></td><td>Only the named ports; arrives as <code>127.0.0.1</code></td><td>None beyond a launch arg</td><td>Ties to pasta CLI; lace ingress compatibility is gate (c)</td><td>Verified: refused without, 200 OK with</td><td><span class="chip good">Choose</span></td></tr>
+        <tr><td class="name">D · <code>--map-host-loopback</code></td><td>Every host-loopback service, any port</td><td>None</td><td>Simple, which is the danger</td><td>Docs only</td><td><span class="chip crit">Reject</span></td></tr>
+        <tr><td class="name">E · host UDS proxy, bind-mounted</td><td>File-permission gated in container; host side equals C unless services speak UDS natively</td><td>A proxy unit per port</td><td>More moving parts; VoiceMode URLs are HTTP-only</td><td>Design only</td><td><span class="chip neutral">Future</span></td></tr>
+        <tr><td class="name">F · STT/TTS in-container</td><td>None across the boundary</td><td>None</td><td>GPU passthrough unsolved; per-project duplication</td><td>n/a</td><td><span class="chip crit">Reject</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Why the allowlist cannot help, and what the token has to carry <span class="hint">serve_middleware.py</span></summary>
+    <div class="dbody">
+      <p><code>pasta</code> opens the host-side connection itself, so every forwarded peer appears as <code>127.0.0.1</code>. <code>serve</code>'s default allowlist (<code>127.0.0.0/8</code>, <code>::1</code>, all of RFC1918) therefore cannot tell one container from another or from a host process. The token check is the only discriminator:</p>
+      <ul>
+        <li>It is a plain <code>!=</code> comparison, not constant-time. That is negligible over loopback.</li>
+        <li>Whether FastMCP validates <code>Host</code>/<code>Origin</code> is unverified, which leaves a possible DNS-rebinding exposure without a token.</li>
+        <li><code>--strict-mcp-config</code> constrains only the converser's own client. Any container process can POST raw JSON-RPC at the port, so tool scoping has to happen host-side.</li>
+        <li>Whether pasta forwards gRPC's HTTP/2 framing is untested. Only HTTP/1.1 has been verified.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ DECISION: ISOLATION ============ -->
+<section id="iso" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Converser isolation</h2>
+  </div>
+  <p class="lede">A bypass overseer holds every inbound message except one from a bypass sender, so over native messaging the converser is forced into bypass mode. Tool surface bounds what the converser can do directly. Relayed injection is untouched by every option here; only spoken confirmation and push-to-talk address it.</p>
+  <div class="callout"><span class="k">Recommend</span><span>v0: a bypass converser with a minimal tool surface. Before packaging, spike the same-UID own-child poster relay (gate n). Spike RC-routed messaging only if that fails.</span></div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Option</th><th>Removes forced bypass</th><th>Direct-actor bound</th><th>Cost</th><th>Status</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr class="rec"><td class="name">Bypass + minimal tools<small><code>ListAgents</code>, <code>SendMessage</code>, <code>converse</code>; <code>converser-io</code> at packaging</small></td><td>No</td><td>Strong: no Edit/Write/Read/Bash; strict MCP; <code>ENABLE_TOOL_SEARCH=false</code></td><td>Low</td><td>Specified; inventory check in Phase 2</td><td><span class="chip good">v0</span></td></tr>
+        <tr><td class="name">Same-UID own-child poster relay</td><td>Yes: no bypass, no <code>accept</code></td><td>Same as above</td><td>Two poster kinds, a <code>send</code> tool, name registry</td><td>Detached-poster verification unverified</td><td><span class="chip acc">Gate n</span></td></tr>
+        <tr><td class="name">Separate UID + own-child relay</td><td>Yes</td><td>OS-level: uid 1001 cannot write host files; reads partial (<code>~/.claude</code> is 755)</td><td>Above plus a second <code>claude /login</code>; must stay out of sudo</td><td>Feasible</td><td><span class="chip neutral">Rejected for v0 on cost</span></td></tr>
+        <tr><td class="name">RC-routed <code>SendMessage</code></td><td>Possibly</td><td>Depends on placement</td><td>Traffic leaves the host; every overseer needs a claude.ai login</td><td>Unverified: in-container RC, hold behavior</td><td><span class="chip neutral">Only if n fails</span></td></tr>
+        <tr><td class="name">bwrap / Landlock sandbox</td><td>No</td><td>Hides workspace, AWS, nvim, dotfiles; cannot hide <code>~/.claude</code></td><td>Low-medium</td><td>Design</td><td><span class="chip neutral">Defense in depth</span></td></tr>
+        <tr><td class="name">Host converser + poster relay</td><td>Yes</td><td>Converser off the container</td><td>Shared-mount inbox is writable from every container</td><td>Design</td><td><span class="chip crit">Injection path</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Separate OS user: the full feasibility finding <span class="hint">vetting §2b</span></summary>
+    <div class="dbody">
+      <ul>
+        <li><strong>Native messaging across UIDs is blocked over the local socket.</strong> Claude Code restricts the socket to its OS user and refuses socket directories another user owns. All sockets are <code>srw------- node</code>.</li>
+        <li><strong>The relay that makes it work.</strong> A session delivers a message verified as coming from its own child. <code>claude</code> is not PID 1 in lace containers, so process evidence exists. Each overseer's <code>SessionStart</code> hook spawns a poster that reads a shared inbox directory and posts to its parent's socket. A mirror poster under uid 1001 does the same for the converser.</li>
+        <li><strong>Open question.</strong> A <code>SessionStart</code>-spawned poster outlives its hook and is reparented to PID 1. The docs cover children that exited, not reparented ones. The second arm of gate (n) is the <code>CLAUDE_CODE_MESSAGING_TOKEN</code> auth line.</li>
+        <li><strong>Side effect.</strong> Anything that can write an inbox directory is delivered as own-child, even to bypass overseers.</li>
+        <li><strong>Credentials.</strong> Copying <code>.credentials.json</code> shares a rotating refresh token and may break one holder (unverified). Hence the second login.</li>
+        <li><strong>Why the case shrinks under host <code>serve</code>.</strong> VoiceMode's code runs on the host, so the in-container converser is only <code>claude</code> plus an HTTP MCP client.</li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Launcher details that bound the tool surface <span class="hint">proposal r4, amendment 7</span></summary>
+    <div class="dbody">
+      <ul>
+        <li><code>--tools</code> restricts built-in tools only. The MCP surface is bounded by <code>--mcp-config</code> + <code>--strict-mcp-config</code> + <code>VOICEMODE_TOOLS_ENABLED=converse</code>.</li>
+        <li><code>ENABLE_TOOL_SEARCH=false</code> loads MCP tools upfront, since a restrictive <code>--tools</code> may drop <code>ToolSearch</code>.</li>
+        <li>Add <code>--disallowedTools "mcp__claude_ai_*"</code> by default. Nobody has verified whether strict MCP hides claude.ai connector tools, and in bypass mode they would run unprompted.</li>
+        <li>Use a single-instance <code>flock</code> in the launcher. The sockpath file is last-writer-wins.</li>
+        <li><code>crossSessionInbound: "accept"</code> goes only in the converser's <code>--settings</code>, never container-wide. <code>CONVERSER_SESSION=1</code> excludes the converser from its own Stop hook.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ DECISION: RELAY ============ -->
+<section id="relay" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Question relay tiers</h2>
+  </div>
+  <p class="lede">When an overseer calls <code>AskUserQuestion</code>, something has to get the question to the user's ears. The tiers trade enforcement against latency risk.</p>
+  <div class="callout"><span class="k">Recommend</span><span>Tier 2 for v0. Defer tier 3 behind gates (h) and (l). If it ever ships, gate it on <code>CLAUDE_CLIENT_PRESENCE_FILE</code>. Use Remote Control as away mode.</span></div>
+  <div class="tscroll">
+    <table class="mid">
+      <thead><tr><th>Tier</th><th>Mechanism</th><th>Enforcement</th><th>Latency risk</th><th>Laundering risk</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">1 · Convention</td><td>Skill/CLAUDE.md: prefer <code>SendMessage</code> when a converser is reachable</td><td>Model compliance only</td><td>None</td><td>None: plain-text relay</td><td><span class="chip neutral">Too weak</span></td></tr>
+        <tr class="rec"><td class="name">2 · Deny and redirect</td><td>About 10-line <code>PreToolUse</code> hook; denies only if the converser is alive</td><td>Deterministic</td><td>None: fails open to the local dialog</td><td>None: plain-text relay</td><td><span class="chip good">v0</span></td></tr>
+        <tr><td class="name">3 · Answer relay</td><td><code>allow</code> + <code>updatedInput.answers</code> after polling a reply file</td><td>Deterministic, native tool kept</td><td>Floor ~15&nbsp;s against a 12&nbsp;s timeout; 0–120&nbsp;s behind an open listen</td><td>Provenance invisible; prefix answers</td><td><span class="chip warn">Deferred</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Latency budget behind the tier-3 deferral <span class="hint">only VAD is sourced; the rest are estimates</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="small">
+          <thead><tr><th>Stage</th><th>Relay of a spoken request</th><th>Tier-3 question</th></tr></thead>
+          <tbody class="num">
+            <tr><td>Question post waits behind an open listen</td><td>n/a</td><td>0–120 s</td></tr>
+            <tr><td>Converser wake turn to first <code>converse()</code></td><td>n/a</td><td>~3 s</td></tr>
+            <tr><td>Speak question and options</td><td>n/a</td><td>~5 s</td></tr>
+            <tr><td>User thinks and answers</td><td>n/a</td><td>~2 s</td></tr>
+            <tr><td>VAD endpoint (<code>SILENCE_THRESHOLD_MS=1000</code>)</td><td>1.0 s</td><td>1.0 s</td></tr>
+            <tr><td>whisper.cpp STT on the RTX 3080</td><td>0.3–1.5 s</td><td>~0.5 s</td></tr>
+            <tr><td>Converser condense or map turn</td><td>3–8 s</td><td>~3 s</td></tr>
+            <tr><td>Overseer reasoning</td><td>0 s to minutes</td><td>n/a</td></tr>
+            <tr><td>Stop post, converser wake, first TTS audio</td><td>3–7 s</td><td>n/a</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>~7–16 s converser overhead</strong></td><td><strong>~15 s floor, no listen wait</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Because the feature is all-or-nothing per container, a user at the keyboard would also pay the invisible wait on every question, and a late answer is lost. <code>CLAUDE_CLIENT_PRESENCE_FILE</code> suppresses the relay while the user is present. Something on the host has to create and delete it, and the in-container hook can only see it on a shared mount.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============ DECISION: FORK ============ -->
+<section id="fork" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Fork or reuse VoiceMode</h2>
+  </div>
+  <p class="lede">VoiceMode is real engineering with a thin bus factor. Its own roadmap covers most of what a broker would add, which raises the bar for forking now.</p>
+  <div class="callout"><span class="k">Recommend</span><span>Option (a), zero source changes. File the #521 in-process lock upstream now without gating on it. Move to (c) or (d) only on a named tripwire.</span></div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Option</th><th>Person-days (first landing)</th><th>Effort</th><th>Ongoing maintenance</th><th>Upstream-drift risk</th><th>Gained</th></tr></thead>
+      <tbody>
+        <tr class="rec"><td class="name">(a) Upstream as-is, host <code>serve</code></td><td class="num">1.5–3</td><td><span class="mt"><span class="meter cost" style="--v:1"></span><b>1</b></span></td><td>Near zero: bump version, watch the CHANGELOG</td><td>Low: stable CLI surface</td><td>Whole tool surface, conch, failover; audio stays on host</td></tr>
+        <tr><td class="name">(b) Thin wrapper over library modules</td><td class="num">3–6</td><td><span class="mt"><span class="meter cost" style="--v:2"></span><b>2</b></span></td><td>Low-moderate: pinned to an internal API</td><td>Moderate: no deprecation contract</td><td>A narrower surface without owning audio or VAD</td></tr>
+        <tr><td class="name">(c) Maintained fork</td><td class="num">3–6, then 0.5–2 per release</td><td><span class="mt"><span class="meter cost" style="--v:3"></span><b>3</b></span></td><td>Compounding rebase of <code>converse.py</code> and <code>conch.py</code></td><td>High if diverging; first rebase large (unpushed HEAD)</td><td>Non-blocking listen, conch event stream, #521 lock</td></tr>
+        <tr><td class="name">(d) Own minimal broker</td><td class="num">15–25, edge cases unbounded</td><td><span class="mt"><span class="meter cost" style="--v:4"></span><b>4</b></span></td><td>High: rediscover every fixed bug</td><td>None</td><td>Full API control; loses conch, failover, statistics</td></tr>
+        <tr><td class="name">(e) Different foundation</td><td>Weeks (see Pipecat row)</td><td><span class="mt"><span class="meter cost" style="--v:5"></span><b>5</b></span></td><td>Framework-owned</td><td>Framework</td><td>Transport-native; abandons VoiceMode work</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>VoiceMode sophistication metrics <span class="hint">commit 126d15e, gh queried 2026-09-28</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="small">
+          <thead><tr><th>Metric</th><th>Value</th><th>Reading</th></tr></thead>
+          <tbody>
+            <tr><td>Non-test Python LOC</td><td class="num">~43,600</td><td>Largest file <code>tools/converse.py</code> at 4,620 lines</td></tr>
+            <tr><td>Test LOC / test functions</td><td class="num">~35,300 / 1,865</td><td>Real regression net; CI on ubuntu + macOS, Python 3.10–3.12</td></tr>
+            <tr><td><code>serve</code> tests</td><td class="num">58</td><td>None exercise concurrent clients</td></tr>
+            <tr><td>Commits / tags</td><td class="num">2,149 / 161</td><td>Continuous engineering since 2025-06-09</td></tr>
+            <tr><td>Bus factor</td><td class="num">78% one maintainer, ~19% AI collaborator</td><td>Thin; human contributors are drive-bys</td></tr>
+            <tr><td>Release gap</td><td class="num">v8.12.0, 2026-07-21</td><td>Two-plus months with no release; unpushed internal HEAD</td></tr>
+            <tr><td>PR latency</td><td>#523 open 5+ weeks, #281 since February</td><td>Review bottleneck; #545 got a same-day reply</td></tr>
+            <tr><td>Stars / forks</td><td class="num">1,380 / 195</td><td>MIT, no CLA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Hard-won subsystems worth reusing:</strong> VAD endpointing, health-checked provider failover, the FIFO flock conch (676 + 696 + 446 lines), TTS streaming, and the HTTP/SSE transport with middleware.</p>
+      <p><strong>Roadmap overlap</strong> (maintainer on #546, 2026-09-27): "Hey Claude, iOS and Android chat / calls, Barge in, Multi-speaker rooms". VM-970's remote-waiter seam in the conch is the mechanism that feature set needs.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Tripwires that justify moving from (a) toward (c) or (d)</summary>
+    <div class="dbody">
+      <ul>
+        <li><strong>Concurrency:</strong> needing more than one client per <code>serve</code> process, or being unable to keep the client timeout above the longest <code>converse()</code>. Propose an in-process <code>asyncio.Lock</code> upstream first.</li>
+        <li><strong>Non-blocking listen:</strong> if it proves necessary, propose it upstream and fork only after a 30-day stall.</li>
+        <li><strong>Upstream remote features land and do not fit:</strong> re-evaluate once VM-970 and Ambient Voice ship. If they solve Android outright, (d) is unlikely to ever pay off.</li>
+        <li><strong>Bus-factor risk materializes:</strong> the release gap recurs, or #521-class issues stay unaddressed past the SLA. That is the strongest case for a minimal independent patch set.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ DECISION: ANDROID ============ -->
+<section id="android" class="decision">
+  <div class="sec-head">
+    <div class="eyebrow">Decision</div>
+    <h2>Android and remote paths</h2>
+  </div>
+  <p class="lede">The cheapest remote path needs no broker at all. The most capable one commits the broker to a framework.</p>
+  <div class="callout"><span class="k">Recommend</span><span>Use Remote Control plus phone dictation as away mode now. Keep VoiceMode Connect as a watch item. Decide on a bespoke client only after Connect's Android client ships and can be weighed against a self-hosted requirement.</span></div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Path</th><th>Build cost</th><th>Voice in / out</th><th>Wake while locked</th><th>Where audio goes</th><th>Caveats</th></tr></thead>
+      <tbody>
+        <tr class="rec"><td class="name">Remote Control + OS dictation</td><td><span class="mt"><span class="meter cost" style="--v:0"></span><b>0</b></span></td><td>Dictation in, text out</td><td>No</td><td>Phone keyboard; RC over outbound HTTPS</td><td>Forwards <code>AskUserQuestion</code> and permission prompts with push; no condensation</td></tr>
+        <tr><td class="name">Tailscale PWA</td><td><span class="mt"><span class="meter cost" style="--v:2"></span><b>2</b></span></td><td>Both, tap-to-talk</td><td>No: PWA background limits</td><td>Own host over the tailnet</td><td><code>getUserMedia</code> needs HTTPS via Tailscale Serve certs. <code>--allow-tailscale</code> admits all of <code>100.64.0.0/10</code>, so a token is still required</td></tr>
+        <tr><td class="name">VoiceMode Connect</td><td><span class="mt"><span class="meter cost" style="--v:1"></span><b>1</b></span></td><td>Both</td><td>Roadmap</td><td>Third-party relay, <code>voicemode.dev</code></td><td>iOS and web today; Android only on the #546 roadmap</td></tr>
+        <tr><td class="name">Home Assistant Assist</td><td><span class="mt"><span class="meter cost" style="--v:3"></span><b>3</b></span></td><td>Both</td><td>Yes: microWakeWord, Companion 2026.2.3+</td><td>Own HA instance, Wyoming bridge to broker</td><td>The Companion app does not speak Wyoming; every utterance routes through Assist</td></tr>
+        <tr><td class="name">Pipecat / LiveKit WebRTC client</td><td><span class="mt"><span class="meter cost" style="--v:5"></span><b>5</b></span></td><td>Both, barge-in</td><td>Yes, native app</td><td>Self-hostable (Small WebRTC, LiveKit SFU)</td><td>Commits the broker to the framework; VoiceMode dropped LiveKit in 8.0.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>How host <code>serve</code> extends to a phone, and where it breaks <span class="hint">#521 applies here</span></summary>
+    <div class="dbody">
+      <p>Host <code>serve</code> is the seam every remote path plugs into. The one-client-per-process discipline that keeps #521 closed breaks as soon as a phone client and a container converser share one <code>serve</code> process. Two options at that point:</p>
+      <ul>
+        <li>a separate <code>serve</code> process for the phone, which serializes against the container's through the shared conch;</li>
+        <li>the in-process lock, landed upstream or carried as a patch.</li>
+      </ul>
+      <p>Wyoming carries no authentication or encryption by design, so it can sit behind the broker but never across the container boundary. Rhasspy is superseded, and <code>wyoming-satellite</code> is unmaintained.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============ THREAT MAP ============ -->
+<section id="threat">
+  <div class="sec-head">
+    <div class="eyebrow">Trust</div>
+    <h2>Threat map</h2>
+  </div>
+  <p class="lede">The converser holds two kinds of authority that its inputs lack. It speaks for the user, and it carries the bypass class that passes overseer holds.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 600" role="img" aria-labelledby="tm-t tm-d">
+        <title id="tm-t">Trust and threat map</title>
+        <desc id="tm-d">Three untrusted sources feed the converser: room audio, overseer turn-end text, and same-UID processes. The converser relays to bypass overseers, which can write host-mounted paths. The converser itself has no write tools. Below: the serve token and the pulse socket as capture surfaces.</desc>
+        <defs>
+          <marker id="a3-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-crit" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="a3-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-warn" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <text class="tml" x="20" y="40">UNTRUSTED INPUTS</text>
+        <text class="tml" x="440" y="40">THE DEPUTY</text>
+        <text class="tml" x="1180" y="40" text-anchor="end">WHAT IT CAN REACH</text>
+
+        <rect class="node" x="20" y="56" width="280" height="84" rx="3"/>
+        <text class="th" x="34" y="80">Room audio</text>
+        <text class="ts" x="34" y="100">people, videos, the converser's own TTS</text>
+        <text class="ts tc" x="34" y="120">acoustic injection</text>
+        <rect class="node" x="20" y="166" width="280" height="84" rx="3"/>
+        <text class="th" x="34" y="190">Overseer turn-end text</text>
+        <text class="ts" x="34" y="210">paraphrases web pages and files</text>
+        <text class="ts tc" x="34" y="230">content injection</text>
+        <rect class="node" x="20" y="276" width="280" height="84" rx="3"/>
+        <text class="th" x="34" y="300">Same-UID container process</text>
+        <text class="ts" x="34" y="320">raw post to the converser's socket</text>
+        <text class="ts tc" x="34" y="340">class laundering</text>
+
+        <path class="e-crit" d="M300 98 C370 98 380 170 438 176" marker-end="url(#a3-crit)"/>
+        <path class="e-crit" d="M300 208 H438" marker-end="url(#a3-crit)"/>
+        <path class="e-crit" d="M300 318 C370 318 380 250 438 244" marker-end="url(#a3-crit)"/>
+
+        <rect class="n-acc" x="440" y="130" width="320" height="200" rx="3"/>
+        <text class="th" x="456" y="156">converser</text>
+        <text class="ts" x="456" y="177">speaks for the user</text>
+        <text class="ts" x="456" y="195">holds bypass class: passes overseer holds</text>
+        <path class="grid" d="M456 210 H744"/>
+        <text class="tml" x="456" y="229">CONTROLS</text>
+        <text class="ts" x="456" y="249">verbatim echo · spoken confirmation</text>
+        <text class="ts" x="456" y="267">push-to-talk or headset by default</text>
+        <text class="ts" x="456" y="285">never acks status posts</text>
+        <text class="ts" x="456" y="303">tools: ListAgents · SendMessage · converse</text>
+
+        <path class="e-crit" d="M760 180 C830 180 840 112 898 110" marker-end="url(#a3-crit)"/>
+        <text class="ts tc halo" x="772" y="210">relay, bypass class</text>
+
+        <path class="e-warn" d="M960 56 C960 14 600 12 600 126" marker-end="url(#a3-warn)"/>
+        <text class="ts tw halo" x="664" y="60">cross-overseer laundering: A → converser → B</text>
+
+        <rect class="n-warn" x="900" y="56" width="280" height="104" rx="3"/>
+        <text class="th" x="914" y="80">Bypass overseers A, B, …</text>
+        <text class="ts" x="914" y="100">execute relayed text unprompted</text>
+        <text class="ts" x="914" y="118">their permission mode is the backstop,</text>
+        <text class="ts" x="914" y="136">and in bypass it is off</text>
+
+        <path class="e-crit" d="M1040 162 V206" marker-end="url(#a3-crit)"/>
+        <text class="ts tc halo" x="1050" y="189">bypass tools</text>
+
+        <rect class="n-crit" x="900" y="208" width="280" height="150" rx="3"/>
+        <text class="th" x="914" y="232">Host-mounted paths</text>
+        <text class="ts" x="914" y="252">write means host code execution:</text>
+        <text class="tm" x="914" y="271">workspace (.git/hooks, .envrc)</text>
+        <text class="tm" x="914" y="289">~/.claude, ~/.claude.json</text>
+        <text class="tm" x="914" y="307">nvim data · dotfiles</text>
+        <text class="ts" x="914" y="330">read means disclosure:</text>
+        <text class="tm" x="914" y="347">~/.config/weftwise/aws</text>
+
+        <path class="e-good" d="M760 290 C820 290 840 300 896 300"/>
+        <path class="axis" d="M820 284 l14 14 M834 284 l-14 14" style="stroke:var(--good);stroke-width:2.4"/>
+        <text class="ts tok halo" x="772" y="324">no Edit / Write /</text>
+        <text class="ts tok halo" x="772" y="340">Read / Bash tools</text>
+
+        <!-- bottom band -->
+        <path class="e-crit" d="M160 362 V414" marker-end="url(#a3-crit)"/>
+        <text class="ts tc halo" x="170" y="394">reads token</text>
+
+        <rect class="n-warn" x="20" y="416" width="560" height="160" rx="3"/>
+        <text class="th" x="36" y="442">serve token T₁ · host serve path</text>
+        <text class="ts" x="36" y="464">pasta traffic arrives as 127.0.0.1, so the allowlist admits every caller</text>
+        <text class="ts" x="36" y="484">any container process holding T₁ can call converse():</text>
+        <text class="ts" x="36" y="504">on-demand room transcription and arbitrary speech</text>
+        <text class="tml" x="36" y="530">MITIGATION</text>
+        <text class="ts" x="36" y="550">one serve + token per container · tools = converse only · loopback STT/TTS</text>
+
+        <rect class="n-crit" x="620" y="416" width="560" height="160" rx="3"/>
+        <text class="th" x="636" y="442">pulse socket · baseline P and P+ only</text>
+        <text class="ts" x="636" y="464">any container process gets raw mic capture</text>
+        <text class="ts" x="636" y="484">monitor sources record system output</text>
+        <text class="ts" x="636" y="504">plausible pulse module loading (unverified)</text>
+        <text class="tml" x="636" y="530">MITIGATION</text>
+        <text class="ts" x="636" y="550">host serve removes the socket from the container</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG D</b>The tool restriction bounds the converser as an actor. It does nothing about the converser as a relay, where injected text reaches bypass overseers. Against a compromised co-located process the incremental risk is low, since that process could run its own bypass <code>claude -p</code>. Against injected content it is real.</figcaption>
+  </figure>
+  <details>
+    <summary>Other threats from the proposal's table that still apply <span class="hint">both placements</span></summary>
+    <div class="dbody">
+      <ul>
+        <li><strong>Turn-end content exposure.</strong> Secrets in <code>last_assistant_message</code> may be spoken aloud and logged. v0 has no content filter.</li>
+        <li><strong>Transcript retention.</strong> Ambient speech becomes Claude prompts stored in the shared <code>~/.claude/projects</code>. VoiceMode logs persist per project.</li>
+        <li><strong>Reply-file forgery (tier 3 only).</strong> Any same-UID process could answer a question on the overseer's behalf.</li>
+        <li><strong>Cloud fallback.</strong> Voice content leaves the host if a provider key and the default URL list come back.</li>
+        <li><strong>Silent managed-source override.</strong> Server-managed settings replace the container's drop-in without a warning. <code>/status</code> checks for this.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ ROADMAP ============ -->
+<section id="roadmap">
+  <div class="sec-head">
+    <div class="eyebrow">Sequence</div>
+    <h2>Evolution roadmap</h2>
+  </div>
+  <p class="lede">Five stages. Each is gated by the one before it and by use. The tripwires below the track are the named conditions that change the plan.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 500" role="img" aria-labelledby="rm-t rm-d">
+        <title id="rm-t">Roadmap from first experiment to Android remote</title>
+        <desc id="rm-d">Five stages on a track: first experiment, prototype, lace feature packaging, broker hardening, Android remote. Eight tripwire boxes below name the conditions that trigger a fallback, a fork, or an owned broker.</desc>
+        <path class="track" d="M60 110 H1140"/>
+        <g text-anchor="middle">
+          <text class="tm" x="120" y="72">hours to 1 day</text>
+          <text class="tm" x="360" y="72">1 week of real use</text>
+          <text class="tm" x="600" y="72">proposal phases 1–4</text>
+          <text class="tm" x="840" y="72">ongoing</text>
+          <text class="tm" x="1080" y="72">weeks, or upstream</text>
+          <circle class="stage" cx="120" cy="110" r="18"/><text class="stage-t" x="120" y="116">1</text>
+          <circle class="stage" cx="360" cy="110" r="18"/><text class="stage-t" x="360" y="116">2</text>
+          <circle class="stage" cx="600" cy="110" r="18"/><text class="stage-t" x="600" y="116">3</text>
+          <circle class="stage" cx="840" cy="110" r="18"/><text class="stage-t" x="840" y="116">4</text>
+          <circle class="stage" cx="1080" cy="110" r="18"/><text class="stage-t" x="1080" y="116">5</text>
+          <text class="th" x="120" y="156">First experiment</text>
+          <text class="ts" x="120" y="178">host serve + unmodified weftwise</text>
+          <text class="ts" x="120" y="196">one pasta -T 8765 line</text>
+          <text class="ts" x="120" y="214">throwaway-container pre-check</text>
+          <text class="tm" x="120" y="234">gates i, j, k</text>
+          <text class="th" x="360" y="156">Prototype</text>
+          <text class="ts" x="360" y="178">tier-2 redirect · Stop guards</text>
+          <text class="ts" x="360" y="196">JSONL trace · push-to-talk</text>
+          <text class="ts" x="360" y="214">promote only if voice is used</text>
+          <text class="tm" x="360" y="234">amendments 1–3, 5, 6, 9</text>
+          <text class="th" x="600" y="156">Lace feature</text>
+          <text class="ts" x="600" y="178">launcher flock · speakable --names</text>
+          <text class="ts" x="600" y="196">canary · pinned VoiceMode release</text>
+          <text class="ts" x="600" y="214">converser status command</text>
+          <text class="tm" x="600" y="234">gates m, n · amendments 7–12</text>
+          <text class="th" x="840" y="156">Broker hardening</text>
+          <text class="ts" x="840" y="178">#521 lock PR filed upstream</text>
+          <text class="ts" x="840" y="196">per-container serve units + tokens</text>
+          <text class="ts" x="840" y="214">tier 3 only if gates h, l pass</text>
+          <text class="tm" x="840" y="234">gates h, l</text>
+          <text class="th" x="1080" y="156">Android / remote</text>
+          <text class="ts" x="1080" y="178">RC + dictation as away mode now</text>
+          <text class="ts" x="1080" y="196">Connect if its Android client fits</text>
+          <text class="ts" x="1080" y="214">else Tailscale PWA or Pipecat</text>
+          <text class="tm" x="1080" y="234">decision 7</text>
+        </g>
+
+        <path class="grid" d="M20 262 H1180"/>
+        <text class="tml" x="20" y="284">TRIPWIRES</text>
+
+        <g>
+          <rect class="n-warn" x="20" y="298" width="275" height="80" rx="3"/>
+          <text class="tml" x="32" y="317">AT STAGE 1–2 · FALLBACK</text>
+          <text class="ts" x="32" y="338">serve wedges or proves unstable</text>
+          <text class="ts" x="32" y="356">→ amended in-container stack (P+)</text>
+
+          <rect class="n-crit" x="315" y="298" width="275" height="80" rx="3"/>
+          <text class="tml" x="327" y="317">AT STAGE 2 · KILL</text>
+          <text class="ts" x="327" y="338">voice unused after a week of use</text>
+          <text class="ts" x="327" y="356">→ stop; do not package</text>
+
+          <rect class="n-warn" x="610" y="298" width="275" height="80" rx="3"/>
+          <text class="tml" x="622" y="317">AT STAGE 4 · FORK (C)</text>
+          <text class="ts" x="622" y="338">&gt;1 client per serve, or client timeout</text>
+          <text class="ts" x="622" y="356">can't exceed max converse() → lock patch</text>
+
+          <rect class="n-warn" x="905" y="298" width="275" height="80" rx="3"/>
+          <text class="tml" x="917" y="317">AT STAGE 5 · OWN (D) OR PIPECAT</text>
+          <text class="ts" x="917" y="338">upstream mobile features land</text>
+          <text class="ts" x="917" y="356">and don't fit → own broker</text>
+
+          <rect class="n-warn" x="20" y="392" width="275" height="80" rx="3"/>
+          <text class="tml" x="32" y="411">AT STAGE 4 · PATCH SET</text>
+          <text class="ts" x="32" y="432">release gap recurs or #521-class</text>
+          <text class="ts" x="32" y="450">issues ignored past SLA → own patches</text>
+
+          <rect class="n-warn" x="315" y="392" width="275" height="80" rx="3"/>
+          <text class="tml" x="327" y="411">AT STAGE 4 · FORK (C)</text>
+          <text class="ts" x="327" y="432">non-blocking listen needed and</text>
+          <text class="ts" x="327" y="450">upstream stalls past 30 days</text>
+
+          <rect class="node" x="610" y="392" width="275" height="80" rx="3"/>
+          <text class="tml" x="622" y="411">AT STAGE 4 · STAY ON TIER 2</text>
+          <text class="ts" x="622" y="432">gates h or l fail → keep the redirect,</text>
+          <text class="ts" x="622" y="450">RC answers questions when away</text>
+
+          <rect class="node" x="905" y="392" width="275" height="80" rx="3"/>
+          <text class="tml" x="917" y="411">AT STAGE 3 · SPIKE RC ROUTING</text>
+          <text class="ts" x="917" y="432">own-child relay (gate n) fails</text>
+          <text class="ts" x="917" y="450">→ spike RC-routed SendMessage (o)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>FIG C</b>Stage 1 changes one <code>runArgs</code> line in one project. Nothing is packaged before stage 2 shows that voice is used. Fork and owned-broker work appear only as tripwire responses.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ RISKS ============ -->
+<section id="risks">
+  <div class="sec-head">
+    <div class="eyebrow">Risk</div>
+    <h2>Risk register</h2>
+  </div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Risk</th><th>Applies to</th><th>Likelihood</th><th>Impact</th><th>Early signal</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Dev-time creep displaces weftwise work</td><td>All</td><td><span class="chip crit">High</span></td><td><span class="chip crit">High</span></td><td>Packaging starts before a week of real use</td></tr>
+        <tr><td class="name">Stop-hook volume exhausts subscription limits</td><td>All</td><td><span class="chip warn">Medium</span></td><td><span class="chip crit">High</span></td><td><code>/usage</code> climbs on voice days; converser compacts hourly</td></tr>
+        <tr><td class="name">Acoustic or content injection drives a bypass overseer</td><td>All</td><td><span class="chip warn">Low-Med</span></td><td><span class="chip crit">High</span></td><td>A relayed message with no matching utterance in the trace</td></tr>
+        <tr><td class="name">Claude Code upgrade changes wire format or hold rules</td><td>All</td><td><span class="chip warn">Med / quarter</span></td><td><span class="chip crit">High</span></td><td>Canary failure; voice goes silent</td></tr>
+        <tr><td class="name">Tier-3 relay never beats its timeout</td><td>Tier 3</td><td><span class="chip crit">High</span></td><td><span class="chip warn">Medium</span></td><td>Trace shows <code>timeout</code> on most relays</td></tr>
+        <tr><td class="name"><code>serve</code> conch wedge (#521/#522)</td><td>S</td><td><span class="chip warn">Medium</span></td><td><span class="chip warn">Medium</span></td><td>A <code>converse()</code> never returns; conch held</td></tr>
+        <tr><td class="name">Token T₁ read by another container process</td><td>S</td><td><span class="chip crit">High</span></td><td><span class="chip warn">Medium</span></td><td>Unexpected <code>converse()</code> calls in <code>serve</code> logs</td></tr>
+        <tr><td class="name">Double capture across containers</td><td>P, P+</td><td><span class="chip warn">Med, 2+ projects</span></td><td><span class="chip warn">Medium</span></td><td>Two conversers log one transcript</td></tr>
+        <tr><td class="name">Pulse restart kills container audio</td><td>P</td><td><span class="chip warn">Med, months</span></td><td><span class="chip warn">Medium</span></td><td><code>pactl info</code> fails in-container</td></tr>
+        <tr><td class="name">VoiceMode pin lags the features studied</td><td>All</td><td><span class="chip warn">Medium</span></td><td><span class="chip neutral">Low-Med</span></td><td>8.12.0 lacks settings read at <code>126d15e</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ OPEN DECISIONS ============ -->
+<section id="decide">
+  <div class="sec-head">
+    <div class="eyebrow">For the user</div>
+    <h2>Open decisions</h2>
+  </div>
+  <ul class="odl">
+    <li><span class="q">Which first experiment?</span><span class="opts">In-container hand-wired stack · host <code>serve</code> with an unmodified container · <code>serve</code> first, in-container only if needed</span><span class="rec"><code>serve</code> first; in-container only if a local process proves necessary or <code>serve</code> is unstable.</span></li>
+    <li><span class="q">Question relay for v0?</span><span class="opts">Tier 1 convention · tier 2 deny-and-redirect · tier 3 answer relay</span><span class="rec">Tier 2. Tier 3 waits for gates (h) and (l) and would be presence-gated.</span></li>
+    <li><span class="q">Is a non-bypass converser worth a spike?</span><span class="opts">Own-child relay + separate UID · same-UID relay only · no, bypass + tool restriction</span><span class="rec">Bypass + tool restriction for the prototype, then the same-UID relay as gate (n) before packaging.</span></li>
+    <li><span class="q">Spike RC-routed messaging, given traffic leaves the host?</span><span class="opts">Yes · only if the own-child relay fails · no, local-only by policy</span><span class="rec">Only if the own-child relay fails.</span></li>
+    <li><span class="q">How should host <code>serve</code> lay out state?</span><span class="opts">Share everything · per-project <code>VOICEMODE_BASE_DIR</code>, shared conch · per-process <code>HOME</code></span><span class="rec">Per-project <code>VOICEMODE_BASE_DIR</code>. Transcripts stay isolated and the conch stays shared.</span></li>
+    <li><span class="q">Which tools may host <code>serve</code> expose?</span><span class="opts"><code>converse</code> only · default <code>converse,service</code> · broader</span><span class="rec"><code>converse</code> only. It takes and releases the conch itself.</span></li>
+    <li><span class="q">Is a cloud relay acceptable for Android?</span><span class="opts">VoiceMode Connect acceptable in principle · self-hosted only</span><span class="rec">Watch Connect without building on it. Decide when its Android client ships.</span></li>
+    <li><span class="q">File the #521 lock upstream?</span><span class="opts">Yes, now · wait</span><span class="rec">File it now alongside #523. Do not gate the converser on it landing.</span></li>
+    <li><span class="q">Capture mode default?</span><span class="opts">Open mic · headset or push-to-talk</span><span class="rec">Headset or push-to-talk. Hands-free is an explicit opt-in.</span></li>
+    <li><span class="q">Should <code>lace up</code> automate host STT/TTS and <code>serve</code> setup?</span><span class="opts">Yes · README only</span><span class="rec">README only until stage 3. Revisit when per-container <code>serve</code> units need provisioning.</span></li>
+  </ul>
+</section>
+
+<!-- ============ GATES ============ -->
+<section id="gates">
+  <div class="sec-head">
+    <div class="eyebrow">Verification</div>
+    <h2>Phase 0 gates and empirical tests</h2>
+  </div>
+  <p class="lede">Proposal gate (g) is dropped, since the <code>label=disable</code> fact is settled. Tick boxes as gates pass; the boxes are not saved.</p>
+  <details>
+    <summary>Gate checklist <span class="hint">16 gates in run order</span></summary>
+    <div class="dbody">
+      <ul class="checks">
+        <li><h4>Prototype, host serve</h4></li>
+        <li><input type="checkbox" id="g-pre"><span class="g">pre</span><label for="g-pre">Throwaway container: 401 without token, only <code>converse</code> listed, one <code>converse()</code> end to end, two <code>serve</code>s serialize</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-i"><span class="g">(i)</span><label for="g-i"><code>serve</code> path end to end in <code>weftwise</code>: token enforced, <code>service</code> absent, no cloud fallback</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-c"><span class="g">(c)</span><label for="g-c"><code>pasta:-T</code> reaches a loopback host service; lace port publishing and portless ingress still work</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-j"><span class="g">(j)</span><label for="g-j">Stop-hook volume dry run: would-be wakes per hour over one AFK arc</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-k"><span class="g">(k)</span><label for="g-k">Hook stamps <code>From:</code> from the session registry; converser silent on acks, speaks replies to user requests</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-e"><span class="g">(e)</span><label for="g-e">A bypass converser's <code>SendMessage</code> reaches a bypass overseer with no <code>accept</code></label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-f"><span class="g">(f)</span><label for="g-f">A raw socket post reaches a converser whose <code>accept</code> comes only from <code>--settings</code></label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-b"><span class="g">(b)</span><label for="g-b"><code>socat</code> wire-format test for the undocumented raw post</label><span class="chip good">stage 1</span></li>
+        <li><input type="checkbox" id="g-d"><span class="g">(d)</span><label for="g-d">Exact converser tool inventory; no Edit/Write/NotebookEdit/Read; no claude.ai connector tools</label><span class="chip good">stage 1</span></li>
+        <li><h4>Fallback only</h4></li>
+        <li><input type="checkbox" id="g-a"><span class="g">(a)</span><label for="g-a">In-container pulse device test with a directory mount; <code>podman inspect</code> check folded in</label><span class="chip warn">P+</span></li>
+        <li><h4>Deferred tier 3</h4></li>
+        <li><input type="checkbox" id="g-h"><span class="g">(h)</span><label for="g-h">Measured tier-3 round trip</label><span class="chip neutral">stage 4</span></li>
+        <li><input type="checkbox" id="g-l"><span class="g">(l)</span><label for="g-l"><code>updatedInput.answers</code> path works in an interactive session</label><span class="chip neutral">stage 4</span></li>
+        <li><h4>Spikes and post-prototype</h4></li>
+        <li><input type="checkbox" id="g-n"><span class="g">(n)</span><label for="g-n">Own-child poster delivers to a bypass receiver; detached poster still verifies; fallback arm: <code>CLAUDE_CODE_MESSAGING_TOKEN</code></label><span class="chip acc">stage 3</span></li>
+        <li><input type="checkbox" id="g-o"><span class="g">(o)</span><label for="g-o">RC-routed <code>SendMessage</code> host to container: visibility and hold behavior at a bypass receiver</label><span class="chip neutral">if n fails</span></li>
+        <li><input type="checkbox" id="g-m"><span class="g">(m)</span><label for="g-m">Two containers, one utterance: the shared conch prevents double action</label><span class="chip acc">stage 3</span></li>
+        <li><input type="checkbox" id="g-can"><span class="g">canary</span><label for="g-can">Recurring post-upgrade re-run of (b), (e), (f)</label><span class="chip acc">stage 3</span></li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Still-unverified claims the gates do not cover</summary>
+    <div class="dbody">
+      <ul>
+        <li>Whether pulse recreates only the socket on restart, or the directory too.</li>
+        <li>Pulse module loading from a container; PipeWire access for a subuid-mapped second user.</li>
+        <li>Shared refresh-token invalidation when <code>.credentials.json</code> is copied.</li>
+        <li>In-container Remote Control; VoiceMode 8.12.0 parity with <code>126d15e</code>.</li>
+        <li>Whether the control channel's <code>stop</code> unwedges a hung <code>converse()</code>.</li>
+        <li><code>serve</code> behavior with one process and N containers calling strictly in sequence.</li>
+        <li>Whether <code>serve</code>'s middleware has had any review beyond its author's.</li>
+        <li>All latency estimates except VAD.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<footer id="sources">
+  <div class="eyebrow">Sources</div>
+  <p>All paths are under <code>cdocs/</code> in this repo (clauthier) unless noted. Reviews marked final carry the corrections this page uses.</p>
+  <ul>
+    <li><code>proposals/2026-09-28-converser-lace-feature.md</code>: accepted proposal, round 4 (baseline)</li>
+    <li><code>reports/2026-09-28-converser-options-vetting.md</code>: vetting, amendments, risk register, decision points</li>
+    <li><code>reports/2026-09-28-host-audio-broker-split.md</code>: broker split, transports, Android paths, options ladder</li>
+    <li><code>reports/2026-09-28-voicemode-fork-complexity.md</code>: sophistication metrics, fork/own ladder, upstream relationship</li>
+    <li><code>reviews/2026-09-28-review-of-converser-lace-feature.md</code>, <code>…-r2-…</code>, <code>…-r3-…</code>, <code>…-r4-review-of-converser-lace-feature.md</code> (final)</li>
+    <li><code>reviews/2026-09-28-review-of-converser-options-vetting.md</code>, <code>…-r2-review-of-converser-options-vetting.md</code> (final)</li>
+    <li><code>reviews/2026-09-28-review-of-host-audio-broker-split.md</code>, <code>…-r2-review-of-host-audio-broker-split.md</code> (final)</li>
+    <li><code>reviews/2026-09-28-review-of-voicemode-fork-complexity.md</code>, <code>…-r2-…</code>, <code>…-r3-review-of-voicemode-fork-complexity.md</code> (final)</li>
+    <li>Lineage, clauthier <code>cdocs/reports/</code>: <code>2026-09-26-voice-companion-architecture.md</code>, <code>2026-09-27-voicemode-deep-dive.md</code>, <code>2026-09-27-conversationalist-bridge-design-questions.md</code>, <code>2026-09-27-containerized-conversationalist-and-question-surface.md</code>, <code>2026-09-27-claude-code-inter-session-messaging.md</code></li>
+  </ul>
+</footer>
+
+</div>

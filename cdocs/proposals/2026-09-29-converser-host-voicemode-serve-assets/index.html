@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Converser Design Map</title>
+<meta name="description" content="Design review map for the accepted converser proposal: host voicemode serve per container, the converser-host package, the in-container converser session, token flow, lifecycle, repo placement, interaction model, and staging.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#EDF0EE; --surface:#F8FAF9; --surface-2:#E2E8E5; --ink:#142220; --ink-2:#3C4C49; --mute:#62716C;
+  --rule:#C3CDC9; --rule-2:#D6DEDB;
+  --accent:#0B6B70; --accent-soft:#D2E6E5; --audio:#A1336A; --audio-soft:#F2DDE7; --msg:#3950A0; --msg-soft:#DDE3F4;
+  --good:#2C7439; --good-soft:#DAEADC; --warn:#8F5E00; --warn-soft:#F3E6CA; --crit:#AE2E28; --crit-soft:#F5DAD7;
+  --track:#D3DBD8; --cost:#3C4C49; --focus:#0B6B70;
+  --f-disp:"Chakra Petch","Bahnschrift","DIN Alternate","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1413; --surface:#151D1C; --surface-2:#1C2725; --ink:#DCE6E3; --ink-2:#B0BFBB; --mute:#83938E;
+    --rule:#2D3A38; --rule-2:#243130;
+    --accent:#56C2C6; --accent-soft:#143A3B; --audio:#E583B4; --audio-soft:#3C1D2D; --msg:#93A6F2; --msg-soft:#1E2748;
+    --good:#72C681; --good-soft:#173322; --warn:#E3AE4A; --warn-soft:#3A2C12; --crit:#F2786D; --crit-soft:#3E1D1B;
+    --track:#283432; --cost:#B0BFBB; --focus:#56C2C6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#151D1C; --surface-2:#1C2725; --ink:#DCE6E3; --ink-2:#B0BFBB; --mute:#83938E;
+  --rule:#2D3A38; --rule-2:#243130;
+  --accent:#56C2C6; --accent-soft:#143A3B; --audio:#E583B4; --audio-soft:#3C1D2D; --msg:#93A6F2; --msg-soft:#1E2748;
+  --good:#72C681; --good-soft:#173322; --warn:#E3AE4A; --warn-soft:#3A2C12; --crit:#F2786D; --crit-soft:#3E1D1B;
+  --track:#283432; --cost:#B0BFBB; --focus:#56C2C6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.55 var(--f-body);margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:140ch;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 64px;display:flex;flex-direction:column;gap:56px}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:2px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--surface-2);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;letter-spacing:.005em}
+h1{font-size:clamp(2.1rem,5vw,3.3rem);font-weight:700;line-height:1.02}
+h2{font-size:1.65rem;font-weight:600;line-height:1.15}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+.prose{max-width:82ch;display:flex;flex-direction:column;gap:.8em}
+.eyebrow{font:500 .74rem/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{display:flex;flex-direction:column;gap:18px;padding-block:8px 0}
+.trace{width:100%;height:46px;display:block}
+.trace path{fill:none;stroke:var(--accent);stroke-width:1.6}
+.trace .base{stroke:var(--rule);stroke-width:1}
+.bluf{border-block:1px solid var(--rule);padding-block:18px;display:grid;grid-template-columns:auto 1fr;gap:6px 22px;max-width:110ch}
+.bluf .tag{font:600 .78rem/1.6 var(--f-mono);letter-spacing:.1em;color:var(--accent);padding-top:3px}
+.bluf p{font-size:1.06rem;line-height:1.6}
+@media (max-width:640px){.bluf{grid-template-columns:1fr}}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 18px;font:500 .82rem/1.4 var(--f-mono)}
+nav.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule)}
+nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+section{display:flex;flex-direction:column;gap:18px;scroll-margin-top:16px}
+.sec-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:12px}
+.lede{color:var(--ink-2);max-width:82ch}
+
+/* tables */
+.tscroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface);border-radius:3px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule-2)}
+thead th{font:600 .72rem/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--mute);background:var(--surface-2);border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-weight:600;min-width:15ch}
+td.name small{display:block;font-weight:400;color:var(--mute);font-size:.8rem}
+tr.rec td{background:color-mix(in srgb,var(--good-soft) 55%,transparent)}
+table.wide{min-width:1120px}
+td.dcell{min-width:22ch}
+.dt{display:block;margin-top:6px;font-size:.8rem;color:var(--ink-2);line-height:1.4}
+.dt code{font-size:.95em}
+table.mid{min-width:860px}
+table.small{min-width:620px}
+
+/* meters: segmented, like a level meter */
+.mt{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.meter{--v:0;--c:var(--accent);display:inline-block;width:60px;height:10px;
+  background:linear-gradient(to right,var(--c) calc(var(--v)*20%),var(--track) 0);
+  -webkit-mask:repeating-linear-gradient(to right,#000 0 10px,transparent 10px 12.5px);
+  mask:repeating-linear-gradient(to right,#000 0 10px,transparent 10px 12.5px)}
+.meter.cost{--c:var(--cost)}
+.mt b{font:500 .78rem var(--f-mono);color:var(--mute);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font:600 .7rem/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 7px 4px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.chip.good{color:var(--good);background:var(--good-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.crit{color:var(--crit);background:var(--crit-soft)}
+.chip.neutral{color:var(--ink-2);background:var(--surface-2)}
+.chip.acc{color:var(--accent);background:var(--accent-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.82rem;color:var(--ink-2);align-items:center}
+
+/* facts */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,40ch),1fr));gap:0 28px;margin:0;padding:0;list-style:none}
+.facts li{padding:10px 0 10px 18px;border-bottom:1px solid var(--rule-2);position:relative;font-size:.94rem}
+.facts li::before{content:"";position:absolute;left:0;top:18px;width:8px;height:2px;background:var(--accent)}
+
+/* figures */
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.fscroll{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:10px}
+.fscroll svg{display:block;width:100%;height:auto;min-width:900px}
+.fscroll.narrow svg{min-width:640px;max-width:900px;margin-inline:auto}
+figcaption{font-size:.86rem;color:var(--ink-2);max-width:100ch}
+figcaption b{font-family:var(--f-mono);font-weight:600;color:var(--ink);font-size:.8rem;letter-spacing:.05em;margin-right:6px}
+
+/* svg vocabulary */
+svg text{font-family:var(--f-body);fill:var(--ink);font-size:13px}
+svg .th{font-family:var(--f-disp);font-weight:600;font-size:15px}
+svg .ts{font-size:11.5px;fill:var(--ink-2)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink-2)}
+svg .tml{font-family:var(--f-mono);font-size:11px;fill:var(--mute);letter-spacing:.06em}
+svg .ta{fill:var(--audio)} svg .tn{fill:var(--accent)} svg .tg{fill:var(--msg)} svg .tc{fill:var(--crit)} svg .tok{fill:var(--good)} svg .tw{fill:var(--warn)}
+svg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+svg .host{fill:var(--bg);stroke:var(--rule);stroke-width:1.2}
+svg .ctr{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.4;stroke-dasharray:7 5}
+svg .node{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.2}
+svg .n-aud{fill:var(--audio-soft);stroke:var(--audio);stroke-width:1.3}
+svg .n-acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.3}
+svg .n-msg{fill:var(--msg-soft);stroke:var(--msg);stroke-width:1.3}
+svg .n-good{fill:var(--good-soft);stroke:var(--good);stroke-width:1.3}
+svg .n-warn{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.3}
+svg .n-crit{fill:var(--crit-soft);stroke:var(--crit);stroke-width:1.3}
+svg .band{fill:var(--surface-2);stroke:none}
+svg .life{fill:none;stroke:var(--rule);stroke-width:1.2;stroke-dasharray:3 4}
+svg .e-aud{fill:none;stroke:var(--audio);stroke-width:2.4}
+svg .e-net{fill:none;stroke:var(--accent);stroke-width:2.2}
+svg .e-loop{fill:none;stroke:var(--ink-2);stroke-width:1.4}
+svg .e-msg{fill:none;stroke:var(--msg);stroke-width:2}
+svg .e-ret{fill:none;stroke:var(--msg);stroke-width:1.8;stroke-dasharray:6 4}
+svg .e-crit{fill:none;stroke:var(--crit);stroke-width:2.2}
+svg .e-warn{fill:none;stroke:var(--warn);stroke-width:2}
+svg .e-good{fill:none;stroke:var(--good);stroke-width:2;stroke-dasharray:6 4}
+svg .e-tw{fill:none;stroke:var(--warn);stroke-width:1.2;stroke-dasharray:4 4}
+svg .track{fill:none;stroke:var(--accent);stroke-width:3}
+svg .grid{fill:none;stroke:var(--rule-2);stroke-width:1}
+svg .axis{fill:none;stroke:var(--ink-2);stroke-width:1.2}
+svg .mk-aud{fill:var(--audio)} svg .mk-net{fill:var(--accent)} svg .mk-msg{fill:var(--msg)} svg .mk-crit{fill:var(--crit)} svg .mk-loop{fill:var(--ink-2)} svg .mk-good{fill:var(--good)} svg .mk-warn{fill:var(--warn)}
+svg .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+svg .dot-good{fill:var(--good);stroke:var(--surface);stroke-width:2}
+svg .dot-warn{fill:var(--warn);stroke:var(--surface);stroke-width:2}
+svg .dot-crit{fill:var(--crit);stroke:var(--surface);stroke-width:2}
+svg .dot-n{fill:var(--ink-2);stroke:var(--surface);stroke-width:2}
+svg .stage{fill:var(--surface);stroke:var(--accent);stroke-width:2.4}
+svg .stage-t{font-family:var(--f-disp);font-weight:700;font-size:15px;fill:var(--accent)}
+svg .sw-line{fill:none;stroke-width:3}
+
+/* decision blocks */
+.decision{display:flex;flex-direction:column;gap:14px}
+.callout{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;padding:12px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:3px;max-width:110ch}
+.callout .k{font:600 .72rem/1.6 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--good)}
+@media (max-width:560px){.callout{grid-template-columns:1fr}}
+
+details{border:1px solid var(--rule);border-radius:3px;background:var(--surface)}
+details>summary{cursor:pointer;list-style:none;padding:10px 14px 10px 36px;position:relative;font:500 .9rem/1.4 var(--f-body);color:var(--ink)}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";position:absolute;left:15px;top:50%;width:0;height:0;margin-top:-5px;border-left:7px solid var(--accent);border-block:5px solid transparent;transition:transform .15s ease}
+details[open]>summary::before{transform:rotate(90deg)}
+details>summary .hint{font:400 .74rem var(--f-mono);color:var(--mute);margin-left:8px;letter-spacing:.03em}
+details[open]>summary{border-bottom:1px solid var(--rule-2)}
+.dbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;font-size:.93rem}
+.dbody ul,.dbody ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:5px;max-width:95ch}
+.dbody p{max-width:95ch}
+.dbody .tscroll{background:var(--bg)}
+.dbody thead th{background:var(--surface)}
+
+/* open decisions */
+.odl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,52ch),1fr));gap:12px}
+.odl li{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.odl .q{font-weight:600}
+.odl .opts{font-size:.86rem;color:var(--ink-2)}
+.odl .rec{font-size:.9rem}
+.odl .rec::before{content:"Recommend ";font:600 .7rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--good);margin-right:4px}
+
+/* checklist */
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.checks li{display:grid;grid-template-columns:auto 4.2em 1fr auto;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--rule-2)}
+.checks li:last-child{border-bottom:0}
+.checks input{accent-color:var(--accent);width:15px;height:15px;transform:translateY(2px)}
+.checks .g{font:600 .8rem var(--f-mono);color:var(--accent)}
+.checks label{cursor:pointer}
+@media (max-width:560px){.checks li{grid-template-columns:auto 3.4em 1fr}.checks li .chip{grid-column:2/-1;justify-self:start}}
+.checks h4{margin:10px 0 2px;font:600 .74rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+
+footer{border-top:2px solid var(--ink);padding-top:12px;display:flex;flex-direction:column;gap:10px;font-size:.86rem;color:var(--ink-2)}
+footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+footer code{background:transparent;padding:0}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* additions for the design map */
+html{overflow-x:hidden}
+svg .e-sec{fill:none;stroke:var(--warn);stroke-width:2.2;stroke-dasharray:7 4}
+svg .mk-sec{fill:var(--warn)}
+svg .ghost{fill:var(--surface);stroke:var(--ink-2);stroke-width:1.1;stroke-dasharray:5 4}
+svg .fw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.3;stroke-dasharray:3 3}
+.answer{border-left:4px solid var(--accent);background:var(--surface);padding:14px 18px;border-radius:0 3px 3px 0;max-width:110ch;display:flex;flex-direction:column;gap:8px}
+.answer .k{font:600 .72rem/1.4 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.answer p{font-size:1.02rem}
+.answer.q{border-left-color:var(--warn)}
+.answer.q .k{color:var(--warn)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,46ch),1fr));gap:18px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.panel h3{font-size:1.05rem}
+.panel ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:.93rem}
+.hist{font:400 .84rem/1.6 var(--f-mono);background:var(--bg);border:1px solid var(--rule);border-radius:3px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre;color:var(--ink)}
+.hist .n{color:var(--accent);font-weight:600}
+.hist .out{color:var(--msg)}
+.hist .in{color:var(--audio)}
+.hist .say{color:var(--mute);font-style:italic}
+.hist .usr{color:var(--ink-2)}
+pre.code{font:400 .8rem/1.55 var(--f-mono);background:var(--bg);border:1px solid var(--rule);border-radius:3px;padding:10px 12px;margin:0;overflow-x:auto;white-space:pre;color:var(--ink)}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26ch),1fr));gap:10px}
+.stat div{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.stat b{font:600 .7rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.stat span{font-size:.93rem}
+td.res{min-width:24ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">lace · voice/converser-lace-feature · design review · accepted r5 · 2026-09-29</div>
+  <h1>Converser Design Map</h1>
+  <svg class="trace" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true">
+    <path class="base" d="M0 23 H1200"/>
+    <path d="M0 23 H240 L248 23 254 12 260 34 266 6 272 40 278 16 284 29 290 23 H520 L526 19 532 28 538 10 544 36 550 4 556 42 562 14 568 31 574 22 580 24 H820 L826 18 832 30 838 15 844 32 850 23 H1200"/>
+  </svg>
+  <div class="bluf">
+    <div class="tag">BLUF</div>
+    <p>Audio moves to the host. Each container project gets its own loopback <code>voicemode serve</code> process under <code>systemd --user</code>, with its own bearer token and only the <code>converse</code> tool. The container reaches it through one <code>--network pasta:-T,&lt;port&gt;</code> forward. The host side is <code>converser-host</code>, a shell CLI plus three unit files. It wraps VoiceMode's unsafe host defaults: wildcard binds, the token on argv, and auto-enabled units. Inside the container, the converser is an ordinary <code>claude</code> session started by a launcher. <strong>Claude Code itself is the MCP HTTP client; no daemon runs in the container.</strong> All new code goes in the clauthier <code>converser</code> plugin directory. Weftwise gets one uncommitted line, and lace is not changed.</p>
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#glance">At a glance</a><a href="#topology">Topology</a><a href="#token">Who holds the token</a><a href="#flow">Message flow</a>
+    <a href="#repos">Where the code lives</a><a href="#interaction">Interaction model</a><a href="#lifecycle">Install and rebuild</a>
+    <a href="#staging">Staging</a><a href="#security">Security</a><a href="#ambiguities">Ambiguities</a><a href="#open">Open questions</a><a href="#sources">Sources</a>
+  </nav>
+</header>
+
+<!-- ============ GLANCE ============ -->
+<section id="glance">
+  <div class="sec-head">
+    <div class="eyebrow">At a glance</div>
+    <h2>What the accepted design commits to</h2>
+  </div>
+  <div class="stat">
+    <div><b>Audio</b><span>Host only: PipeWire mic and speaker, whisper.cpp <code>:2022</code>, Kokoro <code>:8880</code>, all on <code>127.0.0.1</code></span></div>
+    <div><b>Per project</b><span><code>converser-serve@&lt;project&gt;</code>: one process, one token, one port in 8765–8799</span></div>
+    <div><b>Crossing</b><span>One <code>pasta:-T,&lt;port&gt;</code> forward. The peer shows up as <code>127.0.0.1</code>, so the token is the only gate</span></div>
+    <div><b>Shared</b><span><code>~/.voicemode/conch</code>: all serve processes serialize on the one microphone</span></div>
+    <div><b>Container</b><span>A launcher-started <code>claude</code> session named <code>converser</code>, plus overseer hooks from a managed-settings drop-in</span></div>
+    <div><b>Repo</b><span>clauthier <code>plugins/converser/</code> (with <code>host/</code>); weftwise gets one <code>runArgs</code> line; lace is not changed</span></div>
+  </div>
+  <ul class="facts">
+    <li>One <code>serve</code> per container keeps each process single-client. That closes VoiceMode <a href="https://github.com/mbailey/voicemode/issues/521">#521</a>. A per-server MCP <code>timeout</code> of 600000&nbsp;ms, above the longest bounded <code>converse()</code>, closes <a href="https://github.com/mbailey/voicemode/issues/522">#522</a>.</li>
+    <li>SELinux posture is unchanged: the devcontainer CLI applies <code>label=disable</code> to every podman container (vetting A14).</li>
+    <li>VoiceMode is reused unmodified and pinned at <code>voice-mode==8.12.0</code>. Its whisper installer never runs; <code>whisper-server</code> comes from the homebrew-core bottle.</li>
+    <li>Stage 1 builds the host package first. The container side stays hand-wired until a week of real use (stage 2) shows voice is worth packaging.</li>
+  </ul>
+</section>
+
+<!-- ============ TOPOLOGY ============ -->
+<section id="topology">
+  <div class="sec-head">
+    <div class="eyebrow">Question 1 · Components</div>
+    <h2>Host, forward, container</h2>
+  </div>
+  <p class="lede">The host runs everything that touches audio. The container runs <code>claude</code> sessions and nothing else new. Two channels cross the boundary. The first is an HTTP MCP connection through the pasta forward, carried on every call. The second is a one-shot stdin handoff of the token and port when the container is created.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 856" role="img" aria-labelledby="f1-t f1-d">
+        <title id="f1-t">Fig 1: component topology across host and container</title>
+        <desc id="f1-d">The host holds the mic, whisper on 2022, Kokoro on 8880, the shared conch, a firewalld backstop, per-project serve instances on 8765 and up, the converser-host CLI, its instance files, and the systemd units. A pasta forward on the instance port carries HTTP MCP with a bearer token into the container. A stdin handoff writes the token and port files into the container. In the container, the launcher reads the files, writes a temp MCP config, and starts the converser claude session. The converser messages overseer sessions. Overseer Stop hooks from the managed settings file post back to the converser's inbox socket, which they find through converser.sockpath in /run/user/1000.</desc>
+        <defs>
+          <marker id="f1-aud" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-aud" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f1-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f1-msg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-msg" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f1-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-loop" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f1-sec" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-sec" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+
+        <!-- HOST -->
+        <rect class="host" x="20" y="36" width="1164" height="368" rx="3"/>
+        <text class="tml" x="34" y="56">HOST · FEDORA ATOMIC · SYSTEMD --USER · EVERY LISTENER ON 127.0.0.1</text>
+
+        <rect class="n-aud" x="40" y="72" width="170" height="62" rx="3"/>
+        <text class="th" x="125" y="98" text-anchor="middle">Mic + speaker</text>
+        <text class="tm" x="125" y="118" text-anchor="middle">PipeWire · headset</text>
+        <rect class="node" x="224" y="72" width="224" height="62" rx="3"/>
+        <text class="th" x="336" y="98" text-anchor="middle">converser-whisper</text>
+        <text class="tm" x="336" y="118" text-anchor="middle">127.0.0.1:2022 · brew bottle</text>
+        <rect class="node" x="462" y="72" width="224" height="62" rx="3"/>
+        <text class="th" x="574" y="98" text-anchor="middle">converser-kokoro</text>
+        <text class="tm" x="574" y="118" text-anchor="middle">127.0.0.1:8880 · derived script</text>
+        <rect class="n-good" x="700" y="72" width="200" height="62" rx="3"/>
+        <text class="th" x="800" y="98" text-anchor="middle">conch (flock)</text>
+        <text class="tm" x="800" y="118" text-anchor="middle">~/.voicemode/conch</text>
+        <rect class="fw" x="914" y="72" width="252" height="62" rx="3"/>
+        <text class="th" x="1040" y="96" text-anchor="middle">firewalld backstop</text>
+        <text class="tm" x="1040" y="114" text-anchor="middle">reject 2022 · 8880 · 8765-8799</text>
+        <text class="tm" x="1040" y="128" text-anchor="middle">LAN zone (enp3s0) only</text>
+
+        <path class="e-aud" d="M114 162 V138" marker-end="url(#f1-aud)"/>
+        <path class="e-aud" d="M136 138 V162" marker-end="url(#f1-aud)"/>
+        <path class="e-loop" d="M336 164 V137" marker-end="url(#f1-loop)"/>
+        <path class="e-loop" d="M574 164 V137" marker-end="url(#f1-loop)"/>
+        <path class="e-good" d="M730 136 V164"/>
+        <path class="e-good" d="M870 136 V164"/>
+
+        <rect class="n-acc" x="40" y="166" width="720" height="112" rx="3"/>
+        <text class="th" x="54" y="189">converser-serve@weftwise · voicemode serve (voice-mode==8.12.0)</text>
+        <text class="tm" x="54" y="209">--host 127.0.0.1 --port 8765 --transport streamable-http · /mcp</text>
+        <text class="tm" x="54" y="227">token: VOICEMODE_SERVE_TOKEN from instances/weftwise.env (never --token) · ExecStartPre: length ≥ 32</text>
+        <text class="tm" x="54" y="245">pinned on ExecStart: TOOLS_ENABLED=converse · STT/TTS 127.0.0.1 only · AUTO_START_KOKORO=false</text>
+        <text class="tm" x="54" y="263">BASE_DIR=%S/converser-serve/weftwise: control.sock (control channel on), transcripts, logs</text>
+
+        <rect class="ghost" x="780" y="166" width="386" height="112" rx="3"/>
+        <text class="th" x="794" y="189">converser-serve@&lt;other&gt;</text>
+        <text class="tm" x="794" y="209">127.0.0.1:8766 · token T₂ · own BASE_DIR</text>
+        <text class="ts" x="794" y="229">optional second project, its own forward</text>
+        <text class="ts" x="794" y="247">shares mic, STT/TTS and the conch</text>
+        <text class="ts" x="794" y="265">so two conversers never talk over each other</text>
+
+        <rect class="node" x="40" y="304" width="330" height="88" rx="3"/>
+        <text class="th" x="54" y="326">converser-host CLI (POSIX sh)</text>
+        <text class="tm" x="54" y="345">run from the clauthier checkout</text>
+        <text class="ts" x="54" y="364">install · instance add · handoff · status</text>
+        <text class="ts" x="54" y="382">stage 3b: instance rm · uninstall · model set</text>
+
+        <rect class="n-warn" x="390" y="304" width="210" height="88" rx="3"/>
+        <text class="th" x="404" y="326">instance files</text>
+        <text class="tm" x="404" y="345">~/.config/converser-host/</text>
+        <text class="tm" x="404" y="362">instances/&lt;p&gt;.env · .token</text>
+        <text class="tm" x="404" y="379">0600 · port + 64-hex token</text>
+
+        <rect class="node" x="690" y="304" width="476" height="88" rx="3"/>
+        <text class="th" x="704" y="326">systemd --user units (package-owned)</text>
+        <text class="tm" x="704" y="345">converser-whisper · converser-kokoro · converser-serve@.service</text>
+        <text class="tm" x="704" y="363">masked: voicemode-whisper · voicemode-kokoro · voicemode-serve</text>
+        <text class="ts" x="704" y="381">copied into ~/.config/systemd/user; no unit executes from the checkout</text>
+
+        <path class="e-loop" d="M370 348 H388" marker-end="url(#f1-loop)"/>
+        <path class="e-loop" d="M495 302 V280" marker-end="url(#f1-loop)"/>
+        <text class="ts halo" x="503" y="296">EnvironmentFile</text>
+        <path class="e-loop" d="M720 302 V280" marker-end="url(#f1-loop)"/>
+        <text class="ts halo" x="728" y="296" font-size="10.5">supervises</text>
+
+        <!-- pasta forward -->
+        <path class="e-net" d="M640 280 V470" marker-start="url(#f1-net)" marker-end="url(#f1-net)"/>
+        <rect class="n-acc" x="580" y="406" width="120" height="26" rx="2"/>
+        <text class="tm" x="640" y="423" text-anchor="middle">pasta -T 8765</text>
+        <text class="ts tn" x="712" y="423">HTTP /mcp · Authorization: Bearer T₁</text>
+        <text class="ts" x="712" y="446" font-size="10.5">pasta erases the source: peer arrives as 127.0.0.1</text>
+
+        <!-- handoff -->
+        <path class="e-sec" d="M130 394 V484" marker-end="url(#f1-sec)"/>
+        <text class="ts tw halo" x="140" y="423">instance handoff</text>
+        <text class="tm halo" x="140" y="441">podman exec -i · stdin</text>
+
+        <!-- CONTAINER -->
+        <rect class="ctr" x="20" y="452" width="1164" height="352" rx="3"/>
+        <text class="tml" x="34" y="794">WEFTWISE DEVCONTAINER · RUNARGS "--network", "pasta:-T,8765" (LOCAL, UNCOMMITTED, SKIP-WORKTREE)</text>
+
+        <rect class="n-warn" x="40" y="486" width="260" height="70" rx="3"/>
+        <text class="th" x="54" y="508">~/.config/converser/</text>
+        <text class="tm" x="54" y="527">token + port · 0600</text>
+        <text class="ts" x="54" y="545">written only by handoff</text>
+
+        <rect class="node" x="40" y="584" width="260" height="78" rx="3"/>
+        <text class="th" x="54" y="606">launcher: converser</text>
+        <text class="tm" x="54" y="624">~/.local/bin/converser (1)</text>
+        <text class="tm" x="54" y="641">plugin bin/converser (3a)</text>
+        <text class="ts" x="54" y="657" font-size="10.5">flock · reads token + port at start</text>
+
+        <rect class="n-warn" x="40" y="690" width="260" height="84" rx="3"/>
+        <text class="th" x="54" y="712">generated MCP config</text>
+        <text class="tm" x="54" y="730">mktemp in $XDG_RUNTIME_DIR</text>
+        <text class="tm" x="54" y="747">converser-mcp.XXXXXX · 0600</text>
+        <text class="ts" x="54" y="765">removed on exit or signal</text>
+
+        <path class="e-sec" d="M170 558 V582" marker-end="url(#f1-sec)"/>
+        <path class="e-sec" d="M170 664 V688" marker-end="url(#f1-sec)"/>
+
+        <rect class="n-acc" x="330" y="472" width="400" height="302" rx="3"/>
+        <text class="th" x="344" y="496">converser · claude session</text>
+        <text class="tm" x="344" y="518">--name converser · --model sonnet</text>
+        <text class="tm" x="344" y="536">--permission-mode bypassPermissions</text>
+        <text class="tm" x="344" y="554">--tools ListAgents,SendMessage</text>
+        <text class="tm" x="344" y="572">--disallowedTools 'mcp__claude_ai_*'</text>
+        <text class="tm" x="344" y="590">--strict-mcp-config --mcp-config &lt;tmp&gt;</text>
+        <text class="tm" x="344" y="608">  voicemode: http · Bearer · timeout 600000</text>
+        <text class="tm" x="344" y="626">--settings ~/.config/converser/settings.json</text>
+        <text class="tm" x="344" y="644">  crossSessionInbound accept · SessionStart</text>
+        <text class="tm" x="344" y="662">--append-system-prompt-file (security floor)</text>
+        <text class="tm" x="344" y="680">CONVERSER_SESSION=1 ENABLE_TOOL_SEARCH=false</text>
+        <text class="ts tn" x="344" y="708">Claude Code itself is the MCP HTTP client.</text>
+        <text class="ts" x="344" y="726">No proxy or daemon runs in the container.</text>
+        <text class="ts" x="344" y="744">Stage 1: typed trigger opens each listen.</text>
+
+        <path class="e-loop" d="M300 622 H328" marker-end="url(#f1-loop)"/>
+        <text class="ts" x="302" y="614" font-size="10">exec</text>
+        <path class="e-loop" d="M300 732 H328" marker-end="url(#f1-loop)"/>
+
+        <rect class="n-msg" x="870" y="472" width="294" height="104" rx="3"/>
+        <text class="th" x="884" y="496">overseer sessions ×N · bypass</text>
+        <text class="ts" x="884" y="516">Stop hook · async · trace-first (1.5)</text>
+        <text class="ts" x="884" y="534">AskUserQuestion redirect (stage 2)</text>
+        <text class="tm" x="884" y="553">not in converser or claude -p</text>
+        <text class="tm" x="884" y="569">own per-session inbox socket</text>
+
+        <rect class="node" x="870" y="600" width="294" height="70" rx="3"/>
+        <text class="th" x="884" y="622">managed settings drop-in</text>
+        <text class="tm" x="884" y="641">/etc/claude-code/managed-settings.d/</text>
+        <text class="tm" x="884" y="658">50-converser.json · sudo · jq empty</text>
+
+        <rect class="node" x="870" y="692" width="294" height="84" rx="3"/>
+        <text class="th" x="884" y="714">/run/user/1000</text>
+        <text class="tm" x="884" y="733">per-session inbox sockets</text>
+        <text class="tm" x="884" y="750">converser.sockpath</text>
+        <text class="ts" x="884" y="767" font-size="10.5">XDG_RUNTIME_DIR in weftwise</text>
+
+        <path class="e-msg" d="M732 500 H866" marker-end="url(#f1-msg)"/>
+        <text class="ts tg" x="744" y="492">SendMessage</text>
+        <text class="tm" x="744" y="517" font-size="10">ListAgents: names</text>
+        <path class="e-msg" d="M868 552 H734" marker-end="url(#f1-msg)"/>
+        <text class="ts tg" x="744" y="544">Stop post</text>
+        <text class="tm" x="744" y="569" font-size="10">to inbox socket</text>
+        <path class="e-loop" d="M1017 598 V580" marker-end="url(#f1-loop)"/>
+        <text class="ts" x="1026" y="593" font-size="10.5">hooks</text>
+        <path class="e-loop" d="M732 736 H866" marker-end="url(#f1-loop)"/>
+        <text class="ts" x="744" y="728" font-size="10.5">SessionStart</text>
+        <text class="ts" x="744" y="752" font-size="10.5">writes sockpath</text>
+        <path class="e-loop" d="M1166 734 H1176 V520 H1168" marker-end="url(#f1-loop)"/>
+
+        <!-- legend -->
+        <g transform="translate(24 832)">
+          <path class="e-aud" d="M0 0 H30"/><text class="ts" x="38" y="4">raw audio (host only)</text>
+          <path class="e-net" d="M190 0 H220"/><text class="ts" x="228" y="4">HTTP MCP via pasta</text>
+          <path class="e-sec" d="M370 0 H400"/><text class="ts" x="408" y="4">token / port bytes</text>
+          <path class="e-msg" d="M540 0 H570"/><text class="ts" x="578" y="4">cross-session message</text>
+          <path class="e-loop" d="M740 0 H770"/><text class="ts" x="778" y="4">local config / control</text>
+          <path class="e-good" d="M920 0 H950"/><text class="ts" x="958" y="4">shared flock</text>
+          <rect class="ctr" x="1060" y="-8" width="30" height="16"/><text class="ts" x="1098" y="4">container</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>FIG 1</b>Port 8765 and the name <code>weftwise</code> are the first instance; <code>instance add</code> picks the first free port in 8765–8799. The upstream <code>voicemode-*</code> units are masked, not merely disabled, because VoiceMode's model installer and <code>AUTO_START_KOKORO</code> start disabled units. The Stop hook reads <code>converser.sockpath</code> (right-hand loop) to find the converser's inbox. The <code>$CLAUDE_CODE_MESSAGING_SOCKET</code> variable that the SessionStart hook records is verified in the round-1 review, not named in the proposal itself.</figcaption>
+  </figure>
+
+  <details>
+    <summary>Connection inventory: every edge in Fig 1 and what carries it<span class="hint">table</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="mid">
+          <thead><tr><th>From → to</th><th>Carrier</th><th>Auth / scope</th><th>Evidence</th></tr></thead>
+          <tbody>
+            <tr><td>converser → <code>serve@weftwise</code></td><td>Streamable HTTP <code>/mcp</code> over <code>pasta:-T,8765</code></td><td>Bearer token; only <code>converse</code> is registered</td><td>verified/source (<code>cli.py:2017-2044</code>, <code>tools/__init__.py:119</code>)</td></tr>
+            <tr><td><code>serve</code> → whisper, Kokoro</td><td>HTTP to <code>127.0.0.1:2022/v1</code>, <code>:8880/v1</code></td><td>Pinned on <code>ExecStart</code>, so a failure cannot fall over to OpenAI</td><td>verified/source (<code>config.py:777-778</code>)</td></tr>
+            <tr><td><code>serve</code> ↔ mic/speaker</td><td>PipeWire on the host</td><td>Host user session</td><td>design</td></tr>
+            <tr><td><code>serve</code> ↔ conch</td><td><code>flock</code> on <code>~/.voicemode/conch</code></td><td>Hardcoded path, shared by every same-user process</td><td>verified/source (<code>conch.py:133</code>)</td></tr>
+            <tr><td><code>serve</code> → <code>control.sock</code></td><td>Owner-only Unix socket in <code>BASE_DIR</code></td><td>Interrupts TTS playback, not a listen; hotkey is stage 2</td><td>verified/source (<code>control_socket.py:303-320</code>)</td></tr>
+            <tr><td>CLI → instance files → <code>serve</code></td><td><code>EnvironmentFile=%h/.config/converser-host/instances/%i.env</code></td><td><code>0600</code>; port and token only</td><td>design</td></tr>
+            <tr><td>CLI → container files</td><td><code>podman exec -i -u &lt;user&gt; … sh -c 'umask 077; … cat &gt; ~/.config/converser/token'</code></td><td>stdin; <code>--user</code> defaults to the <code>devcontainer.metadata</code> <code>remoteUser</code></td><td>design; <code>remoteUser</code> label verified/live (r5)</td></tr>
+            <tr><td>launcher → temp config → <code>claude</code></td><td>Builtin <code>printf</code> into <code>mktemp</code>; <code>--mcp-config &lt;file&gt;</code></td><td><code>0600</code>, under <code>$XDG_RUNTIME_DIR</code></td><td>design</td></tr>
+            <tr><td>converser → overseer</td><td><code>SendMessage</code></td><td>A bypass receiver holds messages unless the sender is also bypass; both are bypass here</td><td>verified/docs</td></tr>
+            <tr><td>overseer Stop hook → converser</td><td>Raw post to the converser's inbox socket, path read from <code>converser.sockpath</code></td><td>Converser accepts via <code>--settings crossSessionInbound: "accept"</code></td><td>docs for the socket; wire format pinned by gate f (unverified)</td></tr>
+            <tr><td>managed file → overseer hooks</td><td><code>/etc/claude-code/managed-settings.d/50-converser.json</code></td><td>Container-local, container-wide; never user or project scope</td><td>verified/docs</td></tr>
+            <tr><td>container ↔ host sessions</td><td>none</td><td>Container and host sessions cannot message each other</td><td>verified/docs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>The three package unit files<span class="hint">what each runs</span></summary>
+    <div class="dbody">
+      <ul>
+        <li><strong><code>converser-whisper.service</code></strong>: <code>$(brew --prefix)/opt/whisper.cpp/bin/whisper-server --host 127.0.0.1 --port 2022 --model &lt;path&gt; --inference-path /v1/audio/transcriptions --threads &lt;n&gt; --convert</code>. The model is downloaded to <code>~/.local/share/converser-host/models/</code>. <code>whisper.cpp</code>, <code>ggml</code>, and <code>llama.cpp</code> are <code>brew pin</code>ned.</li>
+        <li><strong><code>converser-kokoro.service</code></strong>: runs <code>~/.config/converser-host/kokoro-start.sh</code>, copied from Kokoro-FastAPI's installed start script with its host rewritten. <code>install</code> fails unless the <code>uvicorn</code> line has the literal <code>--host 127.0.0.1</code> and the file contains no <code>0.0.0.0</code>. Carries <code>WorkingDirectory=</code> the Kokoro dir, <code>UVICORN_LIMIT_MAX_REQUESTS</code>, and <code>Restart=always</code>, because uvicorn exits 0 at the request limit (GH-448). The script's environment and any per-start network fetches are unverified.</li>
+        <li><strong><code>converser-serve@.service</code></strong>: <code>StateDirectory=converser-serve/%i</code> and <code>WorkingDirectory</code> under it, which keeps project <code>.voicemode.env</code> files out. Security pins sit on <code>ExecStart=/usr/bin/env …</code> because <code>EnvironmentFile=</code> overrides <code>Environment=</code>. <code>ExecStartPre=/bin/sh -c 'test $${#VOICEMODE_SERVE_TOKEN} -ge 32'</code> refuses an empty token, which <code>serve</code> would treat as "no auth". <code>Restart=on-failure</code>, <code>RestartSec=5</code>.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ TOKEN ============ -->
+<section id="token">
+  <div class="sec-head">
+    <div class="eyebrow">Question 1 · The token</div>
+    <h2>What in the container receives the token?</h2>
+  </div>
+  <div class="answer">
+    <div class="k">Answer</div>
+    <p><strong>A file, then a launcher, then Claude Code. There is no client daemon.</strong> <code>converser-host instance handoff</code> pipes the token and port over stdin (<code>podman exec -i</code>) into <code>~/.config/converser/token</code> and <code>~/.config/converser/port</code> in the container user's home (<code>0600</code>). When the user runs the <code>converser</code> launcher, it reads both files once. It uses the shell's builtin <code>printf</code> to write a temporary <code>0600</code> MCP config under <code>$XDG_RUNTIME_DIR</code>, then execs <code>claude --strict-mcp-config --mcp-config &lt;that file&gt;</code>. From then on, the converser's own Claude Code process is the MCP HTTP client. It sends <code>Authorization: Bearer &lt;token&gt;</code> on every request through the pasta forward.</p>
+  </div>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 190" role="img" aria-labelledby="f1b-t f1b-d">
+        <title id="f1b-t">Fig 1b: the container-side token path</title>
+        <desc id="f1b-d">Four container boxes left to right: the token and port files, the launcher script, the temporary MCP config, and the claude converser process, which sends the bearer header through the pasta forward to the host serve process.</desc>
+        <defs>
+          <marker id="f1b-sec" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-sec" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f1b-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <rect class="ctr" x="10" y="14" width="930" height="166" rx="3"/>
+        <text class="tml" x="24" y="170">CONTAINER · ONE USER · NO DAEMON</text>
+        <rect class="n-warn" x="30" y="44" width="190" height="90" rx="3"/>
+        <text class="th" x="44" y="68">files</text>
+        <text class="tm" x="44" y="88">~/.config/converser/</text>
+        <text class="tm" x="44" y="105">token · port</text>
+        <text class="tm" x="44" y="122">0600 · from handoff</text>
+        <rect class="node" x="260" y="44" width="190" height="90" rx="3"/>
+        <text class="th" x="274" y="68">launcher (sh)</text>
+        <text class="tm" x="274" y="88">flock; $(cat …)</text>
+        <text class="tm" x="274" y="105">builtin printf</text>
+        <text class="tm" x="274" y="122">never on argv</text>
+        <rect class="n-warn" x="490" y="44" width="190" height="90" rx="3"/>
+        <text class="th" x="504" y="68">tmp MCP config</text>
+        <text class="tm" x="504" y="88">$XDG_RUNTIME_DIR</text>
+        <text class="tm" x="504" y="105">0600 · mktemp</text>
+        <text class="tm" x="504" y="122">rm on exit / signal</text>
+        <rect class="n-acc" x="720" y="44" width="200" height="90" rx="3"/>
+        <text class="th" x="734" y="68">claude (converser)</text>
+        <text class="tm" x="734" y="88">--mcp-config &lt;tmp&gt;</text>
+        <text class="tm" x="734" y="105">HTTP MCP client</text>
+        <text class="tm" x="734" y="122">Bearer on each call</text>
+        <path class="e-sec" d="M222 89 H256" marker-end="url(#f1b-sec)"/>
+        <path class="e-sec" d="M452 89 H486" marker-end="url(#f1b-sec)"/>
+        <path class="e-sec" d="M682 89 H716" marker-end="url(#f1b-sec)"/>
+        <path class="e-net" d="M922 89 H1060" marker-end="url(#f1b-net)"/>
+        <text class="tm tn" x="950" y="80">pasta -T</text>
+        <rect class="n-acc" x="1064" y="54" width="126" height="70" rx="3"/>
+        <text class="th" x="1127" y="84" text-anchor="middle">host serve</text>
+        <text class="tm" x="1127" y="104" text-anchor="middle">401 without</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG 1B</b>The overseer sessions never see the token: the MCP entry exists only in the converser's generated config, not in any plugin <code>.mcp.json</code> (which would load into every overseer). Any other process running as the container user can still read the token file; see the security table.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 540" role="img" aria-labelledby="f3-t f3-d">
+        <title id="f3-t">Fig 3: token and secret flow end to end</title>
+        <desc id="f3-d">On the host, instance add mints a token with openssl and writes it to 0600 env and token files. The serve unit reads the env file. Instance handoff pipes the token file over stdin into the container's token and port files. The launcher reads them and writes a temporary MCP config. The converser claude process sends the bearer header through the pasta forward to serve. A lower band lists where the token never appears: host argv, container argv, containerEnv, committed config, plugin MCP config, terminal output. One residual box notes any container process can read the token file.</desc>
+        <defs>
+          <marker id="f3-sec" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-sec" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f3-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f3-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-loop" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <rect class="host" x="10" y="14" width="646" height="330" rx="3"/>
+        <text class="tml" x="24" y="34">HOST</text>
+        <rect class="ctr" x="676" y="14" width="514" height="330" rx="3"/>
+        <text class="tml" x="690" y="34">CONTAINER</text>
+
+        <!-- row 1 -->
+        <rect class="node" x="30" y="52" width="170" height="92" rx="3"/>
+        <text class="tml" x="44" y="70">1 · MINT</text>
+        <text class="th" x="44" y="92">instance add</text>
+        <text class="tm" x="44" y="112">openssl rand -hex 32</text>
+        <text class="ts" x="44" y="131">never printed</text>
+        <rect class="n-warn" x="226" y="52" width="224" height="92" rx="3"/>
+        <text class="tml" x="240" y="70">2 · STORE</text>
+        <text class="th" x="240" y="92">instances/&lt;p&gt;.env</text>
+        <text class="tm" x="240" y="112">+ raw &lt;p&gt;.token</text>
+        <text class="ts" x="240" y="131">0600 · ~/.config/converser-host</text>
+        <rect class="node" x="476" y="52" width="164" height="92" rx="3"/>
+        <text class="tml" x="490" y="70">3 · HANDOFF</text>
+        <text class="th" x="490" y="92">podman exec -i</text>
+        <text class="tm" x="490" y="112">&lt; &lt;p&gt;.token</text>
+        <text class="ts" x="490" y="131">re-run per rebuild</text>
+        <rect class="n-warn" x="696" y="52" width="224" height="92" rx="3"/>
+        <text class="tml" x="710" y="70">4 · LAND</text>
+        <text class="th" x="710" y="92">~/.config/converser/</text>
+        <text class="tm" x="710" y="112">token · port · 0600</text>
+        <text class="ts" x="710" y="131">umask 077; rm -f first</text>
+        <rect class="node" x="946" y="52" width="224" height="92" rx="3"/>
+        <text class="tml" x="960" y="70">5 · READ</text>
+        <text class="th" x="960" y="92">launcher at start</text>
+        <text class="tm" x="960" y="112">builtin printf only</text>
+        <text class="ts" x="960" y="131">not /usr/bin/printf, jq --arg</text>
+
+        <path class="e-sec" d="M202 98 H222" marker-end="url(#f3-sec)"/>
+        <path class="e-sec" d="M452 98 H472" marker-end="url(#f3-sec)"/>
+        <path class="e-sec" d="M642 98 H692" marker-end="url(#f3-sec)"/>
+        <text class="tm tw" x="667" y="88" text-anchor="middle" font-size="10">stdin</text>
+        <path class="e-sec" d="M922 98 H942" marker-end="url(#f3-sec)"/>
+        <path class="e-sec" d="M1058 146 V206" marker-end="url(#f3-sec)"/>
+
+        <!-- row 2 -->
+        <rect class="n-acc" x="226" y="210" width="414" height="112" rx="3"/>
+        <text class="tml" x="240" y="228">8 · CHECK</text>
+        <text class="th" x="240" y="250">converser-serve@&lt;p&gt;</text>
+        <text class="tm" x="240" y="270">env VOICEMODE_SERVE_TOKEN (EnvironmentFile)</text>
+        <text class="tm" x="240" y="288">ExecStartPre: length ≥ 32, else refuse</text>
+        <text class="ts" x="240" y="308">no token → 401 · with it → tools/list = [converse]</text>
+        <path class="e-loop" d="M338 146 V206" marker-end="url(#f3-loop)"/>
+        <text class="ts halo" x="346" y="182">EnvironmentFile (not argv)</text>
+
+        <rect class="n-acc" x="696" y="210" width="224" height="112" rx="3"/>
+        <text class="tml" x="710" y="228">7 · SEND</text>
+        <text class="th" x="710" y="250">claude (converser)</text>
+        <text class="tm" x="710" y="270">HTTP MCP client</text>
+        <text class="tm" x="710" y="288">Authorization: Bearer</text>
+        <text class="ts" x="710" y="308">timeout 600000 ms</text>
+        <rect class="n-warn" x="946" y="210" width="224" height="112" rx="3"/>
+        <text class="tml" x="960" y="228">6 · CONFIG</text>
+        <text class="th" x="960" y="250">tmp MCP config</text>
+        <text class="tm" x="960" y="270">mktemp · 0600</text>
+        <text class="tm" x="960" y="288">$XDG_RUNTIME_DIR</text>
+        <text class="ts" x="960" y="308">trap rm on exit/signal</text>
+        <path class="e-sec" d="M944 266 H924" marker-end="url(#f3-sec)"/>
+        <path class="e-net" d="M694 266 H644" marker-end="url(#f3-net)"/>
+        <text class="tm tn" x="669" y="290" text-anchor="middle" font-size="10">pasta</text>
+
+        <!-- never band -->
+        <rect class="band" x="10" y="360" width="1180" height="24"/>
+        <text class="tml" x="20" y="377">WHERE THE TOKEN NEVER APPEARS · AND THE ONE PLACE IT IS EXPOSED</text>
+        <g>
+          <rect class="n-good" x="20" y="396" width="226" height="58" rx="3"/>
+          <text class="ts" x="32" y="418">host argv / ps</text>
+          <text class="tm" x="32" y="438">env file; curl -K - on stdin</text>
+          <rect class="n-good" x="256" y="396" width="226" height="58" rx="3"/>
+          <text class="ts" x="268" y="418">container argv</text>
+          <text class="tm" x="268" y="438">builtin printf into a file</text>
+          <rect class="n-good" x="492" y="396" width="226" height="58" rx="3"/>
+          <text class="ts" x="504" y="418">containerEnv / runArgs</text>
+          <text class="tm" x="504" y="438">devcontainer.json has port only</text>
+          <rect class="n-good" x="728" y="396" width="226" height="58" rx="3"/>
+          <text class="ts" x="740" y="418">committed config</text>
+          <text class="tm" x="740" y="438">no plugin .mcp.json</text>
+          <rect class="n-good" x="964" y="396" width="216" height="58" rx="3"/>
+          <text class="ts" x="976" y="418">terminal / scrollback</text>
+          <text class="tm" x="976" y="438">instance add never prints</text>
+
+          <rect class="n-crit" x="20" y="466" width="700" height="58" rx="3"/>
+          <text class="ts" x="32" y="488">Exposed: any container process running as the same user can read ~/.config/converser/token</text>
+          <text class="tm" x="32" y="508">and drive converse() (room transcription + TTS). Accepted; one token per container bounds it.</text>
+          <rect class="n-warn" x="730" y="466" width="450" height="58" rx="3"/>
+          <text class="ts" x="742" y="488">Journal: serve's banner logs the token's first 4 chars</text>
+          <text class="tm" x="742" y="508">negligible per the threat table</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>FIG 3</b>Numbered in time order. Steps 1–2 run once per instance, step 3 after every container recreate, and steps 5–7 at each converser launch. <code>status</code> and the install-time scoping check send the bearer header as a curl config on stdin: <code>printf 'header = "Authorization: Bearer %s"\n' "$tok" | curl -K - …</code>. Stage 3 may replace the handoff with a read-only mount of <code>&lt;project&gt;.token</code> through lace's user-level mount config. That path is plausible but untested.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ FLOW ============ -->
+<section id="flow">
+  <div class="sec-head">
+    <div class="eyebrow">Question 1 · Behavior</div>
+    <h2>A spoken request, the turn-end summary, and a redirected question</h2>
+  </div>
+  <p class="lede">The converser does two jobs. It relays user speech outward as <code>SendMessage</code>, and it speaks what comes back from overseer turn ends. Relays go out first and are read back after. The only question asked before sending checks intent. Agent text is never forwarded to another agent.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 1086" role="img" aria-labelledby="f2-t f2-d">
+        <title id="f2-t">Fig 2: sequence for a spoken request, the Stop-hook reply, and the tier-2 question redirect</title>
+        <desc id="f2-d">Five lifelines: user, host serve, converser, overseer hooks, overseer. Path A: typed trigger, converse opens a listen, speech, STT, transcript, the converser compiles the message, sends it with SendMessage, logs a numbered entry, and speaks a readback. Path B: the overseer's turn ends, the Stop hook posts a condensed message to the converser's inbox, the converser speaks a summary or stays silent. Path C, stage 2: AskUserQuestion is denied by a PreToolUse hook when the converser is alive, the overseer sends the question to the converser, which asks the user and sends the answer back.</desc>
+        <defs>
+          <marker id="f2-aud" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-aud" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f2-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-net" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f2-msg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-msg" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f2-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-crit" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="f2-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-loop" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <g>
+          <rect class="n-aud" x="20" y="14" width="140" height="44" rx="3"/><text class="th" x="90" y="34" text-anchor="middle">User</text><text class="tm" x="90" y="50" text-anchor="middle">voice + keyboard</text>
+          <rect class="n-acc" x="245" y="14" width="170" height="44" rx="3"/><text class="th" x="330" y="34" text-anchor="middle">serve@weftwise</text><text class="tm" x="330" y="50" text-anchor="middle">host · VAD · STT · TTS</text>
+          <rect class="n-acc" x="495" y="14" width="170" height="44" rx="3"/><text class="th" x="580" y="34" text-anchor="middle">Converser</text><text class="tm" x="580" y="50" text-anchor="middle">container · bypass</text>
+          <rect class="node" x="745" y="14" width="170" height="44" rx="3"/><text class="th" x="830" y="34" text-anchor="middle">Overseer hooks</text><text class="tm" x="830" y="50" text-anchor="middle">managed drop-in</text>
+          <rect class="n-msg" x="995" y="14" width="170" height="44" rx="3"/><text class="th" x="1080" y="34" text-anchor="middle">Overseer</text><text class="tm" x="1080" y="50" text-anchor="middle">e.g. weftwise-overseer</text>
+        </g>
+        <path class="life" d="M90 58 V1076 M330 58 V1076 M580 58 V1076 M830 58 V1076 M1080 58 V1076"/>
+
+        <!-- A -->
+        <rect class="band" x="10" y="72" width="1180" height="24"/>
+        <text class="tml" x="20" y="89">A · SPOKEN REQUEST → RELAY → READBACK (STAGE 1 · GATE R)</text>
+
+        <path class="e-loop" d="M90 124 H576" marker-end="url(#f2-loop)"/>
+        <text class="ts halo" x="100" y="117">0  types Enter or "listen" in the converser terminal (stage 2: push-to-talk)</text>
+        <path class="e-net" d="M580 164 H334" marker-end="url(#f2-net)"/>
+        <text class="ts halo" x="570" y="157" text-anchor="end">1  converse(): listen ≤ 90 s, single turn</text>
+        <text class="tm halo" x="570" y="180" text-anchor="end">wait_for_conch true|false · no hold_conch</text>
+        <path class="e-aud" d="M90 206 H326" marker-end="url(#f2-aud)"/>
+        <text class="ts halo" x="100" y="199">2  speech at the host mic</text>
+        <rect class="n-acc" x="246" y="220" width="168" height="30" rx="3"/>
+        <text class="ts" x="258" y="240">3  VAD → whisper :2022</text>
+        <path class="e-net" d="M330 280 H576" marker-end="url(#f2-net)"/>
+        <text class="ts halo" x="340" y="273">4  transcript returned</text>
+
+        <rect class="n-acc" x="452" y="296" width="256" height="84" rx="3"/>
+        <text class="ts" x="464" y="316">5  compile the message</text>
+        <text class="tm" x="464" y="334">clean disfluencies, keep hedges</text>
+        <text class="tm" x="464" y="350">resolve target via ListAgents</text>
+        <text class="tm" x="464" y="366">ask first only to verify intent</text>
+
+        <path class="e-msg" d="M580 408 H1076" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="720" y="401">6  SendMessage · opens with a voice-relay marker</text>
+        <text class="tm halo" x="720" y="424">bypass sender → bypass receiver: delivered</text>
+
+        <rect class="n-good" x="452" y="440" width="256" height="30" rx="3"/>
+        <text class="tm" x="464" y="460">7  log  #4: weftwise-overseer → …</text>
+        <path class="e-net" d="M580 500 H334" marker-end="url(#f2-net)"/>
+        <text class="ts halo" x="570" y="493" text-anchor="end">8  converse(readback)</text>
+        <path class="e-aud" d="M330 536 H94" marker-end="url(#f2-aud)"/>
+        <text class="ts halo" x="320" y="529" text-anchor="end">9  "Sent to weftwise-overseer: …"</text>
+
+        <!-- B -->
+        <rect class="band" x="10" y="560" width="1180" height="24"/>
+        <text class="tml" x="20" y="577">B · TURN END → STOP POST → SPOKEN SUMMARY (1.5 · TRACE-ONLY FIRST, GATES J, K)</text>
+
+        <rect class="n-msg" x="992" y="598" width="176" height="30" rx="3"/>
+        <text class="ts" x="1004" y="618">turn runs · s to min</text>
+        <path class="e-msg" d="M1080 656 H834" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="1070" y="649" text-anchor="end">10  turn ends · Stop (async)</text>
+        <path class="e-msg" d="M830 702 H584" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="820" y="695" text-anchor="end">11  post From:-stamped condensed text</text>
+        <text class="tm halo" x="820" y="718" text-anchor="end">to sockpath inbox · skip if background_tasks</text>
+        <rect class="n-acc" x="452" y="734" width="256" height="66" rx="3"/>
+        <text class="ts" x="464" y="754">12  speak, summarize, or stay silent</text>
+        <text class="tm" x="464" y="772">never forward as an instruction</text>
+        <text class="tm" x="464" y="788">log  #5: weftwise-overseer ← …</text>
+        <path class="e-net" d="M580 826 H334" marker-end="url(#f2-net)"/>
+        <text class="ts halo" x="570" y="819" text-anchor="end">13  converse(summary)</text>
+        <path class="e-aud" d="M330 856 H94" marker-end="url(#f2-aud)"/>
+        <text class="ts halo" x="320" y="849" text-anchor="end">14  short spoken sentences</text>
+
+        <!-- C -->
+        <rect class="band" x="10" y="874" width="1180" height="24"/>
+        <text class="tml" x="20" y="891">C · ASKUSERQUESTION · TIER-2 REDIRECT (STAGE 2)</text>
+        <path class="e-msg" d="M1080 922 H834" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="1070" y="915" text-anchor="end">15  AskUserQuestion → PreToolUse</text>
+        <path class="e-crit" d="M830 958 H1076" marker-end="url(#f2-crit)"/>
+        <text class="ts halo tc" x="840" y="951">16  deny: route it via the converser</text>
+        <text class="tm halo" x="840" y="974">only if its socket answers; else dialog</text>
+        <path class="e-msg" d="M1080 1000 H584" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="1070" y="993" text-anchor="end">17  SendMessage(question)</text>
+        <path class="e-net" d="M580 1030 H334" marker-end="url(#f2-net)"/>
+        <path class="e-aud" d="M330 1030 H94" marker-end="url(#f2-aud)"/>
+        <text class="ts halo" x="320" y="1023" text-anchor="end">18  ask, then listen</text>
+        <path class="e-aud" d="M90 1056 H326" marker-end="url(#f2-aud)"/>
+        <path class="e-net" d="M330 1056 H576" marker-end="url(#f2-net)"/>
+        <text class="ts halo" x="100" y="1072">19  spoken answer → transcript</text>
+        <path class="e-msg" d="M580 1056 H1076" marker-end="url(#f2-msg)"/>
+        <text class="ts halo" x="600" y="1049">20  SendMessage(answer, cleaned user prose)</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG 2</b>Step numbers are the real order. Checkpoint 1.4a (gate r) is path A plus a manual overseer <code>SendMessage</code> reply, with no hook. Path B's Stop hook starts trace-only for one AFK arc, counting would-be wakes per hour, before it posts. Path C never waits on a timeout. If the converser is dead its socket does not answer, and the local dialog appears. Tier 3 (answer relay) stays deferred behind gates h and l.</figcaption>
+  </figure>
+  <details>
+    <summary>Bounds that make the 600 s client timeout safe<span class="hint">call shape</span></summary>
+    <div class="dbody">
+      <p>Claude Code's HTTP MCP request timer defaults to 60&nbsp;s. VoiceMode's default <code>listen_duration_max</code> is 120&nbsp;s with no server-side clamp, so without a per-server <code>timeout</code> every default listen aborts client-side at 60&nbsp;s. That abort is the #522 trigger. The converser's security floor bounds each call:</p>
+      <ul>
+        <li><code>listen_duration_max</code> ≤ 90, single-turn (no <code>turns</code>), spoken messages under a minute.</li>
+        <li><code>wait_for_conch</code> only <code>true</code> or <code>false</code>. A number would replace <code>VOICEMODE_CONCH_TIMEOUT=60</code>. No <code>hold_conch</code>, and never <code>conch_mode=callback</code>.</li>
+        <li>Worst case: about 60&nbsp;s conch wait + 60&nbsp;s playback + 90&nbsp;s listen + a few seconds of STT. That is well under 600&nbsp;s.</li>
+        <li>These are prompt-level bounds. They bind the converser, not another container process that holds the token.</li>
+      </ul>
+      <p>Gate p: a 90&nbsp;s listen survives with the field and aborts near 60&nbsp;s without it.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============ REPOS ============ -->
+<section id="repos">
+  <div class="sec-head">
+    <div class="eyebrow">Question 2 · Where the code lives</div>
+    <h2>Repo map</h2>
+  </div>
+  <div class="answer">
+    <div class="k">"The entire development surface is in clauthier"</div>
+    <p><strong>Confirmed for versioned code, with three qualifications.</strong> Every file the design authors and keeps goes in clauthier <code>plugins/converser/</code>. That covers the <code>host/</code> tooling in stage 1 and the plugin proper in stage 3a. The qualifications:</p>
+    <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>Through stages 1–2 the container side is hand-placed, container-local and unversioned: the launcher, <code>settings.json</code>, <code>SYSTEM_PROMPT.md</code>, and the managed file. Each rebuild destroys these files. Nothing in clauthier holds them until 3a turns them into plugin content.</li>
+      <li>Weftwise gets one uncommitted <code>runArgs</code> line.</li>
+      <li>The design record (proposal, reviews, reports, devlogs, this page) lives in <strong>clauthier</strong> <code>cdocs/</code>.</li>
+    </ul>
+  </div>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Location</th><th>What goes there</th><th>Stage</th><th>Versioned?</th><th>Runs where</th></tr></thead>
+      <tbody>
+        <tr class="rec"><td class="name">clauthier<small><code>plugins/converser/host/</code></small></td><td><code>converser-host</code> POSIX shell CLI (<code>install</code>, <code>instance add</code>, <code>instance handoff</code>, <code>status</code>); <code>converser-whisper.service</code>, <code>converser-kokoro.service</code>, <code>converser-serve@.service</code>; <code>README.md</code> stating the container file contract <code>~/.config/converser/{token,port}</code>. 3b adds <code>instance rm</code>, <code>uninstall</code>, <code>model set</code>, and a fuller <code>status</code>.</td><td>1.0 (committed first, diff reviewed before each <code>sudo</code> run); 3b</td><td>Yes. Not in <code>marketplace.json</code> until 3a, so no plugin loads</td><td>Host, from the checkout <code>/var/home/mjr/code/weft/clauthier/main/…/converser-host</code>, never from the plugin cache. Deliberately outside <code>bin/</code></td></tr>
+        <tr class="rec"><td class="name">clauthier<small><code>plugins/converser/</code> plugin</small></td><td>Agent (<code>tools: ListAgents, SendMessage</code>, <code>model: sonnet</code>); <code>/converser</code> skill (interaction model and style); <code>Stop</code> and tier-2 <code>PreToolUse</code> hooks; <code>bin/converser</code> launcher with <code>setup</code> (writes and validates the managed file) and <code>status</code>; security-floor prompt beside it; <code>defaultEnabled: false</code>; <strong>no <code>.mcp.json</code></strong>; <code>marketplace.json</code> entry.</td><td>3a, gated on stage 2</td><td>Yes</td><td>Container. The launcher is run by absolute path from the clauthier mount or an alias, because plugin <code>bin/</code> is only on the Bash tool's PATH. Hooks are force-enabled by the managed file</td></tr>
+        <tr><td class="name">Container-local, hand-placed<small>weftwise container</small></td><td><code>~/.local/bin/converser</code>, <code>~/.config/converser/settings.json</code>, <code>~/.config/converser/SYSTEM_PROMPT.md</code>, <code>/etc/claude-code/managed-settings.d/50-converser.json</code>. Also <code>~/.config/converser/{token,port}</code>, written by <code>handoff</code> in every stage.</td><td>1.4, 1.5 (until 3a)</td><td><strong>No</strong>. They are prototypes of the 3a content. Token and port are never versioned</td><td>Container; a rebuild erases them (gate s)</td></tr>
+        <tr><td class="name">weftwise<small><code>.devcontainer/devcontainer.json</code></small></td><td>One line: <code>"--network", "pasta:-T,&lt;port&gt;"</code>, printed by <code>instance add</code>.</td><td>1.3</td><td>No: a local edit under <code>git update-index --skip-worktree</code>, because bypass overseers commit to that checkout often. Stage 3 commits it only if the project accepts host-specific <code>runArgs</code></td><td>Read by <code>lace up</code> / podman</td></tr>
+        <tr><td class="name">lace<small>code</small></td><td>Nothing. Generalized host-service hooks (allocate port, mint secret, add forward, mount secret) are Future Work, with <code>instance add</code> as their first consumer.</td><td>n/a</td><td>n/a</td><td>Only <code>lace up</code> recreating the container</td></tr>
+        <tr><td class="name">clauthier<small><code>cdocs/</code></small></td><td>This proposal, its five reviews, the input reports, the decision artifact, the devlogs (<code>2026-09-29-converser-host-serve-propose-revise.md</code> and earlier), and this page.</td><td>all</td><td>Yes</td><td>n/a (docs)</td></tr>
+        <tr><td class="name">Host, installed artifacts<small>not a repo</small></td><td>Copied units in <code>~/.config/systemd/user/</code>; masks for <code>voicemode-{whisper,kokoro,serve}</code>; <code>~/.config/converser-host/</code> (<code>instances/</code>, <code>kokoro-start.sh</code>); models in <code>~/.local/share/converser-host/models/</code>; <code>uv tool</code> <code>voice-mode==8.12.0</code>; brew <code>whisper.cpp</code> (pinned); the Kokoro install dir; firewalld rich rules. <code>StateDirectory</code> under <code>~/.local/state/converser-serve/&lt;p&gt;</code> (the <code>%S</code> path is inferred from systemd semantics).</td><td>1.0–1.2</td><td>No; chezmoi manages no units, and is only a fallback home</td><td>Host</td></tr>
+        <tr><td class="name">Upstream<small>unmodified</small></td><td>VoiceMode (8.12.0, reused, not forked), homebrew-core <code>whisper.cpp</code> 1.9.4 bottle, Kokoro-FastAPI via VoiceMode's installer. A #521 lock fix is to be filed upstream (stage 4).</td><td>—</td><td>Pinned</td><td>Host</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Why a host package in a plugin directory, and not lace, a new repo, Homebrew, or chezmoi<span class="hint">options</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="mid">
+          <thead><tr><th>Option</th><th>Verdict</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>A. Lace spawns and tracks a PID</td><td><span class="chip crit">Reject</span></td><td>Acts only during <code>lace up</code>; no restart on crash or reboot</td></tr>
+            <tr><td>B. Hand-configured user units</td><td><span class="chip crit">Reject</span></td><td>Every safety step becomes a manual checklist</td></tr>
+            <tr><td>C. Lace-provisioned units</td><td><span class="chip neutral">Future</span></td><td>Good long-term; couples a voice experiment to lace changes</td></tr>
+            <tr class="rec"><td>D. Self-contained <code>converser-host</code></td><td><span class="chip good">Chosen</span></td><td>Fixes VoiceMode's host-install defaults in one reviewable place</td></tr>
+            <tr><td>E. Homebrew formula/tap</td><td><span class="chip neutral">Not needed</span></td><td>homebrew-core already ships <code>whisper-server</code>; <code>brew services</code> has no instances</td></tr>
+            <tr><td>F. chezmoi dotfiles</td><td><span class="chip neutral">Fallback</span></td><td>Personal config, not reusable</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Home for the source: clauthier <code>plugins/converser/host/</code> (user direction: no new repo). This puts the host writer and the container reader of the token/port contract in one place. The acknowledged cost is that a <code>sudo firewall-cmd</code> installer sits in a Claude Code plugin directory the plugin runtime never uses. If stage 2 kills the project, <code>plugins/converser/</code> is deleted and no repo is left behind.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Why enablement cannot be plugin-scoped<span class="hint">the managed-file argument</span></summary>
+    <div class="dbody">
+      <ul>
+        <li>A plugin's hooks fire wherever the plugin is enabled, and enablement is per settings file.</li>
+        <li>User scope is <code>~/.claude/settings.json</code>, the bind mount shared by the host and every container, so hooks would run everywhere.</li>
+        <li>Project scope would run for every session in the repo, host-side too, and for collaborators. It also outranks user scope for <code>enabledPlugins</code>. So the plugin must never appear in any project settings file.</li>
+        <li>Only <code>/etc/claude-code/managed-settings.d/50-converser.json</code> inside the container scopes and force-enables it. In stage 3 it carries <code>extraKnownMarketplaces.clauthier</code> (directory source <code>/var/home/mjr/code/weft/clauthier/main</code>) and <code>enabledPlugins: {"converser@clauthier": true}</code>.</li>
+        <li><span class="chip warn">Unverified · gate t</span> A directory-source managed install working end to end in the container, and that exact source shape.</li>
+        <li><code>crossSessionInbound: "accept"</code> and the VoiceMode MCP entry cannot come from a plugin. They go through the launcher's <code>--settings</code> and <code>--mcp-config</code>.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ INTERACTION ============ -->
+<section id="interaction">
+  <div class="sec-head">
+    <div class="eyebrow">Question 3 · Interaction model</div>
+    <h2>Relay first, verify intent by exception, correct by number</h2>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h3>Rules</h3>
+      <ul>
+        <li><strong>Relay cleaned speech.</strong> Drop disfluencies, false starts, and obvious transcription slips. Keep the user's words, emphasis, hedges, and uncertainty. Never upgrade "maybe look at" into "fix".</li>
+        <li><strong>Send, then read back.</strong> The readback says what was actually sent. The control channel stops playback, not a send, so reading back first would buy nothing. The raw transcript is never echoed for confirmation.</li>
+        <li><strong>Confirm only to verify intent</strong>, for three reasons. Comprehension: the target is unclear, or a key detail came through low-confidence. Sensibility: the request is self-contradictory or makes no sense against the target's work. Destructive intent: a truly destructive action the user did not signal explicitly. Keep it short: "Weftwise or lace?"</li>
+        <li><strong>Labelled history on one global sequence.</strong> Entries read <code>#4: weftwise-overseer → …</code>. The label is the target's session name as <code>ListAgents</code> shows it (<code>--name</code> or <code>/rename</code>). An unnamed session gets an inferred label, stated on first use.</li>
+        <li><strong>Correct by follow-on.</strong> "Fix four" sends a correction to the same target, citing <code>#4</code>. Delivered messages are never retracted.</li>
+        <li><strong>Human prose both ways.</strong> To agents: ordinary sentences, opening with a voice-relay marker. To the user: short spoken sentences, with the rest left in the history.</li>
+        <li><strong>Structural relay rule.</strong> Only user speech is forwarded. Stop-post text is spoken or summarized, never passed to another overseer.</li>
+        <li><strong>Listen gating.</strong> The mic opens only when the user starts an exchange, or right after the converser asked something. There is no idle open-mic loop. A headset is the default.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Example history <span class="chip neutral">illustrative</span></h3>
+<pre class="hist"><span class="usr">[Enter]</span>  <span class="say">"uh, tell weftwise to, um, maybe look at why
+          the pasta forward test is failing, I think it's
+          the port but I'm not sure"</span>
+<span class="n">#3:</span> <span class="out">weftwise-overseer →</span> (Relayed by voice) Could you
+    maybe look at why the pasta forward test is failing?
+    I think it's the port, but I'm not sure.
+<span class="say">  spoken: "Sent to weftwise-overseer."</span>
+
+<span class="usr">[Enter]</span>  <span class="say">"ask docs whether the readme covers
+          the vulkan backend"</span>
+<span class="n">#4:</span> <span class="out">weftwise-docs →</span> (Relayed by voice) Does the README
+    cover the Vulkan backend?
+
+<span class="n">#5:</span> <span class="in">weftwise-overseer ←</span> Forward test passes now; the
+    test used the wrong port.
+
+<span class="usr">[Enter]</span>  <span class="say">"clean up the old branches in weftwise"</span>
+<span class="say">  spoken: "Delete them, or just list them first?"</span>
+<span class="say">  "just list them"</span>
+<span class="n">#6:</span> <span class="out">weftwise-overseer →</span> (Relayed by voice) Please
+    list the old branches; don't delete anything yet.
+
+<span class="usr">[Enter]</span>  <span class="say">"fix four, I meant CUDA not Vulkan"</span>
+<span class="n">#7:</span> <span class="out">weftwise-docs →</span> (Relayed by voice) Correction
+    to #4: I meant CUDA, not Vulkan.
+
+<span class="n">#8:</span> <span class="out">lace-main (unnamed) →</span> …  <span class="say">(label stated aloud on first use)</span></pre>
+      <p style="font-size:.84rem;color:var(--ink-2)">The session names and message text are invented. Every target must be a session in the same container, since container and host sessions cannot message each other. The format follows the proposal: number first, one global sequence, <code>→</code> for relays, <code>←</code> for spoken inbound. In v0 the history is the converser's own terminal transcript. A persistent ledger would be a stage-3 fixed-path <code>converser-io</code> MCP tool, never <code>Write</code>.</p>
+    </div>
+  </div>
+  <div class="answer q">
+    <div class="k">Accepted risk · the audio stream is a keyboard</div>
+    <p>Anything captured inside an open listen window is treated as the user's input, just like keystrokes in the converser terminal. There is no speaker attribution. A video, a call, another person, or leaked TTS inside an open window is indistinguishable from the user, and a bypass overseer approves everything. Intent verification is a comprehension aid, not a control. What keeps the "keyboard" physically scoped: listen gating, the headset default, the visible numbered history (after the fact), and the voice marker (advisory). This fits a one-user, desk-bound, headset-first prototype. Hands-free use in a shared room stays an explicit opt-in.</p>
+  </div>
+</section>
+
+<!-- ============ LIFECYCLE ============ -->
+<section id="lifecycle">
+  <div class="sec-head">
+    <div class="eyebrow">Question 1 · Lifecycle</div>
+    <h2>Install order, and what a rebuild erases</h2>
+  </div>
+  <p class="lede">The host install order matters for security. The firewall goes up before anything can bind. Installers run with <code>--no-auto-enable</code>. Upstream units are removed, reloaded, and masked before the package's own units start. The container half is the fragile half: every recreate erases what stage 1 hand-placed.</p>
+  <figure>
+    <div class="fscroll">
+      <svg viewBox="0 0 1200 712" role="img" aria-labelledby="f4-t f4-d">
+        <title id="f4-t">Fig 4: install order and container-rebuild state</title>
+        <desc id="f4-d">Left: a vertical track of install steps: firewall rules, VoiceMode install with a scoping stop-check, whisper from homebrew, Kokoro with no auto-enable, remove reload mask of upstream units, own units, verify; then per-project steps: end-to-end converse check, instance add, runArgs and lace up, handoff and hand-placed files, first checkpoint and the Stop hook. Right: what survives a container rebuild, what is erased and must be re-run, the silent failure if skipped, and host reboot and logout behavior.</desc>
+        <!-- left -->
+        <text class="th" x="20" y="30">A · Host install and per-project binding, in order</text>
+        <path class="track" d="M52 64 V676"/>
+        <text class="tml" x="76" y="62">CONVERSER-HOST INSTALL (1.0) · IDEMPOTENT</text>
+        <g>
+          <circle class="dot-warn" cx="52" cy="92" r="8"/>
+          <text class="tm tw" x="76" y="89">1</text><text class="ts" x="96" y="89">firewalld rich rules reject 2022, 8880, 8765-8799 (both families)</text>
+          <text class="tm" x="96" y="106">runtime + --permanent, no reload (Docker host) · LAN zone only</text>
+
+          <circle class="dot" cx="52" cy="140" r="8"/>
+          <text class="tm tn" x="76" y="137">2</text><text class="ts" x="96" y="137">uv tool install voice-mode==8.12.0, then the scoping stop-check (1.1a)</text>
+          <text class="tm" x="96" y="154">throwaway serve 127.0.0.1:8800, mktemp BASE_DIR, token via env</text>
+          <text class="tm tc" x="96" y="170">no token → 401 and tools/list == [converse], else STOP</text>
+
+          <circle class="dot" cx="52" cy="204" r="8"/>
+          <text class="tm tn" x="76" y="201">3</text><text class="ts" x="96" y="201">brew install whisper.cpp · brew pin whisper.cpp ggml llama.cpp</text>
+          <text class="tm" x="96" y="218">model download to ~/.local/share/converser-host/models/</text>
+
+          <circle class="dot" cx="52" cy="252" r="8"/>
+          <text class="tm tn" x="76" y="249">4</text><text class="ts" x="96" y="249">voicemode kokoro install --no-auto-enable</text>
+          <text class="tm" x="96" y="266">several GB; whisper-only fallback if it overruns the time box</text>
+
+          <circle class="dot-crit" cx="52" cy="300" r="8"/>
+          <text class="tm tc" x="76" y="297">5</text><text class="ts" x="96" y="297">rm -f upstream unit files → daemon-reload → mask whisper, kokoro, serve</text>
+          <text class="tm" x="96" y="314">mask fails over a regular file; delete-only makes VoiceMode kill</text>
+          <text class="tm" x="96" y="330">the port holder and launch its 0.0.0.0 script</text>
+
+          <circle class="dot" cx="52" cy="364" r="8"/>
+          <text class="tm tn" x="76" y="361">6</text><text class="ts" x="96" y="361">install own units + derive kokoro-start.sh; enable + start whisper, kokoro</text>
+
+          <circle class="dot-good" cx="52" cy="404" r="8"/>
+          <text class="tm tok" x="76" y="401">7</text><text class="ts" x="96" y="401">verify: ss -ltn loopback only; is-enabled output == "masked"</text>
+          <text class="tm" x="96" y="418">compare output, never exit code, under set -e</text>
+        </g>
+        <path class="grid" d="M76 440 H620"/>
+        <text class="tml" x="76" y="460">PER PROJECT · STAGE 1</text>
+        <g>
+          <circle class="dot-n" cx="52" cy="486" r="7"/>
+          <text class="tm" x="76" y="483">1.1b</text><text class="ts" x="118" y="483">one converse() end to end; two instances serialize on the conch</text>
+          <circle class="dot-n" cx="52" cy="522" r="7"/>
+          <text class="tm" x="76" y="519">1.2</text><text class="ts" x="118" y="519">instance add weftwise: port, token, .env + .token, enable serve@</text>
+          <text class="tm" x="118" y="536">prints the runArgs line, never the token</text>
+          <circle class="dot-n" cx="52" cy="568" r="7"/>
+          <text class="tm" x="76" y="565">1.3</text><text class="ts" x="118" y="565">add runArgs (skip-worktree) → lace up (ends running overseers)</text>
+          <circle class="dot-n" cx="52" cy="604" r="7"/>
+          <text class="tm" x="76" y="601">1.4</text><text class="ts" x="118" y="601">handoff; hand-place launcher, settings.json, SYSTEM_PROMPT.md</text>
+          <circle class="dot-good" cx="52" cy="640" r="8"/>
+          <text class="tm tok" x="76" y="637">1.4a</text><text class="ts" x="118" y="637">first checkpoint, gate r: one spoken request out, one reply back</text>
+          <circle class="dot-n" cx="52" cy="676" r="7"/>
+          <text class="tm" x="76" y="673">1.5</text><text class="ts" x="118" y="673">managed file (jq empty first) with the Stop hook, trace-only first</text>
+        </g>
+
+        <!-- right -->
+        <path class="grid" d="M650 20 V690"/>
+        <text class="th" x="672" y="30">B · After a container rebuild (gate s)</text>
+
+        <rect class="n-good" x="672" y="48" width="508" height="150" rx="3"/>
+        <text class="tml" x="686" y="68">SURVIVES · HOST OR CHECKOUT</text>
+        <text class="ts" x="686" y="92">units, masks, firewall rules, whisper + Kokoro running</text>
+        <text class="ts" x="686" y="114">instances/weftwise.env + .token: same port, same token</text>
+        <text class="ts" x="686" y="136">runArgs line in the weftwise checkout (skip-worktree)</text>
+        <text class="ts" x="686" y="158">stage 3: plugin and bin/converser on the clauthier mount</text>
+        <text class="ts" x="686" y="180">serve@weftwise keeps running; nothing host-side re-runs</text>
+
+        <rect class="n-warn" x="672" y="216" width="508" height="226" rx="3"/>
+        <text class="tml" x="686" y="236">ERASED · RE-RUN AFTER EVERY RECREATE</text>
+        <text class="ts" x="686" y="260">~/.config/converser/{token,port}</text>
+        <text class="tm" x="700" y="277">→ converser-host instance handoff weftwise weftwise</text>
+        <text class="ts" x="686" y="302">/etc/claude-code/managed-settings.d/50-converser.json</text>
+        <text class="tm" x="700" y="319">→ stage 1: sudo re-write, jq empty · stage 3: converser setup</text>
+        <text class="ts" x="686" y="344">launcher, settings.json, SYSTEM_PROMPT.md (stages 1–2)</text>
+        <text class="tm" x="700" y="361">→ re-place by hand · stage 3: shipped by the plugin</text>
+        <text class="ts" x="686" y="386">every running overseer and converser session</text>
+        <text class="tm" x="700" y="403">→ recreate at a natural break</text>
+        <text class="tm" x="686" y="428">stage-3 converser status checks the container half</text>
+
+        <rect class="n-crit" x="672" y="460" width="508" height="92" rx="3"/>
+        <text class="tml" x="686" y="480">IF SKIPPED · SILENT</text>
+        <text class="ts" x="686" y="503">Without the managed file, overseers silently stop posting.</text>
+        <text class="ts" x="686" y="522">The trace cannot show it: the trace comes from the missing hook.</text>
+        <text class="ts" x="686" y="541">Without handoff, the launcher's cat fails and voice is unavailable.</text>
+
+        <rect class="node" x="672" y="570" width="508" height="108" rx="3"/>
+        <text class="tml" x="686" y="590">HOST EVENTS</text>
+        <text class="ts" x="686" y="613">Reboot: units return (WantedBy=default.target) on login.</text>
+        <text class="ts" x="686" y="633">Logout with Linger=no: user units stop → loginctl enable-linger.</text>
+        <text class="ts" x="686" y="653">serve crash: Restart=on-failure, RestartSec=5, inside the</text>
+        <text class="ts" x="686" y="671">client's five reconnects (~31 s). A wedge needs a manual restart.</text>
+      </svg>
+    </div>
+    <figcaption><b>FIG 4</b>Colored dots mark security-relevant install steps: warn is the backstop, red is the ordering that fails unsafe if reversed, green is the verify step. Step 2 runs before the multi-GB Kokoro download so that a scoping failure costs minutes. The "launcher's cat fails" line is inferred from <code>set -eu</code> in the stage-1 launcher; the proposal does not describe this case.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ STAGING ============ -->
+<section id="staging">
+  <div class="sec-head">
+    <div class="eyebrow">Question 4 · Staging</div>
+    <h2>Stages, gates, tripwires</h2>
+  </div>
+  <div class="tscroll">
+    <table class="mid">
+      <thead><tr><th>Stage</th><th>Deliverable</th><th>Success</th><th>Tripwire</th></tr></thead>
+      <tbody>
+        <tr><td class="name">1<small>host package v0 + hand-wired container</small></td><td>1.0 <code>converser-host</code> in clauthier and <code>install</code> (time-boxed to one session) · 1.1 pre-check · 1.2 instance · 1.3 forward · 1.4 container-local converser · <strong>1.4a checkpoint (gate r)</strong> · 1.5 Stop hook, trace-first</td><td>Gates pre, i, c, d, e, f, b, j, k, p, q, r, s pass. A spoken request reaches an overseer and its reply comes back</td><td><span class="chip warn">Fallback</span> <code>serve</code> wedges repeatedly: go to the in-container stack (round-4 proposal plus vetting amendments), hand-wired first</td></tr>
+        <tr><td class="name">2<small>one week of real use</small></td><td>Tier-2 redirect hook, push-to-talk hotkey (hands-free opt-in), <code>converse()</code> duration logging, optional "stop talking" hotkey on the conch holder's <code>control.sock</code></td><td>Measured use, Stop volume within subscription comfort, no unexplained relays</td><td><span class="chip crit">Kill</span> voice unused after a week: remove the instance and units, delete <code>plugins/converser/</code>, drop the <code>runArgs</code> line</td></tr>
+        <tr><td class="name">3a<small>clauthier plugin</small></td><td>Agent, <code>/converser</code> skill, hooks, <code>bin/converser</code> with <code>setup</code> and <code>status</code>, the floor prompt, <code>defaultEnabled: false</code>, no <code>.mcp.json</code>, a <code>marketplace.json</code> entry</td><td><code>claude plugin validate --strict</code>; <code>converser setup</code> reproduces stage 1; gate t</td><td>—</td></tr>
+        <tr><td class="name">3b<small>host completion</small></td><td><code>instance rm</code>, <code>uninstall</code>, <code>model set</code>, a fuller <code>status</code>, docs</td><td>A fresh-host install reproduces gate q</td><td>—</td></tr>
+        <tr><td class="name">4–5<small>unchanged roadmap</small></td><td>Broker hardening (file the #521 lock upstream; tier 3 only if gates h and l pass); Android/remote via Remote Control plus dictation</td><td colspan="2">Per the decision artifact</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Stage-1 steps in full<span class="hint">1.0 → 1.5</span></summary>
+    <div class="dbody">
+      <ol>
+        <li><strong>1.0</strong> Create <code>plugins/converser/host/</code> (CLI, three units, README with the file contract). Commit, review <code>git log -p plugins/converser/host/</code>, then run <code>install</code> from the checkout. If Kokoro overruns the time box, continue whisper-only and run gate r with <code>skip_tts</code>.</li>
+        <li><strong>1.1</strong> Pre-check in two halves: scoping inside install step 2, before Kokoro; after the installs, one <code>converse()</code> end to end and the two-instance conch check.</li>
+        <li><strong>1.2</strong> <code>converser-host instance add weftwise</code>; full host-hygiene check (gate q).</li>
+        <li><strong>1.3</strong> Add the printed <code>runArgs</code> line under <code>--skip-worktree</code>; recreate with <code>lace up</code> at a natural break. Gates i and c.</li>
+        <li><strong>1.4</strong> <code>instance handoff</code>; hand-place <code>settings.json</code>, <code>SYSTEM_PROMPT.md</code>, and <code>~/.local/bin/converser</code>. Test items 4–6 and 8, plus the one-minute <code>${VAR}</code>-in-<code>--mcp-config</code> test.</li>
+        <li><strong>1.4a</strong> Typed trigger, one spoken request, relay, overseer <code>SendMessage</code> reply. No hook is needed. Proceed only once this works.</li>
+        <li><strong>1.5</strong> <code>sudo</code>-write the managed file with the <code>async: true</code> Stop hook, after <code>jq empty</code> (an invalid managed file stops every session in the container). Trace-only for one AFK arc (gate j), then posting (gate k).</li>
+      </ol>
+<pre class="code">#!/bin/sh   # stage-1 ~/.local/bin/converser, verbatim from the proposal
+set -eu
+exec 9&gt;"$XDG_RUNTIME_DIR/converser.lock"
+flock -n 9 || { echo "converser already running" &gt;&amp;2; exit 1; }
+cfg=$(mktemp "$XDG_RUNTIME_DIR/converser-mcp.XXXXXX")
+trap 'rm -f "$cfg"' EXIT HUP INT TERM
+printf '{"mcpServers":{"voicemode":{"type":"http","url":"http://127.0.0.1:%s/mcp","headers":{"Authorization":"Bearer %s"},"timeout":600000}}}' \
+  "$(cat ~/.config/converser/port)" "$(cat ~/.config/converser/token)" &gt; "$cfg"
+CONVERSER_SESSION=1 ENABLE_TOOL_SEARCH=false claude \
+  --name converser --model sonnet --permission-mode bypassPermissions \
+  --tools ListAgents,SendMessage --disallowedTools 'mcp__claude_ai_*' \
+  --strict-mcp-config --mcp-config "$cfg" \
+  --settings ~/.config/converser/settings.json \
+  --append-system-prompt-file ~/.config/converser/SYSTEM_PROMPT.md</pre>
+    </div>
+  </details>
+  <details>
+    <summary>Gate glossary<span class="hint">new gates p–t, and those carried from the vetting</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="small">
+          <thead><tr><th>Gate</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td><code>pre</code></td><td>Throwaway <code>serve</code> + <code>podman run --network pasta:-T,8765</code>: 401 without the token, <code>[converse]</code> with it, one <code>converse()</code>, two instances serialize</td></tr>
+            <tr><td>i, c</td><td>From weftwise: token enforced, <code>service</code> absent, no OpenAI failover with whisper stopped; lace port publishing and portless ingress survive <code>--network</code></td></tr>
+            <tr><td>d</td><td>Converser inventory: exactly <code>ListAgents</code>, <code>SendMessage</code>, <code>mcp__voicemode__converse</code>, plus any unremovable built-in (<code>EndConversation</code>, maybe <code>WaitForMcpServers</code>)</td></tr>
+            <tr><td>e, f, b</td><td>Bypass→bypass <code>SendMessage</code> delivered; a raw socket post reaches the converser via <code>--settings</code> <code>accept</code>; wire format pinned by a <code>python3</code> socket script</td></tr>
+            <tr><td>j, k</td><td>Stop hook trace-only wake counts and parent argv; then posting with a registry-resolved <code>From:</code>, converser silent on acks</td></tr>
+            <tr><td><strong>p</strong></td><td>The per-server MCP <code>timeout</code> is load-bearing (90&nbsp;s listen survives with it, aborts near 60&nbsp;s without)</td></tr>
+            <tr><td><strong>q</strong></td><td>Host hygiene: loopback-only listeners, masked upstream units, firewall rules present, pinned env in <code>/proc/&lt;pid&gt;/environ</code>, no token in <code>ps</code></td></tr>
+            <tr><td><strong>r</strong></td><td>First voice loop: one spoken request out, one <code>SendMessage</code> reply back, no Stop hook</td></tr>
+            <tr><td><strong>s</strong></td><td>Post-rebuild: managed file, launcher, token and port files present (handoff re-run)</td></tr>
+            <tr><td><strong>t</strong></td><td>Directory-source managed plugin install works in the container (stage 3)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section id="security">
+  <div class="sec-head">
+    <div class="eyebrow">Question 4 · Security posture</div>
+    <h2>Threat, control, residual</h2>
+  </div>
+  <p class="lede">Moving audio to the host removes four threats: pulse-socket mic and monitor capture, pulse module loading, inode pinning, and double capture per container. It adds a network-reachable token. The host process scopes the tools, because any container process that holds the token can speak raw JSON-RPC.</p>
+  <div class="tscroll">
+    <table class="wide">
+      <thead><tr><th>Threat</th><th>Likelihood</th><th>Control</th><th>Residual</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Any container process reads the token and drives <code>converse()</code></td><td><span class="chip crit">High</span></td><td>One token per container (limited to its port); host-side <code>TOOLS_ENABLED=converse</code></td><td class="res">Inherent: room transcription + TTS; a second client reintroduces #521 and is unbound by the call-shape floor. Recovery: <code>systemctl --user restart</code></td></tr>
+        <tr><td class="name">Upstream wildcard-bound whisper/Kokoro starts</td><td><span class="chip warn">Low masked</span> <span class="chip crit">High naive</span></td><td>Bottle whisper (VoiceMode's whisper installer never runs), <code>--no-auto-enable</code>, remove-reload-mask, loopback units, firewall rejects</td><td class="res">Interfaces outside the <code>enp3s0</code> zone rely on the bind alone</td></tr>
+        <tr><td class="name"><code>serve</code> starts with an empty token</td><td><span class="chip good">Low</span></td><td><code>ExecStartPre</code> length ≥ 32; <code>status</code> checks for 401</td><td class="res">None known</td></tr>
+        <tr><td class="name">Env file re-widens tools or URLs</td><td><span class="chip good">Very low</span></td><td>Pins on the <code>ExecStart</code> command line win; <code>/proc/&lt;pid&gt;/environ</code> confirms</td><td class="res">Unpinned keys (e.g. <code>SERVE_ALLOWED_IPS</code>) still settable; inert behind the token</td></tr>
+        <tr><td class="name">Token visible to host processes or leaked in handoff</td><td><span class="chip good">Low</span></td><td>Env file, stdin handoff, <code>curl -K -</code>, never printed</td><td class="res">Banner logs the first 4 chars to the journal</td></tr>
+        <tr><td class="name">#521 / #522 wedge</td><td><span class="chip warn">Medium</span></td><td>One client per process; 600&nbsp;s <code>timeout</code>; bounded call shape</td><td class="res">A wedged-but-alive process needs a manual restart; stage 2 logs durations</td></tr>
+        <tr><td class="name">Non-user speech relayed to a bypass overseer</td><td><span class="chip warn">Low–Med</span></td><td>Listen gating, headset default, visible history, voice marker</td><td class="res"><strong>Accepted: the audio stream is a keyboard.</strong> No speaker attribution</td></tr>
+        <tr><td class="name">Agent turn-end text laundered into another overseer</td><td><span class="chip good">Low</span></td><td>Structural: only user speech is forwarded</td><td class="res">Prompt-level rule</td></tr>
+        <tr><td class="name">Turn-end secrets spoken and logged</td><td><span class="chip crit">High</span></td><td>None new</td><td class="res">Logs land host-side under the per-project <code>BASE_DIR</code></td></tr>
+        <tr><td class="name">DNS rebinding against the loopback listener</td><td><span class="chip good">Low</span></td><td>Token required</td><td class="res">FastMCP <code>Host</code>/<code>Origin</code> validation unverified</td></tr>
+        <tr><td class="name"><code>ref_text</code> host-file read · <code>conch_mode=callback</code></td><td><span class="chip good">Low</span></td><td>No clone voices configured; floor forbids callback mode (binary absent)</td><td class="res">Low impact</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>Converser posture, re-derived for host serve<span class="hint">which controls still apply</span></summary>
+    <div class="dbody">
+      <div class="tscroll">
+        <table class="mid">
+          <thead><tr><th>Control</th><th>Still needed?</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>No <code>Edit</code>/<code>Write</code>/<code>NotebookEdit</code>/<code>Read</code>/<code>Bash</code></td><td><span class="chip good">Yes</span></td><td>Bind mounts (<code>~/.claude</code>, <code>~/.claude.json</code>, workspace, nvim data, dotfiles, <code>~/.aws</code>, <code>authorized_keys</code>) are unchanged</td></tr>
+            <tr><td><code>--tools ListAgents,SendMessage</code> + strict MCP</td><td><span class="chip good">Yes</span></td><td>The MCP set shrinks to one HTTP server</td></tr>
+            <tr><td><code>VOICEMODE_TOOLS_ENABLED=converse</code></td><td><span class="chip acc">Host-side</span></td><td>Only the host process can scope tools against raw JSON-RPC</td></tr>
+            <tr><td>STT/TTS pinned to loopback</td><td><span class="chip acc">Host-side</span></td><td>Otherwise stopping whisper fails over to OpenAI</td></tr>
+            <tr><td>Managed settings file for hooks</td><td><span class="chip good">Yes</span></td><td>The only container-local, container-wide scope</td></tr>
+            <tr><td><code>crossSessionInbound: accept</code> via launcher <code>--settings</code></td><td><span class="chip good">Yes</span></td><td>Project and local <code>accept</code> are ignored</td></tr>
+            <tr><td>Bypass converser</td><td><span class="chip good">Yes</span></td><td>Bypass overseers hold all but bypass senders; the own-child relay (gate n) is still a spike</td></tr>
+            <tr><td>Pulse mount, audio packages, per-project <code>~/.voicemode-*</code></td><td><span class="chip neutral">Removed</span></td><td>Audio is host-side; <code>BASE_DIR</code> per instance; the conch deliberately stays shared</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ AMBIGUITIES ============ -->
+<section id="ambiguities">
+  <div class="sec-head">
+    <div class="eyebrow">Review notes</div>
+    <h2>Where the proposal leaves a connection underspecified</h2>
+  </div>
+  <p class="lede">None of these blocks stage 1. Each is a place where a diagram above had to infer or leave an edge unlabelled. Gates e, f, j, and k are where most of them get settled.</p>
+  <ul class="odl">
+    <li><span class="q">How does the Stop hook find the converser?</span><span class="opts">Specified: the converser's <code>--settings</code> <code>SessionStart</code> hook records its inbox path at <code>/run/user/1000/converser.sockpath</code>, and the hooks post there. The round-1 review verified that <code>$CLAUDE_CODE_MESSAGING_SOCKET</code> is exported before <code>SessionStart</code>. The proposal does not name the variable. It also does not say whether the sockpath file is removed on exit, so a stale file is left for the "socket answers" liveness check to catch.</span></li>
+    <li><span class="q">How does the converser learn session names?</span><span class="opts">From <code>ListAgents</code>, which only covers sessions in its own container, because container and host sessions cannot message each other. The inferred label for unnamed sessions (<code>lace-main (unnamed)</code>) assumes <code>ListAgents</code> exposes a working directory. The proposal does not verify that, and the label rule is prompt-level.</span></li>
+    <li><span class="q">Where does the Stop hook get its own name for <code>From:</code>?</span><span class="opts">Test Plan item 9 says "registry-resolved <code>From:</code>", but the proposal never defines the registry. The converser needs this name to label inbound entries (<code>#5: weftwise-overseer ←</code>).</span></li>
+    <li><span class="q">What is the raw inbox wire format?</span><span class="opts">It is pinned empirically by gate f (a <code>python3</code> socket script), not specified. Stage-1 hook bodies are "inline in the managed file", and whether "condensed" means truncation by the hook or summarization is left open.</span></li>
+    <li><span class="q">How does a redirected overseer address the converser?</span><span class="opts">Implied by <code>--name converser</code> plus <code>ListAgents</code>. The deny reason's exact wording, and whether it names the session, are unspecified.</span></li>
+    <li><span class="q">Where does the port come from at launch?</span><span class="opts">From the handed-off <code>port</code> file. The <code>runArgs</code> line is a separate copy of the same number. The proposal names no check that the two agree after an <code>instance add --port</code> change.</span></li>
+  </ul>
+</section>
+
+<!-- ============ OPEN / FUTURE ============ -->
+<section id="open">
+  <div class="sec-head">
+    <div class="eyebrow">Question 4 · Open questions and future work</div>
+    <h2>Still open</h2>
+  </div>
+  <ul class="odl">
+    <li><span class="q">1 · Token rotation</span><span class="opts">Minted once per instance. Is an on-demand <code>instance rotate</code> enough?</span></li>
+    <li><span class="q">2 · <code>--mcp-config</code> env expansion</span><span class="opts"><code>.mcp.json</code> expands <code>${VAR}</code>; whether <code>--mcp-config</code> does is unverified. A one-minute test in 1.4 decides it. If it works, the launcher can use a static config.</span></li>
+    <li><span class="q">3 · Headless detection in the Stop hook</span><span class="opts">The hook input does not say whether the session is <code>claude -p</code>. The trace's parent-argv field shows whether argv inspection is reliable.</span></li>
+    <li><span class="q">4 · Whisper acceleration</span><span class="opts">Does the bottle's Vulkan <code>ggml</code> backend work on the RTX 3080, or fall back to CPU? <code>nvcc</code> is absent, so CUDA needs the toolkit.</span></li>
+  </ul>
+  <details>
+    <summary>Round-5 non-blocking items to apply during 1.0<span class="hint">review r5</span></summary>
+    <div class="dbody">
+      <ul>
+        <li>R1: leftover "build" wording; since fixed in the r5 text read for this page.</li>
+        <li>R2: the host <code>curl</code> sends the header via <code>curl -K -</code> on stdin; now in the proposal.</li>
+        <li>R3: the Kokoro unit gets <code>WorkingDirectory</code>, <code>Restart=always</code>, and a literal <code>--host 127.0.0.1</code> match; now in the proposal. Whether to strip per-start network fetches is still open (the script is unread).</li>
+        <li>R4: pin <code>llama.cpp</code> as well; the throwaway <code>serve</code> gets a temp <code>BASE_DIR</code> and port 8800; <code>handoff</code> falls back to no <code>-u</code>. All now in the proposal.</li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Future work and non-goals<span class="hint">deliberately not designed</span></summary>
+    <div class="dbody">
+      <ul>
+        <li>Generalized lace host-side service hooks: a feature declares it needs host service X on a forwarded port; lace allocates the port, mints the secret, adds the <code>pasta:-T</code> forward, and mounts the secret. <code>instance add</code> would be the first consumer.</li>
+        <li>Seeding the converser with the user's earlier typed messages as style context.</li>
+        <li>Voice fingerprinting, audio provenance, speaker attribution, or any control stronger than "the audio stream is a keyboard".</li>
+        <li>A persistent, externally viewable ledger (tmux pane, <code>converser status</code>) as a fixed-path <code>converser-io</code> MCP tool.</li>
+        <li>Tier-3 <code>AskUserQuestion</code> answer relay, the own-child poster relay (gate n), and Android/remote, per the roadmap.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<footer id="sources">
+  <div class="eyebrow">Sources</div>
+  <p>All paths are under <code>cdocs/</code> in this repo (clauthier) unless noted. Evidence labels on this page (verified/source, verified/docs, verified/live, plausible, unverified) follow the proposal's.</p>
+  <ul>
+    <li><code>proposals/2026-09-29-converser-host-voicemode-serve.md</code>: accepted round 5, <code>implementation_ready</code> (source of truth)</li>
+    <li><code>reviews/2026-09-29-review-of-converser-host-voicemode-serve.md</code>, <code>…-r2-…</code>, <code>…-r3-…</code>, <code>…-r4-…</code>, <code>…-r5-review-of-converser-host-voicemode-serve.md</code> (accept)</li>
+    <li><code>reports/2026-09-28-converser-directions-assets/index.html</code>: decision artifact and visual style reference</li>
+    <li><code>proposals/2026-09-28-converser-lace-feature.md</code>: superseded in-container design, kept as the fallback</li>
+    <li>VoiceMode at <code>126d15e</code> (<code>/var/home/mjr/code/weft/clauthier/main/build/research/voicemode</code>); Claude Code docs fetched 2026-09-29</li>
+  </ul>
+</footer>
+
+</div>
+</body>
+</html>
