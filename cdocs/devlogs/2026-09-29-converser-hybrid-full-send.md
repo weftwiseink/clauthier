@@ -79,3 +79,4 @@ tags: [voice, converser, full-send, containers]
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
+| 19:10 | steer-implementer | impl-1 | User asks: A = install after the 1.0 reviewer accepts; B = user runs setsebool (GPU path); C = recreate clauthier at a natural break, warn just before | pending |
