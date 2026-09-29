@@ -16,7 +16,7 @@ tags: [voice, architecture, security, networking, packaging, podman, claude_plug
 
 # converser: a host voice service and an in-container voice session
 
-> BLUF(opus/voice/converser-lace-feature): Run VoiceMode on the host as `voicemode serve` (loopback, one `systemd --user` instance and bearer token per container, `converse` tool only), with whisper.cpp and Kokoro as rootless podman Quadlet containers from digest-pinned upstream images, published on `127.0.0.1` and given the GPU through the host's CDI spec.
+> BLUF(opus/voice/converser-lace-feature): Run VoiceMode on the host as `voicemode serve` (loopback, one `systemd --user` instance and bearer token per container, `converse` module only: `converse` plus an unremovable `pause_conversation` the client disables), with whisper.cpp and Kokoro as rootless podman Quadlet containers from digest-pinned upstream images, published on `127.0.0.1` and given the GPU through the host's CDI spec.
 > A container reaches its instance over one `pasta:-T` forward and gets its token from a podman `--secret` in `runArgs`.
 > Everything lives in the clauthier `converser` plugin directory (`host/` CLI and units, launcher, prompt).
 > Stage 1 ends with a voice conversation in the `clauthier` container relaying to an in-container session.
@@ -38,6 +38,10 @@ tags: [voice, architecture, security, networking, packaging, podman, claude_plug
 > Stage 1.4 is now driven by the implementer through a host `tmux` server whose panes run `podman exec -it` into `clauthier`. Only the headset sitting needs the user, and it follows an exact script.
 > The same scratch install showed that `VOICEMODE_TOOLS_ENABLED=converse` registers `pause_conversation` as well. The expected tool list, the launcher's `--disallowedTools`, and the threat table now account for it.
 > The r6 non-blocking items are also applied.
+
+> NOTE(opus/voice/converser-lace-feature): Revision r8 adds a mechanical text-only mode (`CONVERSER_VOICE=off`) so the unattended stage 1.4 can never open the host mic or speakers.
+> The `tmux` harness starts with `-f /dev/null`, so the user's tmux config, plugins, and resurrect snapshots are untouched, and the headset script no longer depends on a prefix key.
+> It also fixes run ordering against the launcher's lock, the conch check's `HOME`, the test client's runtime, typed-trigger wording, the `pause_conversation` threat row, and dependency pinning.
 
 ## Summary
 
@@ -213,6 +217,8 @@ Before each `install`, the user reviews `git log -p $(cat ~/.local/share/convers
   1. **Self-install from a clean commit** (above).
   2. **GPU gate.** Unless `--cpu`, require `getsebool container_use_xserver_devices` to print `on`. If it is off, print the one `sudo` line (below) and exit non-zero before any download, so a declined ask B fails fast and the `sudo` stays an explicit user step.
   3. **VoiceMode and the scoping stop-check.** `uv tool install --python 3.12 --excludes ~/.local/share/converser-host/src/uv-excludes.txt voice-mode==8.12.0`, where the package's `uv-excludes.txt` holds the one line `simpleaudio` (Facts). Python 3.12 is used rather than the host's default 3.14 for wheel coverage.
+     It also passes `--exclude-newer <date recorded in the script>`, so transitive packages (for example `fastmcp`) resolve as they did on the verified date rather than floating (plausible that this reproduces the verified set; the flag exists in uv 0.11.23).
+     After install it records `uv pip freeze --python ~/.local/share/uv/tools/voice-mode/bin/python` as `~/.local/share/converser-host/installed-deps` beside `installed-rev`, so a later re-install can be diffed.
      On failure, `install` prints the last `uv` error lines, which name the failing package, before stopping.
      After the install, `voicemode --version` must run.
      Then start one throwaway `serve` on `127.0.0.1:8800`, outside the 8765-8799 instance range. It gets a `mktemp -d` `VOICEMODE_BASE_DIR` and working directory, a throwaway token passed as `VOICEMODE_SERVE_TOKEN` (never `--token`), and `VOICEMODE_TOOLS_ENABLED=converse`.
@@ -396,7 +402,14 @@ tokf=${CONVERSER_TOKEN_FILE:-/run/secrets/converser-token}
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port/mcp" || :)
 [ "$code" = 401 ] || { echo "converser: voice server on 127.0.0.1:$port answered '$code', expected 401" >&2; exit 1; }
 umask 077
-trap 'rm -f "$run/mcp.json" "$run/converser.sockpath"' EXIT HUP INT TERM
+trap 'rm -f "$run/mcp.json" "$run/prompt.md" "$run/converser.sockpath"' EXIT HUP INT TERM
+# CONVERSER_VOICE=off removes converse client-side: no code path can open the mic or speakers.
+deny='mcp__claude_ai_*,mcp__voicemode__pause_conversation'
+cp "$here/launcher/SYSTEM_PROMPT.md" "$run/prompt.md"
+if [ "${CONVERSER_VOICE:-on}" = off ]; then
+  deny="$deny,mcp__voicemode__converse"
+  printf '\nVoice is off. Treat each typed line as the user'"'"'s speech; print readbacks instead of speaking them.\n' >> "$run/prompt.md"
+fi
 # printf is a shell builtin, so the token never reaches argv; `cat` sees only the path.
 # Do not swap in /usr/bin/printf or jq --arg, both of which would put it on a command line.
 printf '{"mcpServers":{"voicemode":{"type":"http","url":"http://127.0.0.1:%s/mcp","headers":{"Authorization":"Bearer %s"},"timeout":600000}}}' \
@@ -406,14 +419,16 @@ printf '{"crossSessionInbound":"accept","hooks":{"SessionStart":[{"hooks":[{"typ
 CONVERSER_SESSION=1 ENABLE_TOOL_SEARCH=false claude \
   --name converser --model sonnet --permission-mode bypassPermissions \
   --tools ListAgents,SendMessage \
-  --disallowedTools 'mcp__claude_ai_*,mcp__voicemode__pause_conversation' \
+  --disallowedTools "$deny" \
   --strict-mcp-config --mcp-config "$run/mcp.json" \
   --settings "$run/settings.json" \
-  --append-system-prompt-file "$here/launcher/SYSTEM_PROMPT.md" \
+  --append-system-prompt-file "$run/prompt.md" \
   "$@"
 ```
 
 Extra arguments pass through to `claude`, so `converser -p '<prompt>' --output-format stream-json --verbose` runs the same configuration headlessly for the checks in 1.4.
+The deny list is built once and passed once, because whether a second `--disallowedTools` merges with the first is unverified.
+With `CONVERSER_VOICE=off` the preflight, the MCP connection, messaging, and relay logic are all exercised; only `converse` is absent.
 
 `record-sockpath.sh` computes the same `run` and writes `$CLAUDE_CODE_MESSAGING_SOCKET` to `$run/converser.sockpath` (`0600`).
 
@@ -481,7 +496,10 @@ Text arriving in an overseer's `Stop` post is spoken or summarized to the user, 
 
 **Listen gating.**
 The converser opens a listen only when the user starts an exchange, or immediately after it asked the user something; never an idle open-mic loop.
-In stage 1 the user starts an exchange by typing into the converser's terminal (Enter, or "listen"); stage 2 adds a push-to-talk hotkey.
+In stage 1 the user starts an exchange by typing `listen` and Enter in the converser's terminal; an empty Enter does not submit in Claude Code. Stage 2 adds a push-to-talk hotkey.
+Any other typed line is the user's request itself, relayed like speech without opening a listen.
+Readbacks and spoken summaries use `wait_for_response=false`, so speaking never opens the mic by itself.
+With `CONVERSER_VOICE=off`, every typed line is a request and nothing is spoken.
 A headset is the default; hands-free is an explicit opt-in.
 
 The interaction and style content lives in `plugins/converser/launcher/SYSTEM_PROMPT.md` in stage 1 and in the plugin's `/converser` skill at stage 3.
@@ -614,7 +632,7 @@ Three independently installed pieces (host package, `runArgs` entries, managed f
 | Secret readable by other users in the container | Low (single-user containers) | Medium | `mode=0400,uid=<container user>`; container root can read it, as it can any file |
 | `converse(ref_text=<host path>)` reads a host file | Low | Low: used only for a configured clone voice (`converse.py:518-541`, `simple_failover.py:42-50`) | No clone voices configured |
 | `conch_mode=callback` types into a host tmux pane via `session send` | Low: binary absent | Low | Floor forbids callback mode |
-| Token holder pins the floor with `pause_conversation(seconds=<large>)` | Low | Medium: every project's converser gets "conch held" until the idle-expiry valve or a restart | Unremovable server-side in 8.12.0; the converser cannot call it (`--disallowedTools`); another token holder in the container can. Recovery is `systemctl --user restart converser-serve@<project>` |
+| Token holder pins the floor with `pause_conversation(seconds=<large>)` | Low | Medium-High: the pause re-stamps the hold for all of `seconds`, so every project's converser gets "conch held" until the pause ends or that `serve@` restarts (the dead PID then fails the liveness check); unbounded in practice | Unremovable server-side in 8.12.0; the converser cannot call it (`--disallowedTools`); another token holder in the container can. Recovery is `systemctl --user restart converser-serve@<project>` |
 | #521/#522 wedge | Medium | Medium | One client per process (while no other token holder connects); 600s `timeout`; bounded call shape; manual restart for a wedged-but-alive process |
 | DNS rebinding against the loopback listener | Low | Medium absent a token | Token required; FastMCP `Host`/`Origin` validation unverified |
 | Non-user speech relayed to a bypass overseer | Low-Medium | High | **Accepted: the audio stream is treated like a keyboard**; see below |
@@ -677,7 +695,11 @@ New gates introduced here:
 
 1. **Scoping pre-check (gate `pre`).** `install` step 3 (401 without the token; with it, exactly `converse` and `pause_conversation`).
    Then, in the headset sitting (ask D), from the host: one `converse()` end to end against `converser-serve@clauthier`, and a concurrent `converse()` against a throwaway instance on 8800 that returns "conch held".
-   Both use a small Python MCP client that reads its token from stdin.
+   Unlike the install stop-check, this throwaway keeps the real `HOME` (with a temp `VOICEMODE_BASE_DIR`), because the conch is `~/.voicemode/conch` under `HOME`.
+   The implementer starts both calls. It knows the first is holding the conch when `flock -n ~/.voicemode/conch true` starts failing, and only then starts the second.
+   Both calls use `mcp-converse.py` run by the tool venv's interpreter, which has the `mcp` package; host `python3` does not.
+   The client runs from the installed copy, never the container-writable checkout, and reads the token on stdin:
+   `~/.local/share/uv/tools/voice-mode/bin/python ~/.local/share/converser-host/src/mcp-converse.py --port 8765 --listen 30 < ~/.config/converser-host/instances/clauthier.token`.
 2. **Host hygiene (gates q, u).** Covered by `converser-host status`:
    - `ss -ltnH` shows 2022, 8880, and each instance port on `127.0.0.1` only;
    - `podman inspect converser-whisper converser-kokoro --format '{{json .HostConfig.PortBindings}}'` shows `HostIp` `127.0.0.1`;
@@ -690,17 +712,18 @@ New gates introduced here:
    With whisper stopped, `converse()` fails rather than reaching OpenAI.
    sshd on `22431` still answers (`ssh -p 22431 node@localhost true` from the host).
 4. **Timeout guard (gate p), in the headset sitting.** It opens the host mic for 90 s, so it runs only while the user is present.
-   Call `converse` with `listen_duration_max=90`, `disable_silence_detection=true`, `skip_tts=true`, and a short `message`, and stay silent.
-   With the launcher's config (600 s `timeout`) the call returns after about 90 s.
-   Repeat from a second MCP config without `timeout`: the client aborts near 60 s. Then check `journalctl --user -u converser-serve@clauthier` for the abandoned call, and restart the unit if it wedged (#522).
-5. **Converser inventory (gate d), headless.** `converser -p 'reply ok' --output-format stream-json --verbose --max-turns 1`; the `system` `init` event lists `tools` and `mcp_servers` (plausible, per the stream-json format). Exactly `ListAgents`, `SendMessage`, `mcp__voicemode__converse`, plus any unremovable built-in (`EndConversation`, possibly `WaitForMcpServers` with tool search off); no `Edit`/`Write`/`NotebookEdit`/`Read`/`Bash`, no `mcp__claude_ai_*`, no `mcp__voicemode__pause_conversation`, and `voicemode` connected.
+   With `timeout` (600 s): the implementer types into the voice-on converser pane, "Call converse with listen_duration_max=90, disable_silence_detection=true, skip_tts=true, message 'timeout test'." The user stays silent, and the call returns after about 90 s.
+   Without `timeout`: the implementer closes the converser window first, so only one client talks to `serve` (#521) and the launcher's lock is free.
+   It then writes `$run/mcp-notimeout.json` in the container the same way the launcher does, with builtin `printf` and no `"timeout"`, and runs `claude -p '<same instruction>' --strict-mcp-config --mcp-config "$run/mcp-notimeout.json" --tools '' --disallowedTools 'mcp__voicemode__pause_conversation'` in a pane. The client aborts near 60 s.
+   Then it checks `journalctl --user -u converser-serve@clauthier` for the abandoned call, restarts the unit if it wedged (#522), deletes the variant config, and reopens the converser window.
+5. **Converser inventory (gate d), headless, before any converser pane exists** (the launcher's `flock` refuses a second instance). `CONVERSER_VOICE=off converser -p 'reply ok' --output-format stream-json --verbose --max-turns 1`, which confirms everything below except `mcp__voicemode__converse`, which is absent by design. Its presence is confirmed by item 3's `tools/list` and by `/mcp` in the voice-on pane at 1.5; the `system` `init` event lists `tools` and `mcp_servers` (plausible, per the stream-json format). Voice on, exactly `ListAgents`, `SendMessage`, `mcp__voicemode__converse`, plus any unremovable built-in (`EndConversation`, possibly `WaitForMcpServers` with tool search off); no `Edit`/`Write`/`NotebookEdit`/`Read`/`Bash`, no `mcp__claude_ai_*`, no `mcp__voicemode__pause_conversation`, and `voicemode` connected.
 6. **Messaging (gates e, f, b).**
    - A bypass converser's `SendMessage` reaches a bypass overseer in `clauthier` with no `accept`.
    - `ListAgents` shows that overseer by name and shows no host or `weftwise` sessions.
    - A raw socket post through `hooks/inbox.py` reaches the converser, whose `accept` comes only from `--settings`.
    - The sockpath is at `/tmp/converser-1000/converser.sockpath`, since `clauthier` has no `XDG_RUNTIME_DIR`.
 7. **First voice loop (gate r).** Typed trigger, one spoken request, relay, the overseer's `SendMessage` reply spoken or shown.
-8. **Interaction behavior** (scripted transcripts, audio-free via `skip_tts` where possible; each run starts from a typed trigger).
+8. **Interaction behavior.** The text half runs in 1.4 with `CONVERSER_VOICE=off`, with typed lines as the requests; the voice half runs in 1.5, where each utterance follows a typed `listen`.
    A clear request with one obvious target relays without a question, as a `#N: <session>` entry, in cleaned user prose; entries to different targets share one number sequence.
    A request with no resolvable target, or contradicting the previous one, gets one short question.
    "Clean up the old branches", rendered as a deletion, gets a destructive-intent check; "force delete the old branches" does not.
@@ -768,7 +791,7 @@ In-container `sudo` (the managed file) is passwordless in `clauthier` and is not
 
 **1.0 Author the files (no host changes).**
 Create and commit, one logical commit each:
-- `plugins/converser/host/`: `converser-host`, `converser-whisper.container`, `converser-kokoro.container` (GPU and CPU digests as script constants), `converser-serve@.service`, `uv-excludes.txt`, `mcp-converse.py` (the host MCP test client for item 1 and gate p, token on stdin), and `README.md` (the container contract, the run-dir expression, the review-before-install rule);
+- `plugins/converser/host/`: `converser-host`, `converser-whisper.container`, `converser-kokoro.container` (GPU and CPU digests as script constants), `converser-serve@.service`, `uv-excludes.txt`, `mcp-converse.py` (the host MCP test client for item 1, using the `mcp` package from the VoiceMode tool venv, token on stdin), and `README.md` (the container contract, the run-dir expression, the review-before-install rule);
 - `plugins/converser/bin/converser`;
 - `plugins/converser/launcher/`: `SYSTEM_PROMPT.md` (the security floor, then the interaction model: relay without asking, intent verification, `#N: <session>` history on one global sequence, correction by follow-on utterance, prose both ways, never ack status posts, silence on posts that answer nothing it asked, the spoken-output budget) and `record-sockpath.sh`;
 - `plugins/converser/hooks/`: `inbox.py` and `stop-post.py`.
@@ -787,48 +810,51 @@ Then `converser-host status` passes the host part of Test Plan item 2, including
 3. Recreate with `lace up --rebuild --workspace-folder /var/home/mjr/code/weft/clauthier/main`. Plain `lace up` warns and reuses a running container.
 Then Test Plan item 3, and re-check `podman exec clauthier claude --version`: the rebuild re-resolves lace's floating feature tags, so the version can differ from the 2.1.274 verified here.
 
-**1.4 Converser without voice (implementer-driven).**
-The implementer drives both in-container sessions from the host through a dedicated host `tmux` server (`tmux -L converser`, tmux 3.6a, already installed).
+**1.4 Converser without voice (implementer-driven, text-only).**
+Everything in 1.4 runs with `CONVERSER_VOICE=off`, so `converse` is removed client-side and nothing can reach the host mic or speakers while the user is away.
+The implementer drives the in-container sessions from the host through a dedicated host `tmux` server, `tmux -L converser` (tmux 3.6a, already installed).
+The server starts with `-f /dev/null`, so it loads none of the user's tmux config: no `M-z` prefix, no tpm, and no resurrect or continuum restores or saves into the user's snapshots.
 Each pane runs `podman exec -it`, which gets its TTY from `tmux`.
-Nothing is installed in the container, the harness survives container rebuilds, and the user can attach to the same panes later.
-A transient check confirmed that a detached host `tmux` pane running `podman exec -it -u node -w /workspace/clauthier/main clauthier bash` is interactive (`tty` prints `/dev/pts/0`) and scriptable with `send-keys`/`capture-pane` (verified/live).
+Nothing is installed in the container, and the harness survives container rebuilds.
+A transient check confirmed that a detached host `tmux` pane running `podman exec -it -u node -w /workspace/clauthier/main clauthier bash` is interactive and scriptable with `send-keys`/`capture-pane` (verified/live).
 `wezterm cli` is not used: from a non-GUI session it does not reach the user's GUI socket and spawns a stray mux server (observed).
 
+Order matters, because the launcher holds a single-instance `flock`:
+1. Headless checks first, with no converser pane: item 5 (gate d), and the `${VAR}` expansion test for `--mcp-config` (Open Question 2), both as `podman exec -e CONVERSER_VOICE=off ... converser -p ...`.
+2. Then the panes:
+
 ```sh
-X='podman exec -it -u node -w /workspace/clauthier/main clauthier'
-tmux -L converser new-session -d -s converser -n overseer -x 220 -y 50 \
-  "$X claude --name clauthier-overseer --permission-mode bypassPermissions"
-tmux -L converser new-window -t converser -n converser \
-  "$X /workspace/clauthier/main/plugins/converser/bin/converser"
+X='podman exec -it -u node -w /workspace/clauthier/main'
+T='tmux -L converser'
+$T -f /dev/null new-session -d -s converser -n overseer -x 220 -y 50 \
+  "$X clauthier claude --name clauthier-overseer --permission-mode bypassPermissions"
+$T new-window -t converser -n converser \
+  "$X -e CONVERSER_VOICE=off clauthier /workspace/clauthier/main/plugins/converser/bin/converser"
 # Drive: literal text, a short pause, then Enter as a separate key.
-say() { tmux -L converser send-keys -t "converser:$1" -l "$2"; sleep 1; tmux -L converser send-keys -t "converser:$1" Enter; }
-look() { tmux -L converser capture-pane -p -J -t "converser:$1" -S -200; }
+say() { $T send-keys -t "converser:$1" -l "$2"; sleep 1; $T send-keys -t "converser:$1" Enter; }
+look() { $T capture-pane -p -J -t "converser:$1" -S -200; }
 ```
 
-With that harness the implementer runs:
-- Test Plan item 6 (gates e, f, b): for example `say converser "Send clauthier-overseer: ping from the converser"`, then `look overseer`; the raw post with `hooks/inbox.py` runs via `podman exec`.
-- The audio-free part of item 8: typed stand-ins for speech, with `skip_tts`.
-
-The headless `converser -p ... --output-format stream-json` form covers item 5 (gate d, tool inventory) and the one-minute `${VAR}` expansion test for `--mcp-config` (Open Question 2); neither needs a live second session.
+3. With that harness, run Test Plan item 6 (gates e, f, b): for example `say converser "Send clauthier-overseer: ping from the converser"`, then `look overseer`. The raw post with `hooks/inbox.py` runs via `podman exec`.
+4. Run the text half of item 8, with typed lines standing in for speech.
 `ListAgents`/`SendMessage` checks need both sessions live, hence the panes.
-Nothing in 1.4 opens a listen: the converser prompt's listen gating plus typed text keeps the mic closed. Item 4 (gate p) moves to 1.5.
-Leave both panes running for 1.5.
+Leave the overseer pane running for 1.5.
 
 **1.5 Headset sitting (ask D): first voice loop.**
 The implementer prepares first:
-- both panes are running from 1.4;
+- it respawns the converser window with voice on: `$T respawn-window -k -t converser:converser "$X clauthier /workspace/clauthier/main/plugins/converser/bin/converser"`, then selects it with `$T select-window -t converser:converser`;
 - `converser-host status clauthier clauthier` passes;
-- the host `converse()` client script from item 1 is ready.
+- it starts the 8800 throwaway `serve` for item 1 with the real `HOME` and a temp `VOICEMODE_BASE_DIR`.
+The implementer drives every host-side call; the user only speaks, listens, and types into the attached converser pane.
 Then it sends the user this script:
 1. Plug in the headset and make it the default input and output device.
-2. On the host, run `python3 <item-1 client> --instance clauthier` and answer the spoken prompt. Expect the transcript printed back.
-3. While step 2's call is listening, the implementer runs the throwaway-instance call; expect it to return "conch held". This is the item 1 conch check.
-4. Attach: `tmux -L converser attach -t converser`, then switch to the `converser` window (`Ctrl-b n`).
-5. Press Enter in the converser pane (the typed trigger) and say, for example, "Tell the clauthier overseer to reply with the word pineapple." Expect a `#1: clauthier-overseer →` entry and a spoken readback.
-6. Switch to the `overseer` window and confirm the relayed message arrived, marked as voice. Type "Reply to the converser with SendMessage: pineapple." Back in the converser, expect a `#2: clauthier-overseer ←` entry, spoken aloud. That completes gate r (item 7).
-7. Gate p (item 4): the implementer runs the 90 s silent listen, twice. Stay quiet; it takes about 3 minutes.
-8. The voice parts of item 8: a clear request, an ambiguous target, "clean up the old branches", and then "fix one".
-9. Detach with `Ctrl-b d`. The panes stay up.
+2. Item 1: when the implementer says "speak now", answer the spoken prompt. The implementer runs `mcp-converse.py` against 8765 (full command in item 1), waits until `flock -n ~/.voicemode/conch true` fails, then runs it against 8800 and expects "conch held". It shows you the transcript.
+3. In any host terminal, run `tmux -L converser attach -t converser:converser`. This lands in the converser window, and no prefix key is needed.
+4. Type `listen` and press Enter, then say, for example, "Tell the clauthier overseer to reply with the word pineapple." Expect a `#1: clauthier-overseer →` entry and a spoken readback.
+5. The implementer checks the overseer window (`look overseer`) for the relayed message, marked as voice. It then types there: "Reply to the converser with SendMessage: pineapple." In your pane, expect a `#2: clauthier-overseer ←` entry, spoken aloud. That completes gate r (item 7).
+6. Gate p (item 4): the implementer drives both halves while you stay quiet, about 3 minutes. The converser window closes during the second half and your terminal shows the overseer window meanwhile. The implementer reopens the converser window and selects it again, so you stay attached.
+7. The voice parts of item 8: type `listen` and press Enter before each utterance. Say a clear request, then one with an ambiguous target, then "clean up the old branches", then "fix one".
+8. Close the terminal window when done, or the implementer runs `tmux -L converser detach-client`. The panes stay up.
 No hook is needed: a bypass overseer's `SendMessage` to the bypass converser is delivered.
 **This is stage 1's target end state.**
 
