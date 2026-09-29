@@ -29,8 +29,15 @@ tags: [voice, architecture, security, networking, packaging, podman, claude_plug
 > Separately, a podman `--secret` in `runArgs` replaces `instance handoff`: the devcontainer CLI appends `runArgs` verbatim, which was verified in its source and on live containers.
 > A fixed in-container port removes the port file.
 > The first target is now the `clauthier` container, and stage 1 is restructured to reach it.
+> The firewall backstop existed only to guard VoiceMode's wildcard-bound installers, which this design never runs.
 > The six ambiguities listed in the design map are resolved inline.
-> The design map ([`-assets/index.html`](2026-09-29-converser-host-voicemode-serve-assets/index.html)) still depicts r5 (brew, firewall, handoff) and needs regeneration.
+> The design map ([`-assets/index.html`](2026-09-29-converser-host-voicemode-serve-assets/index.html)) still depicts r5 (brew, firewall, handoff); it is stale and not the source of truth.
+
+> NOTE(opus/voice/converser-lace-feature): Revision r7 fixes the two r6 blockers.
+> `voice-mode==8.12.0` pulls `simpleaudio`, which has no Linux wheel and does not build on this host. `install` now passes `uv tool install --excludes` to drop it, which was verified by a scratch install.
+> Stage 1.4 is now driven by the implementer through a host `tmux` server whose panes run `podman exec -it` into `clauthier`. Only the headset sitting needs the user, and it follows an exact script.
+> The same scratch install showed that `VOICEMODE_TOOLS_ENABLED=converse` registers `pause_conversation` as well. The expected tool list, the launcher's `--disallowedTools`, and the threat table now account for it.
+> The r6 non-blocking items are also applied.
 
 ## Summary
 
@@ -91,7 +98,8 @@ VoiceMode `serve` (verified/source):
 
 - `voicemode serve` binds `--host 127.0.0.1 --port 8765` by default and serves streamable HTTP at `/mcp` (`cli.py:2017-2044`, `:2157`). `--port`/`--host` are literal click defaults; the port goes on the command line.
 - The bearer token is read from `VOICEMODE_SERVE_TOKEN` when `--token` is absent (`config.py:1664`). Upstream's `start-voicemode-serve.sh` passes it as `--token` argv, visible to every host process via `ps`.
-- Tool registration defaults to `{converse, service}` (`tools/__init__.py:119`); `service` controls host systemd units. `VOICEMODE_TOOLS_ENABLED=converse` narrows it.
+- Tool registration defaults to `{converse, service}` (`tools/__init__.py:119`); `service` controls host systemd units. `VOICEMODE_TOOLS_ENABLED=converse` narrows it to the converse module, which also registers **`pause_conversation(seconds, message)`**. That tool holds the conch for `seconds` with no server-side clamp (`converse.py:4528-4610`). A `tools/list` against 8.12.0 with that setting returns exactly `converse` and `pause_conversation` (verified/live, scratch install).
+- `voice-mode` 8.12.0 depends on `simpleaudio`, which ships only an sdist for Linux; building it needs `alsa/asoundlib.h`, which this host lacks (r6 review, B1). `simpleaudio` is a pydub playback fallback reached only after `sounddevice` fails (`core.py:573`). `uv tool install --python 3.12 --excludes <file naming simpleaudio> voice-mode==8.12.0` (uv 0.11.23) resolves and installs without it. `voice_mode.core` and `voice_mode.tools.converse` import cleanly, `sounddevice` finds the system PortAudio V19.7.0, and a throwaway `serve` answers 401 without the token (verified/live: scratch `UV_TOOL_DIR`, `UV_TOOL_BIN_DIR`, `UV_PYTHON_INSTALL_DIR`, and `HOME`).
 - STT/TTS URL lists default to loopback then `https://api.openai.com/v1` (`config.py:777-778`).
 - Process environment wins over `voicemode.env` files (`config.py:520`), which are `~/.voicemode/voicemode.env` plus the nearest `.voicemode.env` walking up from the working directory (`config.py:18-67`).
 - The conch lock is hardcoded to `~/.voicemode/conch` (`conch.py:133`), shared by every same-user process in one PID namespace; `VOICEMODE_BASE_DIR` moves transcripts, audio, logs, and the control socket (`config.py:545-550,697`).
@@ -106,11 +114,11 @@ VoiceMode `serve` (verified/source):
 Upstream STT/TTS images (verified/live from `ghcr.io` manifests and configs unless marked):
 
 - `ghcr.io/ggml-org/whisper.cpp:main-cuda` (index `sha256:8a9def3eea0615dbee85cac1e0fa3898dce214fe9bb7955635ba25667da3884a` on 2026-09-29, 2.25 GB compressed, amd64) and `:main` for CPU (`sha256:070afe9654a204cb0b60848c47d25f6f9d052fd3a1e198de8462201233381391`, 0.51 GB). Entrypoint `["bash","-c"]`, runs as root inside its user namespace. The Dockerfile installs `curl` and `ffmpeg` and builds CUDA 13.0 for sm 75/80/86/90, which covers the RTX 3080 (verified/source, `.devops/main-cuda.Dockerfile`). `whisper-server` serves `GET /health` (verified/source, `examples/server/server.cpp:1218`). The tags float, so the package pins digests.
-- `ghcr.io/remsky/kokoro-fastapi-gpu:v0.9.0` (`sha256:9ba150465c6b8f5d6b1c62b54de83eb9aa0a1444aad8a1a9c8948eed60564b76`, equal to `latest`, 4.64 GB compressed, CUDA 12.6) and `kokoro-fastapi-cpu:latest` (`sha256:ee3111d6a2c903ed62f3b4fa19543c6901205ed39fce3c177e895b34a8386b9c`, 1.53 GB). They run as `appuser`, and the entrypoint is `./entrypoint.sh`. The image sets no `UVICORN_*` variable. At revision `404d122`, which the image labels name (verified/source):
+- `ghcr.io/remsky/kokoro-fastapi-gpu:v0.9.0` (`sha256:9ba150465c6b8f5d6b1c62b54de83eb9aa0a1444aad8a1a9c8948eed60564b76`, equal to `latest`, 4.64 GB compressed, CUDA 12.6) and `kokoro-fastapi-cpu:latest` (`sha256:ee3111d6a2c903ed62f3b4fa19543c6901205ed39fce3c177e895b34a8386b9c`, 1.53 GB). They run as `appuser`; `Entrypoint` is null and `Cmd` is `./entrypoint.sh`, so an `Exec=` would replace the script rather than append to it. The image sets no `UVICORN_*` variable. At revision `404d122`, which the image labels name (verified/source):
   - the entrypoint runs `download_model.py` unless `DOWNLOAD_MODEL=false`; that script verifies existing files by sha256 and returns early;
   - it then runs uvicorn on `${HOST:-0.0.0.0}:${PORT:-8880}` with no request limit;
   - the Dockerfile bakes the model at build time (`ARG DOWNLOAD_MODEL=true`), and the app serves `GET /health`.
-  That the published image was built with that default is plausible and is checked at first start (gate u).
+  The published image was built with that default: its history shows `RUN |1 DOWNLOAD_MODEL=true ... download_model.py` (verified/live, r6 review).
 - Model files: `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-<model>.bin`, the same URL VoiceMode uses (`whisper_helpers.py:116`). `large-v3-turbo` is 1.62 GB, LFS sha256 `1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69`. `base.en` is 148 MB, sha256 `a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002`.
 
 Podman, Quadlet, pasta, and the devcontainer CLI:
@@ -133,7 +141,7 @@ Claude Code (verified/docs unless marked):
 - `.mcp.json` supports `${VAR}` expansion in `url` and `headers`; whether `--mcp-config` files do is unverified.
 - `crossSessionInbound`: "A project or local value applies only when it's stricter than the value managed settings, the `--settings` flag, or user settings give" ([settings-reference](https://code.claude.com/docs/en/settings-reference)).
 - A bypass receiver holds inbound unless the sender is also bypass ([cross-session-messaging](https://code.claude.com/docs/en/cross-session-messaging)). Container and host sessions cannot message each other. The session's inbox path is exported as `CLAUDE_CODE_MESSAGING_SOCKET` before any hook runs, including `SessionStart` (same page; round-1 review).
-- Each live session writes `$CLAUDE_CONFIG_DIR/sessions/<pid>.json` with `sessionId`, `cwd`, `name`, `pidDomain`, and `messagingSocketPath` (verified/live, Claude Code 2.1.283; an undocumented internal). The directory is on the shared `~/.claude` mount, and `pidDomain` distinguishes containers.
+- Each live session writes `$CLAUDE_CONFIG_DIR/sessions/<pid>.json` with `sessionId`, `cwd`, `name`, `pidDomain`, and `messagingSocketPath` (verified/live, Claude Code 2.1.283-2.1.285; an undocumented internal). The directory is on the shared `~/.claude` mount, and `pidDomain` distinguishes containers.
 - Plugins ([plugins-reference](https://code.claude.com/docs/en/plugins-reference), [components](https://code.claude.com/docs/en/plugins/components)): can ship skills, agents, hooks, MCP servers, `bin/`, `userConfig`; agent frontmatter ignores `permissionMode`, `hooks`, `mcpServers`; `bin/` is on the Bash *tool's* PATH only; plugins cannot set CLI flags, `crossSessionInbound`, or managed settings; `--strict-mcp-config` excludes plugin MCP servers.
 - Managed `enabledPlugins` installs a plugin from a registered marketplace at session start and cannot be disabled from a user scope ([plugins/org](https://code.claude.com/docs/en/plugins/org)). Project settings outrank user settings for `enabledPlugins`.
 
@@ -203,13 +211,16 @@ Before each `install`, the user reviews `git log -p $(cat ~/.local/share/convers
 
 - `converser-host install [--cpu]` (stage 1): idempotent; it never runs `sudo` itself.
   1. **Self-install from a clean commit** (above).
-  2. **VoiceMode and the scoping stop-check.** `uv tool install --python 3.12 voice-mode==8.12.0` (3.12, not the host's default 3.14, so every dependency has wheels; plausible).
+  2. **GPU gate.** Unless `--cpu`, require `getsebool container_use_xserver_devices` to print `on`. If it is off, print the one `sudo` line (below) and exit non-zero before any download, so a declined ask B fails fast and the `sudo` stays an explicit user step.
+  3. **VoiceMode and the scoping stop-check.** `uv tool install --python 3.12 --excludes ~/.local/share/converser-host/src/uv-excludes.txt voice-mode==8.12.0`, where the package's `uv-excludes.txt` holds the one line `simpleaudio` (Facts). Python 3.12 is used rather than the host's default 3.14 for wheel coverage.
+     On failure, `install` prints the last `uv` error lines, which name the failing package, before stopping.
+     After the install, `voicemode --version` must run.
      Then start one throwaway `serve` on `127.0.0.1:8800`, outside the 8765-8799 instance range. It gets a `mktemp -d` `VOICEMODE_BASE_DIR` and working directory, a throwaway token passed as `VOICEMODE_SERVE_TOKEN` (never `--token`), and `VOICEMODE_TOOLS_ENABLED=converse`.
-     From the host, `curl` an MCP `initialize` + `tools/list`: without the token it must return 401, and with it exactly `[converse]`. Then stop the process and remove the temp dir.
+     From the host, `curl` an MCP `initialize` + `tools/list`: without the token it must return 401, and with it exactly `converse` and `pause_conversation` (any other name, `service` above all, fails the check). Then stop the process and remove the temp dir.
+     The throwaway also gets `HOME` pointed at the temp dir, because importing VoiceMode creates `~/.voicemode/` with a default `voicemode.env` (verified/live).
      `curl` never takes a token on argv: the authenticated request reads its header as a curl config from stdin through the shell builtin, `printf 'header = "Authorization: Bearer %s"\n' "$tok" | curl -K - ...`. `status` uses the same pattern.
      Stop here if either check fails.
-  3. **Model.** Download `ggml-large-v3-turbo.bin` (`ggml-base.en.bin` with `--cpu`) into `~/.local/share/converser-host/models/` and check its sha256 against the value pinned in the script (Facts).
-  4. **GPU gate.** Unless `--cpu`, require `getsebool container_use_xserver_devices` to print `on`. If it is off, print the one `sudo` line (below) and exit non-zero, so the `sudo` is an explicit user step, not hidden inside the script.
+  4. **Model.** Download `ggml-large-v3-turbo.bin` (`ggml-base.en.bin` with `--cpu`) into `~/.local/share/converser-host/models/` and check its sha256 against the value pinned in the script (Facts).
   5. **Units.** Write the two `.container` files (GPU or CPU image digests) into `~/.config/containers/systemd/` and `converser-serve@.service` into `~/.config/systemd/user/`, `systemctl --user daemon-reload`, `podman pull` both pinned digests (several GB; pulling before start keeps the first start inside its timeout), then `systemctl --user start converser-whisper converser-kokoro`.
      Then, as a guard, `systemctl --user mask voicemode-whisper voicemode-kokoro voicemode-serve`. No installer has written those unit files, so `mask` cannot collide with a regular file.
   6. **Verify.** `ss -ltnH` shows 2022 and 8880 on `127.0.0.1` only; `podman inspect` shows each published port with `HostIp` `127.0.0.1`; both units are `active` (which with `Notify=healthy` means healthy); each upstream unit's `systemctl --user is-enabled` output is `masked`. `is-enabled` exits 1 for a masked unit, so the script compares output, never the exit code, under `set -e`.
@@ -221,7 +232,8 @@ Before each `install`, the user reviews `git log -p $(cat ~/.local/share/convers
   5. `systemctl --user enable --now converser-serve@<project>`.
   6. Print the `runArgs` entries to add (below). It never prints the token.
   `--uid` (default 1000) is the container user's uid for the secret's owner.
-- `converser-host status [<project> <container>]` (stage 1, thin): the gate-q checks from step 6, plus per instance: the unit is active; an unauthenticated `tools/list` returns 401 and an authenticated one returns `[converse]` (token via `curl -K -` on stdin); `/proc/<MainPID>/environ` holds the pins; `ps -o args` shows no `--token`. Given a container, it also checks that the container's `CreateCommand` carries `pasta:-T,<container-port>:<instance port>` and `--secret converser-<project>`.
+  Re-running `instance add` for an existing project is a repair: it reuses the env file's port and token and creates only what is missing (the `.token` file, the podman secret if `podman secret exists` fails, the enabled unit). It prints the same `runArgs`. `--port` on an existing project is refused; that is `instance rm` then `add`.
+- `converser-host status [<project> <container>]` (stage 1, thin): the gate-q checks from step 6, plus per instance: the unit is active; an unauthenticated `tools/list` returns 401 and an authenticated one returns exactly `converse` and `pause_conversation` (token via `curl -K -` on stdin); `/proc/<MainPID>/environ` holds the pins; `ps -o args` shows no `--token`. Given a container, it also checks that the container's `CreateCommand` carries `pasta:-T,<container-port>:<instance port>` and `--secret converser-<project>`.
 - Stage 3b: `instance rm <project>` (stops and disables the unit, removes the env, token, and secret; warns when a container's `CreateCommand` still references the secret, since that container can then no longer be recreated), `uninstall` (removes units, Quadlet files, masks, images, and the self-install), and `model set <name>` (downloads, then edits the `Exec=` line of `converser-whisper.container`).
 
 **GPU and SELinux: `container_use_xserver_devices`, not `container_use_devices`.**
@@ -258,6 +270,8 @@ PublishPort=127.0.0.1:2022:2022
 Exec="whisper-server --host 0.0.0.0 --port 2022 --model /models/ggml-large-v3-turbo.bin --inference-path /v1/audio/transcriptions --threads 4 --convert"
 HealthCmd=curl -fsS http://127.0.0.1:2022/health
 HealthInterval=5s
+# large-v3-turbo takes a while to load; failures before this do not count.
+HealthStartPeriod=60s
 Notify=healthy
 NoNewPrivileges=true
 DropCapability=all
@@ -271,12 +285,12 @@ WantedBy=default.target
 ```
 
 `converser-kokoro.container` has the same shape:
-- `Image=ghcr.io/remsky/kokoro-fastapi-gpu:v0.9.0@sha256:9ba1504...` (or the `-cpu` digest);
+- `Image=ghcr.io/remsky/kokoro-fastapi-gpu@sha256:9ba1504...` (digest only, with `# v0.9.0` in a comment; `skopeo` and `podman manifest inspect` reject tag-plus-digest references), or the `-cpu` digest;
 - `AddDevice=nvidia.com/gpu=all` (dropped for `--cpu`) and `PublishPort=127.0.0.1:8880:8880`;
 - `Environment=DOWNLOAD_MODEL=false`, so a start never fetches from the network and a missing baked model fails loudly;
-- `HealthCmd=curl -fsS http://127.0.0.1:8880/health` with `Notify=healthy`, plus `NoNewPrivileges=true` and `DropCapability=all`;
+- `HealthCmd=curl -fsS http://127.0.0.1:8880/health`, `HealthStartPeriod=60s`, and `Notify=healthy`, plus `NoNewPrivileges=true` and `DropCapability=all`;
 - `Restart=on-failure` and `TimeoutStartSec=900`.
-`on-failure` suffices because the image's uvicorn has no request limit and never exits 0 by design (Facts). There is no `Exec=`, so the image entrypoint runs.
+`on-failure` suffices because the image's uvicorn has no request limit and never exits 0 by design (Facts). There is no `Exec=`, so the image's `Cmd` (`./entrypoint.sh`) runs.
 
 `converser-serve@.service`:
 
@@ -322,7 +336,7 @@ WantedBy=default.target
 Design points:
 
 - **No wildcard host listener.** `serve` binds `127.0.0.1`; whisper and Kokoro bind `0.0.0.0` only inside their own network namespaces, and their host exposure is the `127.0.0.1:` `PublishPort=`.
-- **No firewall rules.** The r5 backstop guarded against VoiceMode's wildcard-bound installers, which this design never runs. `serve` needs no rule to be reachable: `pasta -T` connects to the host's loopback, which firewalld does not filter. Nothing listens off loopback, so the `FedoraWorkstation` zone's open range and `tailscale0` do not matter here.
+- **No firewall rules.** No VoiceMode installer runs, so nothing binds a wildcard. `serve` needs no rule to be reachable: `pasta -T` connects to the host's loopback, which firewalld does not filter. Nothing listens off loopback, so the `FedoraWorkstation` zone's open range and `tailscale0` do not matter here.
 - **`VOICEMODE_CONCH_TIMEOUT=60`** bounds `wait_for_conch=true` only; the converser's floor allows only boolean `wait_for_conch` (below).
 - **`WorkingDirectory` under the state dir** keeps project `.voicemode.env` files out; `~/.voicemode.env` and `~/.voicemode/voicemode.env` would still load, losing to the command-line pins.
 - **Control channel on.** It gives a later "stop talking" hotkey a per-project `control.sock`; the hotkey must pick the conch holder's project (holder PID to `converser-serve@<project>` via `/proc/<pid>/cgroup`). Stage-2 work.
@@ -344,6 +358,7 @@ The secret is copied into the container at creation, so it survives every `lace 
 `podman inspect` shows the secret's name, not its value (plausible).
 Lace's `-p` publishing and portless ingress must keep working under the explicit `--network` (gate c).
 The lines go into the project's `.devcontainer/devcontainer.json` as a local, uncommitted edit (Implementation Phases): a host without the secret cannot create the container, so the lines must not reach other clones.
+Lace has no user-level `runArgs` overlay (its `user.json` takes `mounts`, `features`, `containerEnv`, and `git`), so the skip-worktree edit is the only option until lace host-service hooks exist.
 
 > NOTE(opus/voice/converser-lace-feature): `instance handoff` (the token and port written into the container over `podman exec -i` stdin, re-run after every recreate) is the fallback if gate s shows the secret missing or unreadable in the container.
 > It is not built unless that happens.
@@ -352,7 +367,7 @@ The lines go into the project's `.devcontainer/devcontainer.json` as a local, un
 
 The converser is a `claude` session started by `plugins/converser/bin/converser`, run by absolute path from the container's view of the clauthier checkout (`/workspace/clauthier/main/...` in `clauthier`, `/var/home/mjr/code/weft/clauthier/main/...` in `weftwise`), with:
 
-- `--tools ListAgents,SendMessage` (built-ins only) and `--disallowedTools "mcp__claude_ai_*"`;
+- `--tools ListAgents,SendMessage` (built-ins only) and `--disallowedTools "mcp__claude_ai_*,mcp__voicemode__pause_conversation"` (`serve` cannot drop `pause_conversation`, so the client does);
 - `--strict-mcp-config --mcp-config <generated>` naming one HTTP server, `voicemode`, with the bearer header and `"timeout": 600000`;
 - `ENABLE_TOOL_SEARCH=false`, so `mcp__voicemode__converse` loads upfront;
 - `--settings <generated>` carrying `crossSessionInbound: "accept"` and a `SessionStart` hook that records `$CLAUDE_CODE_MESSAGING_SOCKET` into the sockpath file;
@@ -377,7 +392,7 @@ port=${CONVERSER_PORT:-8765}
 tokf=${CONVERSER_TOKEN_FILE:-/run/secrets/converser-token}
 [ -r "$tokf" ] || { echo "converser: no token at $tokf (runArgs --secret missing?)" >&2; exit 1; }
 # Preflight without the token: 401 means the forward and serve are up
-# (plausible that auth answers before MCP parsing; gate pre shows the status).
+# (TokenAuthMiddleware answers before MCP parsing; verified/source, cli.py).
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port/mcp" || :)
 [ "$code" = 401 ] || { echo "converser: voice server on 127.0.0.1:$port answered '$code', expected 401" >&2; exit 1; }
 umask 077
@@ -390,15 +405,19 @@ printf '{"crossSessionInbound":"accept","hooks":{"SessionStart":[{"hooks":[{"typ
   "$here" > "$run/settings.json"
 CONVERSER_SESSION=1 ENABLE_TOOL_SEARCH=false claude \
   --name converser --model sonnet --permission-mode bypassPermissions \
-  --tools ListAgents,SendMessage --disallowedTools 'mcp__claude_ai_*' \
+  --tools ListAgents,SendMessage \
+  --disallowedTools 'mcp__claude_ai_*,mcp__voicemode__pause_conversation' \
   --strict-mcp-config --mcp-config "$run/mcp.json" \
   --settings "$run/settings.json" \
-  --append-system-prompt-file "$here/launcher/SYSTEM_PROMPT.md"
+  --append-system-prompt-file "$here/launcher/SYSTEM_PROMPT.md" \
+  "$@"
 ```
+
+Extra arguments pass through to `claude`, so `converser -p '<prompt>' --output-format stream-json --verbose` runs the same configuration headlessly for the checks in 1.4.
 
 `record-sockpath.sh` computes the same `run` and writes `$CLAUDE_CODE_MESSAGING_SOCKET` to `$run/converser.sockpath` (`0600`).
 
-**Client timeout.** The security floor bounds the converser's calls: `listen_duration_max` ≤ 90, single-turn (no `turns`), spoken messages under a minute, `wait_for_conch` only `true` or `false` (never a number), no `hold_conch`, never `conch_mode=callback`.
+**Client timeout.** The security floor bounds the converser's calls: no `pause_conversation` (also removed client-side), `listen_duration_max` ≤ 90, single-turn (no `turns`), spoken messages under a minute, `wait_for_conch` only `true` or `false` (never a number), no `hold_conch`, never `conch_mode=callback`.
 The worst case is then about 60s conch wait, 60s playback, 90s listen, and a few seconds of STT, well under the 600s per-server `timeout`.
 Without that field the 60s HTTP request timer aborts every default listen, so the field is load-bearing.
 These bounds are prompt-level: they hold for the converser, not for another container process holding the token (Security Analysis).
@@ -533,7 +552,7 @@ Three independently installed pieces (host package, `runArgs` entries, managed f
 - Managed file missing (any rebuild in stage 1): overseers silently stop posting, and the trace cannot show it because the trace comes from the missing hook.
 - Plugin enabled at user or project scope by mistake (stage 3): hooks on the host too (liveness checks keep them no-ops, but it is the wrong scope).
 
-`converser-host status <project> <container>` covers the host half and the forward; the stage-3 `converser status` covers the container half (launcher present, managed file present and valid, plugin enabled, port reachable with token, `tools/list` equals `[converse]`, converser socket live).
+`converser-host status <project> <container>` covers the host half and the forward; the stage-3 `converser status` covers the container half (launcher present, managed file present and valid, plugin enabled, port reachable with token, `tools/list` equals `converse` and `pause_conversation`, converser socket live).
 
 ## Important Design Decisions
 
@@ -595,6 +614,7 @@ Three independently installed pieces (host package, `runArgs` entries, managed f
 | Secret readable by other users in the container | Low (single-user containers) | Medium | `mode=0400,uid=<container user>`; container root can read it, as it can any file |
 | `converse(ref_text=<host path>)` reads a host file | Low | Low: used only for a configured clone voice (`converse.py:518-541`, `simple_failover.py:42-50`) | No clone voices configured |
 | `conch_mode=callback` types into a host tmux pane via `session send` | Low: binary absent | Low | Floor forbids callback mode |
+| Token holder pins the floor with `pause_conversation(seconds=<large>)` | Low | Medium: every project's converser gets "conch held" until the idle-expiry valve or a restart | Unremovable server-side in 8.12.0; the converser cannot call it (`--disallowedTools`); another token holder in the container can. Recovery is `systemctl --user restart converser-serve@<project>` |
 | #521/#522 wedge | Medium | Medium | One client per process (while no other token holder connects); 600s `timeout`; bounded call shape; manual restart for a wedged-but-alive process |
 | DNS rebinding against the loopback listener | Low | Medium absent a token | Token required; FastMCP `Host`/`Origin` validation unverified |
 | Non-user speech relayed to a bypass overseer | Low-Medium | High | **Accepted: the audio stream is treated like a keyboard**; see below |
@@ -637,7 +657,7 @@ Speaker attribution and audio provenance are Future Work ([`2026-09-29-converser
 - **Whisper model change.** Stage 1: edit `Exec=` in the Quadlet and restart; stage 3b: `model set`. `voicemode whisper model install` would see the containerized `whisper-server` through `pgrep` (container processes are host processes; plausible), try the masked upstream unit, and fail loudly.
 - **VoiceMode upgrade.** Re-running `uv tool install` cannot touch the Quadlet files, the `serve@` unit, or the masks; the pin stays until deliberately bumped.
 - **Upstream unit unmasked by hand.** VoiceMode's service fallback could then kill the port holder, which is the rootless port forwarder of the whisper container. `status` reports any upstream unit that is not `masked`.
-- **Secret deleted while a container references it.** The next `lace up --rebuild` fails at create with a missing-secret error; `instance rm` warns first (3b). Recreating the secret with the same name fixes it.
+- **Secret deleted while a container references it.** The next `lace up --rebuild` fails at create with a missing-secret error; `instance rm` warns first (3b). A plain `podman start` after a reboot plausibly fails too, if podman re-reads the store on start (unverified; tested with Open Question 1). Recreating the secret with the same name fixes both (`converser-host instance add <project>` repairs it).
 - **Token rotation.** `podman secret create --replace` plus a `serve@` restart; whether the running container sees the new value without a recreate is Open Question 1.
 - **Container rebuild.** The token survives (secret); the launcher, prompt, and hook bodies survive (repo files); the managed file does not (gate s re-places it).
 - **Host logout with `Linger=no`.** User units, including the Quadlet containers, stop; voice unavailable until login. `loginctl enable-linger` if not acceptable.
@@ -655,8 +675,8 @@ New gates introduced here:
 - **(t)** a directory-source managed plugin install works inside the container (stage 3);
 - **(u)** GPU: whisper's and Kokoro's journals name a CUDA device; if not, the CPU images pass gate r.
 
-1. **Scoping pre-check (gate `pre`).** `install` step 2 (401 without token, `[converse]` with it).
-   Then, in the headset sitting, from the host: one `converse()` end to end against `converser-serve@clauthier`, and a concurrent `converse()` against a throwaway instance on 8800 that returns "conch held".
+1. **Scoping pre-check (gate `pre`).** `install` step 3 (401 without the token; with it, exactly `converse` and `pause_conversation`).
+   Then, in the headset sitting (ask D), from the host: one `converse()` end to end against `converser-serve@clauthier`, and a concurrent `converse()` against a throwaway instance on 8800 that returns "conch held".
    Both use a small Python MCP client that reads its token from stdin.
 2. **Host hygiene (gates q, u).** Covered by `converser-host status`:
    - `ss -ltnH` shows 2022, 8880, and each instance port on `127.0.0.1` only;
@@ -666,11 +686,14 @@ New gates introduced here:
    - the journals name the CUDA backend.
    From the container, `curl http://host.containers.internal:2022/` fails: a `127.0.0.1` listener refuses the host's global address.
 3. **Forward and secret in `clauthier` (gates i, c, s-token).** `podman inspect clauthier --format '{{json .Config.CreateCommand}}'` contains `pasta:-T,8765:8765` and `--secret`.
-   In the container, `stat -c '%a %U' /run/secrets/converser-token` prints `400 node`, and an unauthenticated `POST http://127.0.0.1:8765/mcp` returns 401. Authenticated, `tools/list` is `[converse]` and `service` is absent.
+   In the container, `stat -c '%a %U' /run/secrets/converser-token` prints `400 node`, and an unauthenticated `POST http://127.0.0.1:8765/mcp` returns 401. Authenticated, `tools/list` is exactly `converse` and `pause_conversation`; `service` is absent.
    With whisper stopped, `converse()` fails rather than reaching OpenAI.
    sshd on `22431` still answers (`ssh -p 22431 node@localhost true` from the host).
-4. **Timeout guard (gate p).**
-5. **Converser inventory (gate d).** Exactly `ListAgents`, `SendMessage`, `mcp__voicemode__converse`, plus any unremovable built-in (`EndConversation`, possibly `WaitForMcpServers` with tool search off); no `Edit`/`Write`/`NotebookEdit`/`Read`/`Bash`, no `mcp__claude_ai_*`.
+4. **Timeout guard (gate p), in the headset sitting.** It opens the host mic for 90 s, so it runs only while the user is present.
+   Call `converse` with `listen_duration_max=90`, `disable_silence_detection=true`, `skip_tts=true`, and a short `message`, and stay silent.
+   With the launcher's config (600 s `timeout`) the call returns after about 90 s.
+   Repeat from a second MCP config without `timeout`: the client aborts near 60 s. Then check `journalctl --user -u converser-serve@clauthier` for the abandoned call, and restart the unit if it wedged (#522).
+5. **Converser inventory (gate d), headless.** `converser -p 'reply ok' --output-format stream-json --verbose --max-turns 1`; the `system` `init` event lists `tools` and `mcp_servers` (plausible, per the stream-json format). Exactly `ListAgents`, `SendMessage`, `mcp__voicemode__converse`, plus any unremovable built-in (`EndConversation`, possibly `WaitForMcpServers` with tool search off); no `Edit`/`Write`/`NotebookEdit`/`Read`/`Bash`, no `mcp__claude_ai_*`, no `mcp__voicemode__pause_conversation`, and `voicemode` connected.
 6. **Messaging (gates e, f, b).**
    - A bypass converser's `SendMessage` reaches a bypass overseer in `clauthier` with no `accept`.
    - `ListAgents` shows that overseer by name and shows no host or `weftwise` sessions.
@@ -716,7 +739,7 @@ Observability pair for stage 2: the Stop hook's `$run/stop-trace.jsonl` plus `jo
 
 - *GPU denied by SELinux.* `converser-whisper` is active and `/health` answers, but transcription is slow. The whisper journal shows a CUDA init failure (for example `ggml_cuda_init: failed to initialize CUDA: no CUDA-capable device is detected`) and no CUDA device line. `sudo ausearch -m avc -ts recent` shows a `denied { open }` for `container_t` on `xserver_misc_device_t`. Cause: `container_use_xserver_devices` is off. Fix: the boolean, or `--cpu`.
 - *Forward missing after a recreate.* The launcher exits with `voice server on 127.0.0.1:8765 answered '000', expected 401`. `podman inspect clauthier --format '{{json .Config.CreateCommand}}' | grep -c pasta:-T` prints `0`. Cause: the `runArgs` edit was lost (a checkout reset cleared the skip-worktree edit) or lace reused the running container (`lace up` without `--rebuild`). Fix: restore the lines, then `lace up --rebuild`.
-- *Secret missing on the host.* `lace up --rebuild` fails before the container starts with podman's missing-secret error (`no secret with name or id "converser-clauthier"`). `podman secret ls` confirms. Fix: `converser-host instance add clauthier` again, or remove the `runArgs` lines.
+- *Secret missing on the host.* `lace up --rebuild` fails before the container starts with podman's missing-secret error (`no secret with name or id "converser-clauthier"`). `podman secret ls` confirms. Fix: `converser-host instance add clauthier`, which on an existing project recreates only the missing secret from the stored token (or directly `podman secret create converser-clauthier ~/.config/converser-host/instances/clauthier.token`), or remove the `runArgs` lines.
 - *Relays never arrive.* `SendMessage` succeeds in the converser but the overseer shows nothing: the overseer is not running bypass. Check with `/status` in the overseer, where the permission mode is shown.
 
 ## Implementation Phases
@@ -730,12 +753,13 @@ They do not modify lace, `cdocs`, or any other existing clauthier file.
 
 | Ask | Kind | Needed before | Notes |
 |---|---|---|---|
-| A. Review `git log -p` of `plugins/converser/` at the commit to install | Review | 1.1 | Batch with B |
-| B. `sudo setsebool -P container_use_xserver_devices on` | **Host `sudo`** (the only one) | 1.1 step 4 | Declining means `install --cpu` |
-| C. Consent to recreate `clauthier` | Consent | 1.3 | Ends every session in that container; pick a natural break |
-| D. Headset sitting: host `converse()` and conch check (item 1), first voice loop (gate r), voice parts of item 8 | **Physical presence**, mic and speaker | 1.5 | One sitting; the rest of item 8 runs audio-free |
+| A. Review `git log -p` of `plugins/converser/` at the commit to install | Review | 1.1 | One message with B and C |
+| B. `sudo setsebool -P container_use_xserver_devices on` | **Host `sudo`** (the only one) | 1.1 step 2 | Declining means `install --cpu` |
+| C. Consent to recreate `clauthier` (given in advance, exercised at 1.3 and again at 1.6) | Consent | 1.3 | Ends every session in that container; the implementer picks a natural break |
+| D. Headset sitting (script in 1.5) | **Physical presence**, mic and speaker | 1.5 | One sitting |
 | E. Leave one AFK arc running in `clauthier` | Time | 1.6 | For the trace-only Stop count |
 
+The implementer sends A, B, and C together in one message as soon as 1.0 is committed; D and E are separate by nature.
 In-container `sudo` (the managed file) is passwordless in `clauthier` and is not a user ask.
 
 ### Stage 1: the `clauthier` container, end to end
@@ -744,29 +768,67 @@ In-container `sudo` (the managed file) is passwordless in `clauthier` and is not
 
 **1.0 Author the files (no host changes).**
 Create and commit, one logical commit each:
-- `plugins/converser/host/`: `converser-host`, `converser-whisper.container`, `converser-kokoro.container` (GPU and CPU digests as script constants), `converser-serve@.service`, and `README.md` (the container contract, the run-dir expression, the review-before-install rule);
+- `plugins/converser/host/`: `converser-host`, `converser-whisper.container`, `converser-kokoro.container` (GPU and CPU digests as script constants), `converser-serve@.service`, `uv-excludes.txt`, `mcp-converse.py` (the host MCP test client for item 1 and gate p, token on stdin), and `README.md` (the container contract, the run-dir expression, the review-before-install rule);
 - `plugins/converser/bin/converser`;
 - `plugins/converser/launcher/`: `SYSTEM_PROMPT.md` (the security floor, then the interaction model: relay without asking, intent verification, `#N: <session>` history on one global sequence, correction by follow-on utterance, prose both ways, never ack status posts, silence on posts that answer nothing it asked, the spoken-output budget) and `record-sockpath.sh`;
 - `plugins/converser/hooks/`: `inbox.py` and `stop-post.py`.
 Pass the static checks in Verification Methodology.
 **Do not** add `.claude-plugin/plugin.json` or a `marketplace.json` entry, and put nothing under `bin/` except the launcher.
 
-**1.1 Host install.** After asks A and B: `sh plugins/converser/host/converser-host install` from the clauthier checkout on the host. Its step 2 is the scoping stop-check (stop on failure); the pulls are about 6.9 GB compressed on the GPU path.
+**1.1 Host install.** After asks A and B: `sh plugins/converser/host/converser-host install` from the clauthier checkout on the host. Step 2 fails fast without the boolean (or pass `--cpu`); step 3 is the `uv` install and the scoping stop-check (stop on failure); the pulls are about 6.9 GB compressed on the GPU path.
 Then `converser-host status` passes the host part of Test Plan item 2, including gate u (or record the CPU fallback).
 
 **1.2 Instance.** `converser-host instance add clauthier`; record the printed `runArgs`.
-`status clauthier` passes the per-instance checks (401 and `[converse]`, pins, no `--token`).
+`status clauthier` passes the per-instance checks (401, then `converse` and `pause_conversation`, pins, no `--token`).
 
 **1.3 Forward, secret, recreate.** After ask C:
 1. Add the printed entries as a `runArgs` array in `/var/home/mjr/code/weft/clauthier/main/.devcontainer/devcontainer.json`.
 2. Protect the edit with `git update-index --skip-worktree .devcontainer/devcontainer.json`. Bypass-mode sessions commit to this checkout, and the lines must not reach other clones. Undo with `--no-skip-worktree` before any intended edit to the file.
 3. Recreate with `lace up --rebuild --workspace-folder /var/home/mjr/code/weft/clauthier/main`. Plain `lace up` warns and reuses a running container.
-Then Test Plan item 3.
+Then Test Plan item 3, and re-check `podman exec clauthier claude --version`: the rebuild re-resolves lace's floating feature tags, so the version can differ from the 2.1.274 verified here.
 
-**1.4 Converser without voice.** In a `clauthier` terminal, start a bypass overseer named for the test (`claude --name clauthier-overseer --permission-mode bypassPermissions`). In another, run `/workspace/clauthier/main/plugins/converser/bin/converser`.
-Test Plan items 4, 5, 6, and the audio-free part of 8. The one-minute `${VAR}` expansion test for `--mcp-config` (Open Question 2) also runs here.
+**1.4 Converser without voice (implementer-driven).**
+The implementer drives both in-container sessions from the host through a dedicated host `tmux` server (`tmux -L converser`, tmux 3.6a, already installed).
+Each pane runs `podman exec -it`, which gets its TTY from `tmux`.
+Nothing is installed in the container, the harness survives container rebuilds, and the user can attach to the same panes later.
+A transient check confirmed that a detached host `tmux` pane running `podman exec -it -u node -w /workspace/clauthier/main clauthier bash` is interactive (`tty` prints `/dev/pts/0`) and scriptable with `send-keys`/`capture-pane` (verified/live).
+`wezterm cli` is not used: from a non-GUI session it does not reach the user's GUI socket and spawns a stray mux server (observed).
 
-**1.5 Headset sitting (ask D): first voice loop.** Test Plan item 1's end-to-end half, then gate r (item 7): type the trigger, speak one request, let the converser relay it, have the overseer reply with `SendMessage`. Then the voice parts of item 8.
+```sh
+X='podman exec -it -u node -w /workspace/clauthier/main clauthier'
+tmux -L converser new-session -d -s converser -n overseer -x 220 -y 50 \
+  "$X claude --name clauthier-overseer --permission-mode bypassPermissions"
+tmux -L converser new-window -t converser -n converser \
+  "$X /workspace/clauthier/main/plugins/converser/bin/converser"
+# Drive: literal text, a short pause, then Enter as a separate key.
+say() { tmux -L converser send-keys -t "converser:$1" -l "$2"; sleep 1; tmux -L converser send-keys -t "converser:$1" Enter; }
+look() { tmux -L converser capture-pane -p -J -t "converser:$1" -S -200; }
+```
+
+With that harness the implementer runs:
+- Test Plan item 6 (gates e, f, b): for example `say converser "Send clauthier-overseer: ping from the converser"`, then `look overseer`; the raw post with `hooks/inbox.py` runs via `podman exec`.
+- The audio-free part of item 8: typed stand-ins for speech, with `skip_tts`.
+
+The headless `converser -p ... --output-format stream-json` form covers item 5 (gate d, tool inventory) and the one-minute `${VAR}` expansion test for `--mcp-config` (Open Question 2); neither needs a live second session.
+`ListAgents`/`SendMessage` checks need both sessions live, hence the panes.
+Nothing in 1.4 opens a listen: the converser prompt's listen gating plus typed text keeps the mic closed. Item 4 (gate p) moves to 1.5.
+Leave both panes running for 1.5.
+
+**1.5 Headset sitting (ask D): first voice loop.**
+The implementer prepares first:
+- both panes are running from 1.4;
+- `converser-host status clauthier clauthier` passes;
+- the host `converse()` client script from item 1 is ready.
+Then it sends the user this script:
+1. Plug in the headset and make it the default input and output device.
+2. On the host, run `python3 <item-1 client> --instance clauthier` and answer the spoken prompt. Expect the transcript printed back.
+3. While step 2's call is listening, the implementer runs the throwaway-instance call; expect it to return "conch held". This is the item 1 conch check.
+4. Attach: `tmux -L converser attach -t converser`, then switch to the `converser` window (`Ctrl-b n`).
+5. Press Enter in the converser pane (the typed trigger) and say, for example, "Tell the clauthier overseer to reply with the word pineapple." Expect a `#1: clauthier-overseer →` entry and a spoken readback.
+6. Switch to the `overseer` window and confirm the relayed message arrived, marked as voice. Type "Reply to the converser with SendMessage: pineapple." Back in the converser, expect a `#2: clauthier-overseer ←` entry, spoken aloud. That completes gate r (item 7).
+7. Gate p (item 4): the implementer runs the 90 s silent listen, twice. Stay quiet; it takes about 3 minutes.
+8. The voice parts of item 8: a clear request, an ambiguous target, "clean up the old branches", and then "fix one".
+9. Detach with `Ctrl-b d`. The panes stay up.
 No hook is needed: a bypass overseer's `SendMessage` to the bypass converser is delivered.
 **This is stage 1's target end state.**
 
@@ -823,7 +885,6 @@ Deliberately not designed here:
 
 Superseded: [`2026-09-28-converser-lace-feature.md`](2026-09-28-converser-lace-feature.md) (the in-container fallback) and its reviews.
 Reviews of this proposal: `cdocs/reviews/2026-09-29-review-of-converser-host-voicemode-serve.md` and the `-r2-` through `-r5-` rounds beside it.
-Design map (depicts r5; needs regeneration): [`2026-09-29-converser-host-voicemode-serve-assets/index.html`](2026-09-29-converser-host-voicemode-serve-assets/index.html).
 Reports: see Background.
 VoiceMode source: `cli.py:2017-2273`, `config.py:18-110,520,545-550,690-697,777-778,885-891,927,1639-1667`, `conch.py:125-140,348,388-440`, `control_socket.py:300-322`, `shared.py:44`, `tools/__init__.py:110-125`, `tools/converse.py:138-150,518-541,3112-3140,4308-4345`, `tools/service.py:431-470,612-640,733-742`, `whisper_model_unified.py:169-179`, `utils/services/whisper_helpers.py:116`, `simple_failover.py:25-50`.
 Images: [whisper.cpp `.devops/main-cuda.Dockerfile`](https://github.com/ggml-org/whisper.cpp/blob/master/.devops/main-cuda.Dockerfile), [whisper `server.cpp`](https://github.com/ggml-org/whisper.cpp/blob/master/examples/server/server.cpp), [Kokoro-FastAPI `404d122`](https://github.com/remsky/Kokoro-FastAPI/tree/404d122e847569012bd6a6afe36f1c3a5e1c66b7) (`docker/gpu/Dockerfile.optimized`, `docker/scripts/entrypoint.sh`, `docker/scripts/download_model.py`, `api/src/main.py:164`).
