@@ -31,6 +31,12 @@ tags: [voice, converser, full-send, containers]
 | r8 | prop-r6 (opus, warm) | rev-r8 (opus) | revise | cdocs/reviews/2026-09-29-r8-review-of-converser-host-voicemode-serve.md | d7142fd; review 5ac7ea3: killing a tmux pane orphans podman exec, lock stays held |
 | r9 | prop-r6 (opus, warm) | rev-r9 (opus) | accept | cdocs/reviews/2026-09-29-r9-review-of-converser-host-voicemode-serve.md | 1eb4b6c; review 797dcfd; 5 nits to fix before iterate |
 
+## Iterate Brief
+
+- **Scope:** proposal stage 1 (1.0-1.6), ending at the 1.5 headset loop (end state) plus the 1.6 Stop hook. Stages 2+ out of scope.
+- **Verification floor:** the proposal's Verification Methodology commands pass as observed on the live host and in `clauthier` (not by config reading); failure picture: the launcher exits `voice server on 127.0.0.1:8765 answered '000', expected 401` because the pasta forward is missing from `CreateCommand`.
+- **User asks:** A-C batched after 1.0; D headset sitting; E AFK arc.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
@@ -62,6 +68,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | rev-r9 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-r9-review-of-converser-host-voicemode-serve.md | 18:30 | fresh |
 | return | rev-r9 | review | 18:40 | accept, 797dcfd |
 | dispatch | prop-r6 (warm) | proposal | 18:40 | r9 nits, set implementation_ready |
+| return | prop-r6 | proposal | 18:45 | d8bff24 implementation_ready; pkill absent in image, fallback now fuser -k on lock |
+| dispatch | impl-1 (cdocs:implementer, opus) | plugins/converser/** | 18:45 | stage 1.0 only, then stop for asks A-C |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
