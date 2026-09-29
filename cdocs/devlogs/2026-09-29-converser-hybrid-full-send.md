@@ -80,3 +80,4 @@ tags: [voice, converser, full-send, containers]
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 | 19:10 | steer-implementer | impl-1 | User asks: A = install after the 1.0 reviewer accepts; B = user runs setsebool (GPU path); C = recreate clauthier at a natural break, warn just before | pending |
+| 19:20 | steer-implementer | impl-1 | User AFK, setsebool not yet run (boolean still off). Proceed with everything that does not need it: install on the CPU path now if a later GPU switch by re-running install is supported, then 1.2-1.4 (text-only). clauthier has no claude sessions running (checked 19:20), so the 1.3 recreate is safe now; re-check right before. Stop before 1.5. | pending |
