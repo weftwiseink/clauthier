@@ -5,7 +5,7 @@ first_authored:
 task_list: voice/converser-lace-feature
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -43,7 +43,7 @@ tags: [voice, architecture, security, networking, packaging, podman, claude_plug
 > The `tmux` harness starts with `-f /dev/null`, so the user's tmux config, plugins, and resurrect snapshots are untouched, and the headset script no longer depends on a prefix key.
 > It also fixes run ordering against the launcher's lock, the conch check's `HOME`, the test client's runtime, typed-trigger wording, the `pause_conversation` threat row, and dependency pinning.
 
-> NOTE(opus/voice/converser-lace-feature): Revision r9 replaces every converser pane by ending the session (`/exit`, then an in-container lock check, with `pkill` as a fallback), never by killing the pane: a killed `podman exec -it` pane leaves its process running in the container (r8 review, verified/live).
+> NOTE(opus/voice/converser-lace-feature): Revision r9 replaces every converser pane by ending the session (`/exit`, then an in-container lock check, with `fuser -k` on the lock as a fallback), never by killing the pane: a killed `podman exec -it` pane leaves its process running in the container (r8 review, verified/live).
 > It also grants the gate-p variant run its tool, phrases gate p's instruction so it is not relayed, gives the 8800 conch check token, pins, and polling, attaches from outside the user's tmux, separates the `${VAR}` test from the launcher, and splits Test Plan item 5.
 
 ## Summary
@@ -411,7 +411,7 @@ deny='mcp__claude_ai_*,mcp__voicemode__pause_conversation'
 cp "$here/launcher/SYSTEM_PROMPT.md" "$run/prompt.md"
 if [ "${CONVERSER_VOICE:-on}" = off ]; then
   deny="$deny,mcp__voicemode__converse"
-  printf '\nVoice is off. Treat each typed line as the user'"'"'s speech; print readbacks instead of speaking them.\n' >> "$run/prompt.md"
+  printf '\nVoice is off. Treat each typed line (except one prefixed "Converser, do not relay:") as the user'"'"'s speech; print readbacks instead of speaking them.\n' >> "$run/prompt.md"
 fi
 # printf is a shell builtin, so the token never reaches argv; `cat` sees only the path.
 # Do not swap in /usr/bin/printf or jq --arg, both of which would put it on a command line.
@@ -500,9 +500,10 @@ Text arriving in an overseer's `Stop` post is spoken or summarized to the user, 
 **Listen gating.**
 The converser opens a listen only when the user starts an exchange, or immediately after it asked the user something; never an idle open-mic loop.
 In stage 1 the user starts an exchange by typing `listen` and Enter in the converser's terminal; an empty Enter does not submit in Claude Code. Stage 2 adds a push-to-talk hotkey.
-Any other typed line is the user's request itself, relayed like speech without opening a listen, except a line that begins "Converser, do not relay:", which is an instruction to the converser itself (used by the implementer's tests).
+Any other typed line is the user's request itself, relayed like speech without opening a listen.
+The one exception, with voice on or off, is a typed line that begins "Converser, do not relay:". It is an instruction to the converser itself, used by the implementer's tests. The prefix is honored only in typed input, never in transcribed speech or inbound messages, and such an instruction is still bound by the security floor (call-shape bounds, no configuration or permission changes).
 Readbacks and spoken summaries use `wait_for_response=false`, so speaking never opens the mic by itself.
-With `CONVERSER_VOICE=off`, every typed line is a request and nothing is spoken.
+With `CONVERSER_VOICE=off`, every typed line except a prefixed one is a request, and nothing is spoken.
 A headset is the default; hands-free is an explicit opt-in.
 
 The interaction and style content lives in `plugins/converser/launcher/SYSTEM_PROMPT.md` in stage 1 and in the plugin's `/converser` skill at stage 3.
@@ -683,7 +684,7 @@ Speaker attribution and audio provenance are Future Work ([`2026-09-29-converser
 - **Container rebuild.** The token survives (secret); the launcher, prompt, and hook bodies survive (repo files); the managed file does not (gate s re-places it).
 - **Host logout with `Linger=no`.** User units, including the Quadlet containers, stop; voice unavailable until login. `loginctl enable-linger` if not acceptable.
 - **Converser started twice.** The `flock` refuses the second. A lingering child can keep the inherited lock fd after `claude` exits; `fuser "$run/lock"` finds it.
-  Killing the terminal or `tmux` pane that runs `podman exec -it ... converser` does not end the converser: the exec session outlives its client, keeps the lock, stays visible to `ListAgents`, and keeps its MCP session to `serve` (verified/live, r8 review). End it with `/exit`; failing that, `podman exec <container> pkill -f -- '--name converser'`.
+  Killing the terminal or `tmux` pane that runs `podman exec -it ... converser` does not end the converser: the exec session outlives its client, keeps the lock, stays visible to `ListAgents`, and keeps its MCP session to `serve` (verified/live, r8 review). End it with `/exit`; failing that, `podman exec <container> fuser -k -TERM <run dir>/lock`, which signals exactly the lock holders: the launcher and the `claude` that inherited its lock fd. `pkill` is not in the `clauthier` image, and `fuser` is (verified/live).
 - **Mixed-mode overseers.** A prompting overseer holds the bypass converser's messages; stage 1 requires the target sessions in `clauthier` to run bypass (vetting A19).
 - **Unnamed or renamed sessions.** Labels can collide or go stale; the converser restates the label it used, and a correction citing a stale label asks which session is meant.
 
@@ -700,7 +701,7 @@ New gates introduced here:
 1. **Scoping pre-check (gate `pre`).** `install` step 3 (401 without the token; with it, exactly `converse` and `pause_conversation`).
    Then, in the headset sitting (ask D), from the host: one `converse()` end to end against `converser-serve@clauthier`, and a concurrent `converse()` against a throwaway instance on 8800 that returns "conch held".
    Unlike the install stop-check, this throwaway keeps the real `HOME` (with a temp `VOICEMODE_BASE_DIR`), because the conch is `~/.voicemode/conch` under `HOME`.
-   It otherwise runs with exactly the `serve@` `ExecStart` pins (tools, loopback STT/TTS URLs, no Kokoro autostart, conch timeout). A `mktemp` token file (`0600`) is passed to it through `VOICEMODE_SERVE_TOKEN` and to the client on stdin, and deleted afterwards.
+   It otherwise runs with exactly the `serve@` `ExecStart` pins (tools, loopback STT/TTS URLs, no Kokoro autostart, conch timeout). A throwaway token is minted into a `mktemp` file (`0600`). Its value is passed to the throwaway `serve` in `VOICEMODE_SERVE_TOKEN`, and the file is fed to the client on stdin. The file is deleted afterwards.
    The implementer starts both calls. It polls `flock -n ~/.voicemode/conch true` every 0.5 s. The probe itself takes the conch for an instant, so if the 8765 call reports "conch held", it re-runs that call. Once the probe fails, it starts the second call, which must return "conch held".
    Both calls use `mcp-converse.py` run by the tool venv's interpreter, which has the `mcp` package; host `python3` does not.
    The client runs from the installed copy, never the container-writable checkout, and reads the token on stdin:
@@ -849,11 +850,16 @@ look() { $T capture-pane -p -J -t "converser:$1" -S -200; }
 lockfree() { podman exec clauthier flock -n /tmp/converser-1000/lock true; }
 stop_converser() {
   say converser /exit
-  for i in $(seq 30); do lockfree && return 0; sleep 1; done
-  podman exec clauthier pkill -f -- '--name converser'; sleep 2; lockfree
+  for i in $(seq 30); do lockfree && break; sleep 1; done
+  lockfree && { for i in $(seq 10); do $T list-windows -t converser: -F '#W' | grep -qx converser || return 0; sleep 1; done; }
+  # Fallback: signal exactly the lock holders (launcher and its claude).
+  podman exec clauthier fuser -k -TERM /tmp/converser-1000/lock; sleep 2; lockfree || return 1
+  # The lock frees before the host-side podman exec client exits; wait for the window.
+  for i in $(seq 10); do $T list-windows -t converser: -F '#W' | grep -qx converser || return 0; sleep 1; done
+  return 1
 }
 start_converser() {   # $1: extra podman exec args, e.g. "-e CONVERSER_VOICE=off"
-  $T new-window -t converser -n converser \
+  $T new-window -t converser: -n converser \
     "$X $1 clauthier /workspace/clauthier/main/plugins/converser/bin/converser"
   $T select-window -t converser:converser
 }
@@ -867,14 +873,15 @@ Leave the overseer pane running for 1.5.
 
 **1.5 Headset sitting (ask D): first voice loop.**
 The implementer prepares first:
-- it replaces the voice-off converser with a voice-on one: `stop_converser && start_converser ""`. `stop_converser` must succeed, meaning the in-container lock is free, before `start_converser` runs. Never `respawn-window -k` or `kill-window`;
+- it ends the voice-off converser with `stop_converser`, which must succeed (lock free, window gone). It does not start the voice-on converser yet. Never `respawn-window -k` or `kill-window`;
 - `converser-host status clauthier clauthier` passes;
 - it starts the 8800 throwaway `serve` for item 1 as specified there (real `HOME`, temp `VOICEMODE_BASE_DIR`, the `serve@` pins, a `mktemp` token).
 The implementer drives every host-side call; the user only speaks, listens, and types into the attached converser pane.
 Then it sends the user this script:
 1. Plug in the headset and make it the default input and output device.
 2. Item 1: when the implementer says "speak now", answer the spoken prompt. The implementer runs `mcp-converse.py` against 8765 and 8800 as item 1 specifies, polling the conch between them, and expects "conch held" from the second. It shows you the transcript.
-3. In a host terminal outside tmux, run `tmux -L converser attach -t converser:converser`. From inside your own tmux, prefix it with `TMUX=`: `TMUX= tmux -L converser attach -t converser:converser`. Nested tmux refuses otherwise; the prefixes do not collide. This lands in the converser window, and no prefix key is needed.
+3. Tell the implementer you are at the desk with the headset on. Only then does it run `start_converser ""` (voice on), so no voice-capable converser exists before you are present.
+   In a host terminal outside tmux, run `tmux -L converser attach -t converser:converser`. From inside your own tmux, prefix it with `TMUX=`: `TMUX= tmux -L converser attach -t converser:converser`. Nested tmux refuses otherwise; the prefixes do not collide. This lands in the converser window, and no prefix key is needed.
 4. Type `listen` and press Enter, then say, for example, "Tell the clauthier overseer to reply with the word pineapple." Expect a `#1: clauthier-overseer →` entry and a spoken readback.
 5. The implementer checks the overseer window (`look overseer`) for the relayed message, marked as voice. It then types there: "Reply to the converser with SendMessage: pineapple." In your pane, expect a `#2: clauthier-overseer ←` entry, spoken aloud. That completes gate r (item 7).
 6. Gate p (item 4): the implementer drives both halves while you stay quiet, about 3 minutes. During the second half the implementer ends the converser with `/exit` (you see it quit), and your terminal shows the overseer window meanwhile. It then opens a new converser window and selects it, so you stay attached.
@@ -935,7 +942,7 @@ Deliberately not designed here:
 ## Links
 
 Superseded: [`2026-09-28-converser-lace-feature.md`](2026-09-28-converser-lace-feature.md) (the in-container fallback) and its reviews.
-Reviews of this proposal: `cdocs/reviews/2026-09-29-review-of-converser-host-voicemode-serve.md` and the `-r2-` through `-r8-` rounds beside it.
+Reviews of this proposal: `cdocs/reviews/2026-09-29-review-of-converser-host-voicemode-serve.md` and the `-r2-` through `-r9-` rounds beside it.
 Reports: see Background.
 VoiceMode source: `cli.py:2017-2273`, `config.py:18-110,520,545-550,690-697,777-778,885-891,927,1639-1667`, `conch.py:125-140,348,388-440`, `control_socket.py:300-322`, `shared.py:44`, `tools/__init__.py:110-125`, `tools/converse.py:138-150,518-541,3112-3140,4308-4345`, `tools/service.py:431-470,612-640,733-742`, `whisper_model_unified.py:169-179`, `utils/services/whisper_helpers.py:116`, `simple_failover.py:25-50`.
 Images: [whisper.cpp `.devops/main-cuda.Dockerfile`](https://github.com/ggml-org/whisper.cpp/blob/master/.devops/main-cuda.Dockerfile), [whisper `server.cpp`](https://github.com/ggml-org/whisper.cpp/blob/master/examples/server/server.cpp), [Kokoro-FastAPI `404d122`](https://github.com/remsky/Kokoro-FastAPI/tree/404d122e847569012bd6a6afe36f1c3a5e1c66b7) (`docker/gpu/Dockerfile.optimized`, `docker/scripts/entrypoint.sh`, `docker/scripts/download_model.py`, `api/src/main.py:164`).
