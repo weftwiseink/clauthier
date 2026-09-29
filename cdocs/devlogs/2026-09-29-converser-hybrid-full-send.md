@@ -70,6 +70,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | prop-r6 (warm) | proposal | 18:40 | r9 nits, set implementation_ready |
 | return | prop-r6 | proposal | 18:45 | d8bff24 implementation_ready; pkill absent in image, fallback now fuser -k on lock |
 | dispatch | impl-1 (cdocs:implementer, opus) | plugins/converser/** | 18:45 | stage 1.0 only, then stop for asks A-C |
+| return | impl-1 | plugins/converser/** | 19:05 | 1.0 done fe84afe..7e0e080; static checks pass |
+| dispatch | rev-i1 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-0.md | 19:05 | review 1.0 before install |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
