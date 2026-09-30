@@ -717,6 +717,7 @@ New gates introduced here:
    In the container, `stat -c '%a %U' /run/secrets/converser-token` prints `400 node`, and an unauthenticated `POST http://127.0.0.1:8765/mcp` returns 401. Authenticated, `tools/list` is exactly `converse` and `pause_conversation`; `service` is absent.
    With whisper stopped, `converse()` fails rather than reaching OpenAI.
    sshd on `22431` still answers (`ssh -p 22431 node@localhost true` from the host).
+   > NOTE(opus/voice/converser-lace-feature): At 1.3 (2026-09-29) this check failed for a reason outside converser: after `lace up --rebuild`, sshd in `clauthier` listens on its default 2222, while lace passes `sshPort: 22431` to `lace-fundamentals` and publishes `22431:22431`. The feature only warns about the mismatch. The forward itself worked (a throwaway listener on container port 22431 answered the host through pasta), so gate c holds for publishing. The sshd port is a lace issue, tracked outside this proposal.
 4. **Timeout guard (gate p), in the headset sitting.** It opens the host mic for 90 s, so it runs only while the user is present.
    With `timeout` (600 s): the implementer types into the voice-on converser pane, "Converser, do not relay: call your converse tool once with listen_duration_max=90, disable_silence_detection=true, skip_tts=true, message 'timeout test'." The user stays silent, and the call returns after about 90 s.
    Without `timeout`: the implementer first ends the converser with `stop_converser` (1.4 harness). That makes the variant the only MCP client of `serve` (#521) and frees the lock.
