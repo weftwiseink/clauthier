@@ -75,6 +75,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | rev-i1 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-0.md | 19:05 | review 1.0 before install |
 | return | rev-i1 | review | 19:25 | accept 9a6f2d0; install only tree 310caaa; check git config |
 | dispatch | impl-1 (warm) | plugins/converser/**, host install, clauthier devcontainer.json (skip-worktree) | 19:25 | 1.1 (CPU) - 1.4 |
+| return | impl-1 | | 20:00 | 1.1 (CPU)-1.4 pass; fixes committed, not installed; ssh 22431 banner absent (pre-existing: weftwise 22425 same, sshd Port 2222 in all) |
+| dispatch | rev-i2 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-1-4.md | 20:00 | live verification of 1.1-1.4 + fix commits |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
@@ -82,5 +84,5 @@ tags: [voice, converser, full-send, containers]
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
-| 19:10 | steer-implementer | impl-1 | User asks: A = install after the 1.0 reviewer accepts; B = user runs setsebool (GPU path); C = recreate clauthier at a natural break, warn just before | pending |
-| 19:20 | steer-implementer | impl-1 | User AFK, setsebool not yet run (boolean still off). Proceed with everything that does not need it: install on the CPU path now if a later GPU switch by re-running install is supported, then 1.2-1.4 (text-only). clauthier has no claude sessions running (checked 19:20), so the 1.3 recreate is safe now; re-check right before. Stop before 1.5. | pending |
+| 19:10 | steer-implementer | impl-1 | User asks: A = install after the 1.0 reviewer accepts; B = user runs setsebool (GPU path); C = recreate clauthier at a natural break, warn just before | 1 |
+| 19:20 | steer-implementer | impl-1 | User AFK, setsebool not yet run (boolean still off). Proceed with everything that does not need it: install on the CPU path now if a later GPU switch by re-running install is supported, then 1.2-1.4 (text-only). clauthier has no claude sessions running (checked 19:20), so the 1.3 recreate is safe now; re-check right before. Stop before 1.5. | 1 |
