@@ -43,6 +43,7 @@ tags: [voice, converser, full-send, containers]
 |---|---|---|---|---|---|---|---|---|
 | 1 | impl-1 (cdocs:implementer) | rev-i1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-09-29-review-of-converser-stage1-0.md | ~60K | no | stage 1.0 only; static floor re-run by reviewer |
 | 2 | impl-1 (cdocs:implementer) | rev-i2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-29-review-of-converser-stage1-1-4.md | ~80K | no | 1.1 CPU-1.4 live; user set SELinux boolean after review |
+| 3 | impl-1 (cdocs:implementer) | rev-i3 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-29-review-of-converser-stage1-gpu-fixes.md | ~95K | no | GPU gate u live; awaiting user for 1.5 |
 
 ## Judge Log
 
@@ -82,6 +83,7 @@ tags: [voice, converser, full-send, containers]
 | dispatch | impl-1 (warm) | plugins/converser/** (not host/ until after install), host GPU re-install | 20:40 | GPU install at afce023, F3/F4, prep 1.5 |
 | return | impl-1 | | 21:00 | GPU gate u pass (CUDA0, RTX 3080); F1-F4 fixed; 1.5 prepped |
 | dispatch | rev-i3 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-gpu-fixes.md | 21:00 | review host fixes since afce023 + GPU state |
+| return | rev-i3 | review | 21:15 | accept a11c7ec; approved host tree 4c27933 for re-install after 1.5; F5-F9 non-blocking |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
