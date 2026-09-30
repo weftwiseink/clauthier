@@ -248,9 +248,9 @@ scoping_stopcheck() {
   ) > "$tmp/serve.log" 2>&1 &
   pid=$!
   # shellcheck disable=SC2064  # expand now: pid and tmp are fixed for this check
-  trap "kill $pid 2>/dev/null; rm -rf '$tmp'" EXIT
+  trap "kill $pid 2>/dev/null || :; rm -rf '$tmp'" EXIT
   # shellcheck disable=SC2064  # expand now, as above
-  trap "kill $pid 2>/dev/null; rm -rf '$tmp'; exit 130" HUP INT TERM
+  trap "kill $pid 2>/dev/null || :; rm -rf '$tmp'; exit 130" HUP INT TERM
   i=0
   while [ "$(mcp_unauth_code "$CHECK_PORT")" = 000 ]; do
     kill -0 "$pid" 2>/dev/null || { cat "$tmp/serve.log" >&2; die "throwaway serve exited"; }
