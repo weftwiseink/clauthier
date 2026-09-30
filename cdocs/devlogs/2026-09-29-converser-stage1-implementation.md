@@ -223,6 +223,89 @@ These `host/` changes are **not installed**: the installed copy is `ab1e1d9` (tr
 3. **1.6:** the managed settings file and Stop hook trace-first (ask E), then item 10 (`lace up --rebuild` again).
 4. **sshd port mismatch in `clauthier`:** decide on the in-container stopgap or a lace fix.
 
+## Iteration 3: GPU re-install, review fixes, 1.5 preparation
+
+> BLUF: The GPU install at the approved tree passed: whisper runs `large-v3-turbo` on `CUDA0` (RTX 3080), Kokoro reports `CUDA: True`, and `status clauthier clauthier` passes. The CPU images are removed. Review F1-F4, the `mv` nit, and a gate-u status fix are committed (the `host/` ones are not installed). The overseer is out of test mode. 1.5 is ready and needs the user.
+
+### GPU install (ask B done: `container_use_xserver_devices --> on`)
+
+- Pre-checks: `HEAD:plugins/converser/host` = `afce023776eb0a349082ac20a2d9351949d73f59`; host path clean; no `__pycache__`; git config shows only `filter.lfs.*` and user aliases outside `.bare/config`, whose keys are core/remote/extensions/branch only; no hooks, no `info/attributes`.
+- `sh plugins/converser/host/converser-host install` (exit 0, `installed-rev` `1106664`, `mode` `gpu`): stop-check 401 and exact tools; `ggml-large-v3-turbo.bin sha256 verified`; `restarting converser-whisper (unit changed)`, `restarting converser-kokoro (unit changed)`; every gate-q line `ok`.
+- **Gate u, from the containers' own logs:** whisper `ggml_cuda_init: found 1 CUDA devices`, `Device 0: NVIDIA GeForce RTX 3080, compute capability 8.6`, `CUDA0 total size = 1623.92 MB`, `using CUDA0 backend`; Kokoro `Initializing Kokoro V1 on cuda`, `Model warmed up on cuda`, `CUDA: True`. `nvidia-smi`: `whisper-server` 2008 MiB, Kokoro `python` 920 MiB. No AVC denial surfaced (no `ausearch` run; it needs sudo).
+- `/health`: `{"status":"ok"}` and `{"status":"healthy"}`. `ss`: `127.0.0.1:2022`, `127.0.0.1:8880`, `127.0.0.1:8765` only. `converser-host status clauthier clauthier`: all checks passed, including the forward and secret.
+- `serve@clauthier` was not restarted (its unit file did not change); it uses the new STT/TTS through the same URLs.
+- After GPU worked: `podman rmi` of `whisper.cpp@sha256:070afe...` and `kokoro-fastapi-cpu@sha256:ee3111...`. Images now: `whisper.cpp@sha256:8a9def...` 3.7 GB, `kokoro-fastapi-gpu@sha256:9ba150...` 8.07 GB. `models/ggml-base.en.bin` (142 MB) remains.
+
+> WARN(opus/voice/converser-lace-feature): In the installed copy (`1106664`), `status`'s gate-u line is misleading. `journalctl -b` returns the first match of the whole boot, which printed the 16:43 CPU-run `backends = 1` line and an unrelated podman line as `info`. Fixed in `fdb8fc3` (reads `podman logs` of the running container and matches the CUDA device lines); a live run prints `ok converser-whisper on GPU: ... using CUDA0 backend` and `ok converser-kokoro on GPU: ... Loading Kokoro model on cuda`. Installing it needs the next review.
+
+### Fix commits (iteration 3)
+
+| item | commit | test |
+|---|---|---|
+| F3 prompt names the model-visible framing: `Another Claude session sent a message:`, `<cross-session-message ... from-name=...>` trusted; Stop post `From:` untrusted | e0f362e | prompt text |
+| F4 relay marker carries `#N` | ed8ef3c | live voice-off relay: overseer saw `[User, relayed by the converser (typed), #1]`, reply logged `#2 ←` |
+| proposal NOTE: Test Plan item 3 sshd, lace-preexisting | 4bd568a | - |
+| F2 `kill ... \|\| :` in both stop-check traps | 42c022b | fake `serve` that exits: old code leaves 1 temp dir, new code 0 |
+| `install_file` removes `$2.tmp` on a failed `cp`/`mv` | 2e40ba9 | shellcheck |
+| F1 `instance add` restarts a running `serve@` whose environ token differs (compared in-shell, never on argv), says "replaced stale podman secret", and notes that existing containers keep the old secret until recreated; README updated | 67cbb44 | stubs plus a fake process: same token gives no restart; old token plus stale secret gives restart, replace, NOTE; token on stub argv 0 times |
+| gate u from `podman logs` | fdb8fc3 | live `host_checks` (above) |
+
+Also removed the reviewer-flagged stray scratch dirs `/tmp/tmp.xIJI72UfRr` and `/tmp/tmp.zTo3Ucpa4a` (from my 16:19 and 16:27 tests).
+
+### 1.5 preparation state
+
+- The overseer pane was out of test mode first. Its input line showed a greyed prompt suggestion ("test mode over, back to normal"); I cleared it with `C-u` and submitted an explicit end-of-test-mode line. It replied: "Test mode is off, and I'll now handle converser messages as your own requests, without acting on the branch-deletion messages that came in during test mode." The prompt is idle.
+- A voice-off converser ran briefly to check F4, then `stop_converser` ended it (rc 0, lock free, window gone; the only `claude` in `clauthier` is the overseer).
+- Not started: the voice-on converser, any `converse()`, the 8800 throwaway.
+
+### 1.5 script (ready; nothing below has run)
+
+**Implementer prep, before messaging the user** (host shell; harness functions from `/tmp/cvh.sh`, which the 1.4 section defines):
+
+1. `converser-host status clauthier clauthier` passes; `look overseer` shows an idle prompt (test mode is off); `tmux -L converser list-windows -t converser` shows only `overseer`; `lockfree` succeeds.
+2. Item 1's 8800 throwaway. It keeps the real `HOME` (the conch is `~/.voicemode/conch`), gets a temp `VOICEMODE_BASE_DIR` created with `mkdir -p` first (VoiceMode's `BASE_DIR.mkdir` is not recursive), uses the `serve@` pins, and takes a `mktemp` token that never reaches argv:
+
+```sh
+tw=$(mktemp -d); mkdir -p "$tw/state/base"
+tokf=$(mktemp); chmod 600 "$tokf"; openssl rand -hex 32 > "$tokf"
+( cd "$tw"
+  export VOICEMODE_SERVE_TOKEN="$(cat "$tokf")" VOICEMODE_BASE_DIR="$tw/state/base" \
+    VOICEMODE_TOOLS_ENABLED=converse VOICEMODE_STT_BASE_URLS=http://127.0.0.1:2022/v1 \
+    VOICEMODE_TTS_BASE_URLS=http://127.0.0.1:8880/v1 VOICEMODE_AUTO_START_KOKORO=false \
+    VOICEMODE_CONCH_TIMEOUT=60
+  exec ~/.local/bin/voicemode serve --host 127.0.0.1 --port 8800 --transport streamable-http
+) > "$tw/serve.log" 2>&1 &
+tw_pid=$!
+until [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 -X POST http://127.0.0.1:8800/mcp)" = 401 ]; do sleep 1; done
+```
+
+Then send the user the script below.
+
+**User script (send as one message):**
+
+1. Plug in the headset and make it the default input and output device.
+2. **Item 1 (conch).** Say when you are ready. When I say "speak now", answer the spoken prompt with a short sentence.
+   I run, from the installed copy:
+   `PY=~/.local/share/uv/tools/voice-mode/bin/python; C=~/.local/share/converser-host/src/mcp-converse.py`
+   `$PY $C --port 8765 --listen 30 < ~/.config/converser-host/instances/clauthier.token &`
+   I poll `[ -e ~/.voicemode/conch ] && ! flock -n ~/.voicemode/conch true` every 0.5 s. If the 8765 call itself reports "conch held" (because my probe held it for an instant), I re-run it. Once the probe fails (8765 holds the conch), I run `$PY $C --port 8800 --listen 5 --skip-tts < "$tokf"`, which must return "conch held" at once. Then I show you both transcripts.
+   Afterwards I `kill $tw_pid` and `rm -rf "$tw" "$tokf"`.
+3. **Tell me you are at the desk with the headset on.** Only then do I run `start_converser ""` (voice on).
+   In a host terminal outside tmux, run `tmux -L converser attach -t converser:converser`. From inside your own tmux, run `TMUX= tmux -L converser attach -t converser:converser`. No prefix key is needed.
+4. **Gate r (item 7).** Type `listen` and press Enter, then say: "Tell the clauthier overseer to reply with the word pineapple."
+   Expect a `#1: clauthier-overseer →` entry and a spoken readback.
+   I check `look overseer` for the relay (marker `[User, relayed by the converser (voice), #1]`), then type there: "Reply to the converser with SendMessage: pineapple." In your pane, expect `#2: clauthier-overseer ←`, spoken aloud.
+5. **Item 3 leftover (no OpenAI fallback).** I run `systemctl --user stop converser-whisper`. Type `listen`, press Enter, and say anything. Expect "voice unavailable" with an STT error, not a transcript. I then run `systemctl --user start converser-whisper` and confirm `/health`.
+6. **Gate p (item 4), about 3 minutes, stay quiet.**
+   - With `timeout`: I type into your pane: "Converser, do not relay: call your converse tool once with listen_duration_max=90, disable_silence_detection=true, skip_tts=true, message 'timeout test'." The call returns after about 90 s.
+   - Without `timeout`: I run `stop_converser` (you see the converser quit, and your terminal shows the overseer window meanwhile). I write `$run/mcp-notimeout.json` in the container with builtin `printf` and no `"timeout"`, and in a new window run `claude -p 'Call your converse tool once with listen_duration_max=90, disable_silence_detection=true, skip_tts=true, message "timeout test".' --strict-mcp-config --mcp-config "$run/mcp-notimeout.json" --tools '' --allowedTools mcp__voicemode__converse --disallowedTools mcp__voicemode__pause_conversation`. The client should abort near 60 s. I check `journalctl --user -u converser-serve@clauthier` for the abandoned call, restart the unit if it wedged (#522), delete the variant config, then run `start_converser ""` and select it, so you stay attached.
+7. **Item 8, voice half.** Before each utterance, type `listen` and Enter. Say, in turn:
+   - a clear request ("Tell the clauthier overseer to list the files in cdocs slash devlogs from today");
+   - one with an ambiguous target ("Tell the build session to rerun the tests");
+   - "Clean up the old branches" (expect a destructive-intent question; answer "no, never mind");
+   - "Fix one" (expect a correction citing `#1: clauthier-overseer`).
+8. Close the terminal window when done, or I run `tmux -L converser detach-client`. The panes stay up. I end the voice-on converser with `stop_converser` once you say you are finished.
+
 ### Implementer Notes
 
 - Bugs caught by testing before commit: `mcp_tool_names` clobbered its arguments with `set --`; `host_checks`, `instance_checks`, and `cmd_status` shared the global `rc` (POSIX sh has no `local`), so an instance check would erase a host failure; the SSE parser printed each `data:` line twice; host `FORCE_COLOR` broke the `uv` bin-dir comparison.
