@@ -484,17 +484,35 @@ cmd_instance() {
     say "wrote $tokf from $envf"
   fi
   chmod 600 "$envf" "$tokf"
-  if podman secret exists "converser-$project" &&
-     [ "$(podman secret inspect --showsecret --format '{{.SecretData}}' "converser-$project")" = "$tok" ]; then
-    say "ok   podman secret converser-$project matches"
+  replaced=0
+  if podman secret exists "converser-$project"; then
+    if [ "$(podman secret inspect --showsecret --format '{{.SecretData}}' "converser-$project")" = "$tok" ]; then
+      say "ok   podman secret converser-$project matches"
+    else
+      # The value is read from the file, never argv.
+      podman secret create --replace "converser-$project" "$tokf" > /dev/null
+      replaced=1
+      say "replaced stale podman secret converser-$project"
+    fi
   else
-    # The value is read from the file, never argv. --replace fixes a stale secret.
-    podman secret create --replace "converser-$project" "$tokf" > /dev/null
+    podman secret create "converser-$project" "$tokf" > /dev/null
     say "created podman secret converser-$project"
   fi
+  unit="converser-serve@$project.service"
+  systemctl --user enable --now "$unit"
+  # enable --now leaves a running serve alone: restart it if it holds another token.
+  pid=$(systemctl --user show -p MainPID --value "$unit")
+  # Compare in-shell: the token never goes on a grep or sed command line.
+  if [ -n "$pid" ] && [ "$pid" != 0 ] && [ -r "/proc/$pid/environ" ] &&
+     [ "$(tr '\0' '\n' < "/proc/$pid/environ" | sed -n 's/^VOICEMODE_SERVE_TOKEN=//p')" != "$tok" ]; then
+    systemctl --user restart "$unit"
+    say "restarted $unit (it held a different token)"
+  fi
   tok=
-  systemctl --user enable --now "converser-serve@$project.service"
-  say "converser-serve@$project enabled and started"
+  say "$unit enabled and running"
+  if [ "$replaced" = 1 ]; then
+    say "NOTE: an existing container keeps the old secret until it is recreated (lace up --rebuild)"
+  fi
   cat <<EOF
 
 Add to the project's .devcontainer/devcontainer.json as a local, uncommitted
