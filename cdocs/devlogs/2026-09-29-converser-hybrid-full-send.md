@@ -80,6 +80,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | rev-i2 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-1-4.md | 20:00 | live verification of 1.1-1.4 + fix commits |
 | return | rev-i2 | review | 20:40 | accept b0c7e76; host fixes approved at tree afce023; F3 prompt marker wrong, F4 relays lack #N |
 | dispatch | impl-1 (warm) | plugins/converser/** (not host/ until after install), host GPU re-install | 20:40 | GPU install at afce023, F3/F4, prep 1.5 |
+| return | impl-1 | | 21:00 | GPU gate u pass (CUDA0, RTX 3080); F1-F4 fixed; 1.5 prepped |
+| dispatch | rev-i3 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-gpu-fixes.md | 21:00 | review host fixes since afce023 + GPU state |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
