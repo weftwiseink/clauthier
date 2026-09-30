@@ -378,13 +378,17 @@ host_checks() {
   done
   hmode=gpu
   [ -f "$SHARE/mode" ] && hmode=$(cat "$SHARE/mode")
+  # Gate u, from the running container's own log (not the whole boot's journal):
+  # whisper.cpp prints "using CUDA0 backend", Kokoro "Loading Kokoro model on cuda".
   for c in converser-whisper converser-kokoro; do
-    line=$(journalctl --user -u "$c.service" -b --no-pager 2>/dev/null |
-      grep -i -m1 -E 'cuda|ggml_cuda|backend' || :)
+    line=$(podman logs "$c" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' |
+      grep -m1 -E 'using CUDA[0-9]+ backend|model on cuda' || :)
     if [ -n "$line" ]; then
-      say "info $c backend: $(printf '%s' "$line" | cut -c1-160)"
+      say "ok   $c on GPU: $(printf '%s' "$line" | cut -c1-120)"
     elif [ "$hmode" = gpu ]; then
-      say "WARN $c journal names no CUDA/backend line (gate u; GPU denied?)"
+      say "WARN $c log names no CUDA device (gate u; GPU denied, or CPU fallback)"
+    else
+      say "info $c on CPU (install --cpu)"
     fi
   done
   return "$hrc"
