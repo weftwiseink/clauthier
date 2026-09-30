@@ -42,6 +42,7 @@ tags: [voice, converser, full-send, containers]
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
 | 1 | impl-1 (cdocs:implementer) | rev-i1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-09-29-review-of-converser-stage1-0.md | ~60K | no | stage 1.0 only; static floor re-run by reviewer |
+| 2 | impl-1 (cdocs:implementer) | rev-i2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-09-29-review-of-converser-stage1-1-4.md | ~80K | no | 1.1 CPU-1.4 live; user set SELinux boolean after review |
 
 ## Judge Log
 
@@ -77,6 +78,8 @@ tags: [voice, converser, full-send, containers]
 | dispatch | impl-1 (warm) | plugins/converser/**, host install, clauthier devcontainer.json (skip-worktree) | 19:25 | 1.1 (CPU) - 1.4 |
 | return | impl-1 | | 20:00 | 1.1 (CPU)-1.4 pass; fixes committed, not installed; ssh 22431 banner absent (pre-existing: weftwise 22425 same, sshd Port 2222 in all) |
 | dispatch | rev-i2 (cdocs:reviewer, opus) | cdocs/reviews/2026-09-29-review-of-converser-stage1-1-4.md | 20:00 | live verification of 1.1-1.4 + fix commits |
+| return | rev-i2 | review | 20:40 | accept b0c7e76; host fixes approved at tree afce023; F3 prompt marker wrong, F4 relays lack #N |
+| dispatch | impl-1 (warm) | plugins/converser/** (not host/ until after install), host GPU re-install | 20:40 | GPU install at afce023, F3/F4, prep 1.5 |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace: cdocs/proposals/2026-09-29-*port*.md | 17:00 | lace RFP |
 | return | rfp-lace | lace e2e797a cdocs/proposals/2026-09-29-container-port-exposure.md | 17:05 | root cause template-resolver.ts:714 (appPort without host IP) |
 
