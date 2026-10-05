@@ -121,6 +121,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:37 | round 6: maintainer simplification + r5 findings |
 | return | prop-2 (cdocs:proposer, fable) | same | 2026-10-05T12:10 | 6548206, 6c1a4e4 |
 | dispatch | crev-6 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r6.md | 2026-10-05T12:11 | propose-revise round 6 review |
+| return | crev-6 (cdocs:reviewer) | review r6 | 2026-10-05T12:30 | bd84d7c revise (subagent writes into parent record; shell expansion in note text) |
+| dispatch | prop-3 (cdocs:proposer, fresh) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T12:31 | round 7; fresh author (prop-2 ctx ~220K) |
 
 ## Steering Log
 
