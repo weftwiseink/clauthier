@@ -1,5 +1,5 @@
 {
-  "description": "CDocs hooks: frontmatter validation, rule injection, and path restriction",
+  "description": "CDocs hooks: frontmatter validation, rule injection, path restriction, and the per-session chat record (cdocs/_chat/)",
   "hooks": {
     "SessionStart": [
       {
@@ -31,6 +31,28 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/cdocs-validate-frontmatter.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/chat-record UserPromptSubmit",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/chat-record Stop",
             "timeout": 5
           }
         ]
