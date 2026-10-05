@@ -426,3 +426,16 @@ Implements rev-7 option A ([`2026-10-05-review-of-haiku-bash-wrapper-impl-r7.md`
   Even this worst realistic case leaves room for the header fields, `Summary:` and `Truncated:` under ~4K.
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Live sweep canaries are pending the reviewer's re-run.
+
+## Implementation Notes (impl-1, post-accept)
+
+Wording-only pass after rev-8 accepted iteration 8; runner behaviour is unchanged.
+
+| commit | file(s) | change |
+|---|---|---|
+| `82149b2` | `plugins/cdocs/rules/orchestration-discipline.md` | Dispatch is a judgment call (Steering Log 12:25): preserve the lead's context without losing relevant info; self-bound known-need commands (`grep -c`, `grep -q`, `| tail -n 5`); run trivial ones directly; dispatch only output that is large or unpredictable AND relevant. The sweeps/builds/unboundable list is kept as observed weight, not a mandatory order. Callers needing exact bytes read the capture file (r8 follow-up 3) |
+| `e616bff` | `plugins/cdocs/agents/bash-runner.md` | "about 4,000 characters or less", replacing "by construction" (r8 follow-up 1); no labels or composed lines in `Excerpt:` in every report (r8 follow-up 2) |
+| `a729264` | proposal | Dispatch-scope text mirrors the judgment-call framing and the exact-bytes note; dated `NOTE(opus-5-5/oversee)` for the steer; "about 4K" wording |
+
+`npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+The working tree also had unrelated, uncommitted edits to `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`; I did not stage or touch them.
