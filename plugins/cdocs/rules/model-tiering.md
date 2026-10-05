@@ -22,14 +22,15 @@ When the workload is "find information and summarize it" rather than "reason dee
 It is cheaper and fast enough for this class, and the overseer validates the returned summary before acting on it.
 This tier covers exploratory search sweeps, codebase reconnaissance, and straightforward research aggregation.
 
+The `bash-runner` agent (`cdocs:bash-runner`) sits in this tier at `model: sonnet`: it runs one expected-verbose command with output captured to a scratch file and returns a concise fixed-format extract (see "Bash Output Hygiene" in `orchestration-discipline.md`).
+Its job looks mechanical but is not: a runner that drifts from verbatim extraction misleads the dispatcher or forces a follow-up, and that cost outweighs a cheaper model, since the saving comes from keeping raw output out of the parent's context, not from the runner's own price.
+A consumer with a blanket opus floor keeps that floor for this dispatch until it opts `bash-runner` down to sonnet (see "Precedence").
+
 ## Mechanical / Deterministic Fan-Out Tier (haiku, cheapest capable model)
 
 When the task has a clear pass/fail signal and needs no reasoning flexibility, the cheapest capable model is the default.
 The `nit-fix` agent is the canonical case: it is `model: haiku` in `plugins/cdocs/agents/`.
 These tasks fan out mechanically against a deterministic rubric, so a stronger model buys nothing.
-
-The `bash-runner` agent (`cdocs:bash-runner`) is a second named case: it is `model: haiku`, runs one expected-verbose command with output captured to a scratch file, and returns a concise fixed-format extract (see "Bash Output Hygiene" in `orchestration-discipline.md` for when to dispatch it).
-Like every tier here it is a named carve-out a consumer must bless, not an automatic override: a consumer with a blanket opus floor keeps that floor for this dispatch until it explicitly opts `bash-runner` down to haiku (see "Precedence").
 
 The `triage` agent's base mechanical-fix workload (frontmatter fields, timestamps, tags) fits this tier, but the agent is `model: sonnet` (not haiku) because its iterate-aware analysis step sits in the Search/Explore tier: it globs `cdocs/devlogs/*.md`, filters by frontmatter `task_list` and by body citation, tie-breaks candidates, then parses two header-keyed markdown tables and applies a precedence mapping.
 Since `triage.md` carries a single `model:` field, the whole agent runs at the higher tier the parse/reasoning step requires; this is the accepted tradeoff of a model bump over splitting the skill.
