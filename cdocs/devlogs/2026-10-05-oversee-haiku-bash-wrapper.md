@@ -59,6 +59,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | 2026-10-05T09:27 | iteration 1 review |
 | return | rev-1 (cdocs:reviewer) | review r1 | 2026-10-05T09:33 | 94658da revise |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, AGENTS.md? | 2026-10-05T09:35 | iteration 2 (continue) |
+| return | impl-1 (cdocs:implementer) | same + plugins/cdocs/AGENTS.md | 2026-10-05T09:42 | a8a3684..31dc86e |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md, cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary-r2.md | 2026-10-05T09:44 | iteration 2 review; runs live canaries |
 
 ## Steering Log
 
