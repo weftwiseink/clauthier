@@ -155,6 +155,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-r9 (cdocs:reviewer, fresh) | review r9 file | 2026-10-05T10:52 | round 9 |
 | return | rev-r9 | `76e4d77`; REVISE: 1 blocker (devlog-skill deliverable leaks note instructions to subagents, directive 5), 6 nits; tensions a/b/c judged acceptable | 2026-10-05T10:55 | round 9 |
 | dispatch | prop-4 (warm, SendMessage) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T10:56 | round 9 fixes |
+| return | prop-4 | `845996d`, `1945db4`; blocker + 6 nits fixed; review_ready | 2026-10-05T10:58 | round 9 fixes |
+| dispatch | rev-r9b (cdocs:reviewer, fresh) | review r9b file | 2026-10-05T10:59 | verification pass |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
