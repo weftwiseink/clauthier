@@ -218,6 +218,7 @@ Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
 
 The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a haiku runner misjudging "salient" is the main failure mode.
 Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
+The runner returns at most 10 salient lines, so an aggregate spec over many files should ask for per-file counts plus detail for the top few files only; a spec that cannot fit comes back as counts plus one `[spec truncated: ...]` line naming a follow-up command over the capture file.
 With no spec, the runner falls back to exit code, status, error-matching lines, and a bounded tail and head.
 If more detail is needed later, grep or read the named capture file rather than re-running the command.
 
