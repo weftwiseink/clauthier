@@ -102,8 +102,8 @@ The `opencode-rules` plugin is not required: rules fall back to `.claude/rules/`
 ### Agent path resolution
 
 Agents (`nit-fix`, `triage`, `reviewer`, `judge`, `implementer`, `proposer`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
-`bash-runner` reads no rule files: its capture-then-extract contract is inlined in its prompt.
 This is experimental belt-and-suspenders alongside the `/cdocs:init` materialization path.
+`bash-runner` reads no rule files: its capture-then-extract contract is inlined in its prompt.
 
 ### When CC #14200 Lands
 
