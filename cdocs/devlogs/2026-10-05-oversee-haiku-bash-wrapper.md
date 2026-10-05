@@ -41,6 +41,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
 | 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | ~45K (10% inline) | yes | containment re-run by rev-1 (970-char report, true last line); F1 blocking: example shapes omit `| head -n 10` bound; overseer ran canaries inline (read-only) |
+| 2 | impl-1 (cdocs:implementer) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md | ~60K (5% inline) | no | F1 closed (max internal result 1,453); accept NOT terminal: maintainer steer ca5916f (relax internal bounds) pending -> iteration 3 |
 
 ## Judge Log
 
@@ -61,6 +62,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, AGENTS.md? | 2026-10-05T09:35 | iteration 2 (continue) |
 | return | impl-1 (cdocs:implementer) | same + plugins/cdocs/AGENTS.md | 2026-10-05T09:42 | a8a3684..31dc86e |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md, cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary-r2.md | 2026-10-05T09:44 | iteration 2 review; runs live canaries |
+| return | rev-2 (cdocs:reviewer) | review r2 + _verify r2 | 2026-10-05T09:55 | dc14665, 5f457a6 accept |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, plugins/cdocs/rules/orchestration-discipline.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md | 2026-10-05T09:57 | iteration 3: apply maintainer steer |
 
 ## Steering Log
 
@@ -68,7 +71,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 |---|---|---|---|---|
 | 2026-10-05T09:01 | steer-implementer | p0 proposal | Defer `bashOutputMaxChars` cap to follow-up RFP; ship runner + dispatch guidance only | pre-step (prop-1) |
 | 2026-10-05T09:10 | steer-implementer | impl-1 | Size runner extraction bounds so its own Bash results stay well under any plausible consumer cap (report body <= ~2K chars) - makes the runner cap-safe regardless of the RFP outcome | 1 |
-| 2026-10-05T09:50 | steer-implementer | impl-1 | Maintainer: do not over-constrain the runner's methodology vs. the parent running Bash directly; the cheaper model is the main saving. SUPERSEDES the 09:10 cap-safety steer (its premise, the deferred cap, is out of scope). Runner-internal reads are judgment-driven (capture-to-file + size check stays; small outputs may be read whole; larger ones extracted with targeted, iterative commands, no fixed `head -n 10` suffix). Only the REPORT returned to the parent stays bounded. | 3 (pending) |
+| 2026-10-05T09:50 | steer-implementer | impl-1 | Maintainer: do not over-constrain the runner's methodology vs. the parent running Bash directly; the cheaper model is the main saving. SUPERSEDES the 09:10 cap-safety steer (its premise, the deferred cap, is out of scope). Runner-internal reads are judgment-driven (capture-to-file + size check stays; small outputs may be read whole; larger ones extracted with targeted, iterative commands, no fixed `head -n 10` suffix). Only the REPORT returned to the parent stays bounded. | 3 |
 
 ## Implementation Notes (impl-1)
 
