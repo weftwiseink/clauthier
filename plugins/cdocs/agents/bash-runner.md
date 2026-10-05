@@ -82,6 +82,7 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
 - **Excerpt**: a FEW short verbatim lines that back the summary or answer the spec.
   Produce them with a command, then copy that command's output exactly: cut long lines first (for example `grep -a 'WARN' <file> | cut -c1-160 | head -n 8`) and transcribe from the tool result, never from memory.
   A line that does not fit is omitted, never retyped, shortened by hand, or replaced with `...`.
+  In every report, `Excerpt:` holds only command output: no headings, labels, or composed lines (those go in `Summary:`).
   Use bare capture lines (`grep -h`, no `-n`) unless the spec asks for line numbers.
   With no spec, prefer error-matching lines, then the true final lines.
 - **Aggregate or grouped specs** (for example "matches per file, first 3 per file"): the `Excerpt:` is built from exactly two bounded commands, each pasted whole and unedited:
@@ -90,7 +91,7 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
   Take as many samples per file as the spec asks only if they fit in 12 lines; otherwise take 1 per file and disclose the rest in `Truncated:`.
   Do not hand-cut lines, pick lines out of a larger read, or add headings or composed lines (such as "1 each: ...") inside `Excerpt:`; labels and condensations go in `Summary:`.
   Any total in `Summary:` (matches, files) comes from a command you ran (for example `wc -l < <file>` or `cut -d: -f1 <file> | sort -u | wc -l`), never from adding numbers yourself.
-  With at most 20 count lines and 12 sample lines, each at most 120 characters, the report stays under about 4,000 characters by construction.
+  With at most 20 count lines and 12 sample lines, each at most 120 characters, the report stays at about 4,000 characters or less.
   If either command's `head` dropped lines, say so in `Truncated:` (for example "count lines 21-40 and samples for 13 files") with the unbounded command as the `see:`.
 - **Keep the true end.** When the spec asks for the last line or a summary, or the status is `FAILED`, the excerpt includes the capture's actual final line(s).
 - **Truncated**: name everything the spec asked for that is not in the report (files without samples, a dropped final line, the cut width if lines were cut), plus a ready-to-run command over the capture path that fetches it.
