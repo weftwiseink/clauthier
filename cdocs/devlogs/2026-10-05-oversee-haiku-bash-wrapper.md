@@ -149,6 +149,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | crev-8 (cdocs:reviewer) | review r8 | 2026-10-05T13:35 | 0df3016 ACCEPT; implementation_ready |
 | dispatch | prop-3 (cdocs:proposer) | proposal + design-history report | 2026-10-05T13:36 | accepting-round nits |
 | return | prop-3 (cdocs:proposer) | same | 2026-10-05T13:40 | 043b884, b927846; p1 pre-step done, HOLD |
+| inline | overseer | plugins/cdocs/agents/bash-runner.md, haiku-bash-wrapper proposal L281 | 2026-10-05T10:44 | 552684d capture pruning (maintainer-approved), hand-tested |
+| dispatch | prop-4 (cdocs:proposer, fresh) | chat-record proposal, design-history report, revise-r5 devlog | 2026-10-05T10:46 | round 9 |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
@@ -163,6 +165,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T12:25 | steer-implementer | impl-1 / Bash Output Hygiene | Maintainer: goal is delegating context-bloating work to preserve the lead's context without degrading performance or losing relevant info. Don't be too aggressive: trivial/known-small commands need no subagent, and self-bounding (`grep -c`, `-q`, `| tail -n 5`) is preferred when the caller knows exactly what it needs. Soften 'Any agent ... keeps ... by dispatching' to a judgment call. Apply after rev-8 returns (reviewer is reading these files). | post-accept (82149b2) |
 | 2026-10-05T12:50 | steer-implementer | prop-3 (chat-record r7) | Maintainer: turn-end stamp is a postscript line `-- <session_name> at <timestamp>`, not an `@end:` speaker block, to keep @-attribution semantics clean. | 7 (applied, 62febaa) |
 | 2026-10-05T13:13 | steer-implementer | prop-3 (chat-record r8) | Maintainer: proposals should be timeless; move revision history and past approaches into a supplemental report (repo convention). Keep phases together (Phase 3 depends on 1-2). Guard: rule text + scoped PreToolUse fallback (subagent-notes alternative under discussion). | 8 |
+| 2026-10-05T10:45 | steer-implementer | prop-4 (chat-record r9) | Maintainer: chat-record path as devlog frontmatter attr; drop prompt-id (p=) correlation; drop @harness records; no permission edits by init (usage runs skip-permissions); guard text only beside the per-turn instruction (no per-agent copies); remove all agent-side compaction/context-tracking instructions (compaction purely rules-side, on user/auto compaction); Scratchpoint caps -> 'aim for at most'. Then update artifact. | 9 |
 
 ## Implementation Notes (impl-1)
 
