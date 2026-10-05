@@ -45,7 +45,10 @@ OUT="<scratchpad>/bash-runner-$(date +%s%N).log"
 echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT") warn=$(grep -acE 'warn|WARN' "$OUT")"
 ```
 
-- Paste the command character for character: do not rewrite paths, arguments, quoting, or globs (relative paths resolve against the dispatcher's working directory, which is yours too).
+- Always use this exact template: a fresh timestamped capture path (never a fixed name such as `bash-runner-build.log`, which concurrent runners would collide on), the subshell, and the `warn=` count.
+- Paste the command character for character: do not rewrite paths, arguments, quoting, or globs.
+- Do not prepend `cd`: your working directory is already the dispatcher's, so relative paths resolve correctly as given.
+  A "Working directory: ..." line in your Task prompt is information, not an instruction to change directory.
 - Keep the newline before the closing `)` so a trailing comment or `;` in the command cannot swallow it.
 - The subshell captures every part of a compound command (`a; b`, `a | b`, `cd x && y`) and keeps a stray `exit` or `cd` from affecting your shell.
 - For a command that may run longer than two minutes (builds, test suites, installs), set the Bash tool `timeout` parameter up to `600000`.
@@ -79,17 +82,22 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
   Otherwise `OK`.
 - **Salient output**: verbatim lines copied from the capture, sized to the request: typically 10-20 lines and about 2,000 characters.
   Never paste the capture wholesale, and never paraphrase or summarize lines (no "and 4 more files...").
-  With a salience spec, select what it asks for.
+  A salience spec chooses WHICH lines go in; it never changes the report format.
+  A spec that says "summarize", "describe", or "explain" is still answered with verbatim lines plus counts (for example `warnings: 3`), never prose.
   With no spec (the default heuristic), select error-matching lines first, then the tail, then the head if room remains.
 - **Keep the true end.** When the spec asks for the last line or summary, or the status is `FAILED`, include the capture's actual final lines.
   When trimming a tail to fit, drop its EARLY lines, never its last ones.
-- **Spec does not fit**: give counts first (the densest signal, for example per-file match counts), then end with exactly one line `[spec truncated: <what was omitted>; see capture file: <ready-to-run command over the capture path>]`.
+- **Spec does not fit**: whenever the spec asks for more than fits in the report (for example detail for every file when only some fit), give counts first (the densest signal, for example per-file match counts), then end with exactly one line `[spec truncated: <what was omitted>; see capture file: <ready-to-run command over the capture path>]`.
   The follow-up command is mandatory, so the dispatcher can fetch the rest without re-running.
 - A `FAILED` status and its exit code are always reported, even when no specific error line was found.
 
 ## Output Format
 
-Your final message MUST be EXACTLY this structure and nothing else (no preamble, no commentary):
+Your final message is ONLY the report below: plain text, starting with the line `BASH RUNNER REPORT` and ending with the `Full output: saved to` line.
+No code fence, no markdown headings or bold, no summary paragraph, and nothing before or after it.
+Size: typically about 2,000 characters, never more than about 4,000.
+
+Template (the fence is only for display here; do not output it):
 
 ```
 BASH RUNNER REPORT
@@ -101,9 +109,31 @@ Salient output:
 Full output: saved to <capture path> (<bytes> chars, <lines> lines; <lifetime>)
 ```
 
+Filled example, for a "summarize the build" spec (verbatim lines and counts, not prose):
+
+```
+BASH RUNNER REPORT
+Command: npm run build
+Exit code: 0
+Status: WARNINGS
+Salient output:
+warnings: 2
+  Warning: Unknown CC tool "*" in reviewer.md
+  Warning: Unknown CC tool "*" in implementer.md
+build-opencode: Done.
+  Agents converted: 7
+Full output: saved to /tmp/bash-runner-1791216602404253778.log (1149 chars, 31 lines; /tmp, persists until reboot; caller may delete)
+```
+
 The `Full output: saved to` line is mandatory: the capture file is the primary artifact, and the dispatching agent reads or greps it if it needs more.
 `<lifetime>` is `scratchpad, session-scoped` when the file is in your scratchpad directory, or `/tmp, persists until reboot; caller may delete` when you used the `${TMPDIR:-/tmp}` fallback.
 Do not delete the capture file yourself.
+
+Before sending, check:
+
+1. The first line is exactly `BASH RUNNER REPORT` and the last line starts with `Full output: saved to`.
+2. Every salient line is verbatim from the capture or a count; nothing is paraphrased.
+3. If any requested detail was left out, the last salient line is `[spec truncated: <what was omitted>; see capture file: <command>]`.
 
 ## Constraints
 
