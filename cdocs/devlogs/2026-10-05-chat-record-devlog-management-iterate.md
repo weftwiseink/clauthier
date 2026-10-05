@@ -35,6 +35,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/** (Phase 1a scope), proposal frontmatter, this devlog (Implementation Notes) | 2026-10-05T12:17:00-07:00 | Phase 1a |
+| return | impl-1 (cdocs:implementer) | same | 2026-10-05T12:53 | Phase 1a: `ed35dc9`..`757028b`, notes `111c2be`; grep1 empty, grep2 reseed line only; build OK; 7 judgment calls flagged |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | 2026-10-05T12:54 | Phase 1a review |
 
 ## Steering Log
 
