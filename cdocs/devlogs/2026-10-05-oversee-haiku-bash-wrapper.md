@@ -183,6 +183,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-6 (warm) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T12:37 | r12 fixes; overseer confirms success lines then iterate |
 | return | prop-6 | `f2bf11f`, `aaa9290`, `e346f31`; M1 greps scoped to rules/skills/agents, N1-N4 applied | 2026-10-05T12:40 | round 12 fixes |
 | inline | overseer | chat-record proposal frontmatter | 2026-10-05T12:41 | confirmed 1a/1b success lines consistent (r12 reviewer: no full round needed); status implementation_ready, last_reviewed accepted |
+| dispatch | fork (artifact) | proposal assets/index.html; artifact LSfQwst9o1MtbjbhZ94T1e | 2026-10-05T12:42 | round-12 artifact update |
+| inline | overseer | arc-state p1 in_progress; iterate devlog created | 2026-10-05T12:43 | /cdocs:iterate Phases 1a,1b,2 -> cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
