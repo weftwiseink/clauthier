@@ -487,3 +487,39 @@ Wording-only pass after rev-8 accepted iteration 8; runner behaviour is unchange
 
 `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 The working tree also had unrelated, uncommitted edits to `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`; I did not stage or touch them.
+
+## Implementation Notes (impl-2, completeness revision)
+
+Applies all 17 action items of the final review ([`2026-10-05-review-of-haiku-bash-wrapper-impl-final.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-final.md)) under the maintainer's completeness-first steer: report quality comes first, size is a default, and the runner's methodology is not over-constrained.
+Maintainer defaults: Question A (a), about 12K for a complete list; B (a), the list goes in `Excerpt:` as one command's output; C (a), self-capture is the first cheap path.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `786985a` | `plugins/cdocs/agents/bash-runner.md` | Items 1-12: purpose is containment without loss; new first Step 3 bullet "Answer the spec completely"; no-spec default names each distinct failure; Summary "a few lines (usually 1-3)"; Excerpt is one line per item for a list, built by a command such as `awk`; aggregate `head` counts set by the spec, 20/12/120/4,000 arithmetic deleted; size "usually under ~4K, up to ~12K for a complete list, never unlabelled shorthand"; `description` rewritten; `grep -n` kept when useful; exit-0 failures and text-match `warn` counts flagged in `Summary:`; pipes, not temp files; honest `Truncated:`; haiku-era lines removed |
+| `54f040c` | `plugins/cdocs/rules/orchestration-discipline.md` (Bash Output Hygiene only) | Items 13-15: self-capture (`cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`) replaces `| tail -n 5`; dispatch is for a distillation, not for line-by-line reading; the dispatch contract tells callers to say "every" and gives an active follow-up path; runner-internal size mechanics removed |
+| `b6818e7` | `plugins/cdocs/rules/model-tiering.md`, `plugins/cdocs/AGENTS.md` | Item 16: "fixed-format report"; under-reporting named as the second risk |
+| `bde47b3` | proposal | Item 17 and design sync: completeness probe in the Test Plan, the acceptance bar and Phase 1 success criteria; output contract, input contract, dispatch scope, edge cases and a new "Completeness over brevity" decision rewritten to match; dated maintainer NOTE with the three defaults. Status stays `implementation_accepted` |
+
+### Implementer Notes
+
+> NOTE(opus-5-5/impl-2): The proposal edits landed in `bde47b3`, a commit made by a concurrent chat-record session in this shared `main/` worktree, whose `git add` swept in my uncommitted proposal diff.
+> Its message names only the chat-record work.
+> I left it alone because rewriting a shared branch under a live sibling session is riskier than a misleading message; the bash-wrapper hunks in `bde47b3` are exactly my edits (checked with `git show bde47b3 -- cdocs/proposals/2026-09-22-haiku-bash-wrapper.md`).
+
+- **Balance over counterweights.** I removed size admonitions rather than adding completeness text against them: the `head -n 8` Excerpt example, "a line that does not fit is omitted" (now "never retype ... change the command"), the "exactly two bounded commands" wording and the 4K arithmetic. Report size appears once, in Output Format.
+- **No-spec default** is its own Step 3 bullet next to the completeness bullet, not a clause in Excerpt, so the Input section's pointer to "the default heuristic in Workflow step 3" lands on it directly.
+- **Input example** now includes "every failing test with file:line and expected vs actual", so the completeness spec shape is visible where callers' specs are described.
+- **README** (`plugins/cdocs/README.md`): unchanged; the review found its one runner line (L106) accurate.
+- **Materialized rule copies:** none are tracked in this repo (no `.claude/rules/`, root `AGENTS.md` or `.opencode/rules/`); `82149b2` and `552684d` touched only plugin sources, so nothing to regenerate.
+
+### Verification
+
+- `npm run build:cdocs` -> exit 0, `Agents converted: 7`; the built `bash-runner.md` keeps `bash: true` with `read`/`edit`/`write: false` and the new description. The only warnings are the existing `Unknown CC tool "*"` skips for the full-tool agents.
+- Repo tests: `package.json` defines no test script; the two shell tests (`test-graphify-scope.sh`, `skills/ablate/test-ablate.sh`) cover neither agents nor rules, so none apply.
+- **Live N1 canary (no spec, failing test run)**, fixture method from [`_verify/2026-10-05-bash-runner-quality-canary.md`](_verify/2026-10-05-bash-runner-quality-canary.md), regenerated in the session scratchpad: 6 `node --test` files, 360 tests, 17 distinct `deepStrictEqual` failures, 38,833 chars, 894 lines, exit 1.
+  `claude -p --plugin-dir <abs>/plugins/cdocs --model sonnet` (Claude Code 2.1.289, runner `claude-sonnet-5-5`, 4 runner Bash calls, $0.13), prompt passing only the command.
+  Report: 3,292 chars, `Status: FAILED`, per-file counts in `Summary:`, and **17 of 17 failing tests named** in `Excerpt:` as `test at <file:line> | <name> | actual total N, expected total M`, plus the `ℹ tests/pass/fail` lines.
+  Diffed against ground truth from the fixture sources (name, location, actual, expected): exact match on all 17 (previously 0 of 17).
+- Residual slip: the runner's `awk` missed the first failure's `test at` line, so it labelled that one line `(first failure)` and filled in its location from capture line 444. Both the `Summary:` and the `Truncated:` field disclose this. The capture also landed in the fixture directory, because the fixture sat under the session scratchpad, the same fixture-induced effect as B1.
