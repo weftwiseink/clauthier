@@ -89,7 +89,7 @@ stateDiagram-v2
 
 Read the proposal and any handoff devlog once.
 State scope and verification floor explicitly.
-Create or append to a devlog, copying all four table sections from `./template.md`: the Iteration Log, the (empty) Judge Log, the Dispatch/Return Events table, and the (empty) Steering Log.
+Create or append to a devlog, copying from `./template.md` the `## Scratchpoint` (unless the devlog already has one) and all four table sections: the Iteration Log, the (empty) Judge Log, the Dispatch/Return Events table, and the (empty) Steering Log.
 Prefer appending to the most recent devlog whose `task_list` matches the proposal's; otherwise create a new one and record the choice.
 
 ### Turn N.a (Implement)

@@ -1,9 +1,18 @@
 # Iterate Skill: Devlog Section Templates
 
-The `/cdocs:iterate` skill appends four table sections to the loop's devlog on Turn 0.
+The `/cdocs:iterate` skill appends a Scratchpoint and four table sections to the loop's devlog on Turn 0.
 This file is the source for those snippets.
 
-Copy the four H2 sections below into the devlog body verbatim, then append a row to each table as the loop progresses.
+Copy the five H2 sections below into the devlog body verbatim (skip `## Scratchpoint` if the devlog already has one), then keep the Scratchpoint current and append a row to each table as the loop progresses.
+
+## Scratchpoint
+
+- as_of:
+- now:
+- since_handoff:
+- open:
+- next:
+- files:
 
 ## Iteration Log
 
@@ -26,6 +35,8 @@ Copy the four H2 sections below into the devlog body verbatim, then append a row
 |---|---|---|---|---|
 
 ## Column Semantics
+
+The Scratchpoint's fields, size, and owner-only writer rule are in `orchestration-discipline.md` Pillar 2 "Scratchpoint"; the overseer owns it.
 
 **Iteration Log**
 
