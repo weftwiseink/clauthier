@@ -49,7 +49,7 @@ This is deliberate, small duplication, and it is a correctness floor, not a redu
 
 The reason is a delivery gap: on a marketplace install that has not run `/cdocs:init`, the `SessionStart` hook injects no rule content, only a directive to re-run `/cdocs:init`.
 A skill that reduced to a bare reference would then point at content the session never loaded.
-The 2-3 line floor (dispatch-by-default with the skill's own carve-out, durable state before compact, fresh reviewer and judge) keeps the discipline alive on an un-init'd install.
+The 2-3 line floor (dispatch-by-default with the skill's own carve-out, durable state at task-unit boundaries, fresh reviewer and judge) keeps the discipline alive on an un-init'd install.
 
 > NOTE(claude-opus-4-8/overseer-alignment-round2): Do NOT "deduplicate" the inline floor into a bare reference in a later nit-fix pass.
 > The duplication is intentional: a correctness floor beats a clean-but-absent reference.
@@ -61,7 +61,7 @@ Three layers back the discipline:
 
 1. **Written rule plus self-check.** This file, plus the per-dispatch self-check above.
 2. **Judge-remit backstop (iterate-only).** The `judge` agent, fresh each invocation, checks for overseer-as-workhorse and context bloat and can `escalate`.
-   This backstop is real only because the overseer logs a thinness signal (the context-estimate and inline-work columns below) and the judge logs its own `overseer_thinness` diagnosis; absent both logged fields this layer reduces to self-policing.
+   This backstop is real only because the overseer logs a thinness signal (the inline-work column below) and the judge logs its own `overseer_thinness` diagnosis; absent both logged fields this layer reduces to self-policing.
    `propose-revise` and `full-send` have no judge and fall back to the written self-check plus the optional future hook, with no independent enforcer.
 3. **Optional `PreToolUse` advisory hook (Phase 5, not built).** A future advisory that warns on long runs of inline `Edit`/`Write`/`Bash` from the top-level session. Advisory only, since a hook cannot reliably detect overseer mode.
    Spec note (documentation only; hook build deferred to a dedicated hooks proposal): the same advisory MAY also warn, never refuse, on a cross-worktree or `main` write from the top-level session, surfacing it to the overseer and judge. Warn-not-refuse keeps the overseer in control and matches the graded philosophy. A refusing guard on the top-level session is exactly the mid-merge dead-end this discipline removes.
@@ -107,44 +107,65 @@ A named durable specialist that owns a file across turns satisfies this by const
 Thinness is enforceable only when it is logged.
 Two additive fields make it legible in the Iteration Log:
 
-- **Overseer-written (input signal).** The overseer appends an approximate current-context estimate and an "inline-work performed this turn" flag as additive columns.
-  Estimate format example: "~150K tokens (30% of turn was inline file reads)," so a trend is visible across rows.
+- **Overseer-written (input signal).** The overseer appends an "inline-work performed this turn" flag, the `inline_work` column, so a run of inline-work turns is visible across rows.
   This is the field the judge reads to key `escalate`; without it the judge cannot see bloat and the judge backstop is inert.
 - **Judge-written (output signal).** The judge writes its own named additive field, `overseer_thinness: clean | bloat_detected | signal_missing`, at every invocation.
-  This is distinct from the judge's continue/rotate/escalate verdict: a judge may log `bloat_detected` while returning `continue` when a rising-context trend coexists with clear forward progress, keeping the diagnosis auditable independent of whether it alone triggered escalation.
-  `signal_missing` is written whenever the overseer's context-estimate/inline-work columns are absent, making an unenforced checkpoint visible in the log rather than only inferable from prose.
+  This is distinct from the judge's continue/rotate/escalate verdict: a judge may log `bloat_detected` while returning `continue` when a run of inline-work turns coexists with clear forward progress, keeping the diagnosis auditable independent of whether it alone triggered escalation.
+  `signal_missing` is written whenever the overseer's `inline_work` column is absent, making an unenforced checkpoint visible in the log rather than only inferable from prose.
 
 This `overseer_thinness` field, not prose guidance, is what makes the judge-backstop layer real and gradeable.
 
-> NOTE(claude-sonnet-5/overseer-alignment-round2): The remaining context-cleanliness discipline (handoff format, proactive compaction cadence, `CLAUDE.md` reseed verification) ships in Phase 2 and references this rule for the enforcement backbone.
+> NOTE(claude-sonnet-5/overseer-alignment-round2): The remaining context-cleanliness discipline (handoff format, `CLAUDE.md` reseed verification) ships in Phase 2 and references this rule for the enforcement backbone.
 
 ## Pillar 2: Context Persistence and Cleanliness
 
-The overseer keeps its own turns thin across a long loop by checkpointing and compacting deliberately rather than drifting toward the window limit.
-The thinness columns and the judge's `overseer_thinness` verdict (see "Judge-Observable Thinness Signal" above) make bloat legible; this pillar is the discipline that keeps the signal clean.
+The overseer keeps its own turns thin across a long loop and keeps its durable state current, so a compaction or a fresh session resumes from written state rather than from a lossy summary.
+The thinness column and the judge's `overseer_thinness` verdict (see "Judge-Observable Thinness Signal" above) make bloat legible; this pillar is the discipline that keeps the signal clean.
 
-### Handoff-before-compact format
+### Handoff format
 
-At each task-unit boundary the overseer writes a handoff into the devlog BEFORE compacting.
-The checkpoint is not complete until the handoff is written: skipping the handoff and compacting anyway is a failure, because auto-compaction's summary is lossy and a hand-written handoff is more complete, which is why the write precedes the compact.
+At each task-unit boundary the overseer writes a handoff into the devlog.
+The checkpoint is not complete until the handoff is written: a compaction's summary is lossy, and the hand-written handoff is what a resuming reader trusts.
 
 The handoff is a markdown section with exactly three subsections:
 
-- **Completed**: what this task unit finished, including the files touched.
-- **Decisions Made**: cross-cutting choices and their rationale, so they are not re-litigated after the compact.
+- **Completed**: what this task unit finished, including the files touched as `files:` gists rolled over from the Scratchpoint (below).
+- **Decisions Made**: cross-cutting choices and their rationale, so they are not re-litigated after a compaction or in a fresh session.
 - **Open Todos**: what remains, phrased so the next reader can pick it up cold.
 
 A fresh reader must be able to orient from the handoff in under 30 seconds.
 
-### Proactive compaction cadence
+### Scratchpoint
 
-Run `/compact` (or `/clear` for a hard reset) proactively at task-unit boundaries, NOT reactively at the window limit.
-Concrete trigger: after every 3 to 5 iterations of the implement-review loop, OR whenever a judge invocation completes, checkpoint-and-compact immediately.
-The target is keeping overseer turns under roughly 150K tokens rather than letting them grow to 800K+.
+A devlog's owner keeps one `## Scratchpoint` section of current state, replaced in place on every state-changing turn; history belongs in handoffs.
+
+```markdown
+## Scratchpoint
+
+- as_of: 2026-10-05T12:40:11-07:00
+- now: iteration 3 implementer dispatched on the parser fix
+- since_handoff: reviewer r2 accepted the schema change; the parser still rejects CRLF input
+- open: whether the CLI flag stays in this phase
+- next: on the implementer's return, dispatch a fresh reviewer
+- files:
+  - plugins/cdocs/skills/iterate/template.md (r): Iteration Log column order for the new rows
+```
+
+- **Fields:** `as_of` (timestamp), `now`, `since_handoff` (facts not yet in a handoff), `open`, `next` (the single next action), `files`.
+- **`files:`** one line per file read in full or edited since the last handoff, shape `- <path> (<r|w|rw>): <what it was useful for>`; files skimmed for a search hit do not belong.
+  It gives awareness ("does this gist cover me, or do I need the bytes"), not cheaper re-reads; tasks needing exact content re-read regardless.
+  At each handoff the list rolls into the handoff's Completed subsection and restarts empty.
+- **Size:** aim for at most ~15 lines and ~8 `files:` entries; move anything older into a handoff.
+- **Writers:** the devlog's owner alone, such as the overseer of a loop (`iterate`, `propose-revise`, `full-send`, `oversee`), a top-level `implement` or plain session, or a durable specialist that keeps its own devlog (Pillar 3).
+  An agent writing into another agent's devlog keeps none: the `iterate` implementer writes only `## Changes Made` and `### Implementer Notes`, and its return summary is its checkpoint, as it is for one-shot legs.
+- **Not a thinness input:** the judge's `overseer_thinness` reads the `inline_work` column alone.
+
+Raw evidence (settings, commands, log lines) goes in the devlog's `## Verification` section, not the Scratchpoint.
+After a compaction, re-read your devlog's `## Scratchpoint` and latest handoff before acting.
 
 ### CLAUDE.md reseed mechanism
 
-The reseed is what makes aggressive compaction safe: it restores the discipline the compact would otherwise drop.
+The reseed is what makes compaction safe: it restores the discipline the compact would otherwise drop.
 Project-root `CLAUDE.md` and *unscoped* rules (`.claude/rules/*.md` with no `paths:` frontmatter) are re-injected from disk on both auto-compaction and manual `/compact`.
 Source: https://code.claude.com/docs/en/context-window.md ("What survives compaction").
 
@@ -188,6 +209,7 @@ An overseer managing ten workstreams spawns ten specialists maximum; if the work
 
 A durable specialist that owns its OWN files satisfies the "Pillar 1b: Single-Writer File Ownership" guarantee BY CONSTRUCTION: the single writer of those paths is the one named specialist across turns, so no second concurrent writer is ever dispatched against them.
 See that section for the guarantee itself; this pillar supplies the constructive case where it holds automatically rather than by per-dispatch check.
+The same applies to the Scratchpoint (Pillar 2): a durable specialist keeps one only in a devlog it owns, never in the overseer's.
 
 ### Cross-target degradation
 
@@ -235,6 +257,6 @@ An undispatched verbose command falls back to the platform's built-in Bash outpu
 ## Cross-Target Degradation
 
 Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
-Only the *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork`/`compact` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
-Likewise, where a target lacks a `/compact` equivalent, Pillar 2's compaction cadence degrades to "start a fresh session from the handoff doc" rather than silently breaking off-Claude-Code.
+Only the *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
+Likewise, off Claude Code, resumption reads the devlog's Scratchpoint and latest handoff.
 The discipline still holds; only the primitive changes.
