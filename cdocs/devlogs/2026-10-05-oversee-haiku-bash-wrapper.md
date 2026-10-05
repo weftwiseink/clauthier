@@ -386,3 +386,35 @@ Applies the maintainer-approved report contract v2 in response to [`2026-10-05-r
 - Aggregate sizing: on a `grep -rn overseer plugins/cdocs/skills` capture (98 lines, 10 files), the counting command plus 3 cut lines each for the top 4 files total 2,297 chars, comfortably inside the ~4K ceiling with room for the header fields.
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Live sonnet canaries are pending the reviewer's re-run.
+
+## Implementation Notes (impl-1, iteration 8)
+
+Implements rev-7 option A ([`2026-10-05-review-of-haiku-bash-wrapper-impl-r7.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r7.md)) for aggregate/grouped specs only; Step 2 and the non-aggregate path are unchanged.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `c17ad00` | `plugins/cdocs/agents/bash-runner.md` | Aggregate `Excerpt:` = whole output of one counting + one sampling command; no composed/heading lines; command-computed totals; bounds by construction; `Truncated:` is for omissions, not absences |
+| `9e8393e` | `plugins/cdocs/rules/orchestration-discipline.md` | Dispatch contract mirrors the two-command aggregate excerpt |
+| `2eae8da` | proposal | Output contract mirrors the two-command excerpt and bounds |
+
+### Implementer Notes
+
+- **Counts:** the entire output of one counting command, for example `cut -d: -f1 <file> | sort | uniq -c | sort -rn | head -n 20 | cut -c1-120`.
+- **Samples:** the entire output of one sampling command, for example `awk -F: 'c[$1]++ < 1' <file> | cut -c1-120 | head -n 12`.
+  The runner uses as many samples per file as the spec asks only if they fit in 12 lines; otherwise it takes 1 per file and discloses the rest in `Truncated:`.
+- **Excerpt purity (r7 F4):** no hand-cut, selected, heading, or composed lines (for example "1 each: ...") inside `Excerpt:`; labels and condensations go in `Summary:`.
+- **Totals (r7 Summary/count mismatch):** any total in `Summary:` comes from a command (`wc -l < <file>`, `cut -d: -f1 <file> | sort -u | wc -l`), never from mental arithmetic.
+- **Bounds (deviation):** I chose 20 count lines and 12 sample lines, below the brief's suggested 15 samples.
+  With every line capped at 120 chars, the worst case is about 3.9K for the excerpt; real sweeps run well under that (below).
+  `Truncated:` names dropped count lines or samples, with the unbounded command as `see:`.
+- **r7 F5:** `Truncated:` is for things left out of the report, not for information the capture lacks; that goes in `Summary:`.
+
+### Verification (emulated)
+
+- Relative-path sweep (`grep -rn the plugins/cdocs/skills`, 688 matches, 19 files): the two commands' combined output is 2,643 chars.
+- Absolute-path sweep (`grep -rn agent <abs>/plugins/cdocs`, 227 matches, 33 files, so both `head`s bind): 3,145 chars.
+  Even this worst realistic case leaves room for the header fields, `Summary:` and `Truncated:` under ~4K.
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+- Live sweep canaries are pending the reviewer's re-run.
