@@ -10,7 +10,7 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk[=ski
 Its unit of work is a proposal, not a file: it advances proposal N+1 only when proposal N reaches a terminal accepted state, reading each proposal's frontmatter `status` as the return contract.
 
 The arc overseer runs in *overseer mode*, defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md), and the arc-level primitives it applies are defined in [`oversee-arc.md`](../../rules/oversee-arc.md); this skill references both rather than restating them.
-Inline floor: dispatch by default (each composed loop keeps its own carve-out); write the arc-state file and a Completed/Decisions Made/Open Todos handoff BEFORE compacting; the arc overseer reads durable signals (proposal frontmatter `status`, devlog handoff, arc-state), never the composed loop's raw turns.
+Inline floor: dispatch by default (each composed loop keeps its own carve-out); write the arc-state file and a Completed/Decisions Made/Open Todos handoff at task-unit boundaries; the arc overseer reads durable signals (proposal frontmatter `status`, devlog handoff, arc-state), never the composed loop's raw turns.
 The human user is the supervisor: they invoke the skill and receive escalations; the arc overseer runs the arc.
 
 > NOTE: `/oversee` is TOP-LEVEL ONLY. A dispatched subagent cannot dispatch its own loops ([`orchestration-discipline.md`](../../rules/orchestration-discipline.md): no nested dispatch), so if invoked as a subagent it degrades to sequential-advisory or declines, and says so.
@@ -69,7 +69,7 @@ The arc-state file (`.claude/oversee/<arc-id>.json`, normative schema in [`overs
 The copyable skeleton is in [`./template.md`](./template.md).
 
 - **Create** on Turn 0: seed `proposals` from the invocation with `arc_state: pending`, `position: 0`, `budget.full_cycle_retries_max: 2`, and the AFK fields.
-- **Transition-write BEFORE compact**: rewrite the file at every arc-level transition (proposal start, proposal terminal, escalation, claim acquire/release). This is the arc-altitude analogue of Pillar 2's handoff-before-compact; the prose half still goes to the arc devlog.
+- **Transition-write**: rewrite the file at every arc-level transition (proposal start, proposal terminal, escalation, claim acquire/release). This is the arc-altitude analogue of Pillar 2's handoff; the prose half still goes to the arc devlog.
 - Keep a normal arc devlog beside the JSON (Completed / Decisions Made / Open Todos), the human-readable narrative the JSON does not replace.
 
 ## Sequential Chain
@@ -111,7 +111,7 @@ The one overseer dispatches proposal A's and proposal B's implementers concurren
 3. Disjoint proposals are eligible to interleave.
 4. **Uncertainty defaults to serialize** (low scout confidence or broad globs like `**/*`): a false conflict costs latency, a missed conflict costs a clobber.
 
-**Concurrency cap.** At most **3** footprint-disjoint proposals interleave at once by default (each a distinct workstream with one durable specialist, honoring Pillar 3's one-per-workstream bound against the overseer's ~150K-token budget), adjustable with `--max-parallel N`.
+**Concurrency cap.** At most **3** footprint-disjoint proposals interleave at once by default (each a distinct workstream with one durable specialist, honoring Pillar 3's one-per-workstream bound), adjustable with `--max-parallel N`.
 Past the cap the overseer serializes the surplus (defers them to run after an in-flight one terminates) or re-scopes, exactly as Pillar 3 escalates when workstream count outgrows one overseer; it does NOT spawn a second overseer.
 
 **Claim registry** (repo-global `.claude/oversee/claims/`, format and protocol in [`oversee-arc.md`](../../rules/oversee-arc.md); skeleton in [`./template.md`](./template.md)):
@@ -124,9 +124,10 @@ Past the cap the overseer serializes the surplus (defers them to run after an in
 
 ## Checkpoint (proposal boundary)
 
-At each proposal boundary, BEFORE starting the next proposal (and before compacting), write the arc-state file AND a three-subsection Completed / Decisions Made / Open Todos handoff into the arc devlog, then compact (`/compact`, or `/clear` for a hard reset).
+At each proposal boundary, BEFORE starting the next proposal, write the arc-state file AND a three-subsection Completed / Decisions Made / Open Todos handoff into the arc devlog.
 The handoff format is defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2; do not restate it here.
-The checkpoint is not complete until both durable writes land: compacting without them is a failure.
+The checkpoint is not complete until both durable writes land.
+Between checkpoints the arc overseer keeps the arc devlog's `## Scratchpoint` current per Pillar 2 "Scratchpoint".
 
 ## AFK and Escalation Gates
 
@@ -168,5 +169,5 @@ The arc-state file is the durable record: a fresh session reading only it plus t
 
 ## Cross-Target Degradation
 
-Rule CONTENT ships cross-target cleanly; only RUNTIME mechanics degrade (absent `fork`/`SendMessage` the arc runs sequential-only; absent `/compact` the checkpoint becomes a fresh-session restart from the arc-state file plus the last handoff).
+Rule CONTENT ships cross-target cleanly; only RUNTIME mechanics degrade (absent `fork`/`SendMessage` the arc runs sequential-only).
 See [`oversee-arc.md`](../../rules/oversee-arc.md) "Cross-Target Degradation" for the full mapping.

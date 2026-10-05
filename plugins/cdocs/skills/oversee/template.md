@@ -6,7 +6,7 @@ The normative field semantics live in [`../../rules/oversee-arc.md`](../../rules
 
 ## Arc-State File
 
-Write to `.claude/oversee/<arc-id>.json` on Turn 0, and rewrite at every arc-level transition BEFORE compacting.
+Write to `.claude/oversee/<arc-id>.json` on Turn 0, and rewrite at every arc-level transition.
 
 ```jsonc
 {
