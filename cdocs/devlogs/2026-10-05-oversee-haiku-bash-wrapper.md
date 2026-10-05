@@ -134,6 +134,6 @@ Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md`](../reviews/2026
 ### Verification (emulated)
 
 - Step 1 echo over `seq 1 5000; echo "npm WARN deprecated foo@1.0"; seq 1 10 # trailing` -> `exit=0 ... lines=5011 warn=1`, so the WARNINGS path is deterministic.
-- Every documented shape run against an 8-file `grep -rn the plugins/cdocs` sweep capture returned at most 1,491 chars: tail 1,491, per-file counts 836, distinct-file count 3, first-3-per-file 1,447, error count 3.
+- Every documented shape run against a `grep -rn the plugins/cdocs` sweep capture (a two-digit file count) returned at most 1,491 chars: tail 1,491, per-file counts 836, distinct-file count 3, first-3-per-file 1,447, error count 3.
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Still pending: the overseer's live grepsweep re-run, which should show every `RESULT[runner]` at most ~1,500 chars.
