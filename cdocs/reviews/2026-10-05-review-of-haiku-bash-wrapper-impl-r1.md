@@ -2,7 +2,7 @@
 review_of: cdocs/proposals/2026-09-22-haiku-bash-wrapper.md
 first_authored:
   by: "@claude-opus-5-5"
-  at: 2026-10-05T10:05:00-07:00
+  at: 2026-10-05T09:11:29-07:00
 task_list: meta/token-spend-attribution
 type: review
 state: live
