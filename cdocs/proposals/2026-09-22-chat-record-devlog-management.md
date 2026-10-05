@@ -31,7 +31,7 @@ This proposal operationalizes [`2026-09-22-chat-record-scratchpoint-design.md`](
 | Devlog chunks | the devlog's author | at a handoff when a concern has closed | `cdocs/devlogs/YYYY-MM-DD-<root>-<concern>.md`, root becomes index |
 
 The chat record is chronology (what a successor should know, in the order it was learned); the Scratchpoint is a short current-state snapshot; both are agent-authored and terse, and no hook supplies content.
-The session id ties a record together and block order delimits its turns, so the record carries no correlation tokens.
+The session id ties a record together and block order delimits its turns.
 How the design reached this shape, the approaches it rejected, and the runtime evidence behind each platform fact are in the supplemental [`2026-10-05-chat-record-design-history.md`](../reports/2026-10-05-chat-record-design-history.md).
 
 ## Objective
@@ -57,7 +57,7 @@ Keep devlogs skimmable by splitting them where the work has seams, so a resuming
 - Cross-agent content sharing: the gists give awareness, not cheaper re-reads, and make no claim on the measured 97.4% cross-agent re-read figure.
 - Mechanical capture of files touched (no `PostToolUse` hook).
 - Compaction awareness in the record: no compaction hook, no session start, end, or compaction lines.
-- Agent-side compaction management: nothing here asks the user to compact, times compaction, or tracks context usage; the rules act only after a compaction has happened.
+- Agent-side compaction management: nothing here asks the user to compact, times compaction, or has the agent track its own context usage; the rules act only after a compaction has happened.
 - Recording harness envelopes (task notifications, system reminders).
 - Chat records for dispatched subagents (Phase 3 pointer only).
 - Hook-authored scratchpoints: a hook can nudge, never author.
@@ -151,7 +151,7 @@ body       := any line matching neither pattern (after unescape)
 `<model-short>` is the model id without `claude-` and any `-YYYYMMDD` suffix; the agent supplies it, since no hook payload carries a model.
 The sign-off carries the end time and session name and closes the turn by position; a turn's duration is its `@user` time to its sign-off.
 
-**Gist entries.** One to three bullets per turn, one line each, under ~120 characters, each with a category prefix (no prefix reads as `gist:`):
+**Gist entries.** Aim for one to three bullets per turn, one line each, under ~120 characters, each with a category prefix (no prefix reads as `gist:`):
 
 - `gist:` what the turn concluded, decided, or changed, phrased for a successor: `gist: Stop block is the enforcer; reviewer r5 returned revise on two blockers`.
 - `query:` a search or retrieval that proved useful and what it found: `query: graphify query "hook events" surfaced the matcher table; reuse before grepping`.
@@ -216,7 +216,7 @@ The heredoc form delivers the body byte-exact (history report, run R7).
 | `@user`, and `stop_hook_active` is true or the turn was interrupted (signal per interactive check (b)) | sign-off | nothing |
 | a sign-off, or none: the turn did not begin with a human prompt and has no note | nothing | nothing |
 
-Block text, real values substituted (under 300 bytes):
+Block text, with only the record path substituted; `<your model>` stays literal for the agent to fill in (under 300 bytes):
 
 ```
 No chat-record entry for this turn (record: cdocs/_chat/2026-10-05-<session_id>.md). Run, then finish:
@@ -342,6 +342,7 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 - **Headless `-p`.** The block is honored; in default permission mode `note` needs the allow rule; a one-shot non-cdocs invocation should set `CDOCS_CHAT_RECORD=off`.
 - **Interrupted turn.** If `Stop` does not fire, the turn has no entry and no sign-off, which is right for an abandoned turn.
   If it fires, the block is suppressed (resurrecting the agent after Escape defies the user) and the sign-off is written; interactive check (b) finds the distinguishing signal (candidate: empty `last_assistant_message`).
+  An interrupted human turn with no `Stop` leaves an unsigned `@user`, so the next harness-triggered turn's `Stop` blocks once; harmless, since a note then closes both.
 - **Prompt typed mid-turn.** If interactive check (d) shows it fires `UserPromptSubmit` before the turn's `Stop`, the second `@user` lands inside the turn; marker order then reads both prompts as one turn, and `Stop` requires a note after the later one.
   Accepted: the note covers both.
 - **`--resume`** keeps `session_id` and appends to the same file; `/clear` and `/resume` effects are a Phase-1 test, and either outcome is acceptable.
@@ -433,14 +434,15 @@ Deliverables:
 4. `frontmatter-spec.md`: one line on `_chat/`, and the optional devlog field `chat_record:` (list of repo-root record paths).
    README "Hooks": the two hooks, block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs.
 5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps, the commit protocol and Pillar 1 carve-out, and "never `Edit` or `Write` `cdocs/_chat/`".
-6. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: the `chat_record:` field and how to fill it (`chat-record path`), the heredoc `note` form, the four categories; records quoted only in fences; `## Verification` as the evidence home.
+6. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences; `## Verification` as the evidence home.
+   No `chat-record` command, heredoc, or bullet categories there: dispatched implementers read the devlog skill, and the top-level scope sentence is not beside it.
 7. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
 Success criteria: all non-optional tests green; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass.
 If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` fallback ships before Phase 1 closes.
 
-Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md` gain no `chat-record` text; Pillar 2 text this proposal adds contains no instruction to request, time, or estimate compaction or context usage.
+Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence); Pillar 2 text this proposal adds contains no instruction to request, time, or estimate compaction or context usage.
 
 ### Phase 2: scratchpoint and semantic splitting
 

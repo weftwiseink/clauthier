@@ -47,7 +47,7 @@ This report is the condensed index of that history.
 | `SessionStart` hook announcing the record path (rounds 1-5) | `chat-record path` answers from `CLAUDE_CODE_SESSION_ID` on demand |
 | `PreCompact`/`PostCompact`/`SessionEnd` marker lines (rounds 1-5) | a compaction or session-end line informs no reader; the first `@user` and last sign-off are the bookends |
 | Eight-hex session id in the filename with a collision check | the full id removes the collision case |
-| `n=` turn ordinals | the devlog's `## Chat Record` pointer records the last handoff time instead |
+| `n=` turn ordinals | no reader needs a turn count; timestamps order turns |
 | `.prompt` runtime file for `p=` | `note` reads the last prompt header; the `Stop` reason passes `--p` explicitly (later moot: `p=` itself dropped) |
 | `p=` prompt-id correlation on headers and sign-offs (rounds 1-8) | the session id ties the record and marker order delimits turns; ids added a token per header, a `--p` flag, and mid-turn special cases for no reader |
 | `@harness` speaker for harness envelopes (rounds 5-8) | the envelope is not something a successor needs verbatim; the agent's own note reflects a finished subagent |
