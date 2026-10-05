@@ -187,6 +187,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | fork (artifact) | `4b24749`; republished LSfQwst9o1MtbjbhZ94T1e (v3), rendered page not viewed | 2026-10-05T12:46 | round-12 artifact |
 | inline | overseer | bash-runner.md, orchestration-discipline.md | 2026-10-05T14:09 | committed maintainer rewrite 6821b43 (diff read first) |
 | dispatch | rev-bw-rewrite (cdocs:reviewer, fresh) | review + canary evidence files | 2026-10-05T14:10 | review maintainer rewrite in its spirit |
+| return | rev-bw-rewrite | `299394a` (review + _verify/2026-10-05-bash-runner-rewrite-canary.md, 9 runs, all correct vs truth) | 2026-10-05T14:40 | REVISE: capture-file collisions (unnamed file + append in shared /tmp/claude-uid), OC build empties block-scalar description, cross-target fallback deleted (oversee-arc dangling); typos (cdcos:), stale Bash Output Hygiene pointers, timeout hint lost, quadratic difflib idiom; proposal stale spots listed |
 | dispatch | rfp-2 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md | 2026-10-05T14:10 | post-compaction resumption RFP |
 | return | rfp-2 | `435a0b9` | 2026-10-05T14:16 | post-compaction resumption RFP filed |
 | dispatch+return | rfp-3 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-05T14:24 | `eb608ce`; rules decomposition + cross-target removal RFP |
