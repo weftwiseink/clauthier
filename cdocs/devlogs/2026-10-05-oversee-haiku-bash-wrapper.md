@@ -172,6 +172,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-bw-r2 (cdocs:reviewer, fresh) | review impl-final-r2 file, canary evidence | 2026-10-05T12:04 | verify completeness revision |
 | return | prop-5 | `92005e1`, `bde47b3`, `9d04656`, `ac169ec`, `277b19e`, `7a11084`, `a271766`, `82f94ae`; C1/M1-M9/N1-N10 resolved; overseer_ctx_est removed; Scratchpoint moved to Phase 1; Phase-1 footprint widened (~12 plugin files for compaction removal); review_ready | 2026-10-05T12:08 | round 10 |
 | dispatch | rev-r11 (cdocs:reviewer, fresh) | review r11 file | 2026-10-05T12:09 | verify r10 revisions |
+| return | rev-r11 | `a1b1ae2`; REVISE, no critical: r10 all resolved; M1 overseer_ctx_est replacement underspecified (implementer Scratchpoint ownership, uncomputable as_of staleness, signal_missing mismatch); M2 triage.md vs grep contradiction; N1-N8 | 2026-10-05T12:16 | round 11 |
+| dispatch | prop-6 (cdocs:proposer, fresh) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T12:17 | round 11 fixes; overseer defaults: Scratchpoint only for devlog-owning agent, judge thinness = inline_work only, split Phase 1a/1b |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
@@ -189,6 +191,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T10:45 | steer-implementer | prop-4 (chat-record r9) | Maintainer: chat-record path as devlog frontmatter attr; drop prompt-id (p=) correlation; drop @harness records; no permission edits by init (usage runs skip-permissions); guard text only beside the per-turn instruction (no per-agent copies); remove all agent-side compaction/context-tracking instructions (compaction purely rules-side, on user/auto compaction); Scratchpoint caps -> 'aim for at most'. Then update artifact. | 9 |
 | 2026-10-05T11:10 | steer | arc | Maintainer (effort raised to high): one more chat-record review+revision pass; if nothing critical, /iterate implementation (lifts p1 HOLD conditionally). Final bash-wrapper review focused on whether size-aversion degrades subtask quality; quality retention is primary. | 10 |
 | 2026-10-05T11:25 | steer | arc | Maintainer answers: (bash runner) apply all impl-final changes with defaults (~12K complete-list ceiling, list in Excerpt, self-capture named first). (chat-record) M6 remove Pillar-2 compaction cadence + skills' 'then compact' lines (keep durable handoff writes); C1 `/clear` starts a new chat, nothing to hand off -> resumption covers only /compact + auto-compaction; M1 gate on git root AND cdocs/_chat/. | 11 |
+| 2026-10-05T12:17 | decision | prop-6 | No critical in r11 (maintainer: no critical -> iterate). Overseer resolves r11 questions with minimal defaults: Q1 (b) only an agent that owns its devlog keeps a Scratchpoint (implementer notes suffice); judge thinness input = inline_work only (drop uncomputable Scratchpoint-staleness check); Q2 split Phase 1 into 1a (compaction removal + Scratchpoint text) and 1b (capture). | 11 |
 
 ## Implementation Notes (impl-1)
 
