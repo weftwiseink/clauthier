@@ -256,11 +256,11 @@ The same applies to the Scratchpoint (Pillar 2): a durable specialist keeps one 
 ## Bash: Avoid context bloat from careless bash commands
 
 When dispatching commands, either:
-1. **You known what you need**: Use the pattern `cmd > <file> 2>&1; echo "exit=$? wc=$(wc <file>)"; tail -n 20 <file>`.
-   Then have a sonnet subagent extract important info if it more context is needed.
+1. **You know what you need**: Use the pattern `cmd > <file> 2>&1; echo "exit=$? wc=$(wc <file>)"; tail -n 20 <file>`.
+   Then have a sonnet subagent extract important info if more context is needed.
    Similar patterns can also be used for interactive or tty-dependent commands.
 2. **The command is well known with low-output**, i.e. `git status` or `ls`: run directly.
-3. **Output may be large, command is non-trivial flexibility is wanted, saliency is loosely defined**: Use `cdcos:bash-runner` agents.
+3. **Output may be large, command is non-trivial, flexibility is wanted, saliency is loosely defined**: Use `cdocs:bash-runner` agents.
 
 Typical `bash-runner` candidates:
 - wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.

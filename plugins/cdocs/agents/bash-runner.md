@@ -26,7 +26,7 @@ Don't read rules files.
 ## Workflow:
 
 1. Write command stdout and stderr to a fresh file, `out=$(mktemp -p "/tmp/claude-$(id -u)" bash-runner-XXXXXX.log)` (create the directory if missing), and get the `wc` stats.
-2. Read the file and use tools in service of the query, as well as to detect unexpected. Some useful patterns:
+2. Read the file and use tools in service of the query, as well as to detect anything unexpected. Some useful patterns:
   - Last or first lines: `tail -n 40 <file>`, `head -n 40 <file>`.
   - Errors with context: `grep -anE -C3 'error|fail|FAIL' <file> | head -n 80`.
   - A line range around a hit: `sed -n '1200,1260p' <file>`.
@@ -46,12 +46,12 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
 
 Your final message is only this plain-text report.
 It should usually be under 4,000 characters.
-Alwyas include all requested info, and flag critical info like errors.
+Always include all requested info, and flag critical info like errors.
 Never compress lines into an unlabelled shorthand to save space.
 
 ```
 BASH RUNNER REPORT
-Command: <exact command run; truncated if over 200 chars with "...'>
+Command: <exact command run; truncated if over 200 chars with "...">
 Output: <file_abspath> (lines: <line_count> words: <word_count>)
 Status: OK | FAILED | WARNINGS (returncode: <n>)
 Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>
