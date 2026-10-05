@@ -253,52 +253,18 @@ A durable specialist that owns its OWN files satisfies the "Pillar 1b: Single-Wr
 See that section for the guarantee itself; this pillar supplies the constructive case where it holds automatically rather than by per-dispatch check.
 The same applies to the Scratchpoint (Pillar 2): a durable specialist keeps one only in a devlog it owns, never in the overseer's.
 
-### Cross-target degradation
+## Bash: Avoid context bloat from careless bash commands
 
-Where a target lacks `SendMessage`/`fork` equivalents, this pattern degrades to starting a fresh session from the handoff doc plus the Iteration Log's event rows, the same runtime fallback the "Cross-Target Degradation" section names for Pillar 1b.
-The discipline still holds; only the primitive changes, and the durable state (handoff plus event rows) is what makes the fresh-session restart faithful.
+When dispatching commands, either:
+1. **You known what you need**: Use the pattern `cmd > <file> 2>&1; echo "exit=$? wc=$(wc <file>)"; tail -n 20 <file>`.
+   Then have a sonnet subagent extract important info if it more context is needed.
+   Similar patterns can also be used for interactive or tty-dependent commands.
+2. **The command is well known with low-output**, i.e. `git status` or `ls`: run directly.
+3. **Output may be large, command is non-trivial flexibility is wanted, saliency is loosely defined**: Use `cdcos:bash-runner` agents.
 
-> NOTE(claude-opus-4-8/overseer-alignment-phase3): This pillar is additive to Pillars 1, 1b, and 2 and restates none of them.
-> It is discoverable from `workflow-patterns.md` and the `implement`/`propose` skills by pointer, keeping the canonical prose here per the project's deduplication value.
+Typical `bash-runner` candidates:
+- wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.
+- build log reads, test suites, `npm install`, linters, `terraform` and other devtool commands, container builds, `git log -p`.
+- commands with output whose size the caller cannot predict (an unfamiliar script or repo).
 
-## Bash Output Hygiene
-
-Verbose Bash output is a large share of what lands in a lead's context, and it is re-sent on every later turn.
-The goal is to keep that output out of the lead's context without losing relevant information: a result the lead cannot act on forces a re-run or a follow-up, which costs more than the context it saved.
-Any agent, not only an overseer, can do this itself by capturing output to a file, or can delegate a context-bloating command to the `cdocs:bash-runner` agent; which path fits is a judgment call, not a reflex.
-A runner dispatch is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, reads what the caller needs out of that file, and returns a fixed-format `BASH RUNNER REPORT` naming the capture file.
-
-### When to dispatch
-
-Start with the cheapest path that keeps what you need:
-
-- **Known need: bound what you read, not what you keep.** When you know exactly what you need (pass/fail, the last few lines), capture to a file and read just that: `cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`, with `<file>` in your scratchpad or `/tmp`. The exit code survives (`cmd | tail -n 5` reports `tail`'s status, not `cmd`'s), and if the run fails, the details are one `grep -n -C3 <pattern> <file>` away, with no re-run. Pipe straight into `grep -c`/`grep -q` only when the count or match is the whole answer.
-- **Trivial or known-small commands** (`git status`, a one-line `ls`) run directly: the subagent round-trip costs more than it saves.
-- **Interactive or TTY-dependent commands** are never dispatched: the runner closes stdin.
-
-Dispatch when a command's output is large or unpredictable and what you need from it is a distillation: which tests failed and why, every call site, whether the build warned.
-When you need every line itself (a diff you will review line by line), read it yourself in pieces: a relay adds a round trip and nothing else.
-
-Typical dispatch candidates, listed by observed weight in past transcripts (the heaviest results were sweeps), not as a mandatory order:
-
-- **Sweeps**: wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.
-- **Builds, tests, installs**: build logs, test suites, `npm install`, linters, `terraform plan`/`apply`, container builds, `git log -p`.
-- **Unboundable commands**: output whose size the caller cannot predict (an unfamiliar script or repo).
-
-### Dispatch contract
-
-The Task prompt gives the exact command and, for anything you will act on, a salience spec saying what you need, since a runner misjudging "salient" is the main failure mode.
-Say when you need completeness ("every failing test with file:line and expected vs actual", "every call site as file:line"): the runner then lists every item instead of sampling.
-For sweeps, a per-file shape ("matches per file, first 3 per file") beats a blind head/tail, which destroys a sweep's signal.
-The report carries `Status`, a short `Summary:`, verbatim `Excerpt:` lines, a `Truncated:` field with a ready-to-run `see:` command, and the capture path.
-If the report is not enough, do not act on a partial picture and do not re-run the command: run the `see:` command, read a bounded range of the capture (`sed -n`, `grep -n -C`), or dispatch the runner again with a narrower spec over the capture file.
-
-This is a convention for an agent's dispatch decision, not something tooling enforces.
-An undispatched verbose command falls back to the platform's built-in Bash output ceiling, an accepted residual risk.
-
-## Cross-Target Degradation
-
-Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
-The *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
-Pillar 2's chat record is Claude-Code-only (its hooks and `bin/` script are not ported), so off Claude Code there is no record and resumption reads the devlog's Scratchpoint and latest handoff.
-The discipline still holds; only the primitive changes.
+They will include the output file path in the event the report summary is not enough.
