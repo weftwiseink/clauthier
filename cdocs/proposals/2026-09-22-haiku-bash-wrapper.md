@@ -140,6 +140,7 @@ Exit code: <n>
 Status: OK | FAILED | WARNINGS
 Salient output:
 <extracted lines, verbatim; typically 10-20 lines, ~2K chars>
+Truncated: none | <what was omitted>; see: <follow-up command over the capture file>
 Full output: saved to <scratchpad-path> (<K> chars)
 ```
 
