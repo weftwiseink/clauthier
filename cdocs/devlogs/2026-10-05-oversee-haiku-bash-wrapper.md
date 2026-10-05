@@ -580,3 +580,39 @@ Applies the r2 verification review ([`2026-10-05-review-of-haiku-bash-wrapper-im
   - Per-test actual and expected values are absent from the lines, which leaves out the short message that default (B) asks for. The report discloses this honestly in `Truncated:`, with a `sed -n '550,$p'` follow-up.
   - `Excerpt:` omits the capture's true final lines; the totals appear only in `Summary:`.
   - `Summary:` speculates about "one shared calculation bug", an inference the capture does not support.
+
+## Implementation Notes (impl-3, rewrite small fixes)
+
+Applies the small, non-blocking fixes from the rewrite review ([`2026-10-05-review-of-bash-runner-maintainer-rewrite.md`](../reviews/2026-10-05-review-of-bash-runner-maintainer-rewrite.md), `299394a`) on top of the maintainer rewrite (`6821b43`) and the `mktemp` capture fix (`3b32ae4`), keeping the rewrite's wording, structure and looseness.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `0464785` | `plugins/cdocs/agents/bash-runner.md`, `plugins/cdocs/rules/orchestration-discipline.md` | Review item 4: `cdcos:` -> `cdocs:`, "You known", "if it more", missing comma; "Alwyas", the `"...'>` quote, "detect anything unexpected", trailing newline |
+| `5637323` | `plugins/cdocs/rules/model-tiering.md`, `plugins/cdocs/AGENTS.md` | Item 5: "Bash Output Hygiene" pointers name the current "Bash: Avoid context bloat from careless bash commands" heading |
+| `9e86779` | `plugins/cdocs/agents/bash-runner.md` | Item 6: one line under step 1, raise the Bash `timeout` up to 600000 for builds, suites, installs |
+| `22023d2` | `plugins/cdocs/agents/bash-runner.md` | Item 7: the quadratic `difflib` one-liner becomes one line of linear idioms: a number-normalising `sort \| uniq -c` for near-duplicates, `awk '!seen[$0]++'` for exact repeats |
+| `62c6c38` | `plugins/cdocs/rules/orchestration-discipline.md` | Item 8: case 1 names "a `cdocs:bash-runner` (or other sonnet) subagent"; interactive or TTY commands "are not dispatched (they hang without a terminal)" |
+| `59c08ac` | `plugins/cdocs/agents/bash-runner.md` | Item 9: `Output:` reports `bytes: <byte_count>` instead of words |
+| `734ef1f` | proposal | Item 10: input and output contracts, workflow, capture location, section name, edge cases, test plan, Phase 1-2 and the capture-location decision synced to the rewrite; obsolete excerpt and size rules, the scratchpad fallback and its impl-1 NOTE, and the superseded relaxed-reading NOTE dropped; one dated NOTE (`opus-5-5/impl-3`, 2026-10-05) records the loosening steer. Status stays `implementation_accepted` |
+
+### Implementer Notes
+
+- **Linear dedupe timing.** On 50,000 diverse `grep -rn` lines, the normalise-then-`sort | uniq -c` line took 0.56s and `awk '!seen[$0]++'` 0.06s; the review measured the `difflib` line at 56.6s for 2,000 lines.
+- **Proposal NOTEs.** The completeness-first NOTE keeps its steer and evidence but loses its "defaults chosen" lines (the ~12K allowance, the `Excerpt:`-only list, the no-spec complete list), which the rewrite dropped. The relaxed-reading NOTE is dropped whole: its conclusion is now the body text, and its "mandatory one-line summary" claim is obsolete. The report-contract-v2 NOTE stays without its "refined by" line.
+- **No-spec acceptance bar loosened in the proposal.** The test plan and acceptance bar ask the no-spec run to name every failing test, not to give its location, matching the rewrite's shift of that choice onto the caller (review "Observation", C2).
+- **Not done (out of scope per brief).** The OpenCode build still emits `description: |` with an empty value (`build/cdocs/opencode/agents/bash-runner.md`); `oversee-arc.md:136,140` still point at the deleted cross-target text; "When dispatching commands" ("when running commands") is left as written.
+
+### Verification
+
+- `npm run build:cdocs` -> exit 0, `Agents converted: 7`; warnings unchanged (three `Unknown CC tool "*"` skips, Node `DEP0205`).
+- `grep -rn 'cdcos\|Alwyas\|Bash Output Hygiene' plugins/cdocs` -> no matches.
+- **Live canary (17 failures, "every failing test" spec)**, method from [`_verify/2026-10-05-bash-runner-rewrite-canary.md`](_verify/2026-10-05-bash-runner-rewrite-canary.md): fixtures regenerated with the same seeded `gen.py` in the session scratchpad (`F`: 6 `node --test` files, 360 tests, 17 failures, 1,184 lines, exit 1).
+  `claude -p --plugin-dir <abs>/plugins/cdocs --model sonnet --output-format stream-json`, run from `F/`, plugin at `734ef1f`, Claude Code 2.1.289, parent and runner `claude-sonnet-5-5`, $0.12.
+  The parent made one call, `Agent cdocs:bash-runner`, and relayed the report; the runner made 4 Bash calls and set no `timeout` (the suite runs in under a second).
+  - **Capture:** `/tmp/claude-1000/bash-runner-czXzIF.log`, created by `mktemp -p "/tmp/claude-$(id -u)"` with `>` (no `bash-runner-*.log` existed there beforehand), 1,184 lines, identical to a direct run apart from timings, and named in `Output:` with `lines: 1184 bytes: 49230`.
+  - **Report:** 2,714 chars, `Status: FAILED (returncode: 1)`, `Truncated: none`, a labelled 17-row table (name, file:line, expected total, actual total) and a ready-to-run `sed -n` follow-up.
+  - **Ground truth** (Python matcher over `truth_F.json`): **17/17 exact** on name, `it` line, expected and actual.
+  - **Containment:** no raw output line (`setup fixture`) appears in any parent-level event.
+  - **Credentials:** the normal `HOME` was used, so no credential copies were made; a `find` over the scratchpad run dir and `/tmp/claude-1000` found none.
