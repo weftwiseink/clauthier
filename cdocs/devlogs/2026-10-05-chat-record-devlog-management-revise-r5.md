@@ -248,3 +248,44 @@ Frontmatter: `status: review_ready`; `last_reviewed` left at round 8.
 Review [`2026-10-05-review-of-chat-record-devlog-management-r9.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r9.md) (revise).
 Blocking: Phase-1 deliverable 6 now has the devlog skill and template name only `chat_record:` and point to Pillar 2; no `chat-record` command, heredoc, or categories there (dispatched implementers read the skill without the scope sentence); the no-`chat-record`-text constraint covers skills and templates.
 Nits: Summary correlation-token clause dropped; non-goal narrowed to the agent's own context; "aim for one to three" bullets; block text substitutes only the record path; interrupted-turn edge case notes the unsigned `@user` makes the next harness turn's `Stop` block once; report `n=` row no longer cites the `## Chat Record` section.
+
+## Round 10
+
+Inputs: the r10 review ([`2026-10-05-review-of-chat-record-devlog-management-r10.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r10.md), commit 202e135, verdict revise: C1, M1-M9, N1-N10) and maintainer answers (2026-10-05): `/clear` is a new chat with nothing to hand off; Phase 1 removes all agent-side compaction instructions and context self-tracking; gate activation on both the git toplevel and `cdocs/_chat/`; apply the review's fixes elsewhere, minimal option preferred.
+
+### Evidence gathered
+
+- Grepped `plugins/cdocs` for `compact`, `ctx_est`, `150K`: compaction instructions in `orchestration-discipline.md` (Pillar 2 lead, handoff subsection, cadence subsection, thinness signal, inline-floor line, Phase NOTE, Cross-Target Degradation), `oversee-arc.md`, `iterate`/`oversee` SKILL and template, `propose-revise`, `full-send`, `ablate`; `overseer_ctx_est` in `judge.md`, `triage.md`, `iterate/SKILL.md` and `template.md`; `~150K` in the `oversee` concurrency cap and `iterate` Termination.
+  Descriptive mentions (reseed subsection, `triage/SKILL.md` "Context Management", graphify's "compact" adjective, ablate's "compact result payload") are not instructions and stay.
+- Union merge check (scratch repo, git 2.54.0): `cdocs/_chat/.gitattributes` with `*.md merge=union`; a rebase of divergent appends to one committed record, and a merge of the same record added on two branches, both exit 0 with every block kept.
+  The shared trailing blank line between blocks can collapse, so a sign-off may directly precede the next `@user`; the grammar is line-based, so parsing is unaffected.
+- `cdocs-hooks.ts` header confirmed ("NOT ported from CC" list); `opencode-build.yml` only builds; existing hook scripts are mode `100755`.
+
+### Decisions
+
+- **C1.** No fallback. Step 3 is "After a compaction"; `/clear` and `--fork-session` are stated as a new session and new record by design; Decision 3 and the Objective frame them as a fresh start; the A/B `/clear` arm is dropped rather than replaced (the two `/compact` arms already gate Phase 3).
+- **M6 and `overseer_ctx_est`.** Removed. The column is an overseer estimating its own context, which is agent-side context tracking under the directive, and its only calibration was the cadence's ~150K target. `inline_work` stays, because it records behaviour rather than estimating context; the judge's `overseer_thinness` now reads `inline_work` plus Scratchpoint freshness. Older devlogs that still carry the column parse as before, because triage reads columns by header name.
+- **M7.** The Scratchpoint moved into Phase 1. Phase 1 already edits `iterate`, `oversee`, `propose-revise`, `full-send`, and `judge.md` for M6, so the one-line Scratchpoint references go in the same pass. The alternative, Phase-1 steps without the Scratchpoint, would have meant Phase 2 rewriting Phase 1's rule text.
+- **M1.** Activation searches only from `cwd` up to the git toplevel, never outside a work tree, and needs `cdocs/_chat/`. Hook modes exit silently; agent modes fail loudly.
+- **M2.** `--as` goes through the session-token map. Values that are empty, start with `.` or `-`, or equal `user` are rejected. Rejecting a leading `.` or `-` follows from `HEADER_RE`, which needs an alphanumeric first character.
+- **M8.** `tail -n 80` with an offset read if one paste fills it (the review's first option).
+- **M9.** A `--unit` mode, plus a new path-filtered workflow `.github/workflows/cdocs-hooks.yml`. Not added to `opencode-build.yml`, because that job is `continue-on-error` and OpenCode-scoped.
+- **N2.** The interrupt is removed from the `Stop` table. Row 3 is `stop_hook_active` or plan mode, and the empty-`last_assistant_message` candidate is explicitly ruled out.
+- **N7.** Any devlog commit by the top-level session stages that session's record. A session that touches no devlog leaves its record untracked.
+
+### Changes
+
+Proposal commits: 92005e1 (C1, M8), bde47b3 (M1-M5, N1-N5, N7-N10), 9d04656 (M9, N6), ac169ec (M6), 277b19e (M7), 7a11084 (consistency pass, `status: review_ready`).
+History report: a271766 (round-10 row, eight rejected-approach rows, four evidence rows, "Not verified" list trimmed).
+
+### Verification
+
+- `grep -n '/clear'` over the proposal: hits are the fresh-start statements, built-in list, test scenarios, Phase 0 evidence, and the deliverable-6 quote of the line being removed; none in a resumption step or A/B arm.
+- `grep -n 'ctx_est'` over the proposal: only the Summary, deliverable 6 (removal), and the Phase-1 constraint's grep check.
+- Proposal size 53.4KB (42.7KB before). Most of the growth is the explicit M6 removal list that was requested, plus the new tests.
+- Frontmatter `status: review_ready`; `last_reviewed` untouched. No plugin file or artifact HTML edited.
+
+### Tensions
+
+- Phase 1 now carries the compaction-text removal across about twelve plugin files besides the chat-record work. That is a broader footprint, but each change is a deletion or a short rewording.
+- The `cd`-into-sibling case leaves the original `@user` unsigned (accepted, as the review framed it). The test asserts only that the note and `Stop` agree.
