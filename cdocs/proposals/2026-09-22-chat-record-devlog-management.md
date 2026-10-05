@@ -441,7 +441,7 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 **Phase 2.**
 
 - Resumption A/B (gate for Phase 3), on three real workstreams with a `/compact` forced between handoffs: arm 1 resumes with step 3 of the resumption guidance removed from the rules, arm 2 with step 3 present; a fresh reviewer scores correct next action, no re-litigated decision, no redundant re-read.
-  Pass: arm 2 wins or ties arm 1 on all three.
+  Pass: arm 2 wins or ties arm 1 on all three; step 3's post-compaction reliability itself is deferred to [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md).
 - Split dry-run on `2026-09-22-agent-dispatch-labeling.md` and `2026-05-12-rule-delivery-regression-test.md`: a fresh agent given only the root answers three task questions opening at most one chunk each.
 - `/cdocs:triage` and `/cdocs:status` group chunks by `part_of`.
 
@@ -521,7 +521,7 @@ Deliverables:
 7. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
-Success criteria: the `--unit` suite green in CI and every non-optional headless scenario green locally; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass; Phase 1a's two greps, scoped to rules, skills, and agents, still give the same results (1b's test script and README sit outside that scope and may name `/compact` and `/clear`).
+Success criteria: the `--unit` suite green in CI and every non-optional headless scenario green locally; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive check passes, and the rules check is deferred to [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md) (re-test with realistic lead models once the base rules context is cleaned up; haiku-based results are not realistic); Phase 1a's two greps, scoped to rules, skills, and agents, still give the same results (1b's test script and README sit outside that scope and may name `/compact` and `/clear`).
 If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` fallback ships before Phase 1b closes.
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence).
