@@ -143,3 +143,44 @@ Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md`](../reviews/2026
 - Every documented shape run against a `grep -rn the plugins/cdocs` sweep capture (a two-digit file count) returned at most 1,491 chars: tail 1,491, per-file counts 836, distinct-file count 3, first-3-per-file 1,447, error count 3.
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Still pending: the overseer's live grepsweep re-run, which should show every `RESULT[runner]` at most ~1,500 chars.
+
+## Implementation Notes (impl-1, iteration 3)
+
+Applies the maintainer steer (2026-10-05) to relax the runner's internal extraction bounds.
+It replaces the overseer's ~2K internal cap-safety steer and the iteration-2 "Fixed suffix rule".
+It also folds in the still-applicable rev-2 nits from [`2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md) (N1-N3).
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `2544f98` | `plugins/cdocs/agents/bash-runner.md` | Judgment-driven reads; report sized to request; keep true end; mandatory follow-up command; verbatim-command clause; `maxTurns` 8 -> 12 |
+| `f053925` | `plugins/cdocs/rules/orchestration-discipline.md` | "reads the salient lines out of that file"; report "typically 10-20 verbatim lines" |
+| `b236aeb` | proposal | Dated `NOTE(opus-5-5/oversee)` recording the steer; bounded-extraction wording replaced; `maxTurns: 12` in frontmatter spec, Phase 1, and Test Plan |
+| `3f4874e` | `cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md` | `first_authored.at` 10:05 -> 09:11:29 (its commit time), so r1 < r2 (09:16) |
+
+### Implementer Notes
+
+- **Kept:** capture-first in a subshell with stdin closed; the one-line `exit/out/bytes/lines/warn` summary before any read; Bash-only; the fixed-format `BASH RUNNER REPORT`; the `/tmp` lifetime phrase; deterministic `WARNINGS`.
+- **Relaxed:** the fixed `| cut -c1-150 | head -n 10` suffix and the `cat` ban are gone.
+  Step 2 is judgment-driven:
+  - A small capture (roughly under 300 lines and 20,000 bytes) is read whole via `cut -c1-2000 <file>`.
+  - A larger one gets targeted, iterative reads.
+  - The examples (`grep -C3`, `sed -n` ranges, `head`/`tail -n 40`, `awk` aggregation) are labelled "good patterns", not mandatory forms.
+  - The remaining guards are light: stay under the ~30K ceiling, narrow a read that spills, and use `cut -c1-N` when bytes per line show very long lines.
+- **Report:** "typically 10-20 lines and about 2,000 characters", verbatim, never the whole capture, no paraphrase.
+  A new "Keep the true end" rule: when the spec asks for the last line or the status is `FAILED`, include the capture's actual final lines, and when trimming a tail drop its EARLY lines (rev-2 N3).
+- **Overflow:** counts first, then one `[spec truncated: ...; see capture file: <cmd>]` line, and the follow-up command is now mandatory (rev-2 N1).
+- **Verbatim command (rev-2 N2):** the prompt now says "Paste the command character for character: do not rewrite paths, arguments, quoting, or globs".
+- **maxTurns 8 -> 12:** iterative reads (locate, then widen context, then aggregate) can take 4-8 read calls, plus 1 capture call and the final report turn.
+  12 leaves headroom while still bounding a looping haiku; `judge.md`'s 10 is the nearby precedent.
+- The overseer steer is superseded, so the iteration-2 "cap-safe ~2K internal" notes above are historical.
+  The proposal never carried that framing, so nothing there needed removing.
+
+### Verification (emulated)
+
+- Small capture: `grep -rn agent plugins/cdocs/rules` -> `bytes=10221 lines=51`, and `cut -c1-2000` reads all 10,221 bytes in one result.
+- Large capture: `seq 1 200000` -> `grep -anE -C3 '^123456$' | head -n 80` is 98 bytes; `sed -n '199990,200000p' | tail -n 2` ends `199999`/`200000`, the true end.
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+  The OC build emits no `maxTurns` (same as `judge.md`).
+- Live canaries (containment, grepsweep, warnings) are pending the overseer's re-run.
