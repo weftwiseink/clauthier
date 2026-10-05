@@ -154,7 +154,7 @@ Full output: saved to <scratchpad-path> (<K> chars)
 
 The whole report stays under about 4,000 characters.
 `Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` stays few and short so verbatim copying stays accurate.
-For aggregate specs, `Excerpt:` is the whole output of two bounded commands, pasted unedited: one counting command (at most 20 lines) and one sampling command (at most 12 lines of at most 120 chars). Composed or heading lines go in `Summary:`, any total there comes from a command, and the report stays under ~4K by construction. `Truncated: none` is used only when everything the spec asked for is present.
+For aggregate specs, `Excerpt:` is the whole output of two bounded commands, pasted unedited: one counting command (at most 20 lines) and one sampling command (at most 12 lines of at most 120 chars). Composed or heading lines go in `Summary:`, any total there comes from a command, and the report stays at about 4K. `Truncated: none` is used only when everything the spec asked for is present.
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
@@ -168,13 +168,19 @@ The parent receives only the report; the raw output lives in the capture file an
 > NOTE(opus-5-5/oversee): Maintainer-approved report contract v2, 2026-10-05: `Summary:` (interpretation) plus `Excerpt:` (few short verbatim lines) replace a single verbatim `Salient output:` block.
 > Evidence: the r6 live canaries ([`_verify/...-r6.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r6.md)): sonnet kept adding prose despite a ban, and retyping ~50 long lines in 8.6-10KB sweep reports drifted the content of a few. v2 sanctions the prose and keeps the verbatim part small enough to copy accurately.
 
-**Dispatch scope: opt-in, documented convention, not a hard rule.**
+**Dispatch scope: opt-in judgment call, documented convention, not a hard rule.**
+The goal is to delegate context-bloating work so the lead's context is preserved without degrading its performance or losing relevant information.
 Do not route every Bash call through this agent: a subagent round-trip is not worth it for `git status`, a one-line `ls`, or any command the caller already expects to be short.
-Dispatch when a command is expected to be verbose-and-important, ordered by the observed heavy traffic (the 15 largest Bash results in the corpus, all 22k-29k chars, are sweeps, not builds):
+When the caller knows exactly what it needs (pass/fail, a count, the last few lines), it self-bounds the command (`grep -c`, `grep -q`, `| tail -n 5`) instead of dispatching.
+Dispatch when a command's output is both large or unpredictable and relevant; typical candidates, listed by observed weight rather than as a mandatory order (the 15 largest Bash results in the corpus, all 22k-29k chars, are sweeps, not builds):
 - wide recursive searches and diffs: `grep -rn` sweeps, `find`, `git diff`, multi-file `cat` loops (`for f in ...; do cat "$f"; done`).
 - build logs, test suites, package installs (`npm install`), linters, `terraform plan`/`apply`, container builds, `git log -p`.
 - any command whose output the caller cannot bound in advance (an unfamiliar script, an unfamiliar repo).
+A caller that needs exact bytes reads the capture file named in the report.
 This is guidance for an agent's dispatch decision, not something tooling enforces; the unanticipated case falls to the platform default ceiling, an accepted residual risk (see the coverage table under the `PreToolUse` deferral).
+
+> NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: dispatch is a judgment call, not a reflex; delegate context-bloating work to preserve the lead's context without degrading performance or losing relevant information.
+> Known-need commands are self-bounded and run directly; the sweeps-first list is observed weight, not a mandatory order.
 
 **Model-tiering framing.**
 Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Search / Explore / Research-Aggregation Tier (sonnet)", with the rationale that verbatim-extraction fidelity matters more than the runner's own price.
