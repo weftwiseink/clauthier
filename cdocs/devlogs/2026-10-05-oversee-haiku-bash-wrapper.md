@@ -107,3 +107,33 @@ Scope: proposal Phases 1-2 (runner agent, model-tiering carve-out, "Bash Output 
 - Frontmatter keys match `judge.md`'s shape (`name`, `model`, `description`, `tools`, `color`, `maxTurns`); no YAML lib is installed, so parsing was checked via the build script's parser only.
 
 Not verified here (needs a live dispatch, see the implementer's Investigation Requested): `cdocs:bash-runner` appearing as a dispatchable agent, the tool restriction, and the parent-side containment canary.
+
+## Implementation Notes (impl-1, iteration 2)
+
+Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md).
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `a8a3684` | `plugins/cdocs/agents/bash-runner.md` | F1 fixed suffix + compliant examples; F2 overflow rule; F3 lifetime phrase; F4 warn count in Step 1 echo |
+| `ddbfb54` | `plugins/cdocs/rules/orchestration-discipline.md` | Dispatch contract: aggregate specs ask for counts plus top few files |
+| `4204613` | `plugins/cdocs/AGENTS.md` | `bash-runner` (haiku) listed under Formal Agents |
+| `f051945` | proposal | `/tmp` fallback NOTE on the capture-lifetime edge case and maintainer decision; Q4 "carried to the RFP"; dropped "now" in Q2 |
+
+### Implementer Notes
+
+- **F1 (blocking).** Step 2 now states a "Fixed suffix rule": the last two stages are always exactly `| cut -c1-150 | head -n 10`, never raised or dropped, even if the spec asks for more lines.
+  Every example ends in that suffix, including `tail`/`head`. The `cat` ban now comes with a compliant alternative (`head -n 10 <file> | cut -c1-150 | head -n 10`).
+- **F2.** For an overflowing spec, the runner gives per-file counts first, then exactly one `[spec truncated: <omitted>; see capture file, e.g. <cmd>]` line. Paraphrased lines are forbidden. The reviewer's Q-A option (a).
+- **F3.** The report's `<lifetime>` is either `scratchpad, session-scoped` or `/tmp, persists until reboot; caller may delete`.
+  Self-deletion of small captures was not added: the `saved to` line would then point at a missing file, and it widens the mutation surface. This matches Q-B option (a).
+- **F4.** Step 1 echoes `warn=<n>` (from `grep -acE 'warn|WARN'`), and Status `WARNINGS` is defined purely as exit 0 with `warn > 0`.
+- **Unchanged:** `workflow-patterns.md`'s Formal Agents list still leaves out `implementer`/`proposer`. I left it alone, since the iteration brief asked only for the AGENTS.md entry.
+
+### Verification (emulated)
+
+- Step 1 echo over `seq 1 5000; echo "npm WARN deprecated foo@1.0"; seq 1 10 # trailing` -> `exit=0 ... lines=5011 warn=1`, so the WARNINGS path is deterministic.
+- Every documented shape run against an 8-file `grep -rn the plugins/cdocs` sweep capture returned at most 1,491 chars: tail 1,491, per-file counts 836, distinct-file count 3, first-3-per-file 1,447, error count 3.
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+- Still pending: the overseer's live grepsweep re-run, which should show every `RESULT[runner]` at most ~1,500 chars.
