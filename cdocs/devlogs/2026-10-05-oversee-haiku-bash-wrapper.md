@@ -229,3 +229,36 @@ Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md`](../reviews/2026
 
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Live checks are pending the reviewer's re-run: two b-probes (grepsweep: truncation line present) and two d-probes ("summarize" build: exact report structure with the `Full output: saved to` line).
+
+## Implementation Notes (impl-1, iteration 5)
+
+Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md) must-fix F1 and F4, plus the optional F2; Step 2 internal reading is untouched (maintainer steer), and F3 (size overrun) is not chased.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `295f0b7` | `plugins/cdocs/agents/bash-runner.md` | F1 abstract example + "copied from the capture file, never from this prompt"; F4 `grep -aic 'warn'`; F2 `Truncated:` template field and self-check |
+| `bec3e79` | `plugins/cdocs/rules/orchestration-discipline.md` | Dispatch contract references the `Truncated:` field |
+| `4e849f9` | proposal | Output contract gains the `Truncated:` line |
+
+### Implementer Notes
+
+- **F1.**
+  - The filled build example is gone; this confirms the iteration-4 Risk note.
+  - The template's salient placeholder now reads `<verbatim lines copied from the capture file, or "(none)">`.
+  - New sentence: "Salient lines are copied from the capture file, never from this prompt: the template's angle-bracket placeholders only show where content goes."
+  - "Summarize" guidance now gives only an abstract shape (`<pattern> lines: <n>` followed by the capture's own key lines).
+  - Self-check item 2 adds "nothing comes from this prompt".
+- **F4.** `warn=$(grep -aic 'warn' "$OUT")`. The single case-insensitive pattern covers `warn`, `WARN`, and `Warning:`.
+- **F2.**
+  - The template has a mandatory `Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>` line just before `Full output`. This replaces the remembered `[spec truncated: ...]` salient line.
+  - The "Spec does not fit" bullet routes omission into that field and requires `Truncated: none` otherwise.
+  - Self-check item 3 checks that the field is present.
+
+### Verification
+
+- Case-insensitive counter: on a 5-line sample (`  Warning: x`, `npm WARN y`, `warning: z`), the new counter gives `warn=3`; the old `grep -acE 'warn|WARN'` gives 2 and misses `Warning:`.
+- Stale-text check: `grep` finds no `spec truncated` and no `warn|WARN` left in the agent, the rules, or the proposal.
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+- Live checks are pending the reviewer's re-run: d-probes (no example lines leaking into reports, exact structure) and b-probes (`Truncated:` filled with a `see:` command on overflow).
