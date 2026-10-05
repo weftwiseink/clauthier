@@ -112,6 +112,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | judge-2 (cdocs:judge) | none | 2026-10-05T12:06 | review_count >= 3 |
 | return | judge-2 (cdocs:judge) | none | 2026-10-05T12:12 | continue, bloat_detected |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md (+ mirrors) | 2026-10-05T12:13 | iteration 8: option A |
+| return | impl-1 (cdocs:implementer) | same | 2026-10-05T12:18 | c17ad00..3381767 |
+| dispatch | rev-8 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r8.md, _verify r8 | 2026-10-05T12:19 | judge-2 acceptance bar |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 | return | prop-2 (cdocs:proposer, fable) | same + cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:03 | 6c757a3, 74169c1, cfbb241; status review_ready |
 | dispatch | crev-5 (cdocs:reviewer, fable) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md | 2026-10-05T11:04 | propose-revise round 5 review |
