@@ -14,33 +14,40 @@ last_reviewed:
 tags: [meta, tooling, cost, hooks, context-management, agents, haiku]
 ---
 
-# Haiku Bash-Output Wrapper: `cdocs:bash-runner` + Deterministic Floor
+# Haiku Bash-Output Wrapper: `cdocs:bash-runner`
 
 > BLUF(meta/token-spend-attribution): Ship a haiku-tier `cdocs:bash-runner` agent (`Bash`-only, modeled on `nit-fix.md`) that agents opt into for expected-verbose commands; it captures the command's output to a file in its own scratchpad and returns a fixed-format salient extract, keeping the raw dump out of the parent context.
-> Pair it with a deterministic settings-level output cap (`bashOutputMaxChars`, recommended start 6,000 chars, tunable band 4,000-8,000), delivered as `/cdocs:init` consuming-project guidance rather than baked into the plugin.
-> Hook finding (canary-verified on Claude Code 2.1.280): `PostToolUse` `updatedToolOutput` is inert for the built-in Bash tool ([#68951](https://github.com/anthropics/claude-code/issues/68951)), so the custom content-aware hook stays DEFERRED; `PreToolUse` `updatedInput` DOES rewrite Bash commands here, but a rewrite hook stays deferred anyway because it is redundant with mechanisms 1+2 and mis-targets the observed traffic.
+> Ship it with "when to dispatch" guidance in `orchestration-discipline.md`; unanticipated verbose Bash falls back to the platform default ceiling (~30K chars), an accepted residual risk.
+> A settings-level cap (`bashOutputMaxChars`) is DEFERRED to [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md); both output-rewriting hooks stay deferred (`updatedToolOutput` is inert for built-in Bash, [#68951](https://github.com/anthropics/claude-code/issues/68951)).
+
+> NOTE(opus-5-5/oversee): Maintainer directive 2026-10-05 removed the `bashOutputMaxChars` settings cap (formerly mechanism 2, "Adopt", delivered as `/cdocs:init` guidance) from shipped scope.
+> Rationale: the setting is global, so it also constrains `cdocs:bash-runner`'s own Bash calls (interfering with the mechanism this proposal ships), and it reaches into consumer settings policy.
+> The maintainer expects the runner plus its dispatch guidance to be adequate on its own; the cap's measured evidence is retained under [Deferred: settings-level output cap](#deferred-settings-level-output-cap-bashoutputmaxchars) and carried into the follow-up RFP.
 
 ## Summary
 
-This proposal operationalizes [`cdocs/reports/2026-09-22-haiku-bash-wrapper-landscape.md`](../reports/2026-09-22-haiku-bash-wrapper-landscape.md), which resolved the maintainer's "why both a hook and a wrapper?" question: they cover different failure modes (a universal deterministic floor for unanticipated verbosity, opt-in semantic distillation for anticipated verbose-and-important calls) and should ship together.
+This proposal operationalizes [`cdocs/reports/2026-09-22-haiku-bash-wrapper-landscape.md`](../reports/2026-09-22-haiku-bash-wrapper-landscape.md), which framed the "hook vs. wrapper" question as two failure modes: a universal deterministic floor for unanticipated verbosity, and opt-in semantic distillation for anticipated verbose-and-important calls.
+This proposal ships the second; the platform's built-in output ceiling is the only floor for the first, and a tighter settings-level floor is scoped separately by the follow-up RFP.
 
 The design rests on three canary-verified platform facts on Claude Code 2.1.280 (see [Verification of the Load-Bearing Hook Claim](#verification-of-the-load-bearing-hook-claim)):
 
 - `PostToolUse` `updatedToolOutput` is inert for the built-in Bash tool, so a custom content-aware truncation hook is not buildable and stays deferred.
-- `bashOutputMaxChars` is a spill-to-file cliff, not a head/tail clip: a valid over-ceiling result collapses to a file path plus a ~2,000-char preview, and only a failed command yields a lossy head+tail excerpt. This shapes both the cap's cost model and the runner's own design.
-- That same ceiling applies to the runner's own Bash call, so the runner cannot "read the whole output once." It captures the command's output to a file, then extracts with bounded shell commands over that file.
+- The Bash output ceiling (platform default ~30,000 chars, configurable via `bashOutputMaxChars`) is a spill-to-file cliff, not a head/tail clip: a valid over-ceiling result collapses to a file path plus a ~2,000-char preview, and only a failed command yields a lossy head+tail excerpt.
+- That ceiling applies to the runner's own Bash call, so the runner cannot "read the whole output once." It captures the command's output to a file, then extracts with bounded shell commands over that file.
 
 The shape:
 
 - `cdocs:bash-runner` (new `plugins/cdocs/agents/bash-runner.md`, `model: haiku`, `tools: Bash`) is the primary, buildable-now mechanism. It captures-to-file-then-extracts.
-- A tightened `bashOutputMaxChars` cap is the always-on floor, shipped as `/cdocs:init`-delivered guidance because a plugin cannot write a consumer's `settings.json`.
+- A "Bash output hygiene" section in `orchestration-discipline.md` carries the when-to-dispatch convention (sweeps first) and ships to consumers via `/cdocs:init`.
+- A tightened `bashOutputMaxChars` cap is DEFERRED to the follow-up RFP: it is global (it would also cap the runner's own Bash) and is consumer settings policy.
 - The custom content-aware `PostToolUse` hook is DEFERRED, gated on the `updatedToolOutput` regression being fixed for built-in Bash.
-- A `PreToolUse` command-rewrite hook is also DEFERRED, not because it fails (it works on this version) but because it is redundant with mechanisms 1+2 and mis-targets the observed heavy traffic.
+- A `PreToolUse` command-rewrite hook is also DEFERRED, not because it fails (it works on this version) but because its pattern allowlist mis-targets the observed heavy traffic and a mature external tool (rtk) owns that niche.
 
 ## Objective
 
 Bash command output is 28.5% of read intake per [`cdocs/reports/2026-09-20-read-source-attribution.md`](../reports/2026-09-20-read-source-attribution.md) (3.76M of 13.17M approx-tokens, 9,581 results, mean 390 tok/result): "death by a thousand cuts" from many medium-sized results, amplified by the report's separately-measured per-turn re-send factor.
-The goal is to keep verbose Bash output out of the parent (Opus) context: distilled to a salient extract when an agent anticipates verbosity, and deterministically bounded when it does not.
+The goal is to keep verbose Bash output out of the parent (Opus) context: distilled to a salient extract when an agent anticipates verbosity.
+Unanticipated verbosity stays bounded only by the platform default ceiling; tightening that bound is out of scope here (see the follow-up RFP).
 
 ## Background
 
@@ -82,13 +89,13 @@ Per [#68951](https://github.com/anthropics/claude-code/issues/68951)'s compatibi
 The feature request [#32105](https://github.com/anthropics/claude-code/issues/32105) ("allow `updatedToolOutput` for built-in tools for context budget recovery") confirms the exact use case this proposal wants is desired upstream but not shipped.
 
 **Consequence for the design.**
-The core design (the haiku wrapper, mechanism 1) and the deterministic floor (mechanism 2) depend on neither rewrite channel, so they are robust to the environment-dependent hook behavior.
+The core design (the haiku wrapper) depends on neither rewrite channel, so it is robust to the environment-dependent hook behavior.
 The custom `PostToolUse` content-aware hook is deferred on Finding 1 (genuinely inert).
-A `PreToolUse` rewrite hook is deferred on redundancy and mis-targeting grounds (see mechanism 3), not on breakage.
+A `PreToolUse` rewrite hook is deferred on mis-targeting grounds (see its Deferred section), not on breakage.
 
 ## Proposed Solution
 
-Three mechanisms with a precise division of labor, mirroring the landscape report's "Division-of-labor summary" table with the corrections above.
+One adopted mechanism (the haiku runner plus its dispatch convention) and three deferred ones, mirroring the landscape report's "Division-of-labor summary" table with the corrections above.
 
 ### 1. `cdocs:bash-runner` haiku agent (primary, works now)
 
@@ -146,61 +153,42 @@ Dispatch when a command is expected to be verbose-and-important, ordered by the 
 - wide recursive searches and diffs: `grep -rn` sweeps, `find`, `git diff`, multi-file `cat` loops (`for f in ...; do cat "$f"; done`).
 - build logs, test suites, package installs (`npm install`), linters, `terraform plan`/`apply`, container builds, `git log -p`.
 - any command whose output the caller cannot bound in advance (an unfamiliar script, an unfamiliar repo).
-This is guidance for an agent's dispatch decision, not something tooling enforces; the unanticipated case is the deterministic floor's job (mechanism 2).
+This is guidance for an agent's dispatch decision, not something tooling enforces; the unanticipated case falls to the platform default ceiling, an accepted residual risk (see the coverage table under the `PreToolUse` deferral).
 
 **Model-tiering framing.**
 Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Mechanical / Deterministic Fan-Out Tier (haiku)" alongside `nit-fix`.
 Frame it as a named carve-out a consumer must bless, not an automatic override: a consumer with a blanket opus floor still needs to explicitly opt this dispatch down to haiku, per the rule's Precedence language.
 The dispatch-decision convention (the "when to dispatch" list above) belongs in a new "Bash output hygiene" section in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md), alongside the existing fork-vs-specialist disposability guidance, since a bash-runner dispatch is the same disposable-context shape applied to a single command.
 
-### 2. Deterministic floor: settings-level cap (always on, zero LLM cost)
+### Deferred: settings-level output cap (`bashOutputMaxChars`)
 
-Set the built-in Bash output ceiling below the ~30,000-char platform default via `bashOutputMaxChars` (settings, v2.1.261+, up to 128,000).
-This is not a head/tail clip; it is a spill-to-file cliff:
+Tightening the built-in Bash output ceiling below the ~30,000-char platform default via `bashOutputMaxChars` (settings, v2.1.261+, up to 128,000) is the zero-LLM-cost floor for unanticipated verbosity.
+It is DEFERRED to [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md) (maintainer, 2026-10-05) on two grounds:
 
-- **Valid result (exit 0):** inline up to the ceiling; past it, the model gets a file path plus a preview of up to the first ~2,000 chars, and reads or searches the file if it needs more.
-- **Failure result:** inline up to ~10,000; past it, a head-and-tail excerpt cut from the read-back window, with no file path.
-- `bashOutputMaxChars` sizes the inline ceiling and the read-back window together, and it makes Claude Code ignore `BASH_MAX_OUTPUT_LENGTH`; the env var only enlarges the read-back window and does not raise the inline ceiling, so it is not the lever to reach for.
+- **Runner interference.** The setting is global: it bounds `cdocs:bash-runner`'s own Bash calls as well as the parent's. The runner's capture-to-file design keeps its capture call tiny, but its extraction outputs sit under the same ceiling, so a tight cap constrains the very mechanism this proposal ships. How the two compose is the RFP's central question.
+- **Invasiveness.** A plugin cannot write a consumer's `settings.json`, and an output cap is consumer settings policy, not a plugin default. The runner plus dispatch guidance may be adequate alone; post-ship usage data should decide.
 
-**Starting value: 6,000 characters** (tunable band 4,000-8,000).
-This is grounded in the measured per-call Bash distribution over the read-source corpus (11,531 real Bash results, weftwise transcripts 2026-09-12 onward; mean 1,602 chars / ~400 tok, matching the read-source report's 390 tok and validating the join; full method in the round-1 review's Appendix):
+Evidence carried into the RFP (measured, not re-derived there):
 
-| Stat | Chars |
-|---|---:|
-| p50 | 655 |
-| p75 | 1,841 |
-| p90 | 3,978 |
-| p95 | 6,228 |
-| p99 | 14,103 |
-| max | 29,351 |
+- **Spill-cliff semantics.** Valid result: inline up to the ceiling, past it a file path plus a ~2,000-char preview. Failure result: inline up to ~10,000, past it a head+tail excerpt with no path. `bashOutputMaxChars` sizes the inline ceiling and the read-back window together and overrides `BASH_MAX_OUTPUT_LENGTH`.
+- **Per-call distribution** (11,531 Bash results, weftwise transcripts 2026-09-12 onward; method in the round-1 review's Appendix): p50 655, p90 3,978, p95 6,228, p99 14,103, max 29,351 chars. The candidate value was 6,000 (~p95, spilling 606 results), band 4,000-8,000.
+- **Read-back cliff.** A spilled valid result is a read-back candidate that re-ingests the whole output plus line-number overhead; a 6,100-char result under a 6,000 cap costs more than it saved if read back. This is why the candidate sat mid-band, not at 4,000.
+- **Unverified.** Whether the setting also bounds the failure-path head+tail excerpt, and whether the ~2,000-char preview is fixed or scales with the setting.
 
-6,000 sits at p95: it spills the top ~5% of results (606 of 11,531), a defensible outlier boundary that leaves ordinary multi-line output untouched.
-4,000 (p90) spills the top ~10% and cuts more but risks more read-backs; 8,000 (~p97) is the conservative end.
-Because a spilled valid result collapses to a ~2,000-char preview, the realized inline saving per spilled result is `n - ~2,100`, larger than the raw "chars above cap" would suggest (at 4,000, roughly 36% of all Bash chars rather than 24.5%) - but every spilled result is a candidate for a read-back that re-ingests it whole.
-That cliff is why the recommended start is the upper-middle of the band (6,000) rather than the aggressive end, and why the guidance must say: if agents are frequently reading spilled files back, raise the cap.
-
-**Delivery: consuming-project guidance, NOT baked into the plugin.**
-A Claude Code plugin cannot write a consumer's `settings.json`, and even if it could, an output cap is a consumer policy choice, not a plugin default.
-This repo's own `.claude/settings.json` contains only `enabledPlugins` and sets no such cap, confirming the plugin does not own this surface.
-Ship the recommendation as a "Bash output hygiene" section in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md).
-That carrier is deliberate: `/cdocs:init` enumerates rule files by name for its `AGENTS.md` block, so a NEW `rules/*.md` file would require editing the init skill, whereas a new section in an existing rule file rides the existing materialization pipeline and hash marker with zero init changes.
-The section explains how and why to set `bashOutputMaxChars`, gives the recommended value and band, states the spill-then-read-back tuning caveat, and points at the harness's `update-config` skill (with a copy-pasteable `settings.json` snippet) as the mechanism the consumer uses to apply it.
-The proposal documents the setting; it does not auto-apply it.
-
-### 3. Deferred: `PreToolUse` command-rewrite hook (works here, not adopted)
+### Deferred: `PreToolUse` command-rewrite hook (works here, not adopted)
 
 A `PreToolUse` Bash hook using `updatedInput` to append a quieting suffix (`--quiet`, `| tail -n N`, structured-output flags) to a matched command works on this version (Finding 2).
 It is nonetheless deferred, on coverage grounds rather than breakage:
 
-- Mechanisms 1 and 2 already cover the space. The coverage table (using the real spill-to-file semantics):
+- It does not close the residual gap. The coverage table (using the real spill-to-file semantics):
 
   | Case | Covered by | Outcome |
   |---|---|---|
-  | Anticipated verbose, dispatched | 1 (runner) | Parent sees the fixed-format report only |
-  | Unanticipated verbose, exit 0 | 2 (cap) | Parent sees ~2k preview + file path; bounded, recoverable via read-back |
-  | Unanticipated verbose, non-zero exit | 2 (cap) | Parent sees a head+tail excerpt, no file path; a mid-log error CAN be lost; recovery is a re-run through 1 |
+  | Anticipated verbose, dispatched | Runner | Parent sees the fixed-format report only |
+  | Unanticipated verbose, exit 0 | Platform default (~30K ceiling) | Inline up to ~30K chars; past it, ~2k preview + file path, recoverable via read-back |
+  | Unanticipated verbose, non-zero exit | Platform default (~10K failure ceiling) | Inline up to ~10K; past it, a head+tail excerpt with no path; a mid-log error CAN be lost; recovery is a re-run through the runner |
 
-  The third row is the only real gap, and a rewrite hook does not close it: it fires only on a fixed pattern allowlist, and the observed whales are not on any plausible allowlist.
+  Rows 2-3 are the accepted residual risk: an undispatched verbose call can still land up to ~30K chars in the parent (the corpus max is 29,351, so in practice nearly every observed whale lands inline in full). The deferred cap RFP is the lever for tightening that bound; a rewrite hook is not, since it fires only on a fixed pattern allowlist and the observed whales are not on any plausible allowlist.
 - It mis-targets the traffic. The 15 heaviest Bash results are `git diff`, `grep -rn` sweeps, `find`, and multi-`cat` loops - not `npm install`, `docker build`, or `terraform`. A blind `| tail` on a `grep` sweep destroys the signal (the matches ARE the output), so even a working rewrite is a poor fit for what actually dominates.
 - A mature off-the-shelf tool already owns this niche better than a bespoke allowlist would. The tooling landscape report [`cdocs/reports/2026-09-23-bash-output-tooling-landscape.md`](../reports/2026-09-23-bash-output-tooling-landscape.md) found [`rtk-ai/rtk`](https://github.com/rtk-ai/rtk) (Apache-2.0, a Rust `PreToolUse` command-rewrite proxy) deterministically compresses 100+ known dev commands - including exactly the `git diff`/`grep`/`find`/`cat`-sweep shapes that dominate this corpus - with per-command filter/group/dedup pipelines a hand-written allowlist cannot match. A consumer who wants the deterministic-rewrite lever is better served pointing at rtk than by cdocs shipping a bespoke hook; that report recommends against adopting rtk as a plugin dependency (pre-1.0, RC-heavy, CLI-only) but confirms building a competing allowlist is not worth it.
 
@@ -219,9 +207,9 @@ Until then, track as blocked/future work; do not implement.
 | Mechanism | Fires on | Technique | Cost | Status |
 |---|---|---|---|---|
 | Platform default (~30k valid / ~10k failure ceiling) | Every Bash call | Blind spill-to-file (valid) / head+tail excerpt (failure) | Zero | Already shipped upstream |
-| `bashOutputMaxChars` tightened (start 6,000) | Every Bash call | Blind, tunable spill cliff | Zero | **Adopt** (mechanism 2, via `orchestration-discipline.md` guidance) |
-| `cdocs:bash-runner` (haiku wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then bounded extraction) | Small (haiku tokens + round-trip) | **Adopt** (mechanism 1, primary) |
-| `PreToolUse` command-rewrite (`updatedInput`) | Matched known-verbose commands | Blind, pattern-scoped rewrite | Zero | Works here (2.1.280 Linux headless, 2/2); **deferred** - redundant with 1+2, allowlist misses observed whales |
+| `cdocs:bash-runner` (haiku wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then bounded extraction) | Small (haiku tokens + round-trip) | **Adopt** (primary, with dispatch guidance) |
+| `bashOutputMaxChars` tightened | Every Bash call (including the runner's own) | Blind, tunable spill cliff | Zero | **Deferred** to [the cap RFP](2026-10-05-bash-output-cap-rfp.md) - global (interferes with the runner), consumer settings policy |
+| `PreToolUse` command-rewrite (`updatedInput`) | Matched known-verbose commands | Blind, pattern-scoped rewrite | Zero | Works here (2.1.280 Linux headless, 2/2); **deferred** - allowlist misses observed whales; rtk owns the niche |
 | `PostToolUse` content-aware truncation (`updatedToolOutput`) | Every Bash call (or matched) | Heuristic (error-line-preserving) | Zero | **Deferred/blocked** ([#68951](https://github.com/anthropics/claude-code/issues/68951), inert for built-in Bash) |
 
 ## Important Design Decisions
@@ -234,12 +222,13 @@ Until then, track as blocked/future work; do not implement.
   The output ceiling applies to the runner's own Bash call, so a runner that let a command dump to stdout would itself only see a preview.
   Capturing to a file keeps the tool result tiny and the full output on disk (and "valid" from the platform's view regardless of exit status), which is what makes the containment claim actually hold.
 - **Opt-in dispatch, not universal routing.**
-  Round-trip overhead makes universal routing a net loss; the deterministic floor covers the unanticipated case that opt-in dispatch misses.
-  This is the answer to "why both": neither mechanism alone covers both the anticipated-verbose and unanticipated-verbose cases.
-- **Settings cap as guidance in an existing rule file, not plugin-baked, not a new rule file (resolved Q2).**
-  Preserves the "cdocs never silently mutates harness config" invariant, and riding an existing rule file's materialization pipeline avoids editing `/cdocs:init`.
-- **Semantic distillation is not redundant with a blind cap.**
-  The blind cap loses signal in two ways the wrapper does not: a failed verbose command yields a lossy head+tail excerpt with no file (the middle is unrecoverable without a re-run), and a valid one puts the middle on disk at the cost of a read-back that re-ingests it whole.
+  Round-trip overhead makes universal routing a net loss; the unanticipated case opt-in dispatch misses is left to the platform default ceiling as an accepted residual risk.
+- **Settings-level cap deferred, not shipped (maintainer, 2026-10-05).**
+  The cap is global, so it would also bound the runner's own extraction calls; it is consumer settings policy; and the runner plus dispatch guidance is expected to suffice. Shipping it would pre-empt the usage data that should decide whether it is needed. See the follow-up RFP.
+- **Dispatch guidance in an existing rule file, not a new rule file.**
+  `/cdocs:init` enumerates rule files by name for its `AGENTS.md` block, so a new section in `orchestration-discipline.md` rides the existing materialization pipeline and hash marker with zero init changes.
+- **Semantic distillation is not redundant with a blind ceiling.**
+  The platform's blind ceiling loses signal in two ways the wrapper does not: a failed verbose command yields a lossy head+tail excerpt with no file (the middle is unrecoverable without a re-run), and a valid one puts the middle on disk at the cost of a read-back that re-ingests it whole.
   The runner captures the whole output to its scratch file and extracts from it with bounded shell (a `grep` over the file finds a buried error wherever it fell, and per-file aggregation is available for a sweep where a head/tail excerpt is the wrong default), so the salient signal reaches the parent without the raw dump - all in disposable context.
 - **No dependency on either rewrite hook channel.**
   The design does not use `updatedInput` or `updatedToolOutput` for Bash, so it is robust to their environment-dependent and regressed behavior respectively.
@@ -248,9 +237,10 @@ Until then, track as blocked/future work; do not implement.
 
 - **The command needs interactivity or a TTY.**
   `cdocs:bash-runner` runs one non-interactive command; interactive commands are out of scope and should not be dispatched.
-- **Spill-then-read-back can cost more than the uncapped result.**
-  A 6,100-char valid result under a 6,000 cap becomes ~2,000 chars + path; an agent that then `Read`s the file re-ingests it whole plus line-number overhead, a net loss versus the 6,100 inline.
-  Mitigation is in the guidance: if this pattern shows up, raise the cap. This is the core reason the recommended start is 6,000, not 4,000.
+- **Unanticipated verbose output in the parent.**
+  An agent that does not dispatch a verbose command gets up to ~30K chars inline (or a lossy head+tail excerpt past ~10K on failure). Accepted residual risk; the deferred cap RFP is the remedy if post-ship data shows it matters.
+- **Consumer has set `bashOutputMaxChars` themselves.**
+  The runner's capture call returns only `exit=<n>`, and its extraction commands are bounded (`head -n N`, `cut -c1-N`), so it should tolerate a tightened ceiling; but an extraction whose output exceeds a very low cap would itself spill to a preview. Not tested in this scope; the composition question belongs to the cap RFP.
 - **The caller genuinely needs the full raw output later.**
   The runner's report always names the capture file path; the caller reads or greps that file rather than re-running.
 - **Binary or very-long-line output.**
@@ -262,7 +252,7 @@ Until then, track as blocked/future work; do not implement.
 - **Capture file location and lifetime.**
   The capture file lives in the subagent's own scratchpad directory (session-scoped, disposable); it is not a `mktemp` file and not a caller-supplied path, so it is cleaned with the session and needs no explicit teardown.
 - **Consumer never runs `/cdocs:init`.**
-  Then the settings-cap guidance is never delivered and the floor is absent; the wrapper still works (it is a plugin agent, not a settings dependency). Documented degradation, consistent with cdocs being opt-in per project.
+  Then the "Bash output hygiene" dispatch guidance is never materialized, so agents dispatch the runner only when explicitly prompted to; the runner itself still works (it is a plugin agent, not a settings or rule dependency). Documented degradation, consistent with cdocs being opt-in per project.
 
 ## Test Plan
 
@@ -278,14 +268,12 @@ Until then, track as blocked/future work; do not implement.
   Given "matches per file, first 3 per file" over a `grep -rn` sweep, the report shows per-file grouping, not a flat head/tail.
 - **Salience: default heuristic.**
   With no spec, a `FAILED` command still yields a non-`OK` status and its exit code, even if the specific error line is not extracted.
-- **Runner under a low cap (robustness to mechanism 2).**
-  With `bashOutputMaxChars` set low, the runner still returns the true last line of `seq 1 200000` - proving the capture-to-file flow is not itself defeated by the ceiling. This is the key test that the two mechanisms compose.
+- **Runner above the platform ceiling.**
+  The runner returns the true last line of `seq 1 200000` (~1.2MB, far above the ~30K default ceiling), proving the capture-to-file flow is not itself defeated by the ceiling on its own Bash call. Covered by the Verification Methodology canary.
 - **Containment (the core claim).**
   See Verification Methodology.
-- **Deterministic cap shape.**
-  With `bashOutputMaxChars` set low in a test settings file, a direct (non-wrapped) valid command producing >ceiling output yields a `~2,000-char preview + file path` in the model-facing result (not a head/tail clip, and not the full output). A failing >ceiling command yields the head+tail excerpt with no path.
 - **`/cdocs:init` guidance delivery.**
-  The "Bash output hygiene" section exists in `orchestration-discipline.md`; a test init materializes it (the section text, the recommended value and band, and the tuning caveat are present in the output).
+  The "Bash output hygiene" section exists in `orchestration-discipline.md`; a test init materializes it (the when-to-dispatch convention, sweeps first, is present in the output) and it contains no `bashOutputMaxChars` recommendation.
 - **Cross-target.**
   The new agent is picked up by `scripts/build-opencode.ts` (which auto-discovers `agents/*.md`); the built OC agent has `bash: true` with `read`/`edit`/`write: false`.
 
@@ -295,17 +283,15 @@ The load-bearing claim is that the wrapper keeps verbose output out of the PAREN
 Verify it directly with a canary:
 
 1. Pick a command with deterministic, large, countable output, for example `seq 1 200000` (~1.2MB, far above any ceiling) or `yes CANARY_LINE | head -n 100000`.
-2. Dispatch it through `cdocs:bash-runner` with a salience spec like "return the exit code and the last line." The runner captures to `<scratchpad>/bash-runner-<ts>.log`, then `tail -n 1` over that file yields the true last line - which it could not have gotten from a spilled preview had it let the command dump to stdout.
+2. Dispatch it through `cdocs:bash-runner` with a salience spec like "return the exit code and the last line." The runner captures to `<scratchpad>/bash-runner-<ts>.log`, then `tail -n 1` over that file yields the true last line - which it could not have gotten from the platform's spilled preview had it let the command dump to stdout.
 3. Confirm the parent transcript contains only the fixed-format `BASH RUNNER REPORT` (command, exit code, status, the last line, and the `saved to <path>` line) - NOT the 100k-200k lines of raw output.
 4. Confirm the report's byte size is on the order of the extract (hundreds of chars), not the raw output (~MB).
-5. As a negative control, run the same command as a direct `Bash` call in the parent. For a valid command the parent gets a ~2,000-char preview plus a file path (the spill cliff), not the full raw output; what the wrapper saves versus this is the read-back of that file plus the semantic extraction. For a failing command the parent gets the lossy head+tail excerpt with no file - the case the wrapper's capture-with-`2>&1` avoids entirely.
-6. For the cap shape: set `bashOutputMaxChars` low, run a >ceiling direct valid command, and confirm the preview+path spill shape (per the Deterministic cap shape test).
-
-The containment check (steps 3-4) plus the runner-under-a-low-cap test are the verification floor: if the parent transcript holds the raw dump, or the runner cannot recover the true last line under a low cap, the wrapper has failed its one job.
+5. As a negative control, run the same command as a direct `Bash` call in the parent. For a valid command the parent gets a ~2,000-char preview plus a file path (the platform-default spill cliff), not the full raw output; what the wrapper saves versus this is the read-back of that file plus the semantic extraction. For a failing command the parent gets the lossy head+tail excerpt with no file - the case the wrapper's capture-with-`2>&1` avoids entirely.
+The containment check (steps 2-4) is the verification floor: if the parent transcript holds the raw dump, or the runner does not return the true last line, the wrapper has failed its one job.
 
 ## Implementation Phases
 
-Phases 1-2 are the adopt-now core and are largely independent; the two hook mechanisms are deferred, not implemented.
+Phases 1-2 are the adopt-now core and are largely independent; the settings cap and the two hook mechanisms are deferred, not implemented.
 
 ### Phase 1: `cdocs:bash-runner` agent (primary)
 
@@ -313,22 +299,22 @@ Phases 1-2 are the adopt-now core and are largely independent; the two hook mech
 - Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then bounded `wc`/`grep`/`head`/`tail`/`cut` over the file).
 - Inline the salience/extraction contract (line-oriented and aggregate shapes) and the fixed-format report; no rule-file read.
 - Constraints section: run the requested command exactly once; bounded extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded haiku agent does not refuse to `grep` its own capture file.)
-- Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, "Runner under a low cap," and the Verification Methodology containment canary pass.
+- Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, "Runner above the platform ceiling," and the Verification Methodology containment canary pass.
 - Do NOT modify existing agents, `hooks.json`, or the platform default.
 
-### Phase 2: Dispatch convention + model-tiering carve-out + init guidance
+### Phase 2: Dispatch convention + model-tiering carve-out
 
 - Add the `cdocs:bash-runner` named haiku carve-out to `model-tiering.md` alongside `nit-fix`.
-- Add a "Bash output hygiene" section to `orchestration-discipline.md` carrying both the "when to dispatch" convention (sweeps first) and the `bashOutputMaxChars` recommendation (value 6,000, band 4,000-8,000, spill-cliff rationale, read-back tuning caveat, `update-config` snippet, "consumer applies it, plugin does not").
+- Add a "Bash output hygiene" section to `orchestration-discipline.md` carrying the "when to dispatch" convention (sweeps first, then builds/tests/installs, then unboundable commands; skip short-output commands), framed as the same disposable-context shape as the fork-vs-specialist guidance.
 - Success criteria: rule text present and consistent with the frontmatter/writing conventions; the `/cdocs:init` guidance-delivery test passes (the section materializes with no init-skill edit).
 - Dependency: independent of Phase 1's code but cites the agent by name, so land after or with Phase 1.
-- Do NOT auto-write any consumer `settings.json` value, and do NOT add a new `rules/*.md` file (which would force an init-skill edit).
+- Do NOT add any `bashOutputMaxChars` recommendation or `settings.json` snippet (deferred to the cap RFP), and do NOT add a new `rules/*.md` file (which would force an init-skill edit).
 
-### Deferred (not phases): the two hook mechanisms
+### Deferred (not phases)
 
-- `PreToolUse` command-rewrite: works on this version but deferred on redundancy/mis-targeting grounds (mechanism 3). Do not implement now.
+- Settings-level cap (`bashOutputMaxChars`): deferred to [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md), which also carries the open verification questions (failure-excerpt bounding, preview scaling). Do not implement.
+- `PreToolUse` command-rewrite: works on this version but deferred on mis-targeting grounds. Do not implement now.
 - `PostToolUse` content-aware truncation: blocked on the `updatedToolOutput` regression (Finding 1). Do not implement. Re-open per the canary trigger in the Deferred section above.
-- Phase 2 verification flag: confirm whether `bashOutputMaxChars` also bounds the failure-path head+tail excerpt (the docs say the excerpt is cut from the read-back window, which the setting sizes) and whether the ~2,000-char valid-result preview is fixed or scales with the setting. These do not block Phase 2 but should be checked before the guidance value is finalized.
 
 ## Resolved Decisions (round-1 review, 2026-09-23)
 
@@ -336,6 +322,7 @@ The proposal's original open questions are resolved and folded in above; recorde
 
 - **Q1 tool allowlist:** `Bash`-only stays; `Read` is unnecessary once the runner captures to a file, and rule-loading has no consumer.
 - **Q2 init delivery:** document-only, via a section in the existing `orchestration-discipline.md` rather than a new rule file; a consent-gated `settings.json` write is a separate proposal's surface.
-- **Q3 mechanism 3:** mechanisms 1+2 suffice; the `PreToolUse` rewrite is deferred because it is redundant and mis-targets the observed whales, not because it is broken (it works here).
+- **Q3 mechanism 3:** the `PreToolUse` rewrite is deferred because it mis-targets the observed whales, not because it is broken (it works here).
 - **Q4 cap value:** 6,000 chars (p95 of the measured distribution), tunable band 4,000-8,000.
 - **Maintainer decision - capture-file location:** the subagent's own scratchpad directory.
+- **Maintainer decision (2026-10-05) - settings cap deferred:** the `bashOutputMaxChars` cap leaves shipped scope for [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md). Q2 now governs only the dispatch-guidance carrier; Q4's value is carried into the RFP as a starting point, not a shipped recommendation.
