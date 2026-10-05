@@ -36,6 +36,23 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 
 - p0 keeps `status: implementation_ready` after the scope-reduction revision (maintainer-approved deferral, no new design surface), so no re-review round before iterate; iterate's reviewer covers the revised text.
 
+## Handoff (checkpoint 2026-10-05T12:13)
+
+### Completed
+- p0 pre-step: cap deferred to `cdocs/proposals/2026-10-05-bash-output-cap-rfp.md`.
+- p0 iterations 1-7: runner shipped (Phases 1-2), relaxed internal reading (maintainer), sonnet (maintainer), report contract v2 (maintainer). r7: non-sweep runs pass all criteria.
+- p1 chat-record: maintainer-directed propose-revise rounds 5-6 (two hooks, bin/chat-record, per-turn timestamps, no compaction awareness); r6 review in flight.
+
+### Decisions Made
+- Runner on sonnet; true saving is parent-context avoidance, not runner model price.
+- Report v2: Summary (interpretation, <=3 lines) + Excerpt (verbatim, command-cut) + 4K cap + honest Truncated.
+- Iteration 8 = option A (sweep excerpt is one bounded command's whole output). If sweeps fail again: escalate for B (counts-only) / C (accept with caveat).
+
+### Open Todos
+- p0: iteration 8 -> rev-8 (b1/b2 x2, a, c, d1) -> accept or escalate.
+- p1: r6 review -> loop to accept; implementation HOLD for maintainer go-ahead.
+- Follow-ups: scripts/build-opencode.ts stale sonnet/opus model ids; runner captures land in /tmp.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
@@ -53,6 +70,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | judge_iteration | trigger | verdict | overseer_thinness | rationale | judge_path |
 |---|---|---|---|---|---|
 | 5 | review_count >= --judge-after | continue | clean | Converging: r1/r3 blockers closed fully next round; r4 F1 is a self-predicted one-edit regression. r5 must: abstract example (re-run d1/d2) + case-insensitive warn= (F4). F2 truncation line / F3 size overrun deferrable. Accept bar: containment + structure + verbatim fidelity + correct Status; escalate to maintainer if r5 raises a new blocking haiku-compliance class. | inline |
+| 8 | review_count >= --judge-after | continue | bloat_detected | Converging (r7 fails 2/6 vs 5/6, all sweeps). Option A sound (within v2); bound count block, no composed lines in Excerpt. Accept bar: b1+b2 x2, containment, 1 spot-check each a/c/d1. If sweeps fail again: no iteration 9, escalate for option B/C. No rotation. |
 
 ## Dispatch/Return Events
 
@@ -92,6 +110,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-7 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r7.md, _verify r7 | 2026-10-05T11:53 | iteration 7 review, contract v2 |
 | return | rev-7 (cdocs:reviewer) | review r7 + _verify r7 | 2026-10-05T12:05 | e2067a9 revise |
 | dispatch | judge-2 (cdocs:judge) | none | 2026-10-05T12:06 | review_count >= 3 |
+| return | judge-2 (cdocs:judge) | none | 2026-10-05T12:12 | continue, bloat_detected |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md (+ mirrors) | 2026-10-05T12:13 | iteration 8: option A |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 | return | prop-2 (cdocs:proposer, fable) | same + cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:03 | 6c757a3, 74169c1, cfbb241; status review_ready |
 | dispatch | crev-5 (cdocs:reviewer, fable) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md | 2026-10-05T11:04 | propose-revise round 5 review |
