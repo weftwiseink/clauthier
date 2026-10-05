@@ -32,6 +32,10 @@ Smoke: the `cdocs:bash-runner` agent definition parses and loads, and the contai
 A dispatched runner on `seq 1 200000` returns the true last line (`200000`) in a bounded report, while the parent transcript holds no raw dump.
 Failure picture: the parent context receives the raw output (or a >~4K-char excerpt), the runner reports a wrong/truncated last line, or it uses tools other than Bash.
 
+## Decisions Made
+
+- p0 keeps `status: implementation_ready` after the scope-reduction revision (maintainer-approved deferral, no new design surface), so no re-review round before iterate; iterate's reviewer covers the revised text.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
@@ -47,9 +51,12 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, cdocs/proposals/2026-10-05-bash-output-cap-rfp.md | 2026-10-05T09:05 | pre-step: defer mechanism 2 |
+| return | prop-1 (cdocs:proposer) | same | 2026-10-05T09:08 | 531b17e, ac75f43; overseer fixed 2 stale lines in 075ec2c |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, plugins/cdocs/rules/orchestration-discipline.md, plugins/cdocs/rules/model-tiering.md, plugins/cdocs/README.md, materialized rule copies | 2026-10-05T09:12 | iteration 1, Phases 1-2 |
 
 ## Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 | 2026-10-05T09:01 | steer-implementer | p0 proposal | Defer `bashOutputMaxChars` cap to follow-up RFP; ship runner + dispatch guidance only | pre-step (prop-1) |
+| 2026-10-05T09:10 | steer-implementer | impl-1 | Size runner extraction bounds so its own Bash results stay well under any plausible consumer cap (report body <= ~2K chars) - makes the runner cap-safe regardless of the RFP outcome | 1 |
