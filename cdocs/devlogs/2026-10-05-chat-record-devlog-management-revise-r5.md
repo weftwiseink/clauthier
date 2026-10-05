@@ -215,3 +215,30 @@ Size 90205 bytes before, about 41KB after; report about 11.5KB.
 Frontmatter: `status: review_ready`; `last_reviewed` as the r7 reviewer set it.
 
 Post-acceptance nits (r8 review, [`2026-10-05-review-of-chat-record-devlog-management-r8.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r8.md)): optional ` p=` suffix in `SIGNOFF_RE`; top-level-only test asserts via a `PreToolUse` `agent_id` canary and `p=` rather than speaker; "block granularity"; "record present" on the no-matching-`@user` case; "no hook entries beyond" constraint; report `first_authored.at`, evidence-row labels, and round-2/3 rows corrected. No design change.
+
+## Round 9
+
+Inputs: seven maintainer directives (2026-10-05) favouring minimal mechanism, judgment over hard rules, and a timeless implementer-focused proposal.
+
+### Changes
+
+- **Record pointer in frontmatter.** Devlogs carry an optional `chat_record:` list of repo-root record paths (list: a devlog outlives sessions); the `## Chat Record` section and its last-handoff time are gone; chunks omit the field so `grep -l '<path>' cdocs/devlogs/*.md` finds the root; Phase-1 deliverables 4 and 6 add the field to `frontmatter-spec.md`, the devlog skill, and `template.md`.
+- **No `p=`.** Header and `SIGNOFF_RE` lose the suffix; `note` loses `--p`; the block text loses `--p`. `Stop` reads the record's last marker (header or sign-off line): agent header -> sign-off; `@user` -> block once (sign-off on `stop_hook_active` or interrupt); sign-off or none -> nothing. Edge cases for mid-turn prompts and "Stop without matching @user" collapsed or dropped; a new unit test feeds fixture records to `Stop`.
+- **No `@harness`.** Harness envelopes are skipped. Only turns opening with a human prompt are checked; harness-triggered turns may note (the note is then followed by a sign-off) and otherwise leave no trace. Unit test for the skip added; background-dispatch scenario rewritten.
+- **No permission edits.** `/cdocs:init` writes no settings; README carries one allow-rule line. Hook tests run under `bypassPermissions`; the two default-mode scenarios are marked optional.
+- **Guard.** One scope sentence opens the per-turn rule paragraph (quoted in the Script section); per-agent-definition lines and their Phase-1 deliverable removed; constraint added that agents gain no `chat-record` text; fallback reduced to one sentence.
+- **No agent-side compaction management.** "Compaction guidance" became "Resumption guidance": steps are pointer-on-first-turn, Scratchpoint+commit at handoff, re-read after compaction. Removed: the `/compact <steering>` string, the ask-the-user step, `ctx:` in `as_of`, `/cdocs:compact` (Phase 3), and the steered arm of the A/B (arms now differ only in whether step 3 is present, plus `/clear`). Non-goal and Phase-1 constraint added. Existing Pillar 2 cadence text untouched.
+- **Soft Scratchpoint size.** "aim for at most ~15 lines and ~8 `files:` entries".
+- Design decisions renumbered (17); new ones for marker-order turns, human-only checking, and frontmatter pointer.
+- History report: round-9 evolution row, seven rejected-approach rows, evidence "relied on" cells updated. Tiered-records RFP: dropped a stale "by `p=` match".
+
+### Verification
+
+`grep 'p=\|prompt_id\|--p \|@harness\|## Chat Record\|ctx:\|steer\|/cdocs:compact\|permissions.allow'` over the proposal: no hits. Size about 42KB.
+Frontmatter: `status: review_ready`; `last_reviewed` left at round 8.
+
+### Tensions with verified behaviour
+
+- Default permission mode without the allow rule: `note` is denied (run C), so every human turn takes the one-shot block and an extra turn; documented, not mitigated by init.
+- Phase-3 cap-and-reseed still uses a token cutoff, now phrased as harness-reported specialist usage rather than agent self-tracking; kept as a gated dispatch-level item.
+- Marker-order turns rely on one `Stop` per top-level turn (runs 5, 6); a mid-turn prompt (unverified, check (d)) merges two prompts into one turn.
