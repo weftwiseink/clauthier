@@ -42,6 +42,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 |---|---|---|---|---|---|---|---|---|
 | 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | ~45K (10% inline) | yes | containment re-run by rev-1 (970-char report, true last line); F1 blocking: example shapes omit `| head -n 10` bound; overseer ran canaries inline (read-only) |
 | 2 | impl-1 (cdocs:implementer) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md | ~60K (5% inline) | no | F1 closed (max internal result 1,453); accept NOT terminal: maintainer steer ca5916f (relax internal bounds) pending -> iteration 3 |
+| 3 | impl-1 (cdocs:implementer) | rev-3 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md | ~75K (5% inline) | no | steer fully applied, floor passes (229-char containment report); F1: report format drifts on 'summarize' specs (fence, missing Full output line) |
 
 ## Judge Log
 
@@ -66,6 +67,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, plugins/cdocs/rules/orchestration-discipline.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md | 2026-10-05T09:57 | iteration 3: apply maintainer steer |
 | return | impl-1 (cdocs:implementer) | same + r1 review timestamp | 2026-10-05T10:05 | 2544f98..2578907 |
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md, cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary-r3.md | 2026-10-05T10:07 | iteration 3 review; live canaries |
+| return | rev-3 (cdocs:reviewer) | review r3 + _verify r3 | 2026-10-05T10:20 | 1a2bea3 revise |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md (+ wording in AGENTS.md, model-tiering.md) | 2026-10-05T10:22 | iteration 4: report-format robustness |
 
 ## Steering Log
 
