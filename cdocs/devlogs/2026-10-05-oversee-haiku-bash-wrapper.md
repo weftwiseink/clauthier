@@ -188,6 +188,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | inline | overseer | bash-runner.md, orchestration-discipline.md | 2026-10-05T14:09 | committed maintainer rewrite 6821b43 (diff read first) |
 | dispatch | rev-bw-rewrite (cdocs:reviewer, fresh) | review + canary evidence files | 2026-10-05T14:10 | review maintainer rewrite in its spirit |
 | dispatch | rfp-2 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md | 2026-10-05T14:10 | post-compaction resumption RFP |
+| return | rfp-2 | `435a0b9` | 2026-10-05T14:16 | post-compaction resumption RFP filed |
 | inline | overseer | arc-state p1 in_progress; iterate devlog created | 2026-10-05T12:43 | /cdocs:iterate Phases 1a,1b,2 -> cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
