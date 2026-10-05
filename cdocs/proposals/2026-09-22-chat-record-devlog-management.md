@@ -113,9 +113,9 @@ A record is a sequence of blocks, each a header line followed by a body; only re
 
 ```
 HEADER_RE  := ^@[A-Za-z0-9][A-Za-z0-9._-]*:
-SIGNOFF_RE := ^-- [A-Za-z0-9._-]+ at [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$
+SIGNOFF_RE := ^-- [A-Za-z0-9._-]+ at [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}( p=[0-9a-f]{8})?$
 header     := HEADER_RE (" " timestamp (" p=" pid8)?)?    ; timestamp: date -Iseconds
-signoff    := "-- " session " at " timestamp
+signoff    := "-- " session " at " timestamp (" p=" pid8)?   ; p= only per Edge Cases
 body       := any line matching neither pattern (after unescape)
 ```
 
@@ -215,7 +215,7 @@ Guards and invariants:
   Hook mode always exits 0 and writes errors to stderr only.
 - **Agent modes fail loudly.** `note` and `path` exit non-zero with a one-line stderr reason when `CLAUDE_CODE_SESSION_ID` is unset, no `cdocs/` is found, `jq` is missing, or the write fails; `CDOCS_CHAT_RECORD=off` is a silent exit 0.
 - **Never loops.** `stop_hook_active=true` is never blocked, so a turn costs at most one extra short turn; an agent that ignores the block ends the turn with no entry, and the gap shows as a `@user` followed directly by its sign-off.
-- **One append path.** Every write is a single `printf ... >>` of a whole block or line (`O_APPEND`), so a `note` racing a `Stop` interleaves at line granularity; agents read records (`tail`, offset `Read`) and never `Edit` or `Write` them.
+- **One append path.** Every write is a single `printf ... >>` of a whole block or line (`O_APPEND`), so a `note` racing a `Stop` interleaves at block granularity; agents read records (`tail`, offset `Read`) and never `Edit` or `Write` them.
 - **No state beyond the record.** `last_assistant_message` is never written, `Stop` checks presence by `p=` and never content, and no runtime-directory files exist.
 
 **Per-turn rule and cost.** Pillar 2 says: in the top-level session, before ending a turn, append at least one bullet with `chat-record note`, issued in the same parallel tool batch as the turn's last action when the outcome is known.
@@ -328,7 +328,7 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
   If it fires, the block is suppressed (resurrecting the agent after Escape defies the user) and the sign-off is written; interactive check (c) finds the distinguishing signal (candidate: empty `last_assistant_message`).
 - **Prompt typed mid-turn.** If interactive check (e) shows it fires `UserPromptSubmit` mid-turn, the record reads `@user A`, `@user B`, entries; `note` defaults to B's `p=`, `Stop(A)` blocks and the recovery note carries `--p A`, and the sign-off lands after B's block.
   In that case the sign-off gains a trailing ` p=<pid8>` and readers correlate by `p=`, not position.
-- **`Stop` without a matching `@user`** (hook enabled mid-session): the check finds no entry and blocks once with `--p` in the reason, so the note correlates despite a stale last header.
+- **`Stop` without a matching `@user`, record present** (hook enabled mid-session): the check finds no entry and blocks once with `--p` in the reason, so the note correlates despite a stale last header.
 - **`--resume`** keeps `session_id` and appends to the same file; `/clear` and `/resume` effects are a Phase-1 test, and either outcome is acceptable.
 - **Working directory moves to another worktree** with its own `cdocs/`: a second file with the same name starts there; accepted, each worktree's record covers the work done in it.
 - **Devlog at 20KB with no closed concern:** do not split; tighten prose and split landed verification evidence as its own chunk.
@@ -355,7 +355,7 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 - `chat-record path` -> prints the path, creates nothing.
 - background `Agent` dispatch -> second `UserPromptSubmit` recorded as `@harness` with its own `p=`; each turn's entry satisfies its own `Stop`.
 - foreground `Agent` dispatch that reads a file -> one `@user`; nothing written for any event with `agent_id`.
-- top-level only: copy the init-produced `.claude/rules/cdocs.md` and the `CLAUDE.md` import line into the sandbox project and load the plugin's agent definitions; the top-level prompt is told not to note and dispatches (a) a foreground `cdocs:proposer` on a multi-round task and (b) a fork, where the installed version offers `subagent_type: "fork"` -> no entry with a non-top-level speaker; the top-level's first `Stop` still blocks.
+- top-level only: copy the init-produced `.claude/rules/cdocs.md` and the `CLAUDE.md` import line into the sandbox project and load the plugin's agent definitions; the top-level prompt is told not to note and dispatches (a) a foreground `cdocs:proposer` on a multi-round task and (b) a fork, where the installed version offers `subagent_type: "fork"` -> a test-only `PreToolUse` canary (`"if": "Bash(chat-record:*)"`) logs no `chat-record` call with non-null `agent_id`, every entry's `p=` belongs to a top-level `@user`, and the top-level's first `Stop` still blocks (speaker names are not asserted, since a subagent may share the top-level model).
 - `/echo hello-world` from `.claude/commands/echo.md` -> one `@user` whose body is `/echo hello-world`.
 - stream-json `/compact` between two prompts -> nothing between the first sign-off and the second `@user`; no line mentions compaction.
 - stream-json `/clear` then a prompt -> observed `session_id` behavior recorded as the expected output.
@@ -420,7 +420,7 @@ Deliverables:
 Success criteria: all tests green in default permission mode; a real session of at least twenty turns in this repo commits a record in which every `@user`/`@harness` is followed by at least one top-level entry and exactly one sign-off before the next prompt, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass.
 If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` fallback ships before Phase 1 closes.
 
-Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; register no hook beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot.
+Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot.
 
 ### Phase 2: scratchpoint and semantic splitting
 

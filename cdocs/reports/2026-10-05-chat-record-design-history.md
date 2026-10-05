@@ -1,7 +1,7 @@
 ---
 first_authored:
   by: "@claude-opus-5-5"
-  at: 2026-10-05T10:30:00-07:00
+  at: 2026-10-05T10:23:14-07:00
 task_list: meta/chat-record-devlog-management
 type: report
 state: live
@@ -26,7 +26,8 @@ This report is the condensed index of that history.
 | Round | Driver | Change |
 |---|---|---|
 | 1 | initial draft | hook captures `last_assistant_message` verbatim per turn |
-| 3 | review | verbatim capture replaced by one agent-written bullet per action item |
+| 2 | review | accepted with nits; marked `implementation_ready` |
+| 3 | maintainer, 2026-09-23 (reopened after acceptance) | verbatim capture replaced by one agent-written bullet per action item |
 | 4 | maintainer, 2026-09-23 | entries judgment-driven and sparse; `Stop` block dropped; five-quiet-turn advisory added; commit-by-default with no redaction |
 | 5 | maintainer, 2026-10-05 | every turn writes one gist bullet, `Stop` block restored as the enforcer; `PostToolUse` hook and its `files=` metadata dropped; compaction guidance moved into rules; `PreCompact`/`SessionEnd` markers and a `SessionStart` path announcement kept |
 | 6 | maintainer, 2026-10-05; r5 review | record not compaction-aware (no `PreCompact`, `SessionStart`, `SessionEnd`, no session markers); per-turn timestamps; record path from `CLAUDE_CODE_SESSION_ID`; never-list became a guideline; script moved to the plugin's `bin/`; `/cdocs:init` permission rule |
@@ -73,11 +74,11 @@ Runs 1-8 are in the `-canary` chunk (2.1.280, headless, sandboxed `CLAUDE_CONFIG
 | `Stop` fires top-level only (`agent_id: null`), including for a turn that only launched a background subagent, with `prompt_id` equal to the turn's `UserPromptSubmit.prompt_id`, `stop_hook_active`, `transcript_path` | runs 5 and 6 | the per-turn check, `p=` correlation, the sign-off, the session title lookup |
 | `Stop` returning `decision: block` once is honored; the second `Stop` carries `stop_hook_active=true`; three turns total | run 8 (2026-09-23, under `bypassPermissions`) | the one-shot block |
 | `CLAUDE_CODE_SESSION_ID` is exported to the Bash tool and equals the hook's `session_id`; `CLAUDE_PLUGIN_ROOT` is not exported | r5 review run A (2.1.289) | path derivation in `note` and `path` |
-| A plugin's `bin/` is on the Bash tool's PATH while enabled | plugin reference; r5 review's own session; this revision's session (`.../plugins/cdocs/bin` present on PATH before the directory exists) | the bare `chat-record` command |
+| A plugin's `bin/` is on the Bash tool's PATH while enabled | plugin reference; r5 review's own session; the round-6 revision's session (`.../plugins/cdocs/bin` present on PATH before the directory exists) | the bare `chat-record` command |
 | An unallowlisted Bash script call is denied in headless default mode (`DENIED This command requires approval`) | r5 review run C | the permission rule |
 | A quoted-heredoc body reaches the script's stdin byte-exact (backticks, `$HOME`, `$(date)`, apostrophe, quotes, backslashes), and the call matches `Bash(chat-record:*)` in default mode (`permission_denials: []`) | run R7 (2026-10-05, 2.1.289, haiku, stub `chat-record` that logs stdin) | the stdin `note` body |
-| A foreground subagent's Bash has the parent's `CLAUDE_CODE_SESSION_ID` and an environment identical to the top-level's in every `CLAUDE*`/`AI_AGENT` variable (`CLAUDE_CODE_CHILD_SESSION=1` and `AI_AGENT=claude-code_2-1-289_agent` in both) | r6 review; run R7 (same run, the subagent ran the stub too) | Decision 13: no mechanical subagent guard |
-| The transcript carries `{"type":"custom-title","customTitle":"<name>","sessionId":"<id>"}` lines, rewritten over the session; `SessionStart` is the only hook payload documented to carry a title (`session_title`) | this revision's session (2.1.289); hooks reference | the session name in the sign-off |
+| A foreground subagent's Bash has the parent's `CLAUDE_CODE_SESSION_ID` and an environment identical to the top-level's in every `CLAUDE*`/`AI_AGENT` variable (`CLAUDE_CODE_CHILD_SESSION=1` and `AI_AGENT=claude-code_2-1-289_agent` in both) | r6 review; run R7 (same run, the subagent ran the stub too) | no environment-based subagent guard; top-level scoping is rule text with the `PreToolUse` fallback |
+| The transcript carries `{"type":"custom-title","customTitle":"<name>","sessionId":"<id>"}` lines, rewritten over the session; `SessionStart` is the only hook payload documented to carry a title (`session_title`) | the round-6 revision's session (2.1.289); hooks reference | the session name in the sign-off |
 | A `PreToolUse` handler with `"if": "Bash(chat-record:*)"` runs only on `chat-record` calls (not on `echo` calls in the same session) and sees `agent_id` (null at top level, set in a foreground subagent) | run R8 (2026-10-05, 2.1.289) | the named fallback guard |
 
 Also verified, not relied on: `SessionStart` (all sources, `additionalContext` reaching the model), `PreCompact` (manual and auto), `PostCompact` (full `compact_summary`), `SessionEnd` (`reason`), `PostToolUse` (per call, and inside subagents with `agent_id`), `SubagentStart`/`SubagentStop`.
