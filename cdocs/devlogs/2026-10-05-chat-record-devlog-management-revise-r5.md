@@ -184,3 +184,32 @@ Finding: no environment variable distinguishes a subagent's Bash from the top-le
 `grep -n '@end'` over the proposal: one hit, in Decision 4's sentence explaining why the stamp is not an `@end` block.
 `--record` appears only in the history NOTE and Decision 13.
 Frontmatter: `status: review_ready`, `last_reviewed` untouched.
+
+## Round 8
+
+Inputs: the r7 review ([`2026-10-05-review-of-chat-record-devlog-management-r7.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r7.md), verdict revise: Decision 13 rested on a false cost premise; 90KB document with a resulting `Stop`-table contradiction) and maintainer direction: proposals are timeless; move history, superseded approaches, round NOTEs, and Phase-0 evidence into a supplemental report; keep Phases 1-3 in one proposal; one place per fact; target ~40KB.
+
+### Run R8 (2026-10-05, 2.1.289, haiku, default mode)
+
+Same sandbox shape as R7, plus `PreToolUse` `{"matcher":"Bash","hooks":[{"type":"command","if":"Bash(chat-record:*)","command":"pre.sh"}]}` logging `agent_id`, `agent_type`, and the command.
+The session ran `echo plain-top` (twice), `echo plain-sub`, and two notes (top level, foreground `general-purpose` subagent).
+`pre.log` holds exactly the two `chat-record` calls: `agent_id: null` at top level, `agent_id: "a1d03f4c6b83e84e9", agent_type: "general-purpose"` in the subagent.
+So `if` is honored on 2.1.289 and the handler never runs on other Bash calls.
+`subagent_type: "fork"` failed in the sandbox ("Agent type 'fork' not found"), so whether fork tool calls carry `agent_id` stays unverified and the Phase-1 test runs the fork arm only where the installed version offers it.
+
+### Changes
+
+- New supplemental report [`2026-10-05-chat-record-design-history.md`](../reports/2026-10-05-chat-record-design-history.md): round-by-round evolution table, rejected-approaches table (with reasons), the full platform-evidence table plus R7 and R8, the "also verified" and "not verified" lists, and the canary recorder script.
+- Proposal rewritten timeless: no history NOTE, no dated decision parentheticals, no review-evidence Background items; one link to the report in Summary and Background.
+- One place per fact: Script section holds modes, the three-row `Stop` table (sign-off / block / suppressed-block-writes-sign-off), guards, and the per-turn rule; Decisions are one or two sentences of rationale; Edge Cases keep only non-contract cases; test scenarios are one line each.
+- Decision 13 corrected: rule text stays the Phase-1 guard for the two-hook budget; the `if`-scoped `PreToolUse` deny is the named fallback (true cost: one `hooks.json` entry, about one spawn per turn), shipped if the Phase-1 subagent or fork scenario leaks.
+  The guard lives in a short self-contained "Top-level only" section with a NOTE that attributed subagent notes are under maintainer discussion.
+- Phase-1 top-level-only scenario adds a fork arm and states how the sandbox gets the init-materialized rules (copy `.claude/rules/cdocs.md` and the `CLAUDE.md` import).
+- r7 non-blocking items: explicit `SIGNOFF_RE`; empty title falls back to sid8; parse order (classify lines, then strip trailing blanks); mid-turn prompt consequence (sign-off gains `p=` if check (e) shows mid-turn firing); layer-map participant split into hook and `note`; `custom_instructions` and "also verified" lines moved out; `PostCompact` example bullets replaced; "pure-chat" scenario renamed "minimal turn"; grammar test carries an awk reference splitter on the script's regexes.
+- Phase 0 reduced to a link and a five-fact dependency list; Phase 3 per-workstream item is a three-line pointer.
+
+### Verification
+
+Size 90205 bytes before, about 41KB after; report about 11.5KB.
+`grep '@end\|--record\|Round [0-9]\|qchar'` over the proposal: no hits.
+Frontmatter: `status: review_ready`; `last_reviewed` as the r7 reviewer set it.
