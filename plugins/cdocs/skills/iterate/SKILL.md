@@ -11,7 +11,7 @@ The invoking session agent enters *overseer mode* and restricts itself to orches
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
 The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership, on-resume liveness reconciliation) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
-Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log and a Completed/Decisions Made/Open Todos handoff before compacting; use a fresh reviewer every iteration and a fresh judge every invocation.
+Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log and a Completed/Decisions Made/Open Todos handoff at task-unit boundaries; use a fresh reviewer every iteration and a fresh judge every invocation.
 Worktree/filesystem isolation binds the dispatched implementer and reviewer, never this overseer session, which stays free to land, resolve, and fork; the principle is canonical in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property".
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
@@ -126,12 +126,13 @@ Dispatch a fresh judge with the iteration log and the recent review paths.
 The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale (inline for one or two sentences; longer rationales go to `cdocs/devlogs/_judge/` with the path in `judge_path`).
 Append a Judge Log row, then run the Checkpoint (below).
 
-### Checkpoint (handoff-before-compact)
+### Checkpoint (handoff)
 
-The checkpoint fires at each judge assessment (Turn N.d) and on Accept (Turn N.c Accept branch), and proactively after every 3 to 5 iterations at a task-unit boundary.
-Write the handoff into the devlog first, THEN compact (`/compact`, or `/clear` for a hard reset).
+The checkpoint fires at each judge assessment (Turn N.d) and on Accept (Turn N.c Accept branch).
+Write the handoff into the devlog.
 The handoff is the three-subsection Completed / Decisions Made / Open Todos section defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2; do not restate the format here.
-The checkpoint is not complete until the handoff is written: compacting without it is a failure, because the hand-written handoff is more complete than auto-compaction's lossy summary.
+The checkpoint is not complete until the handoff is written: the hand-written handoff is what a resuming reader trusts over a compaction's lossy summary.
+Between checkpoints the overseer keeps the devlog's `## Scratchpoint` current per Pillar 2 "Scratchpoint"; the dispatched implementer keeps none.
 
 ## Termination
 
@@ -141,9 +142,9 @@ No retry-count cap on Accept-bound progress: a patient overseer is bounded by re
 A `pause` steering directive (see "Injection points") is NOT a fourth loop-terminal verdict: it suspends turn advancement without invoking Accept, Reject, or the judge, and makes no claim about the work's quality.
 On a `pause` the overseer finishes the turn in flight, writes its Iteration Log or Judge Log row as it otherwise would, and yields with a resumable closing note; it does not touch the Accept/Reject/Escalate taxonomy.
 
-A soft context-budget signal is a JUDGE INPUT weighed against progress, never a hard kill.
-Overseer context trending past the ~150K target, a run of inline-work turns, or excessive loop length is surfaced by the overseer to the judge, which weighs it against forward progress; it does not itself terminate the loop.
-This preserves the accept/reject/escalate/interrupt contract: the soft budget informs a verdict, it never overrides one.
+A soft thinness signal is a JUDGE INPUT weighed against progress, never a hard kill.
+A run of inline-work turns or excessive loop length is surfaced by the overseer to the judge, which weighs it against forward progress; it does not itself terminate the loop.
+This preserves the accept/reject/escalate/interrupt contract: the soft signal informs a verdict, it never overrides one.
 
 ## Injection points
 
@@ -177,9 +178,9 @@ A fresh overseer resuming a paused loop also re-reads the Steering Log and re-qu
 
 Four tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0: the Iteration Log, the Judge Log, the Dispatch/Return Events table, and the Steering Log (see "Injection points" for the Steering Log's role).
 
-The Iteration Log carries two additive thinness columns for overseer-context legibility: `overseer_ctx_est` (an approximate current-context estimate, e.g. "~150K (30% inline)") and `inline_work` (a yes/no flag for whether the overseer did inline work this turn).
-The overseer writes these each row; the judge reads them to key `escalate` and writes its own `overseer_thinness` verdict (`clean`/`bloat_detected`/`signal_missing`) in the Judge Log.
-Absent the overseer columns, the judge logs `signal_missing`, so the checkpoint is enforceable rather than only inferable from prose.
+The Iteration Log carries one thinness column for overseer legibility: `inline_work` (a yes/no flag for whether the overseer did inline work this turn).
+The overseer writes it each row; the judge reads it to key `escalate` and writes its own `overseer_thinness` verdict (`clean`/`bloat_detected`/`signal_missing`) in the Judge Log.
+Absent the `inline_work` column, the judge logs `signal_missing`, so the checkpoint is enforceable rather than only inferable from prose.
 See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Judge-Observable Thinness Signal."
 
 The Dispatch/Return Events table records each child dispatch and return (with the target files it claims) so a resumed overseer can reconcile liveness and file-ownership from the log rather than from in-window belief (see "On-Resume Reconciliation" above).
