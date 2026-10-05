@@ -179,6 +179,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | prop-6 | `cde1e55`, `83ddd32`, `91d3326`; M1/M2/N1-N8 resolved; Phase 1 split 1a/1b; review_ready | 2026-10-05T12:27 | round 11 fixes |
 | dispatch | rev-r12 (cdocs:reviewer, fresh) | review r12 file | 2026-10-05T12:28 | verify r11 fixes |
 | return | impl-2 | `1d59c2f`, `b61692c`, `fd2f91e`, `2c7394a`; F5 + nits + 2 slip clauses; build OK; N2 canary 45/45 name+location (message omitted w/ honest Truncated pointer; one unsupported Summary speculation) | 2026-10-05T12:31 | overseer: accept with residuals, p0 done |
+| return | rev-r12 | `5e569fb`; REVISE: r11 all resolved, 1a greps hit only planned targets; M1 1b test file trips 1a greps (scope to rules/skills/agents); N1-N4 nits; no further full round needed | 2026-10-05T12:36 | round 12 |
+| dispatch | prop-6 (warm) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T12:37 | r12 fixes; overseer confirms success lines then iterate |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
