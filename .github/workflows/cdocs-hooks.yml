@@ -1,6 +1,7 @@
 # CI for the cdocs Claude Code hooks and bin/ scripts.
 # Runs the chat-record --unit suite (bash, jq, git; no claude, no credentials).
-# The headless scenarios need credentials and stay a manual gate.
+# The headless scenarios need credentials and stay a manual gate. macOS runs it too:
+# BSD sed, awk, and tr, so GNU-only behavior in bin/ or the suite fails there.
 
 name: CDocs Hooks
 
@@ -19,7 +20,11 @@ on:
 
 jobs:
   chat-record-unit:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
