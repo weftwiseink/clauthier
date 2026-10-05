@@ -322,3 +322,40 @@ Maintainer rationale: any unreliability can negate the savings, through task deg
   The built `agents/bash-runner.md` has `model: anthropic/claude-sonnet-4-20250514` (mapped through `MODEL_MAP`) and no `Unknown model alias` warning.
   The only warnings are the 3 `Unknown CC tool "*"` lines, which come from the `tools: "*"` agents and were there before this change.
 - Live sonnet canaries are pending the reviewer's re-run.
+
+## Implementation Notes (impl-1, iteration 7)
+
+Applies the maintainer-approved report contract v2 in response to [`2026-10-05-review-of-haiku-bash-wrapper-impl-r6.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r6.md) (F1 retyping drift, F2 prose outside fields, F3 false `Truncated: none`, F5 `grep -n` prefixes); Step 2 is unchanged.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `20730c2` | `plugins/cdocs/agents/bash-runner.md` | Step 3 and Output Format rewritten to v2: `Summary:` + `Excerpt:` replace `Salient output:`; hard ~4K ceiling; command-cut excerpts; aggregate ordering; strict `Truncated:` |
+| `8d8d138` | `plugins/cdocs/rules/orchestration-discipline.md` | Dispatch contract describes the v2 report; "summarize" specs are fine |
+| `bbd802f` | proposal | Output contract block on v2 with sizing/aggregate rules; the earlier steer NOTE marked superseded on its "cheaper model" premise; dated v2 NOTE citing the r6 canary |
+
+### Implementer Notes
+
+- **F2 (prose):** `Summary:` holds up to 3 lines in the runner's own words.
+  It is explicitly an interpretation, but every name and number must be supported by the capture or by a command the runner ran.
+  The Output Format sentence routes the summary into `Summary:` and nowhere else.
+  The old "never prose" rule is gone, so the contract no longer fights the model.
+- **F1 (retyping drift):**
+  - `Excerpt:` is "a FEW short verbatim lines".
+  - Lines must come from a command that already cuts long lines (example `grep -a 'WARN' <file> | cut -c1-160 | head -n 8`) and are transcribed from that tool result, never from memory.
+  - A line that does not fit is omitted, never retyped, shortened by hand, or replaced with `...`.
+  - Aggregate specs: counts first, from a counting command; then samples for as many top files as fit; then `Truncated:`.
+  - The whole report is "never more than about 4,000 characters".
+- **F3 (false `none`):** `Truncated:` must name everything the spec asked for that is missing: files without samples, a dropped final line, and the cut width if lines were cut. It is `none` only if everything asked for is present.
+  "Keep the true end" now says the excerpt includes the capture's actual final line(s) for summary specs or `FAILED`.
+- **F5 (`grep -n` prefixes):** use bare capture lines (`grep -h`, no `-n`) unless the spec asks for line numbers.
+- **Proposal NOTE fix (rev-6):** the earlier steer NOTE's "cheaper model is the main saving" premise now carries a suffix marking it superseded by the sonnet NOTE.
+  Its relaxed-reading conclusion stands.
+- The agent `description` ("concise fixed-format salient extract") and the AGENTS.md/model-tiering wording ("concise fixed-format extract") still read accurately under v2, so I left them unchanged.
+
+### Verification (emulated)
+
+- Aggregate sizing: on a `grep -rn overseer plugins/cdocs/skills` capture (98 lines, 10 files), the counting command plus 3 cut lines each for the top 4 files total 2,297 chars, comfortably inside the ~4K ceiling with room for the header fields.
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+- Live sonnet canaries are pending the reviewer's re-run.
