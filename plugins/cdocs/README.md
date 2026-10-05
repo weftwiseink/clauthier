@@ -49,7 +49,7 @@ Rule files ship with the plugin and are delivered to consuming projects via `/cd
 
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
 - **`workflow-patterns.md`:** Parallel agent dispatch, subagent-driven development, completeness checklists.
-- **`orchestration-discipline.md`:** Canonical overseer discipline (thin lead, single-writer ownership, liveness reconciliation, durable specialists).
+- **`orchestration-discipline.md`:** Canonical overseer discipline (thin lead, single-writer ownership, liveness reconciliation, durable specialists), plus Pillar 2's Scratchpoint, chat-record rule, and resumption steps.
 - **`model-tiering.md`:** Advisory model tiers (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins).
 - **`oversee-arc.md`:** Arc-layer primitives for `/cdocs:oversee` (arc-state schema, claim registry, footprint heuristic, troubleshooting budget, verification-depth ladder).
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
@@ -123,6 +123,21 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 - **SessionStart:** Hash-based freshness check. Compares the plugin's current rule-content sha256 against the marker in `.claude/rules/cdocs.md` and emits a refresh directive on mismatch. Silent skip in the source repo and in projects without `.claude/rules/cdocs.md`. See "Rules Integration" above.
 - **PreToolUse (Write|Edit):** Restricts cdocs subagents (triage, nit-fix, reviewer) to editing only `cdocs/` document directories. Main session is unaffected. CC-only (OC lacks agent identity in events).
 - **PostToolUse (Write|Edit):** Validates frontmatter on cdocs files. Informational warnings only (non-blocking).
+- **UserPromptSubmit and Stop (chat record):** `bin/chat-record` keeps one record per session at `cdocs/_chat/YYYY-MM-DD-<session_id>.md`. See "Chat record" below.
+
+### Chat record
+
+`UserPromptSubmit` appends each human prompt verbatim as an `@user` block (harness envelopes such as background-agent notifications are skipped).
+The top-level agent appends its gist bullets with `chat-record note`, per `orchestration-discipline.md` Pillar 2 "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
+`Stop` then appends a `-- <session> at <time>` sign-off, or, when a human-initiated turn has no entry, blocks once with the record path and the note command; a second `Stop` (`stop_hook_active`) never blocks, and plan mode never blocks, so a turn costs at most one extra short turn.
+Subagent payloads (`agent_id`) are ignored.
+
+- **Activation.** The hooks walk up from the session's working directory to the git toplevel and stop at the first `cdocs/`; they record only if that `cdocs/_chat/` exists, which `/cdocs:init` (not `--minimal`) creates together with the rule text. Outside a git work tree, or without `cdocs/_chat/`, they do nothing.
+- **Default permission mode.** An unallowlisted `chat-record note` prompts every turn (and is denied headless): allow `Bash(chat-record:*)` in settings or with `--allowedTools`. `/cdocs:init` edits no settings; skip-permissions sessions need nothing.
+- **Opt-outs.** `CDOCS_CHAT_RECORD=off` disables the hooks and `note` for a session (set it for one-shot non-cdocs `claude -p` runs); gitignoring `cdocs/_chat/` keeps records local to one checkout; deleting `cdocs/_chat/` stops recording.
+  Records are committed with the devlogs that list them and are not redacted: a secret pasted into a prompt, or echoed into a gist bullet, is committed with them.
+- **Installability.** A plugin with `bin/` installs through the Claude Code CLI (and the OpenCode build, which ports no record) but not through claude.ai or Cowork.
+- **Doubled hooks.** Plugin hooks are not deduplicated: running `--plugin-dir plugins/cdocs` beside an enabled `cdocs@clauthier` doubles every `@user` block and sign-off, so disable one.
 
 ### Sandbox testing notes
 
@@ -134,6 +149,8 @@ Future agents testing the hooks (especially the freshness check and the Read-aft
   Sandbox CC has no permission allowlist; the agent's first `Write` tool call blocks otherwise. Use this only inside `mktemp -d` test sandboxes, never against real project state.
 - **`~/.claude/.credentials.json` and `~/.claude/.claude.json` copies into the sandbox** so `claude -p` can authenticate. Documented in [cdocs/devlogs/2026-05-12-rule-delivery-regression-test.md](../../cdocs/devlogs/2026-05-12-rule-delivery-regression-test.md) as a known deviation; the alternative is "Not logged in - run /login" failures.
 - **Do not pass `--bare`.** It skips hooks entirely and yields false-negative test results.
+
+The chat-record hooks have their own suite: `plugins/cdocs/hooks/tests/chat-record.test.sh --unit` (pure shell, runs in CI via `.github/workflows/cdocs-hooks.yml`) and `--headless` (sandboxed `claude -p` scenarios that build the sandbox above themselves; `CHAT_RECORD_KEEP=1` keeps it for inspection).
 
 Reference recipe: [cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md](../../cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md) (Group C test setup).
 
