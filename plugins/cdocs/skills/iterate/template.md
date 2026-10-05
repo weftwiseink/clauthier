@@ -7,8 +7,8 @@ Copy the four H2 sections below into the devlog body verbatim, then append a row
 
 ## Iteration Log
 
-| iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
-|---|---|---|---|---|---|---|---|---|
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
+|---|---|---|---|---|---|---|---|
 
 ## Judge Log
 
@@ -38,8 +38,6 @@ Copy the four H2 sections below into the devlog body verbatim, then append a row
 - `review_proof`: one of `confirmed`, `n/a`, `deferred-to-followup`, `skipped`.
   The overseer assigns the value per row based on the verification floor and the iteration's actual content; see `SKILL.md` "Iteration Log and Judge Log" for the per-value rules.
 - `review_path`: path to the review artifact, relative to repo root.
-- `overseer_ctx_est`: overseer-written approximate current-context estimate for the turn, e.g. `~150K (30% inline)`.
-  It makes the overseer's context trend visible across rows so the judge can key `escalate` off a rising trend.
 - `inline_work`: overseer-written `yes`/`no` flag for whether the overseer performed inline work (bulk reads, edits, or command runs it could have dispatched) this turn.
   A run of `yes` rows is a workhorse signal the judge weighs.
 - `notes`: short free text.
@@ -47,9 +45,9 @@ Copy the four H2 sections below into the devlog body verbatim, then append a row
 
 Example row:
 
-| iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
-|---|---|---|---|---|---|---|---|---|
-| 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | ~120K (10% inline) | no | cards not rendering; Playwright excerpt inlined in review |
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | no | cards not rendering; Playwright excerpt inlined in review |
 
 **Judge Log**
 
@@ -57,9 +55,9 @@ Example row:
   The judge runs between Turn N.c and Turn (N+1).a; this column records N+1.
 - `trigger`: either `review_count >= --judge-after` (rule-driven) or `discretionary` (overseer chose to invoke early).
 - `verdict`: one of `continue`, `rotate-implementer`, `escalate`.
-- `overseer_thinness`: judge-written diagnosis of overseer context health, one of `clean`, `bloat_detected`, `signal_missing`.
-  This is distinct from `verdict`: a judge may log `bloat_detected` while returning `continue` when rising context coexists with clear progress, keeping the bloat diagnosis auditable independent of the loop verdict.
-  `signal_missing` is written when the Iteration Log's `overseer_ctx_est`/`inline_work` columns are absent, making an unenforced checkpoint visible in the log.
+- `overseer_thinness`: judge-written diagnosis of overseer thinness, one of `clean`, `bloat_detected`, `signal_missing`.
+  This is distinct from `verdict`: a judge may log `bloat_detected` while returning `continue` when a run of inline-work turns coexists with clear progress, keeping the bloat diagnosis auditable independent of the loop verdict.
+  `signal_missing` is written when the Iteration Log's `inline_work` column is absent, making an unenforced checkpoint visible in the log.
 - `rationale`: short rationales (one or two sentences) live inline.
   Longer rationales go to a file under `cdocs/devlogs/_judge/` and the inline text becomes a short summary plus a path reference.
 - `judge_path`: `inline` if the rationale is in the table cell, otherwise the path to the saved rationale file relative to repo root.
