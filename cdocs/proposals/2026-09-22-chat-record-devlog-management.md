@@ -258,13 +258,15 @@ If the Phase-1 subagent or fork scenario shows a leak, the fallback is a `PreToo
 ### Resumption guidance (rules only)
 
 Compaction happens when the user runs `/compact` or the harness auto-compacts ([#71803](https://github.com/anthropics/claude-code/issues/71803)); this proposal does not schedule, request, or anticipate it.
+Compaction, `--resume`, and `--continue` keep the session id, so the session keeps its record.
+`/clear` and `--fork-session` start a new session with a new id and a new record; nothing carries over, which is what starting fresh means, and they are not resumption.
 Its guidance lives where it survives compaction: Pillar 2 of `orchestration-discipline.md`, which `/cdocs:init` writes into `.claude/rules/cdocs.md` and which re-injects on every compaction.
 Pillar 2 gains three steps:
 
 1. **First turn a session works on a devlog:** run `chat-record path` and append the result to the devlog's `chat_record:` list if absent.
 2. **At each handoff:** refresh the Scratchpoint, and commit devlog and record by explicit path.
-3. **After a compaction or `/clear`:** run `chat-record path`; read the `## Scratchpoint` and latest handoff of the devlog that lists that path, then the last five blocks of the record; do not re-derive state from the summary.
-   If no devlog lists the path, create or resume one and add it.
+3. **After a compaction:** run `chat-record path`; read the `## Scratchpoint` and latest handoff of the devlog that lists that path, then the record's last 80 lines (`tail -n 80`, widened with an offset read if one long paste fills them); do not re-derive state from the summary.
+   If no devlog lists the path, the session kept none and the record tail is its whole durable state.
 
 The steps make compaction a trimming event whose summary quality no longer decides resumption quality; for durable specialists, Phase 3's cap-and-reseed avoids compaction entirely.
 
@@ -278,7 +280,7 @@ One `## Scratchpoint` section in the devlog the agent owns, replaced in place on
 - as_of: 2026-09-22T18:40:11-07:00
 - now: wiring the Stop check; block reason text not final
 - since_handoff: Stop decides from the record's last marker line alone
-- open: interrupt behavior of Stop; /clear effect on session_id
+- open: interrupt behavior of Stop
 - next: run interactive canary, then commit hooks.json entry
 - files:
   - plugins/cdocs/hooks/hooks.json (rw): the two shell-hook entries are the template for the new ones
@@ -345,7 +347,10 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
   An interrupted human turn with no `Stop` leaves an unsigned `@user`, so the next harness-triggered turn's `Stop` blocks once; harmless, since a note then closes both.
 - **Prompt typed mid-turn.** If interactive check (d) shows it fires `UserPromptSubmit` before the turn's `Stop`, the second `@user` lands inside the turn; marker order then reads both prompts as one turn, and `Stop` requires a note after the later one.
   Accepted: the note covers both.
-- **`--resume`** keeps `session_id` and appends to the same file; `/clear` and `/resume` effects are a Phase-1 test, and either outcome is acceptable.
+- **Session id changes.** `/compact`, `--resume`, and `--continue` keep `session_id`, so appends continue in the same file.
+  `/clear` and `--resume <id> --fork-session` mint a new `session_id`, and the Bash `CLAUDE_CODE_SESSION_ID` follows it, so the next prompt starts a new record and the old one ends at its last sign-off.
+  That is the intended fresh start: no rule looks for the previous record.
+  A user who wants continuity names the devlog, and step 1 adds the new record to its `chat_record:` list.
 - **Working directory moves to another worktree** with its own `cdocs/`: a second file with the same name starts there; accepted, each worktree's record covers the work done in it.
 - **Devlog at 20KB with no closed concern:** do not split; tighten prose and split landed verification evidence as its own chunk.
 - **Chunk needed while a sub-loop's table is live:** only finished rows move; the live table stays with a pointer to the chunk.
@@ -377,8 +382,8 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 - top-level only: copy the init-produced `.claude/rules/cdocs.md` and the `CLAUDE.md` import line into the sandbox project; the top-level prompt is told not to note and dispatches (a) a foreground `cdocs:proposer` on a multi-round task and (b) a fork, where the installed version offers `subagent_type: "fork"` -> a test-only `PreToolUse` canary (`"if": "Bash(chat-record:*)"`) logs no `chat-record` call with non-null `agent_id`, and the top-level's first `Stop` still blocks.
 - `/echo hello-world` from `.claude/commands/echo.md` -> one `@user` whose body is `/echo hello-world`.
 - stream-json `/compact` between two prompts -> nothing between the first sign-off and the second `@user`; no line mentions compaction.
-- stream-json `/clear` then a prompt -> observed `session_id` behavior recorded as the expected output.
-- `claude -p --resume <id>` -> new `@user` in the same file.
+- stream-json `/clear` then a prompt -> a second file named by the new `session_id`; `echo $CLAUDE_CODE_SESSION_ID` in that turn prints the new id; the first file is unchanged after its last sign-off.
+- `claude -p --resume <id>` and `--continue` -> new `@user` in the same file; `--resume <id> --fork-session` -> a new file.
 - `/rename my-canary` (or an injected `custom-title` line) -> next sign-off `-- my-canary at <ts>`.
 - `CDOCS_CHAT_RECORD=off`, told not to note -> no file; one `Stop`, no `decision`.
 - no `cdocs/` -> no file, no block.
@@ -399,8 +404,8 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 
 **Phase 2.**
 
-- Resumption A/B (gate for Phase 3), on three real workstreams with a reset forced between handoffs: arm 1 resumes after a plain `/compact` with step 3 of the resumption guidance removed from the rules, arm 2 after the same `/compact` with step 3 present, arm 3 from `/clear` plus step 3; a fresh reviewer scores correct next action, no re-litigated decision, no redundant re-read.
-  Pass: arm 2 wins or ties arm 1 on all three; the arm-3 result is recorded as the input to Phase 3's reseed design.
+- Resumption A/B (gate for Phase 3), on three real workstreams with a `/compact` forced between handoffs: arm 1 resumes with step 3 of the resumption guidance removed from the rules, arm 2 with step 3 present; a fresh reviewer scores correct next action, no re-litigated decision, no redundant re-read.
+  Pass: arm 2 wins or ties arm 1 on all three.
 - Split dry-run on `2026-09-22-agent-dispatch-labeling.md` and `2026-05-12-rule-delivery-regression-test.md`: a fresh agent given only the root answers three task questions opening at most one chunk each.
 - `/cdocs:triage` and `/cdocs:status` group chunks by `part_of`.
 
@@ -422,7 +427,8 @@ The stream (`hook_response` decisions, `num_turns`, `permission_denials`) and th
 
 Evidence for every platform fact is in the history report's Platform Evidence table.
 The script depends on: one `Stop` per top-level turn, never for a subagent; a single honored `Stop` block followed by `stop_hook_active=true`; `UserPromptSubmit` firing on a background agent's completion with the harness envelope as the prompt; `CLAUDE_CODE_SESSION_ID` in the Bash environment equal to the hook's `session_id`; a plugin's `bin/` on the Bash `PATH`; and no environment signal separating a subagent's Bash from the top level's.
-Unverified, and owned by Phase 1: `Stop` on interrupt, `/clear` and `/resume` effects on `session_id`, mid-turn prompts, `agent_id` on fork tool calls.
+Also established: `/clear` and `--fork-session` mint a new `session_id` that the Bash variable follows, while `/compact`, `--resume`, and `--continue` keep it; a prompt queued mid-turn fires `UserPromptSubmit` before the turn's single `Stop` (headless).
+Unverified, and owned by Phase 1: `Stop` on interrupt, mid-turn prompts in an interactive session, `agent_id` on fork tool calls.
 
 ### Phase 1: capture, per-turn rule, resumption guidance
 
@@ -454,7 +460,7 @@ Depends on Phase 1 (the resumption steps name the Scratchpoint).
 4. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` group by it; `agents/judge.md` gains the Scratchpoint staleness condition.
 5. The A/B and split dry-run, results in the devlog.
 
-Success criteria: the A/B pass bar and the recorded arm-3 result; the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
+Success criteria: the A/B pass bar; the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
 Constraints: the `overseer_ctx_est`/`inline_work` columns and `overseer_thinness` are not removed or renamed; no directory-per-workstream layout.
 
 ### Phase 3 (gated on the Phase-2 A/B)
