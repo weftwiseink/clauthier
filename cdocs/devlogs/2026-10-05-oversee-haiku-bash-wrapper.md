@@ -532,3 +532,30 @@ Maintainer defaults: Question A (a), about 12K for a complete list; B (a), the l
   Report: 3,292 chars, `Status: FAILED`, per-file counts in `Summary:`, and **17 of 17 failing tests named** in `Excerpt:` as `test at <file:line> | <name> | actual total N, expected total M`, plus the `ℹ tests/pass/fail` lines.
   Diffed against ground truth from the fixture sources (name, location, actual, expected): exact match on all 17 (previously 0 of 17).
 - Residual slip: the runner's `awk` missed the first failure's `test at` line, so it labelled that one line `(first failure)` and filled in its location from capture line 444. Both the `Summary:` and the `Truncated:` field disclose this. The capture also landed in the fixture directory, because the fixture sat under the session scratchpad, the same fixture-induced effect as B1.
+
+## Implementation Notes (impl-2, verification fixes)
+
+Applies the r2 verification review ([`2026-10-05-review-of-haiku-bash-wrapper-impl-final-r2.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-final-r2.md)) with the overseer's defaults: (A) with no spec, the complete list covers any failing run that reports distinct errors (builds, tests, linters, type-checkers); (B) each line gives name, location and a short message.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `1d59c2f` | `plugins/cdocs/agents/bash-runner.md` | F5 (blocking): the no-spec bullet lists every distinct error of a failing run as a complete list; the ~12K allowance covers a failing run with no spec |
+| `b61692c` | `plugins/cdocs/agents/bash-runner.md` | F1: `Truncated:` describes omissions exactly and never claims a cut that did not happen. F2: "no headings or hand-written lines". F3: the aggregate bullet's duplicate rule is dropped. Runner slips: fix a wrong output by re-running a corrected command; counts come from a command |
+| `fd2f91e` | proposal | F5 mirrored in the input contract, output contract, default-heuristic test and maintainer NOTE; the probe's no-spec arm uses a ~40+ failure fixture; F4 "refined by" pointers on the two older NOTEs; `Command:`/`Full output:` placeholders match the agent |
+
+### Implementer Notes
+
+- The runner-slip guidance is two short clauses on existing lines (Excerpt's "change the command and run it again", Summary's "take counts from a command"), not a new rule. F1's rewording covers `Truncated: none` while admitting omissions, together with the existing "Use `Truncated: none` only if everything the spec asked for is present".
+
+### Verification
+
+- `npm run build:cdocs` -> exit 0, `Agents converted: 7`; warnings unchanged (three `Unknown CC tool "*"` skips, Node `DEP0205`).
+- **Live N2 canary (45 failures, no spec)** on the committed plugin (`fd2f91e`), using the r2 evidence's method with the fixture regenerated in the session scratchpad: 9 `node --test` files, 450 tests, 45 distinct `deepStrictEqual` failures, 73,231 chars, 1,746 lines, exit 1.
+  The runner (`claude-sonnet-5-5`, 4 Bash calls, $0.15) returned 4.2K: `Status: FAILED`, totals and per-file counts in `Summary:`, and one `awk`-built line per failure in `Excerpt:` (`tests/<file>:<line>:3 <name>`).
+  Diffed against ground truth from the fixture sources: **45/45 name and location exact**.
+- Residuals:
+  - Per-test actual and expected values are absent from the lines, which leaves out the short message that default (B) asks for. The report discloses this honestly in `Truncated:`, with a `sed -n '550,$p'` follow-up.
+  - `Excerpt:` omits the capture's true final lines; the totals appear only in `Summary:`.
+  - `Summary:` speculates about "one shared calculation bug", an inference the capture does not support.
