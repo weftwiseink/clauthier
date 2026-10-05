@@ -24,6 +24,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
 |---|---|---|---|---|---|---|---|
+| 1 (1a) | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | no | Phase 1a accepted; greps re-run by reviewer; 6 non-blocking wording nits batched into Phase 1b; overseer default: iterate/template.md gains `## Scratchpoint` in 1b |
 
 ## Judge Log
 
@@ -37,6 +38,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/** (Phase 1a scope), proposal frontmatter, this devlog (Implementation Notes) | 2026-10-05T12:17:00-07:00 | Phase 1a |
 | return | impl-1 (cdocs:implementer) | same | 2026-10-05T12:53 | Phase 1a: `ed35dc9`..`757028b`, notes `111c2be`; grep1 empty, grep2 reseed line only; build OK; 7 judgment calls flagged |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | 2026-10-05T12:54 | Phase 1a review |
+| return | rev-1 (cdocs:reviewer) | same | 2026-10-05T12:59 | `5b65842` accept |
+| dispatch | impl-2 (cdocs:implementer, fresh: new phase, impl-1 context ~150K) | plugins/cdocs/bin/**, plugins/cdocs/hooks/**, plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/README.md, scripts/cdocs-hooks.ts, .github/workflows/cdocs-hooks.yml, cdocs/_chat/**, this devlog (notes) | 2026-10-05T13:00 | Phase 1b + 1a nits |
 
 ## Steering Log
 
