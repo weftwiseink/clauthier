@@ -60,7 +60,7 @@ Unanticipated verbosity stays bounded only by the platform default ceiling; tigh
 - Model-tiering carve-out mechanics (consumer floor wins; adopt via named carve-out): [`plugins/cdocs/rules/model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md).
 - Existing hook registration shape: [`plugins/cdocs/hooks/hooks.json`](../../plugins/cdocs/hooks/hooks.json) (SessionStart, `PreToolUse`/`PostToolUse` on matcher `Write|Edit`; no `Bash`-matcher hook exists yet).
 
-> NOTE(meta/token-spend-attribution): A parallel sonnet report on whether existing tooling (for example `rtk-ai/rtk`) could replace or complement a bespoke `cdocs:bash-runner` is pending; it feeds the round-2 reviewer, not this revision. The correctness fixes here apply regardless: even a wrapped external tool, if it is Bash-only under the hood, hits the same spill ceiling and needs the same capture-to-file-then-extract flow.
+> NOTE(meta/token-spend-attribution): A parallel sonnet report on whether existing tooling (for example `rtk-ai/rtk`) could replace or complement a bespoke `cdocs:bash-runner` landed as [`cdocs/reports/2026-09-23-bash-output-tooling-landscape.md`](../reports/2026-09-23-bash-output-tooling-landscape.md) and was folded into round 2. The correctness fixes here apply regardless: even a wrapped external tool, if it is Bash-only under the hood, hits the same spill ceiling and needs the same capture-to-file-then-extract flow.
 
 ## Verification of the Load-Bearing Hook Claim
 
@@ -199,7 +199,7 @@ If a future need arises (a specific known-verbose command a team runs constantly
 A `PostToolUse` hook on matcher `Bash` using `hookSpecificOutput.updatedToolOutput` to do content-aware truncation - preserve head/tail K lines AND pull forward any error-matching line regardless of position, with `[... N lines elided ...]` markers - is the ideal deterministic mechanism.
 It is DEFERRED because `updatedToolOutput` is inert for built-in Bash (Finding 1).
 
-**Trigger to pick it back up:** re-run the hook-channel canary (round-1 review Appendix; returns a sentinel replacement and checks whether the model sees the sentinel). When a Claude Code release makes `updatedToolOutput` apply to the built-in Bash tool - watch [#68951](https://github.com/anthropics/claude-code/issues/68951) and [#32105](https://github.com/anthropics/claude-code/issues/32105) - this hook becomes buildable and upgrades the deterministic floor from a blind spill-cliff to content-aware truncation, without displacing the wrapper (which still owns the "find the buried needle" job).
+**Trigger to pick it back up:** re-run the hook-channel canary (round-1 review Appendix; returns a sentinel replacement and checks whether the model sees the sentinel). When a Claude Code release makes `updatedToolOutput` apply to the built-in Bash tool - watch [#68951](https://github.com/anthropics/claude-code/issues/68951) and [#32105](https://github.com/anthropics/claude-code/issues/32105) - this hook becomes buildable and upgrades the platform-default ceiling from a blind spill-cliff to content-aware truncation, without displacing the wrapper (which still owns the "find the buried needle" job).
 Until then, track as blocked/future work; do not implement.
 
 ### Division-of-labor summary
