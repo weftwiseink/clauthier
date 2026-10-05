@@ -139,7 +139,7 @@ Absent a spec, the runner summarizes the result and flags critical info such as 
 **Workflow: capture-to-file-then-extract.**
 The Bash output ceiling applies to the runner's own Bash tool call, so the runner must not let a command's output flow to stdout directly (it would spill to a preview the runner cannot fully read).
 Instead:
-1. Write the command's stdout and stderr to a fresh file, `out=$(mktemp -p "/tmp/claude-$(id -u)" bash-runner-XXXXXX.log)`, creating the directory if missing, and get the `wc` stats.
+1. Write the command's stdout and stderr to a fresh file, `out=$(mktemp "/tmp/claude-$(id -u)/bash-runner.XXXXXX")`, creating the directory if missing, and get the `wc` stats.
    The tool result stays tiny, and the full output is on disk regardless of exit status, so the platform's lossy failure-path excerpt never applies to it.
    For long commands (builds, test suites, installs), the runner raises the Bash tool `timeout` up to 600000.
 2. Read the file with judgment, in service of the query and to detect anything unexpected (`head`/`tail`, `grep -a` with context, `sed -n` ranges, `awk` aggregation), each read kept under the ceiling; for an unreasonably large file, linear noise-reduction idioms such as a normalised `sort | uniq -c` help.
