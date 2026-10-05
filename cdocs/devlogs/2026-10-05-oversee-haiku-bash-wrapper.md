@@ -149,6 +149,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | crev-8 (cdocs:reviewer) | review r8 | 2026-10-05T13:35 | 0df3016 ACCEPT; implementation_ready |
 | dispatch | prop-3 (cdocs:proposer) | proposal + design-history report | 2026-10-05T13:36 | accepting-round nits |
 | return | prop-3 (cdocs:proposer) | same | 2026-10-05T13:40 | 043b884, b927846; p1 pre-step done, HOLD |
+| dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
 
