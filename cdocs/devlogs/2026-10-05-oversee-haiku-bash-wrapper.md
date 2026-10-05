@@ -40,6 +40,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
 |---|---|---|---|---|---|---|---|---|
+| 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | ~45K (10% inline) | yes | containment re-run by rev-1 (970-char report, true last line); F1 blocking: example shapes omit `| head -n 10` bound; overseer ran canaries inline (read-only) |
 
 ## Judge Log
 
@@ -56,6 +57,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | impl-1 (cdocs:implementer) | same | 2026-10-05T09:20 | 60979d9..6be7477; 2 Investigation Requested (live canaries) |
 | inline | overseer | none (read-only canary) | 2026-10-05T09:25 | ran 4 headless `claude -p --plugin-dir` canaries; evidence `cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary.md` |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | 2026-10-05T09:27 | iteration 1 review |
+| return | rev-1 (cdocs:reviewer) | review r1 | 2026-10-05T09:33 | 94658da revise |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, AGENTS.md? | 2026-10-05T09:35 | iteration 2 (continue) |
 
 ## Steering Log
 
