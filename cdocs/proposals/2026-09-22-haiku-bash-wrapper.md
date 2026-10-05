@@ -144,11 +144,17 @@ BASH RUNNER REPORT
 Command: <exact command run>
 Exit code: <n>
 Status: OK | FAILED | WARNINGS
-Salient output:
-<extracted lines, verbatim; typically 10-20 lines, ~2K chars>
+Summary:
+<1-3 lines, the runner's interpretation; names and numbers grounded in the capture>
+Excerpt:
+<a few short verbatim lines, cut by a command and copied from its output>
 Truncated: none | <what was omitted>; see: <follow-up command over the capture file>
 Full output: saved to <scratchpad-path> (<K> chars)
 ```
+
+The whole report stays under about 4,000 characters.
+`Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` stays few and short so verbatim copying stays accurate.
+For aggregate specs, counts (from a counting command) come first, then samples for as many top files as fit; `Truncated: none` is used only when everything the spec asked for is present.
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
@@ -157,6 +163,10 @@ The parent receives only the report; the raw output lives in the capture file an
 > NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: the runner's methodology should be no more constrained than the parent running Bash directly, since the cheaper model is the main saving.
 > Runner-internal results cost only haiku context, never the parent's, and the cap that would have motivated tight internal bounds is deferred to the RFP.
 > So internal reads are judgment-driven (small captures read whole, larger ones read iteratively), while capture-first, the one-line `exit/out/bytes/lines/warn` summary, and the concise fixed-format report stay mandatory.
+> (The "cheaper model is the main saving" premise is superseded by the 2026-10-05 sonnet NOTE above; the relaxed-reading conclusion stands.)
+
+> NOTE(opus-5-5/oversee): Maintainer-approved report contract v2, 2026-10-05: `Summary:` (interpretation) plus `Excerpt:` (few short verbatim lines) replace a single verbatim `Salient output:` block.
+> Evidence: the r6 live canaries ([`_verify/...-r6.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r6.md)): sonnet kept adding prose despite a ban, and retyping ~50 long lines in 8.6-10KB sweep reports drifted the content of a few. v2 sanctions the prose and keeps the verbatim part small enough to copy accurately.
 
 **Dispatch scope: opt-in, documented convention, not a hard rule.**
 Do not route every Bash call through this agent: a subagent round-trip is not worth it for `git status`, a one-line `ls`, or any command the caller already expects to be short.
