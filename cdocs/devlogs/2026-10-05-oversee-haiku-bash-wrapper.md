@@ -53,6 +53,19 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 - p1: r6 review -> loop to accept; implementation HOLD for maintainer go-ahead.
 - Follow-ups: scripts/build-opencode.ts stale sonnet/opus model ids; runner captures land in /tmp.
 
+## Handoff (checkpoint 2026-10-05T12:45, p0 terminal)
+
+### Completed
+- p0 `haiku-bash-wrapper` is `implementation_accepted` (rev-8, 908aa15) plus post-accept wording (82149b2..0f94b39). Runner: sonnet, relaxed internal reading, report contract v2 with two-command aggregate excerpts, judgment-call dispatch guidance.
+
+### Decisions Made
+- `bashOutputMaxChars` deferred to `cdocs/proposals/2026-10-05-bash-output-cap-rfp.md`.
+- Sonnet over haiku: the saving is parent-context avoidance; haiku fidelity failures negated it (r3-r5 evidence).
+
+### Open Todos
+- p1 chat-record: round-7 revision in flight (prop-3), then review; implementation HOLD for maintainer go-ahead.
+- Follow-ups: stale OC model ids in `scripts/build-opencode.ts`; runner captures land in `/tmp` (no scratchpad for subagents); cosmetic runner slips (~1 per run).
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | overseer_ctx_est | inline_work | notes |
@@ -117,6 +130,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-8 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r8.md, _verify r8 | 2026-10-05T12:19 | judge-2 acceptance bar |
 | return | rev-8 (cdocs:reviewer) | review r8 + _verify r8 | 2026-10-05T12:40 | 908aa15 accept |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/orchestration-discipline.md, plugins/cdocs/agents/bash-runner.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md | 2026-10-05T12:41 | post-accept wording: steer 12:25 + r8 follow-ups 1-3 |
+| return | impl-1 (cdocs:implementer) | same | 2026-10-05T12:45 | 82149b2..0f94b39; p0 arc_state done, claim released |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 | return | prop-2 (cdocs:proposer, fable) | same + cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:03 | 6c757a3, 74169c1, cfbb241; status review_ready |
 | dispatch | crev-5 (cdocs:reviewer, fable) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md | 2026-10-05T11:04 | propose-revise round 5 review |
@@ -136,7 +150,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T09:50 | steer-implementer | impl-1 | Maintainer: do not over-constrain the runner's methodology vs. the parent running Bash directly; the cheaper model is the main saving. SUPERSEDES the 09:10 cap-safety steer (its premise, the deferred cap, is out of scope). Runner-internal reads are judgment-driven (capture-to-file + size check stays; small outputs may be read whole; larger ones extracted with targeted, iterative commands, no fixed `head -n 10` suffix). Only the REPORT returned to the parent stays bounded. | 3 |
 | 2026-10-05T11:10 | steer-implementer | impl-1 | Maintainer (escalation resolution): switch runner to `model: sonnet`. Rationale: haiku unreliability (fabricated detail on summarize specs) can negate savings via task degradation or fiddly UX for the opus parent; the true saving is avoiding long-term parent context bloat. | 6 |
 | 2026-10-05T11:45 | steer-implementer | impl-1 | Maintainer: adopt report contract v2: `Summary:` <=3 lines labelled interpretation; `Excerpt:` verbatim lines kept short/few (cut by command) to minimise transcription drift; hard ~4K cap; aggregate specs = counts + per-file samples that fit + honest `Truncated:` with follow-up cmd; Status/Truncated/Full output unchanged. | 7 |
-| 2026-10-05T12:25 | steer-implementer | impl-1 / Bash Output Hygiene | Maintainer: goal is delegating context-bloating work to preserve the lead's context without degrading performance or losing relevant info. Don't be too aggressive: trivial/known-small commands need no subagent, and self-bounding (`grep -c`, `-q`, `| tail -n 5`) is preferred when the caller knows exactly what it needs. Soften 'Any agent ... keeps ... by dispatching' to a judgment call. Apply after rev-8 returns (reviewer is reading these files). | post-accept (impl-1) |
+| 2026-10-05T12:25 | steer-implementer | impl-1 / Bash Output Hygiene | Maintainer: goal is delegating context-bloating work to preserve the lead's context without degrading performance or losing relevant info. Don't be too aggressive: trivial/known-small commands need no subagent, and self-bounding (`grep -c`, `-q`, `| tail -n 5`) is preferred when the caller knows exactly what it needs. Soften 'Any agent ... keeps ... by dispatching' to a judgment call. Apply after rev-8 returns (reviewer is reading these files). | post-accept (82149b2) |
 
 ## Implementation Notes (impl-1)
 
