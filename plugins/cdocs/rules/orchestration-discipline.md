@@ -218,8 +218,9 @@ Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
 
 The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a runner misjudging "salient" is the main failure mode.
 Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
-The runner's report is concise (typically 10-20 verbatim lines), so an aggregate spec over many files should ask for per-file counts plus detail for the top few files only; a spec that cannot fit comes back as counts plus a `Truncated:` field naming what was omitted and a follow-up command over the capture file.
-With no spec, the runner falls back to exit code, status, error-matching lines, and the tail and head.
+The report carries status, a `Summary:` of up to 3 lines (the runner's interpretation, with names and numbers grounded in the capture), a few short verbatim `Excerpt:` lines, a `Truncated:` field, and the capture path, within about 4,000 characters.
+So a "summarize" spec is fine, and an aggregate spec over many files gets counts first, samples for the top files that fit, and a `Truncated:` field naming what was omitted plus a follow-up command over the capture file.
+With no spec, the runner falls back to exit code, status, error-matching lines, and the true final lines.
 If more detail is needed later, grep or read the named capture file rather than re-running the command.
 
 This is a convention for an agent's dispatch decision, not something tooling enforces.
