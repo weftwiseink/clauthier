@@ -286,14 +286,15 @@ unit_suite() {
   section "unit: speaker"
   P="$U/speaker"; newproj "$P"
   local as
-  for as in 'opus-4-6[1m]' 'Opus 5.5' Haiku-4.5 haiku-4-5 claude-haiku-4-5-20251001 'Sonnet 4 6'; do
+  for as in 'opus-4-6[1m]' 'Opus 5.5' Haiku-4.5 haiku-4-5 claude-haiku-4-5-20251001 'Sonnet 4 6' \
+    'Claude Opus 4.6' 'opus-4-6 [1m]'; do
     echo "- gist: $as" | note "$P" --as "$as"
   done
   echo "- gist: c" | note "$P"
-  local spk="A:opus-4-6 A:opus-5-5 A:haiku-4-5 A:haiku-4-5 A:haiku-4-5 A:sonnet-4-6 A:assistant"
+  local spk="A:opus-4-6 A:opus-5-5 A:haiku-4-5 A:haiku-4-5 A:haiku-4-5 A:sonnet-4-6 A:opus-4-6 A:opus-4-6 A:assistant"
   check "speakers normalized to one short id per model; default assistant" "$(markers "$(rec "$P")")" "$spk"
   local bad_as
-  for bad_as in user User claude-user '' claude- -x _x; do
+  for bad_as in user User claude-user 'Claude user' '' claude- -x _x; do
     (echo "- gist: z" | note "$P" --as "$bad_as" 2>/dev/null); rc=$?
     [ "$rc" -ne 0 ] && ok "--as '$bad_as' rejected ($rc)" || bad "--as '$bad_as' accepted"
   done
