@@ -151,6 +151,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | prop-3 (cdocs:proposer) | same | 2026-10-05T13:40 | 043b884, b927846; p1 pre-step done, HOLD |
 | inline | overseer | plugins/cdocs/agents/bash-runner.md, haiku-bash-wrapper proposal L281 | 2026-10-05T10:44 | 552684d capture pruning (maintainer-approved), hand-tested |
 | dispatch | prop-4 (cdocs:proposer, fresh) | chat-record proposal, design-history report, revise-r5 devlog | 2026-10-05T10:46 | round 9 |
+| return | prop-4 | `7b2633a`, `ca7218c`; status review_ready; flagged 3 tensions (default-mode note denial README-only; Phase-3 cap uses harness-reported tokens; mid-turn prompt boundary unverified) | 2026-10-05T10:51 | round 9 |
+| dispatch | rev-r9 (cdocs:reviewer, fresh) | review r9 file | 2026-10-05T10:52 | round 9 |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
