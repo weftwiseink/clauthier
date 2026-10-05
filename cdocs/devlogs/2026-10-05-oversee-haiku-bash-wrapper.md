@@ -191,6 +191,9 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | inline | overseer | plugins/cdocs/agents/bash-runner.md | 2026-10-05T14:46 | `3b32ae4` mktemp capture (maintainer-requested, sanity-checked) |
 | dispatch | rfp-4 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-opencode-build-yaml-parser-rfp.md | 2026-10-05T14:47 | OC build YAML parser RFP |
 | dispatch | impl-3 (cdocs:implementer, fresh) | bash-runner.md, orchestration-discipline.md (Bash section), model-tiering.md, plugins/cdocs/AGENTS.md, haiku-bash-wrapper proposal, this devlog (notes) | 2026-10-05T14:47 | rewrite small fixes (iterate) |
+| return | rfp-4 | `e740b5d` | 2026-10-05T14:52 | OC build YAML parser RFP filed |
+| return | impl-3 | `0464785`..`734ef1f`, notes `52368d1`; build OK; typo grep empty; canary 17/17 exact via fresh mktemp capture | 2026-10-05T15:06 | judgment call: no-spec acceptance bar now names-only |
+| dispatch | rev-bw-small (cdocs:reviewer, fresh) | review file | 2026-10-05T15:07 | verify small fixes |
 | dispatch | rfp-2 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md | 2026-10-05T14:10 | post-compaction resumption RFP |
 | return | rfp-2 | `435a0b9` | 2026-10-05T14:16 | post-compaction resumption RFP filed |
 | dispatch+return | rfp-3 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-05T14:24 | `eb608ce`; rules decomposition + cross-target removal RFP |
