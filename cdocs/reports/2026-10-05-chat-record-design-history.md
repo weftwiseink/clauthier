@@ -12,12 +12,12 @@ tags: [meta, hooks, chat_record, context_persistence, runtime_validated]
 # Chat Record Design History and Evidence
 
 > BLUF(opus-5-5/chat-record-devlog-management): Supplemental to [`2026-09-22-chat-record-devlog-management.md`](../proposals/2026-09-22-chat-record-devlog-management.md).
-> It holds what the proposal no longer carries: how the design reached its current shape over eleven review rounds, the approaches it rejected and why, and the runtime evidence (Phase-0 canary runs, review runs, R7, R8) behind each platform fact the script depends on.
+> It holds what the proposal no longer carries: how the design reached its current shape over twelve review rounds, the approaches it rejected and why, and the runtime evidence (Phase-0 canary runs, review runs, R7, R8) behind each platform fact the script depends on.
 > Read it to re-litigate a decision or re-run a check; the proposal alone is enough to implement.
 
 ## Context
 
-The proposal went through eleven propose-revise rounds between 2026-09-22 and 2026-10-05.
+The proposal went through twelve propose-revise rounds between 2026-09-22 and 2026-10-05.
 Round-by-round detail lives in the propose-revise devlog ([`2026-09-22-chat-record-devlog-management-propose-revise.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md)), its `-canary` chunk ([`2026-09-22-chat-record-devlog-management-propose-revise-canary.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise-canary.md)), the continuation devlog from round 5 ([`2026-10-05-chat-record-devlog-management-revise-r5.md`](../devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md)), and the reviews under `cdocs/reviews/*chat-record-devlog-management*`.
 This report is the condensed index of that history.
 
