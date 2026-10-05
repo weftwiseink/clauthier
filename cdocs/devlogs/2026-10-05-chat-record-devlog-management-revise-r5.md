@@ -76,6 +76,7 @@ Scope: Phases 1-2; Phase 3 stays a gated sketch, updated only where it leaned on
 | round | step | result |
 |---|---|---|
 | 5 | revision (fable-5-1, fresh context) | proposal rewritten per directives 1-4; `status: review_ready` |
+| 6 | revision (fable-5-1, warm context) | r5 blockers plus four new directives applied; hooks reduced to `UserPromptSubmit` + `Stop`; `status: review_ready` |
 
 ## Changes Made
 
@@ -98,3 +99,52 @@ BLUF tightened from 1750 to about 950 characters.
 |---|---|
 | `6c757a3` | docs(devlogs): open round-5 revision devlog for chat-record proposal |
 | `74169c1` | docs(chat-record-devlog-mgmt): round-5 redesign: per-turn gist with Stop block, drop PostToolUse/PostCompact, rules-driven compaction |
+| `cfbb241` | docs(devlogs): record round-5 verification scan and commit table |
+| `6548206` | docs(chat-record-devlog-mgmt): round-6 redesign: two hooks, bin/chat-record, per-turn timestamps, no compaction awareness |
+
+## Round 6
+
+Inputs: the r5 review ([`2026-10-05-review-of-chat-record-devlog-management-r5.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md), verdict revise: script invocation path and permission story blocking) and four new maintainer directives (2026-10-05) that take precedence: the record is not compaction-aware; drop `SessionEnd` and the session marker lines, and `SessionStart` unless proven necessary; timestamps per turn (submission on `@user`, end on `Stop`) with session name, model, and prompt id on agent turns; guideline instead of never-list.
+Net target: hooks = `UserPromptSubmit` + `Stop`, one `bin/chat-record`, rules text, init permission rule.
+
+### Facts verified in this session (Claude Code 2.1.289, before changing the design)
+
+- Bash environment: `CLAUDE_CODE_SESSION_ID=e3afd4a9-...` is set and matches this session's transcript filename; `CLAUDE_PLUGIN_ROOT` is absent; `PATH` already contains `.../clauthier/main/plugins/cdocs/bin` even though that directory does not exist yet, so the platform adds a plugin's `bin/` to PATH unconditionally while the plugin is enabled.
+  No session-name variable exists in the environment.
+- Hooks reference (fetched): common input fields are `session_id`, `transcript_path`, `cwd`, `hook_event_name`, `permission_mode`, plus `prompt_id`, `agent_id`, `agent_type` where applicable; no common field carries a session name; `SessionStart` alone has an optional `session_title` (custom title only, not the generated one); no mention of `CLAUDE_CODE_SESSION_ID` (undocumented, as the r5 review said) and nothing on `Stop` firing on interrupt.
+- Transcript: `~/.claude/projects/<slug>/<session_id>.jsonl` carries `{"type":"custom-title","customTitle":"clauth-opt-context","sessionId":"<id>"}` lines, 27 of them in this session (rewritten over time; the last one wins).
+  Since `transcript_path` is a common hook field, the `Stop` hook can read the session name without a third hook.
+- `/cdocs:init` SKILL has no settings-file handling today; the permission rule is a new deliverable, not an extension.
+- Canary run 2 timestamps: the second prompt arrived at 18:21:05, so the illustrative agent stamps in the example had to fall between 18:20:54 and 18:21:05 to keep the file's timestamps non-decreasing (a property the new test plan asserts).
+
+### Design choices
+
+- **`SessionStart` dropped.** Its only remaining job was announcing the record path, and `chat-record path` answers that on demand from the environment; the r5 review showed the "only the hook knows the session id" claim was false.
+  File creation is lazy: the first `UserPromptSubmit` or the first `note`, whichever comes first.
+  Degraded path when the variable is absent: the `Stop` block reason names the real path and `--record` accepts it; a Phase-1 test asserts the variable equals the hook's `session_id` so a rename is caught early.
+- **Full session id in the filename.** `cdocs/_chat/YYYY-MM-DD-<session_id>.md`; deletes the sid8 collision check, the `sid=` first line, and the fallback-name mismatch the r5 review found (nit 9).
+- **End stamp as a separate `@end` block, not a header completion.** `Stop` appends `@end: <ts> p=<pid8> session=<title|sid8>` whenever it does not block (including the silent second `Stop` after an ignored block, so gaps are visible).
+  Chosen over "complete the note header at Stop" because it is append-only with zero state; chosen over "Stop writes the whole agent block from a staging file" because staging adds a runtime file, a crash-loss case, and an orphan-flush case keyed by prompt id.
+  The agent's header carries model (`--as`) and `p=`; the `@end` line carries end time and session name; together they are the directive's per-turn annotation.
+- **Zero runtime-directory state.** `note` takes `p=` from the record's last `@user`/`@harness` header; the block reason passes `--p <pid8>` explicitly, which also covers the r5 "Stop with no `.prompt` file" item (8) without a file.
+- **`n=` ordinal dropped**; the devlog's `## Chat Record` pointer records the last handoff's timestamp instead.
+- **Session name from the transcript at `Stop` time**, not from `SessionStart`'s `session_title`, because that is the only way to get it with two hooks; unnamed sessions fall back to sid8.
+- **`bin/chat-record`** per r5 blocker 1, with the claude.ai/Cowork non-installability trade-off stated in Decision 8 and the init-shim alternative rejected (version-specific cache path goes stale).
+- **Permission rule** `Bash(chat-record:*)` (one rule covers `note` and `path`) merged by `/cdocs:init`, documented in both `settings.json` and `--allowedTools` forms; run 8's `bypassPermissions` caveat stated; default-mode scenarios in the test plan, including a denial-without-rule scenario that documents the failure the rule prevents.
+- **Guideline replaces the never-list** (directive 4): do not note every commit, test run, or tool output; note the one that matters; the shape to avoid is the enumerated log.
+- **Interrupt**: both branches stated; if `Stop` fires on interrupt the block must be suppressed (resurrecting the agent after Escape is the opposite of what the user asked), `@end` still written; signal and decision deferred to interactive check (c) and recorded by the implementer.
+- **Folded r5 non-blocking items**: 4 (interrupt), 5 (per-turn cost and batching `note` with the last tool call), 6 (usefulness sample, 20 entries, 80% bar), 7 (harness, headless `--resume`, stream-json `/clear`, Pillar-2-text assertion in the rules check), 9 (lookup order, resolved by the full-id filename), 10 (history sentence removed).
+  Item 3's "keep the announcement" is overtaken by directive 1; the variable became primary, not fallback, because the announcement no longer exists.
+  Item 7's sid-collision test is gone with the collision case; the `custom_instructions` softening is moot with `PreCompact` unregistered.
+
+### Pushed back or in tension
+
+- None of the maintainer directives was pushed back on.
+- The r5 review recommended keeping the `SessionStart(compact)` announcement with the variable as fallback; the maintainer's directive 1 inverts that, and the proposal follows the directive, recording the variable's undocumented status and the equality test as the mitigation.
+- The r5 review's blocker 2 proposed `Bash(chat-record note:*)`; the proposal uses `Bash(chat-record:*)` so `path` is covered by the same rule.
+
+### Verification
+
+Stale-term scan (`SessionStart|PreCompact|PostCompact|SessionEnd|compact-begin|@session|announce|sid8|\.prompt|runtime.dir|never-list|n=<|chat-record\.sh`) over the rewritten proposal: every hit is in the Summary history NOTE, Decisions 7, 8, 10, and 12 (dated rationale), the Phase-0 table and its "also verified but not relied on" line, the Phase-1 "do not register" constraint, the example's own `query:` text, the Scratchpoint example's description of today's `hooks.json`, or the Phase-3 sketch.
+Frontmatter: `status: review_ready`; `last_reviewed` left exactly as the r5 reviewer set it (`revision_requested`, round 5).
+Proposal size 86KB; BLUF about 1000 characters.
