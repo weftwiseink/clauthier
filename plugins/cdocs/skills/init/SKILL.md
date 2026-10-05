@@ -22,7 +22,8 @@ Scaffold the CDocs documentation structure in the current project.
    - A format summary (required sections, naming convention).
    - A reference to the full skill: "See `/cdocs:<type>` for complete authoring guidelines."
 
-3. Create or update `.claude/rules/cdocs.md` with core CDocs writing conventions.
+3. Create or update `.claude/rules/cdocs.md` with the content of every `${CLAUDE_PLUGIN_ROOT}/rules/*.md` file, frontmatter stripped, in the section order of the AGENTS.md block in step 6.
+   This is the file Claude Code loads and re-injects after every compaction, so it must carry `orchestration-discipline.md` in full, including Pillar 2 (handoff, Scratchpoint, chat record, resumption).
    If `.claude/rules/` doesn't exist, create it.
    If the project has a CLAUDE.md, add a reference line: `@.claude/rules/cdocs.md`
 
@@ -34,8 +35,11 @@ Scaffold the CDocs documentation structure in the current project.
    - Compute `<sha256>` as the sha256 hex digest of the alphabetically-sorted, concatenated raw bodies of `${CLAUDE_PLUGIN_ROOT}/rules/*.md`. Bash one-liner: `(cd "$CLAUDE_PLUGIN_ROOT/rules" && ls *.md | sort | xargs cat) | sha256sum | awk '{print $1}'`.
    - The freshness-check hook (`plugins/cdocs/hooks/inject-rules.ts`) reads this marker on subsequent session starts; hash-based comparison avoids spurious refresh nudges on version-only bumps. The marker shape must match exactly so the hook's opaque-string compare stabilizes on re-runs.
 
-4. If `$ARGUMENTS` includes `--minimal`, skip README generation and rules file creation.
-   Only create the bare directory structure.
+4. Scaffold the chat record directory `cdocs/_chat/` (Claude Code's `UserPromptSubmit` and `Stop` hooks record nothing until it exists):
+   - `cdocs/_chat/README.md` from the template below.
+   - `cdocs/_chat/.gitattributes` containing exactly `*.md merge=union`, so appends made to one record in two checkouts merge or rebase without conflict.
+
+   If `$ARGUMENTS` includes `--minimal`, skip README generation, rules file creation, and this step: create only the five directories of step 1 and no `cdocs/_chat/`, so the hooks never run in a project without the rule text.
 
 5. **OpenCode detection and rule deployment:**
    If `opencode.json` exists in the project root OR a `.opencode/` directory exists, also perform:
@@ -149,6 +153,13 @@ See `/cdocs:report` for complete authoring guidelines.
 **Naming:** `YYYY-MM-DD-topic.md`
 
 **Key sections:** BLUF, Context/Background, Key Findings, Analysis, Recommendations.
+```
+
+### _chat/README.md
+```
+# Chat Records
+
+One file per Claude Code session (`YYYY-MM-DD-<session_id>.md`), appended by the cdocs hooks and the top-level agent: each human prompt verbatim, the agent's gist bullets, and a sign-off per turn; do not edit them by hand. Records are committed with the devlogs that list them; to opt out, set `CDOCS_CHAT_RECORD=off` for a session, gitignore `cdocs/_chat/` (records then stay local to one checkout), or delete this directory to stop recording.
 ```
 
 ## Read-after-write directive
