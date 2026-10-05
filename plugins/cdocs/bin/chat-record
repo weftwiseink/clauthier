@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+# chat-record: the per-session chat record under cdocs/_chat/.
+#
+#   chat-record UserPromptSubmit     hook: append `@user: <ts>` and the human prompt
+#   chat-record Stop                 hook: sign off the turn, or block once if a human
+#                                    turn has no agent entry
+#   chat-record note [--as <model>]  agent: append `@<model>: <ts>` and the stdin body
+#   chat-record path                 agent: print the record path (repo-root relative)
+#
+# Spec: cdocs/proposals/2026-09-22-chat-record-devlog-management.md ("Script").
+# Hook modes always exit 0, write errors to stderr only, and print nothing to stdout
+# except the Stop block JSON. Agent modes fail loudly (non-zero, one-line stderr).
+# Every write is one `printf >>` of a whole block or line. No state beyond the record.
+set -u
+export LC_ALL=C
+unset CDPATH
+
+# Record grammar. The test suite sources these two lines; keep them single-quoted.
+HEADER_RE='^@[A-Za-z0-9][A-Za-z0-9._-]*:'
+SIGNOFF_RE='^-- [A-Za-z0-9._-]+ at [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$'
+HDR_CORE="${HEADER_RE#^}"
+SIG_CORE="${SIGNOFF_RE#^}"
+
+MODE="${1:-}"
+[ $# -gt 0 ] && shift
+
+# --- helpers ---------------------------------------------------------------------------
+
+now_ts() { date +%Y-%m-%dT%H:%M:%S%z | sed 's/\(..\)$/:\1/'; }
+
+# Map every character outside [A-Za-z0-9._-] to '-'.
+sanitize() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '-'; }
+
+# Normalize CRLF and escape body lines that would parse as a marker.
+escape_body() {
+  sed -E -e 's/\r$//' -e 's#^(\\*'"$HDR_CORE"')#\\\1#' -e 's#^(\\*'"$SIG_CORE"')#\\\1#'
+}
+
+# activate <start-dir>: walk up to the git toplevel, stopping at the first cdocs/.
+# Sets TOP (git toplevel) and CHAT_DIR on success; returns 1 when nothing activates.
+activate() {
+  local start="$1" d
+  d="$(cd "$start" 2>/dev/null && pwd -P)" || return 1
+  TOP="$(cd "$d" && git rev-parse --show-toplevel 2>/dev/null)" || return 1
+  TOP="$(cd "$TOP" 2>/dev/null && pwd -P)" || return 1
+  while :; do
+    if [ -d "$d/cdocs" ]; then
+      [ -d "$d/cdocs/_chat" ] || return 1
+      CHAT_DIR="$d/cdocs/_chat"
+      return 0
+    fi
+    [ "$d" = "$TOP" ] && return 1
+    [ "$d" = "/" ] && return 1
+    d="$(dirname "$d")"
+  done
+}
+
+# find_record <sid>: earliest-dated existing record for the session, or empty.
+find_record() {
+  local f
+  for f in "$CHAT_DIR"/*-"$1".md; do
+    [ -f "$f" ] && { printf '%s' "$f"; return 0; }
+  done
+  return 0
+}
+
+# record_for <sid>: existing record, or the name a new one would take.
+record_for() {
+  local f
+  f="$(find_record "$1")"
+  [ -n "$f" ] || f="$CHAT_DIR/$(date +%Y-%m-%d)-$1.md"
+  printf '%s' "$f"
+}
+
+valid_sid() { printf '%s' "$1" | grep -Eq '^[A-Za-z0-9._-]+$'; }
+
+die() { echo "chat-record: $*" >&2; exit 1; }
+
+# --- hook modes ------------------------------------------------------------------------
+
+hook_main() {
+  [ "${CDOCS_CHAT_RECORD:-}" = "off" ] && return 0
+  command -v jq >/dev/null 2>&1 || return 0
+  command -v git >/dev/null 2>&1 || return 0
+
+  local input meta agent_id session_id cwd stop_hook_active permission_mode transcript_path
+  input="$(cat)"
+  meta="$(printf '%s' "$input" | jq -r '[
+      (.agent_id // ""), (.session_id // ""), (.cwd // ""),
+      ((.stop_hook_active // false) | tostring), (.permission_mode // ""),
+      (.transcript_path // "")
+    ] | @sh' 2>/dev/null)" || { echo "chat-record: unparseable $MODE payload" >&2; return 0; }
+  local -a f
+  eval "f=($meta)"
+  agent_id="${f[0]}"; session_id="${f[1]}"; cwd="${f[2]}"; stop_hook_active="${f[3]}"
+  permission_mode="${f[4]}"; transcript_path="${f[5]}"
+
+  [ -n "$agent_id" ] && return 0
+  valid_sid "$session_id" || { echo "chat-record: missing or invalid session_id" >&2; return 0; }
+  activate "${cwd:-$PWD}" || return 0
+
+  case "$MODE" in
+    UserPromptSubmit) hook_prompt "$input" "$session_id" ;;
+    Stop) hook_stop "$session_id" "$stop_hook_active" "$permission_mode" "$transcript_path" ;;
+  esac
+}
+
+hook_prompt() {
+  local input="$1" sid="$2" prompt trimmed body file
+  prompt="$(printf '%s' "$input" | jq -r '.prompt // ""')"
+  # Harness envelopes (a background agent's completion, injected reminders) are not
+  # human input: skip when the first non-blank token is a known harness tag.
+  trimmed="${prompt#"${prompt%%[![:space:]]*}"}"
+  case "$trimmed" in
+    '<task-notification'* | '<system-reminder'*) return 0 ;;
+  esac
+  body="$(printf '%s\n' "$prompt" | escape_body)"
+  file="$(record_for "$sid")"
+  printf '@user: %s\n%s\n\n' "$(now_ts)" "$body" >> "$file" \
+    || echo "chat-record: cannot append to $file" >&2
+  return 0
+}
+
+session_token() {
+  local sid="$1" transcript="$2" title=""
+  if [ -n "$transcript" ] && [ -r "$transcript" ]; then
+    title="$(grep '"type":"custom-title"' "$transcript" 2>/dev/null | tail -n 1 \
+      | jq -r '.customTitle // ""' 2>/dev/null)"
+  fi
+  if [ -n "$title" ]; then
+    sanitize "$title"
+  else
+    printf '%s' "$sid" | tr -cd '0-9A-Fa-f' | cut -c1-8
+  fi
+}
+
+hook_stop() {
+  local sid="$1" active="$2" pmode="$3" transcript="$4" file last rel reason
+  file="$(find_record "$sid")"
+  [ -n "$file" ] || return 0
+  last="$(grep -E -e "$HEADER_RE" -e "$SIGNOFF_RE" "$file" | tail -n 1)"
+  case "$last" in
+    '@user:'*)
+      if [ "$active" != "true" ] && [ "$pmode" != "plan" ]; then
+        rel="${file#"$TOP"/}"
+        reason="$(printf 'No chat-record entry for this turn (record: %s). Run, then finish:\n%s\n%s\n%s' \
+          "$rel" "chat-record note --as <your model> <<'EOF'" \
+          "- gist: <what a successor should know from this turn>" "EOF")"
+        jq -cn --arg r "$reason" '{decision: "block", reason: $r}'
+        return 0
+      fi
+      ;;
+    '@'*) ;;
+    *) return 0 ;; # a sign-off, or no marker: not a human-initiated turn, no note
+  esac
+  printf -- '-- %s at %s\n\n' "$(session_token "$sid" "$transcript")" "$(now_ts)" >> "$file" \
+    || echo "chat-record: cannot append to $file" >&2
+  return 0
+}
+
+# --- agent modes -----------------------------------------------------------------------
+
+agent_setup() {
+  [ "${CDOCS_CHAT_RECORD:-}" = "off" ] && exit 0
+  command -v jq >/dev/null 2>&1 || die "jq not found"
+  command -v git >/dev/null 2>&1 || die "git not found"
+  SID="${CLAUDE_CODE_SESSION_ID:-}"
+  [ -n "$SID" ] || die "CLAUDE_CODE_SESSION_ID is unset (Claude Code top-level session only)"
+  valid_sid "$SID" || die "invalid CLAUDE_CODE_SESSION_ID"
+  activate "$PWD" || die "no cdocs/_chat/ between $PWD and the git toplevel (run /cdocs:init)"
+}
+
+agent_note() {
+  local speaker="assistant" body file
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --as) [ $# -ge 2 ] || die "--as needs a value"; speaker="$2"; shift 2 ;;
+      --as=*) speaker="${1#--as=}"; shift ;;
+      *) die "unknown argument: $1 (body goes on stdin)" ;;
+    esac
+  done
+  agent_setup
+  speaker="$(sanitize "$speaker")"
+  printf '%s' "$speaker" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$' \
+    || die "invalid --as speaker '$speaker'"
+  [ "$(printf '%s' "$speaker" | tr '[:upper:]' '[:lower:]')" = "user" ] && die "--as may not be 'user'"
+  [ -t 0 ] && die "note body goes on stdin: chat-record note --as <model> <<'EOF' ... EOF"
+  body="$(escape_body)"
+  printf '%s' "$body" | grep -q '[^[:space:]]' || die "empty note body"
+  file="$(record_for "$SID")"
+  printf '@%s: %s\n%s\n\n' "$speaker" "$(now_ts)" "$body" >> "$file" \
+    || die "cannot append to $file"
+}
+
+agent_path() {
+  [ $# -eq 0 ] || die "path takes no arguments"
+  agent_setup
+  local file
+  file="$(record_for "$SID")"
+  printf '%s\n' "${file#"$TOP"/}"
+}
+
+# --- dispatch --------------------------------------------------------------------------
+
+case "$MODE" in
+  UserPromptSubmit | Stop) hook_main; exit 0 ;;
+  note) agent_note "$@" ;;
+  path) agent_path "$@" ;;
+  *)
+    echo "usage: chat-record note [--as <model>] <<'EOF' ... EOF | chat-record path" >&2
+    exit 2
+    ;;
+esac
