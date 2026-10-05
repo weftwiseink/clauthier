@@ -200,19 +200,24 @@ The discipline still holds; only the primitive changes, and the durable state (h
 ## Bash Output Hygiene
 
 Verbose Bash output is a large share of what lands in a lead's context, and it is re-sent on every later turn.
-Any agent, not only an overseer, keeps an expected-verbose command out of its own context by dispatching it to the `cdocs:bash-runner` agent.
+Any agent, not only an overseer, can delegate a context-bloating command to the `cdocs:bash-runner` agent.
+The goal is to preserve the lead's context without degrading its performance or losing relevant information, so dispatch is a judgment call, not a reflex.
 This is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, reads the salient lines out of that file, and returns only a short fixed-format `BASH RUNNER REPORT` naming the capture file.
 
 ### When to dispatch
 
-Dispatch when a command is expected to be verbose AND its result matters, in this order of observed weight:
+Dispatch when a command's output is both large or unpredictable AND relevant to the task.
+Otherwise prefer a cheaper path:
 
-1. **Sweeps** (the heaviest observed results): wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.
-2. **Builds, tests, installs**: build logs, test suites, `npm install`, linters, `terraform plan`/`apply`, container builds, `git log -p`.
-3. **Unboundable commands**: any command whose output size the caller cannot predict (an unfamiliar script or repo).
+- **Known need, self-bound it.** When the caller knows exactly what it needs (pass/fail, a count, the last few lines), bound the command itself (`grep -c`, `grep -q`, `| tail -n 5`) and run it directly.
+- **Trivial or known-small commands** (`git status`, a one-line `ls`) run directly: the subagent round-trip costs more than it saves.
+- **Interactive or TTY-dependent commands** are never dispatched: the runner closes stdin.
 
-Do NOT dispatch short-output commands (`git status`, a one-line `ls`, anything the caller already expects to be a few lines): the subagent round-trip costs more than it saves.
-Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
+Typical dispatch candidates, listed by observed weight in past transcripts (the heaviest results were sweeps), not as a mandatory order:
+
+- **Sweeps**: wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.
+- **Builds, tests, installs**: build logs, test suites, `npm install`, linters, `terraform plan`/`apply`, container builds, `git log -p`.
+- **Unboundable commands**: output whose size the caller cannot predict (an unfamiliar script or repo).
 
 ### Dispatch contract
 
@@ -221,7 +226,7 @@ Salience specs are line-oriented for pass/fail commands ("exit code plus any lin
 The report carries status, a `Summary:` of up to 3 lines (the runner's interpretation, with names and numbers grounded in the capture), a few short verbatim `Excerpt:` lines, a `Truncated:` field, and the capture path, within about 4,000 characters.
 So a "summarize" spec is fine, and an aggregate spec over many files gets an excerpt made of two bounded commands pasted whole (per-file counts, then a few samples per file), with any total in the summary computed by a command, and a `Truncated:` field naming what was omitted plus a follow-up command over the capture file.
 With no spec, the runner falls back to exit code, status, error-matching lines, and the true final lines.
-If more detail is needed later, grep or read the named capture file rather than re-running the command.
+If more detail is needed later, grep or read the named capture file rather than re-running the command; a caller that needs exact bytes reads the capture file, since the report's excerpt is cut and bounded.
 
 This is a convention for an agent's dispatch decision, not something tooling enforces.
 An undispatched verbose command falls back to the platform's built-in Bash output ceiling, an accepted residual risk.
