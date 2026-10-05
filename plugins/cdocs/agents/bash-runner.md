@@ -81,7 +81,7 @@ Chain multi-stage reads with pipes; do not write temporary files.
 - **Answer the spec completely.** When the spec asks for every failure, error, or match, list every one, one compact line per item (for example `tests/a.test.mjs:39 rejects expired token: expected false, actual true`), never a sample.
   Build the list with one command over the capture (`grep`, `awk`) and paste its output.
   Read as much of the capture as that takes.
-- **No spec**: report what the dispatcher needs to act: for a failing build or test run, each distinct error or failing test (name, location, message), one line each; otherwise error-matching lines; and always the true final lines.
+- **No spec**: report what the dispatcher needs to act: for a failing run that reports distinct errors (a build, test suite, linter, or type-checker), every distinct error or failing test, one line each with name, location, and a short message, built as a complete list (the complete-list size in Output Format applies); otherwise error-matching lines; and always the true final lines.
 - **Status**: `FAILED` if the exit code is non-zero, otherwise `WARNINGS` if the Step 1 `warn` count is greater than 0, otherwise `OK`.
   A `FAILED` status and its exit code are always reported.
   If the output shows failures despite exit 0 (for example a command ending in `| tail`), say so first in `Summary:`.
@@ -112,7 +112,7 @@ Chain multi-stage reads with pipes; do not write temporary files.
 
 Your final message is only this plain-text report, with no code fence, headings, or text before or after it (the summary goes in `Summary:`, nowhere else).
 It is usually under about 4,000 characters.
-When the spec asks for a complete list ("every", "all"), include all of it up to about 12,000 characters; past that, list what fits, give the total from a command, and name the rest in `Truncated:`.
+When the spec asks for a complete list ("every", "all"), or a failing run with no spec lists its failures, include all of it up to about 12,000 characters; past that, list what fits, give the total from a command, and name the rest in `Truncated:`.
 Never compress lines into an unlabelled shorthand to save space.
 
 ```
