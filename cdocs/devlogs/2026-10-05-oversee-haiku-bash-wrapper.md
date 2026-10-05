@@ -157,6 +157,9 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-4 (warm, SendMessage) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T10:56 | round 9 fixes |
 | return | prop-4 | `845996d`, `1945db4`; blocker + 6 nits fixed; review_ready | 2026-10-05T10:58 | round 9 fixes |
 | dispatch | rev-r9b (cdocs:reviewer, fresh) | review r9b file | 2026-10-05T10:59 | verification pass |
+| return | rev-r9b | `693b35c`; ACCEPT, 1 nit (BLUF/speaker-table bullet wording) | 2026-10-05T11:01 | verification pass |
+| dispatch | prop-4 (warm) | chat-record proposal | 2026-10-05T11:02 | fold accept nit, status implementation_ready |
+| dispatch | fork (artifact) | proposal assets/index.html; artifact LSfQwst9o1MtbjbhZ94T1e | 2026-10-05T11:02 | round-9 artifact update |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
