@@ -5,7 +5,7 @@ first_authored:
 task_list: meta/chat-record-devlog-management
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -16,7 +16,7 @@ tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-m
 
 # Chat Record, Scratchpoint, and Semantic Devlog Splitting
 
-> BLUF(fable-5-1/chat-record-devlog-management): A per-session **chat record** under `cdocs/_chat/` holds hook-captured verbatim human prompts plus one terse agent-written gist bullet per human-initiated turn, each turn closed by a `Stop`-written `-- <session> at <time>` sign-off; `Stop` blocks once when such a turn has no entry.
+> BLUF(fable-5-1/chat-record-devlog-management): A per-session **chat record** under `cdocs/_chat/` holds hook-captured verbatim human prompts plus at least one terse agent-written gist bullet per human-initiated turn, each turn closed by a `Stop`-written `-- <session> at <time>` sign-off; `Stop` blocks once when such a turn has no entry.
 > Two hooks and one script (`plugins/cdocs/bin/chat-record`, note text on stdin via quoted heredoc); a devlog lists its records in `chat_record:` frontmatter; post-compaction re-reading lives in rules, not hooks.
 > A rolling devlog **`## Scratchpoint`** holds current state; devlogs split at closed-concern boundaries.
 
@@ -146,7 +146,7 @@ body       := any line matching neither pattern (after unescape)
 | Speaker | Written by | Timestamp | Body |
 |---|---|---|---|
 | `@user` | `UserPromptSubmit`, human prompt | submission | the prompt, verbatim |
-| `@<model-short>` (`@opus-4-8`, `@fable-5-1`) | the top-level agent via `note --as <model-short>` (default `assistant`) | note time | one to three gist bullets |
+| `@<model-short>` (`@opus-4-8`, `@fable-5-1`) | the top-level agent via `note --as <model-short>` (default `assistant`) | note time | at least one gist bullet; aim for one to three |
 
 `<model-short>` is the model id without `claude-` and any `-YYYYMMDD` suffix; the agent supplies it, since no hook payload carries a model.
 The sign-off carries the end time and session name and closes the turn by position; a turn's duration is its `@user` time to its sign-off.
