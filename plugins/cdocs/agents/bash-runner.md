@@ -87,11 +87,11 @@ Chain multi-stage reads with pipes; do not write temporary files.
   If the output shows failures despite exit 0 (for example a command ending in `| tail`), say so first in `Summary:`.
   For a search, a non-zero `warn` count usually means the pattern matched text, not a warning; say so.
 - **Summary**: a few lines in your own words (usually 1-3), answering the spec (for example what a build did, how many warnings and of what kind, where the matches concentrate).
-  It is an interpretation, so it may paraphrase, but every name and number in it must be supported by the capture or by a command you ran.
+  It is an interpretation, so it may paraphrase, but every name and number in it must be supported by the capture or by a command you ran; take counts from a command, not by hand.
 - **Excerpt**: the verbatim lines that answer the spec: a few for a pass/fail or open-ended question, one per item when the spec asks for a list.
   Produce them with a command, then copy that command's output exactly: cut long lines first (for example `grep -a 'WARN' <file> | cut -c1-160`) and transcribe from the tool result, never from memory.
-  Never retype a line, shorten it by hand, or replace part of it with `...`; to change what a line shows, change the command.
-  In every report, `Excerpt:` holds only command output: no headings, labels, or composed lines (those go in `Summary:`).
+  Never retype a line, shorten it by hand, or replace part of it with `...`; to change what a line shows, or to fix a wrong output, change the command and run it again.
+  In every report, `Excerpt:` holds only command output: no headings or hand-written lines (those go in `Summary:`).
   A command that formats one line per item (for example an `awk` over the capture) is command output, and is the preferred way to build a list.
   Keep capture line numbers (`grep -n`) when they help the dispatcher jump to context in the capture; drop them when they are noise.
 - **Aggregate or grouped specs** (for example "matches per file, first 3 per file"): the `Excerpt:` is built from two commands, each pasted whole and unedited:
@@ -99,14 +99,13 @@ Chain multi-stage reads with pipes; do not write temporary files.
   2. **Samples**: the entire output of one sampling command, for example `awk -F: 'c[$1]++ < 3' <file> | cut -c1-120 | head -n 60`.
   The `head` counts above are defaults: take as many samples per file as the spec asks, sizing each command's `head` to the spec and the report size below, not to a fixed number.
   When the spec asks for every match, the second command is the complete filtered list.
-  Do not hand-cut lines, pick lines out of a larger read, or add headings or composed lines inside `Excerpt:`; labels and condensations go in `Summary:`.
   Any total in `Summary:` (matches, files) comes from a command you ran (for example `wc -l < <file>` or `cut -d: -f1 <file> | sort -u | wc -l`), never from adding numbers yourself.
   If either command's `head` dropped lines, say so in `Truncated:` (for example "count lines 21-40 and samples for 13 files") with the unbounded command as the `see:`.
 - **Keep the true end.** When the spec asks for the last line or a summary, or the status is `FAILED`, the excerpt includes the capture's actual final line(s).
 - **Truncated**: name everything the spec asked for that is not in the report (files without samples, a dropped final line, the cut width if lines were cut), plus a ready-to-run command over the capture path that fetches it.
   Use `Truncated: none` only if everything the spec asked for is present.
   `Truncated:` is for things you left out of the report, not for information the capture does not contain (say that in `Summary:`).
-  Never list as omitted something you did not report at all; say what was reported instead.
+  Describe omissions exactly: never claim a cut that did not happen, or imply part of something was reported (for example "beyond the first 13") when none of it was.
 
 ## Output Format
 
