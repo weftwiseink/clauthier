@@ -36,6 +36,8 @@ Most devlogs should include the other sections as well, but use your judgement (
 You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
+- **Scratchpoint:** Current state, replaced in place by the devlog's owner on every state-changing turn; fields, size, and writers are in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Scratchpoint".
+  An agent writing into another agent's devlog keeps none.
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.
   - Skipping test-first for prototyping? Acknowledge it: "Rapid prototyping without test-first, will add coverage after."
@@ -47,6 +49,7 @@ You should also include novel sections as is appropriate/useful for your work.
 - **Screenshots:** Visual changes with captions. Save to `cdocs/_media/YYYY-MM-DD-description.png`.
 - **Documentation Updated:** Checklist of docs changed.
 - **Verification:** Fresh evidence of completion. No completion claims without pasted evidence.
+  This is the home for raw evidence (settings, commands, log lines), not the Scratchpoint.
 
 ## Debugging Process (Bug Fixes)
 

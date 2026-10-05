@@ -13,6 +13,15 @@ tags: []
 
 ## Objective
 
+## Scratchpoint
+
+- as_of:
+- now:
+- since_handoff:
+- open:
+- next:
+- files:
+
 ## Plan
 
 ## Testing Approach
