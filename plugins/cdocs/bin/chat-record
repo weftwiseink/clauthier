@@ -92,6 +92,7 @@ hook_main() {
       ((.stop_hook_active // false) | tostring), (.permission_mode // ""),
       (.transcript_path // "")
     ] | @sh' 2>/dev/null)" || { echo "chat-record: unparseable $MODE payload" >&2; return 0; }
+  [ -n "$meta" ] || { echo "chat-record: empty $MODE payload" >&2; return 0; } # set -u below
   local -a f
   eval "f=($meta)"
   agent_id="${f[0]}"; session_id="${f[1]}"; cwd="${f[2]}"; stop_hook_active="${f[3]}"

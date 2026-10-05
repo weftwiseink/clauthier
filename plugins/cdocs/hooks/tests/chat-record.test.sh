@@ -244,6 +244,17 @@ unit_suite() {
   ups "$P" 'hello <task-notification>' >/dev/null
   check "<div> and mid-line tag recorded as @user" "$(markers "$(rec "$P")")" "U U"
 
+  section "unit: hook mode on an empty or invalid payload"
+  P="$U/badpayload"; newproj "$P"
+  local bp m
+  for bp in '' ' ' 'not json' '[1]' '"s"' 'null' '{}'; do
+    for m in UserPromptSubmit Stop; do
+      out="$(cd "$P" && printf '%s' "$bp" | "$CR" "$m" 2>/dev/null)"; rc=$?
+      check "$m payload '$bp': exit 0, stdout empty" "$rc:$out" "0:"
+    done
+  done
+  check "empty or invalid payloads write nothing" "$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" "0"
+
   section "unit: agent-mode exit codes"
   P="$U/exit"; newproj "$P"
   (cd "$P" && echo "- gist: x" | env -u CLAUDE_CODE_SESSION_ID "$CR" note 2>/dev/null); rc=$?
