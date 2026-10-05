@@ -209,3 +209,58 @@ The test's first version passed opus's devlog check spuriously on a later `Edit`
 - **Plugin `bin/` missing from `PATH` once** (1 of about 35 sandbox sessions, first session in a fresh `CLAUDE_CONFIG_DIR`, default permission mode): `command not found: chat-record`. Not reproduced in 3 targeted reruns. If it recurs, `Stop`'s block still bounds the cost to one extra turn and the record keeps the prompt and sign-off.
 - `plugins/cdocs/agents/bash-runner.md` shows uncommitted modifications in this worktree that are not impl-2's; left untouched.
 - The shared scratchpad holds `r7canary/cfg` and `r8canary/cfg` credential copies from the earlier R7/R8 runs (not impl-2's); impl-2's own sandboxes are deleted.
+
+## Implementation Notes (impl-3, Phase 1b fixes)
+
+> NOTE(opus-5-5/cdocs/chat-record-devlog-management): Dispatched mode, fix round for [`2026-10-05-review-of-chat-record-impl-1b-r1.md`](../reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md).
+> `orchestration-discipline.md` and `bash-runner.md` untouched; no rules placement change, no SessionStart hook; interactive checks and the usefulness sample left for the maintainer.
+
+### Commits
+
+| commit | item | scope |
+|---|---|---|
+| `4963600` | 1 (blocking) | `bin/chat-record` `escape_body` strips CR with `$'s/\r$//'` (literal byte); round-trip test computes expected bodies without sed and adds lines ending in `r`, with and without CRLF, plus an explicit "keeps its r" check |
+| `b1e5175` | 1 | `.github/workflows/cdocs-hooks.yml`: matrix `ubuntu-latest`, `macos-latest`, `fail-fast: false` |
+| `680d91b` | 2 | hook mode returns 0 (stderr line) when `jq` yields nothing; unit section feeds both hooks `''`, `' '`, non-JSON, `[1]`, `"s"`, `null`, `{}` |
+| `fa4d93a` | 3 | test: `rules_check` devlog-read regex, `init_rules` order, `top_level_only` and `foreground_agent` foreground plus positive controls |
+| `955d350` | 4 | `note` normalizes `--as` to a short id; block text says `--as <your model id>` |
+| `d1d5e64` | 5 | proposal: Phase 1b success criterion and Phase 2 A/B point at [`2026-10-05-post-compaction-resumption-rfp.md`](../proposals/2026-10-05-post-compaction-resumption-rfp.md) |
+
+### Judgment calls and deviations
+
+- **Speaker normalization deviates from the proposal's Script examples.** `note` lowercases `--as`, drops a `claude-` prefix, a `[...]` suffix, and a `-YYYYMMDD` date, and maps dots to dashes, before the existing sanitize and validation: `Opus 5.5` -> `opus-5-5` (proposal: `Opus-5.5`), `opus-4-6[1m]` -> `opus-4-6` (proposal: `opus-4-6-1m-`).
+  It matches Pillar 2's speaker rule ("model id without `claude-` and any `-YYYYMMDD` suffix"), so the rule text needed no edit.
+  A bare family name (`haiku`) still cannot be mapped; the block text's "model id" targets that case.
+- **Foreground dispatch.** In 2.1.289 an `Agent` call runs async unless `run_in_background` is `false` or background tasks are disabled (binary: `shouldRunAsync` is true when `wantsBackground !== false`), so prompt wording alone cannot force foreground.
+  Both agent scenarios set `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, which also drops `run_in_background` from the tool schema; `foreground_agent` had the same defect and got the same fix.
+- **`init_rules` order** is read from init's own AGENTS.md block (`[Full content of <file>, frontmatter stripped]` lines), not hard-coded; the hash stays alphabetical as init specifies.
+- **Devlog-read gate** accepts `Read` of a devlog file, or `cat`/`sed`/`head`/`tail`/`awk` on a devlog path within one pipeline segment; `grep` in any form does not count, so a `grep -A` section print is a false negative (accepted for simplicity).
+- **Cross-Target Degradation (6821b43):** none of impl-3's files references the deleted section.
+  `plugins/cdocs/hooks/cdocs-hooks.ts`'s header still says chat-record is Claude-Code-only on its own terms, and `model-tiering.md` keeps its own unrelated "Cross-Target Degradation" section.
+
+### Verification
+
+**Unit:** `chat-record.test.sh --unit`: `94 passed, 0 failed`, also under `env -i HOME=<empty> PATH=/usr/bin:/bin`.
+**BSD-sed mutation:** a scratch copy with `escape_body` reading `\r` as `r` (`s/r$//`) fails the round trip, "no CR survives", and "keeps its r" (want 6, got 0).
+**macOS CI:** the matrix parses (PyYAML); it has not run, since the workflow is not on the remote default branch, so BSD `awk`/`tr` and the macOS toolchain stay unverified until the first push.
+
+**Headless** (haiku, 2.1.289, sandbox under the session scratchpad, `CHAT_RECORD_KEEP=1`, sandbox and credential copies deleted afterwards; `find` finds no `.credentials.json` or `.claude.json` under the scratchpad): `25 passed, 2 failed`.
+
+| scenario | result | key evidence |
+|---|---|---|
+| `read_note`, `byte_exact`, `no_as` | pass | speaker `haiku-4-5`; bytes exact; `assistant` default |
+| `block_recover` | pass | block carries `--as <your model id>`; model ran `--as claude-haiku-4-5-20251001`, header written `@haiku-4-5` |
+| `foreground_agent` | pass | Agent result is not "Async agent launched" and contains `canary fixture` |
+| `top_level_only` | pass | `cdocs:proposer,fork` in the foreground; fork reported `canary fixture`; proposal file written; subagent calls `Bash=1,Edit=1,Read=3,Write=1`; no `chat-record` call with an `agent_id`; first Stop blocked; rules file in init order (writing-conventions first, frontmatter-spec last) |
+| `rules_check` | 2 gates fail (deferred criterion) | post-compaction calls: `Read greeter.py`, `Read cdocs/devlogs/...greeter.md`, `Edit greeter.py`; the devlog gate passes on a real `Read`; `chat-record path` and record tail absent |
+
+An offline probe of the devlog-read regex: `grep -l "$p" cdocs/devlogs/*.md` (alone or followed by `tail -n 80 "$p"`) and `ls cdocs/devlogs/` do not count; `Read <devlog>.md`, `cat`, `sed -n '/## Scratchpoint/,...'`, `head -50`, and `cat "$(grep -l ...)"` do.
+
+**Phase 1a greps:** grep 1 empty (exit 1); grep 2 exactly `orchestration-discipline.md:211`, the reseed line. `grep -rn chat-record plugins/cdocs/skills plugins/cdocs/agents`: empty.
+**Build:** `npm run build:cdocs` exit 0, "Agents converted: 7", warnings only the existing `Unknown CC tool "*"` lines.
+
+### Open items
+
+- macOS leg unverified until the workflow runs on GitHub (reviewer question 2, permanent or one-off, is the overseer's call; it is permanent as committed).
+- Rules check deferred per the maintainer; `rules_check` still fails on haiku, as expected.
+- Interactive checks (a)-(d), the 20-turn real session, and the usefulness sample remain maintainer-run.
