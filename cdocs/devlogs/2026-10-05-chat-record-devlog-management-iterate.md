@@ -40,6 +40,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | 2026-10-05T12:54 | Phase 1a review |
 | return | rev-1 (cdocs:reviewer) | same | 2026-10-05T12:59 | `5b65842` accept |
 | dispatch | impl-2 (cdocs:implementer, fresh: new phase, impl-1 context ~150K) | plugins/cdocs/bin/**, plugins/cdocs/hooks/**, plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/README.md, scripts/cdocs-hooks.ts, .github/workflows/cdocs-hooks.yml, cdocs/_chat/**, this devlog (notes) | 2026-10-05T13:00 | Phase 1b + 1a nits |
+| return | impl-2 (cdocs:implementer) | same | 2026-10-05T13:47 | Phase 1b: `f3b4806`..`42e0b93` (17); 132/132 tests (75 unit, 57 headless); 20-turn headless record well-formed; FAILS rules check (post-compaction step 3 not followed by haiku/sonnet/opus); interactive checks + usefulness sample not run |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | 2026-10-05T13:48 | Phase 1b review |
 
 ## Steering Log
 
