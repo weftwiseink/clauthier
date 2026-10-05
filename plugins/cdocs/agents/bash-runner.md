@@ -42,7 +42,7 @@ OUT="<scratchpad>/bash-runner-$(date +%s%N).log"
 (
 <the exact command, verbatim>
 ) > "$OUT" 2>&1 < /dev/null
-echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT") warn=$(grep -acE 'warn|WARN' "$OUT")"
+echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT") warn=$(grep -aic 'warn' "$OUT")"
 ```
 
 - Always use this exact template: a fresh timestamped capture path (never a fixed name such as `bash-runner-build.log`, which concurrent runners would collide on), the subshell, and the `warn=` count.
@@ -87,8 +87,9 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
   With no spec (the default heuristic), select error-matching lines first, then the tail, then the head if room remains.
 - **Keep the true end.** When the spec asks for the last line or summary, or the status is `FAILED`, include the capture's actual final lines.
   When trimming a tail to fit, drop its EARLY lines, never its last ones.
-- **Spec does not fit**: whenever the spec asks for more than fits in the report (for example detail for every file when only some fit), give counts first (the densest signal, for example per-file match counts), then end with exactly one line `[spec truncated: <what was omitted>; see capture file: <ready-to-run command over the capture path>]`.
+- **Spec does not fit**: whenever the spec asks for more than fits in the report (for example detail for every file when only some fit), give counts first (the densest signal, for example per-file match counts) in the salient output, and fill the `Truncated:` field with what was omitted plus a ready-to-run command over the capture path.
   The follow-up command is mandatory, so the dispatcher can fetch the rest without re-running.
+  When nothing requested was left out, the field is `Truncated: none`.
 - A `FAILED` status and its exit code are always reported, even when no specific error line was found.
 
 ## Output Format
@@ -105,25 +106,13 @@ Command: <exact command run; if over 200 characters, the first 200 then "...">
 Exit code: <n>
 Status: OK | FAILED | WARNINGS
 Salient output:
-<verbatim lines, or "(none)">
+<verbatim lines copied from the capture file, or "(none)">
+Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>
 Full output: saved to <capture path> (<bytes> chars, <lines> lines; <lifetime>)
 ```
 
-Filled example, for a "summarize the build" spec (verbatim lines and counts, not prose):
-
-```
-BASH RUNNER REPORT
-Command: npm run build
-Exit code: 0
-Status: WARNINGS
-Salient output:
-warnings: 2
-  Warning: Unknown CC tool "*" in reviewer.md
-  Warning: Unknown CC tool "*" in implementer.md
-build-opencode: Done.
-  Agents converted: 7
-Full output: saved to /tmp/bash-runner-1791216602404253778.log (1149 chars, 31 lines; /tmp, persists until reboot; caller may delete)
-```
+Salient lines are copied from the capture file, never from this prompt: the template's angle-bracket placeholders only show where content goes.
+For a "summarize" spec, the salient output is a few counts (for example `<pattern> lines: <n>`) followed by the capture's own key lines, verbatim.
 
 The `Full output: saved to` line is mandatory: the capture file is the primary artifact, and the dispatching agent reads or greps it if it needs more.
 `<lifetime>` is `scratchpad, session-scoped` when the file is in your scratchpad directory, or `/tmp, persists until reboot; caller may delete` when you used the `${TMPDIR:-/tmp}` fallback.
@@ -132,8 +121,8 @@ Do not delete the capture file yourself.
 Before sending, check:
 
 1. The first line is exactly `BASH RUNNER REPORT` and the last line starts with `Full output: saved to`.
-2. Every salient line is verbatim from the capture or a count; nothing is paraphrased.
-3. If any requested detail was left out, the last salient line is `[spec truncated: <what was omitted>; see capture file: <command>]`.
+2. Every salient line is verbatim from the capture file or a count; nothing is paraphrased, and nothing comes from this prompt.
+3. The `Truncated:` line is present: `none`, or what was omitted plus a `see:` command.
 
 ## Constraints
 
