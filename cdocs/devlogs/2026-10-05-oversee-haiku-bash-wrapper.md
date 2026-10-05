@@ -53,6 +53,9 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, cdocs/proposals/2026-10-05-bash-output-cap-rfp.md | 2026-10-05T09:05 | pre-step: defer mechanism 2 |
 | return | prop-1 (cdocs:proposer) | same | 2026-10-05T09:08 | 531b17e, ac75f43; overseer fixed 2 stale lines in 075ec2c |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md, plugins/cdocs/rules/orchestration-discipline.md, plugins/cdocs/rules/model-tiering.md, plugins/cdocs/README.md, materialized rule copies | 2026-10-05T09:12 | iteration 1, Phases 1-2 |
+| return | impl-1 (cdocs:implementer) | same | 2026-10-05T09:20 | 60979d9..6be7477; 2 Investigation Requested (live canaries) |
+| inline | overseer | none (read-only canary) | 2026-10-05T09:25 | ran 4 headless `claude -p --plugin-dir` canaries; evidence `cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary.md` |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | 2026-10-05T09:27 | iteration 1 review |
 
 ## Steering Log
 
