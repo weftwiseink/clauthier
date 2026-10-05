@@ -33,7 +33,7 @@ The design rests on three canary-verified platform facts on Claude Code 2.1.280 
 
 - `PostToolUse` `updatedToolOutput` is inert for the built-in Bash tool, so a custom content-aware truncation hook is not buildable and stays deferred.
 - The Bash output ceiling (platform default ~30,000 chars, configurable via `bashOutputMaxChars`) is a spill-to-file cliff, not a head/tail clip: a valid over-ceiling result collapses to a file path plus a ~2,000-char preview, and only a failed command yields a lossy head+tail excerpt.
-- That ceiling applies to the runner's own Bash call, so the runner cannot "read the whole output once." It captures the command's output to a file, then extracts with bounded shell commands over that file.
+- That ceiling applies to the runner's own Bash call, so the runner cannot "read the whole output once." It captures the command's output to a file, then reads from that file in pieces that each stay under the ceiling.
 
 The shape:
 
@@ -102,8 +102,8 @@ One adopted mechanism (the haiku runner plus its dispatch convention) and three 
 A new dispatched agent at `plugins/cdocs/agents/bash-runner.md`, modeled structurally on `nit-fix.md`: frontmatter, Input, Workflow, Output Format, Constraints.
 
 **Frontmatter.**
-`model: haiku`, `tools: Bash` only, plus `maxTurns: 8` (bounding a haiku runner that could loop on extraction, following `judge.md`'s `maxTurns: 10` precedent; 8 covers capture plus a handful of bounded extraction commands plus the report, with headroom).
-No `Read`/`Edit`/`Write`/`Task`: this agent runs one requested command plus bounded extraction over its capture file, and reports.
+`model: haiku`, `tools: Bash` only, plus `maxTurns: 12` (bounding a haiku runner that could loop on extraction, following `judge.md`'s `maxTurns: 10` precedent; 12 covers capture plus several iterative targeted reads plus the report, with headroom).
+No `Read`/`Edit`/`Write`/`Task`: this agent runs one requested command plus read-only extraction over its capture file, and reports.
 Omitting `Task` prevents onward dispatch; omitting `Write`/`Edit` keeps it inert on the filesystem beyond its scratch capture file.
 The `Bash`-only allowlist survives the OpenCode build: `scripts/build-opencode.ts` `mapTools` turns `tools: Bash` into `bash: true` with `read`/`edit`/`write: false`.
 
@@ -119,7 +119,7 @@ The dispatching agent's Task prompt supplies:
 Salience specs come in two shapes:
 - line-oriented, for pass/fail commands: "return the exit code and any line matching `error`/`fail`/`FAIL`"; "return the final summary line plus any non-zero exit".
 - aggregate, for sweeps where the matches ARE the signal: "matches per file, first 3 per file"; "the changed-file list plus per-file hunk counts"; "the file list, not per-file progress noise".
-Absent an explicit salience spec, the agent applies a default heuristic (exit code, status classification, error-matching lines, plus a bounded head and tail).
+Absent an explicit salience spec, the agent applies a default heuristic (exit code, status classification, error-matching lines, plus the tail and head).
 This mirrors how `nit-fix` is scoped only to the files named in its prompt.
 
 **Workflow: capture-to-file-then-extract.**
@@ -128,7 +128,7 @@ Instead:
 1. Run the requested command with capture into the runner's own scratchpad directory:
    `OUT="<scratchpad>/bash-runner-<ts>.log"; <cmd> > "$OUT" 2>&1; echo "exit=$?"`.
    The runner's tool result is then tiny (`exit=<n>`), and the full output is always on disk regardless of the command's exit status - which also means the platform's lossy failure-path excerpt never applies to this output.
-2. Extract with bounded shell over the capture file, each command sized so its own output stays small: `wc -c "$OUT"`, `grep -nE '<salience pattern>' "$OUT" | head -n N`, `tail -n N "$OUT"`, `head -n N "$OUT"`, and for binary or very-long-line output `grep -a` and `cut -c1-N`.
+2. Read the capture file with judgment, sized by the Step 1 byte and line counts: a small capture (about what a direct Bash call would have shown) may be read whole; a larger one is read in targeted, iterative steps (`grep -a` with context, `sed -n` ranges, `head`/`tail`, `awk` aggregation), each kept under the ceiling, with `cut -c1-N` guarding very long lines.
 3. Classify status as `OK`/`FAILED`/`WARNINGS` and return the fixed-format report.
 
 **Output contract (fixed-format, cheap for the parent to parse).**
@@ -138,14 +138,18 @@ BASH RUNNER REPORT
 Command: <exact command run>
 Exit code: <n>
 Status: OK | FAILED | WARNINGS
-Salient output (<=N lines):
-<extracted lines, verbatim>
+Salient output:
+<extracted lines, verbatim; typically 10-20 lines, ~2K chars>
 Full output: saved to <scratchpad-path> (<K> chars)
 ```
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
-The parent receives only the report; the raw output lives in the capture file (and the runner's own transcript holds only the bounded excerpts), so it never enters the parent context.
+The parent receives only the report; the raw output lives in the capture file and, at most, in the runner's own disposable haiku context, so it never enters the parent context.
+
+> NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: the runner's methodology should be no more constrained than the parent running Bash directly, since the cheaper model is the main saving.
+> Runner-internal results cost only haiku context, never the parent's, and the cap that would have motivated tight internal bounds is deferred to the RFP.
+> So internal reads are judgment-driven (small captures read whole, larger ones read iteratively), while capture-first, the one-line `exit/out/bytes/lines/warn` summary, and the concise fixed-format report stay mandatory.
 
 **Dispatch scope: opt-in, documented convention, not a hard rule.**
 Do not route every Bash call through this agent: a subagent round-trip is not worth it for `git status`, a one-line `ls`, or any command the caller already expects to be short.
@@ -207,7 +211,7 @@ Until then, track as blocked/future work; do not implement.
 | Mechanism | Fires on | Technique | Cost | Status |
 |---|---|---|---|---|
 | Platform default (~30k valid / ~10k failure ceiling) | Every Bash call | Blind spill-to-file (valid) / head+tail excerpt (failure) | Zero | Already shipped upstream |
-| `cdocs:bash-runner` (haiku wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then bounded extraction) | Small (haiku tokens + round-trip) | **Adopt** (primary, with dispatch guidance) |
+| `cdocs:bash-runner` (haiku wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then judgment-driven extraction) | Small (haiku tokens + round-trip) | **Adopt** (primary, with dispatch guidance) |
 | `bashOutputMaxChars` tightened | Every Bash call (including the runner's own) | Blind, tunable spill cliff | Zero | **Deferred** to [the cap RFP](2026-10-05-bash-output-cap-rfp.md) - global (interferes with the runner), consumer settings policy |
 | `PreToolUse` command-rewrite (`updatedInput`) | Matched known-verbose commands | Blind, pattern-scoped rewrite | Zero | Works here (2.1.280 Linux headless, 2/2); **deferred** - allowlist misses observed whales; rtk owns the niche |
 | `PostToolUse` content-aware truncation (`updatedToolOutput`) | Every Bash call (or matched) | Heuristic (error-line-preserving) | Zero | **Deferred/blocked** ([#68951](https://github.com/anthropics/claude-code/issues/68951), inert for built-in Bash) |
@@ -229,7 +233,7 @@ Until then, track as blocked/future work; do not implement.
   `/cdocs:init` enumerates rule files by name for its `AGENTS.md` block, so a new section in `orchestration-discipline.md` rides the existing materialization pipeline and hash marker with zero init changes.
 - **Semantic distillation is not redundant with a blind ceiling.**
   The platform's blind ceiling loses signal in two ways the wrapper does not: a failed verbose command yields a lossy head+tail excerpt with no file (the middle is unrecoverable without a re-run), and a valid one puts the middle on disk at the cost of a read-back that re-ingests it whole.
-  The runner captures the whole output to its scratch file and extracts from it with bounded shell (a `grep` over the file finds a buried error wherever it fell, and per-file aggregation is available for a sweep where a head/tail excerpt is the wrong default), so the salient signal reaches the parent without the raw dump - all in disposable context.
+  The runner captures the whole output to its scratch file and reads it with targeted shell (a `grep` over the file finds a buried error wherever it fell, and per-file aggregation is available for a sweep where a head/tail excerpt is the wrong default), so the salient signal reaches the parent without the raw dump - all in disposable context.
 - **No dependency on either rewrite hook channel.**
   The design does not use `updatedInput` or `updatedToolOutput` for Bash, so it is robust to their environment-dependent and regressed behavior respectively.
 
@@ -240,11 +244,11 @@ Until then, track as blocked/future work; do not implement.
 - **Unanticipated verbose output in the parent.**
   An agent that does not dispatch a verbose command gets up to ~30K chars inline (or a lossy head+tail excerpt past ~10K on failure). Accepted residual risk; the deferred cap RFP is the remedy if post-ship data shows it matters.
 - **Consumer has set `bashOutputMaxChars` themselves.**
-  The runner's capture call returns only `exit=<n>`, and its extraction commands are bounded (`head -n N`, `cut -c1-N`), so it should tolerate a tightened ceiling; but an extraction whose output exceeds a very low cap would itself spill to a preview. Not tested in this scope; the composition question belongs to the cap RFP.
+  The runner's capture call returns only a one-line summary, and its reads are sized to stay under the ceiling and narrowed when one spills, so it should tolerate a tightened ceiling at the cost of more read turns; a very low cap would force many small reads. Not tested in this scope; the composition question belongs to the cap RFP.
 - **The caller genuinely needs the full raw output later.**
   The runner's report always names the capture file path; the caller reads or greps that file rather than re-running.
 - **Binary or very-long-line output.**
-  The runner's extraction uses `grep -a` and `cut -c1-N` so a single multi-megabyte line or binary blob does not defeat the bounded extraction.
+  The runner's extraction uses `grep -a` and `cut -c1-N` so a single multi-megabyte line or binary blob does not fill a read result.
 - **Salient extraction misses the real signal.**
   Haiku misjudging "salient" is a real failure mode; mitigate by having the caller pass an explicit salience spec for high-stakes calls, and by the default heuristic always including exit code and status so a `FAILED` is never hidden even if the specific error line is missed.
 - **A command produces almost no output.**
@@ -261,7 +265,7 @@ Until then, track as blocked/future work; do not implement.
 ## Test Plan
 
 - **Agent definition parses and loads.**
-  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: haiku`, `tools: Bash`, `maxTurns: 8`) is well-formed.
+  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: haiku`, `tools: Bash`, `maxTurns: 12`) is well-formed.
 - **Tool restriction holds.**
   The agent cannot call `Read`/`Write`/`Edit`/`Task` (infrastructure-enforced allowlist).
 - **Fixed-format report.**
@@ -299,10 +303,10 @@ Phases 1-2 are the adopt-now core and are largely independent; the settings cap 
 
 ### Phase 1: `cdocs:bash-runner` agent (primary)
 
-- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: haiku`, `tools: Bash`, plus `maxTurns: 8`.
-- Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then bounded `wc`/`grep`/`head`/`tail`/`cut` over the file).
+- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: haiku`, `tools: Bash`, plus `maxTurns: 12`.
+- Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then judgment-driven `grep`/`sed`/`head`/`tail`/`awk`/`cut` reads over the file).
 - Inline the salience/extraction contract (line-oriented and aggregate shapes) and the fixed-format report; no rule-file read.
-- Constraints section: run the requested command exactly once; bounded extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded haiku agent does not refuse to `grep` its own capture file.)
+- Constraints section: run the requested command exactly once; read-only extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded haiku agent does not refuse to `grep` its own capture file.)
 - Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, "Runner above the platform ceiling," and the Verification Methodology containment canary pass.
 - Do NOT modify existing agents, `hooks.json`, or the platform default.
 
