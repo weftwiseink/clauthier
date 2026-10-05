@@ -28,6 +28,9 @@ Fill in:
 - `task_list` with the relevant workstream path.
 - `type: devlog`, `state: live`, `status: wip`.
 - Tags relevant to the work.
+- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Resumption" describes; an agent writing into another agent's devlog leaves it alone.
+
+Quote a chat record only inside a code fence: its column-0 `@` header and `--` sign-off lines are not cdocs markdown.
 
 ## Sections
 
