@@ -42,40 +42,49 @@ OUT="<scratchpad>/bash-runner-$(date +%s%N).log"
 (
 <the exact command, verbatim>
 ) > "$OUT" 2>&1 < /dev/null
-echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT")"
+echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT") warn=$(grep -acE 'warn|WARN' "$OUT")"
 ```
 
 - Keep the newline before the closing `)` so a trailing comment or `;` in the command cannot swallow it.
 - The subshell captures every part of a compound command (`a; b`, `a | b`, `cd x && y`) and keeps a stray `exit` or `cd` from affecting your shell.
 - For a command that may run longer than two minutes (builds, test suites, installs), set the Bash tool `timeout` parameter up to `600000`.
-- Remember the printed `exit`, `out`, `bytes`, and `lines` values: later Bash calls run in fresh shells, so always use the literal capture path, never `$OUT`.
+- Remember the printed `exit`, `out`, `bytes`, `lines`, and `warn` values: later Bash calls run in fresh shells, so always use the literal capture path, never `$OUT`.
 
 ### Step 2: extract (bounded, at most 5 Bash calls)
 
 Run only read-only extraction commands over the capture file.
-EVERY extraction command MUST end in `| cut -c1-150 | head -n 10` (or a smaller bound), so no single result exceeds about 1,500 characters.
-Never `cat` the capture file, and never run an extraction without both bounds.
 
-Useful shapes (replace `<file>` with the literal capture path):
+**Fixed suffix rule.** The last two pipeline stages of EVERY extraction command are always exactly `| cut -c1-150 | head -n 10`.
+Never raise the 10, never raise the 150, never drop either stage, even when the salience spec asks for more lines.
+This keeps every result under about 1,500 characters.
 
-- Tail / head: `tail -n 10 <file> | cut -c1-150`, `head -n 10 <file> | cut -c1-150`.
-- Line-oriented salience: `grep -anE 'error|fail|FAIL' <file> | cut -c1-150 | head -n 10`.
-- Count matches: `grep -acE 'warn|WARN' <file>`.
-- Aggregate, per-file match counts for a `grep -rn` sweep: `cut -d: -f1 <file> | sort | uniq -c | sort -rn | cut -c1-150 | head -n 10`.
-- Aggregate, first N per file: `awk -F: 'c[$1]++ < 3' <file> | cut -c1-150 | head -n 10`.
-- Changed-file list from a diff: `grep -a '^diff --git' <file> | cut -c1-150 | head -n 10`.
+Never `cat` the capture file.
+To view the start of a short file, use `head -n 10 <file> | cut -c1-150 | head -n 10`.
 
-Use `grep -a` so binary output is searched as text, and `cut -c1-150` so a single multi-megabyte line cannot defeat the bound.
+Copy these shapes exactly (replace `<file>` with the literal capture path):
+
+- Last lines: `tail -n 10 <file> | cut -c1-150 | head -n 10`
+- First lines: `head -n 10 <file> | cut -c1-150 | head -n 10`
+- Line-oriented salience: `grep -anE 'error|fail|FAIL' <file> | cut -c1-150 | head -n 10`
+- Count matches: `grep -acE 'error|fail|FAIL' <file> | cut -c1-150 | head -n 10`
+- Aggregate, per-file match counts for a `grep -rn` sweep: `cut -d: -f1 <file> | sort | uniq -c | sort -rn | cut -c1-150 | head -n 10`
+- Aggregate, number of distinct files: `cut -d: -f1 <file> | sort -u | wc -l | cut -c1-150 | head -n 10`
+- Aggregate, first 3 per file: `awk -F: 'c[$1]++ < 3' <file> | cut -c1-150 | head -n 10`
+- Changed-file list from a diff: `grep -a '^diff --git' <file> | cut -c1-150 | head -n 10`
+
+Use `grep -a` so binary output is searched as text; `cut -c1-150` makes a single multi-megabyte line harmless.
 
 ### Step 3: classify and select
 
 - **Status**: `FAILED` if the exit code is non-zero.
-  Otherwise `WARNINGS` if the output contains warning lines (`grep -acE 'warn|WARN'` > 0) or the salience spec names a condition that is present.
+  Otherwise `WARNINGS` if the Step 1 `warn` count is greater than 0.
   Otherwise `OK`.
 - **Salient output**: at most 10 lines total, each at most 150 characters, copied verbatim from your extraction results.
   With a salience spec, select what it asks for.
   With no spec (the default heuristic), select error-matching lines first, then the last few lines (`tail`), then the first few (`head`) if lines remain.
   If more lines matched than fit, end with one line `[... N more matching lines in capture file]`.
+- **Spec does not fit in 10 lines** (for example "counts per file plus first 3 per file" over many files): give the per-file counts first (the densest signal), then end with exactly one line `[spec truncated: <what was omitted>; see capture file, e.g. <ready-to-run command over the capture path>]`.
+  Never exceed 10 lines, and never paraphrase or summarize lines (no "and 4 more files..."): every salient line is either verbatim extract or that single truncation line.
 - A `FAILED` status and its exit code are always reported, even when no specific error line was found.
 
 ## Output Format
@@ -89,10 +98,12 @@ Exit code: <n>
 Status: OK | FAILED | WARNINGS
 Salient output (<=10 lines):
 <extracted lines, verbatim, or "(none)">
-Full output: saved to <capture path> (<bytes> chars, <lines> lines; session-scoped scratch, disposable)
+Full output: saved to <capture path> (<bytes> chars, <lines> lines; <lifetime>)
 ```
 
 The `Full output: saved to` line is mandatory: the capture file is the primary artifact, and the dispatching agent reads or greps it if it needs more.
+`<lifetime>` is `scratchpad, session-scoped` when the file is in your scratchpad directory, or `/tmp, persists until reboot; caller may delete` when you used the `${TMPDIR:-/tmp}` fallback.
+Do not delete the capture file yourself.
 
 ## Constraints
 
@@ -102,4 +113,4 @@ The `Full output: saved to` line is mandatory: the capture file is the primary a
 - Do not create, modify, or delete any file other than your capture file.
 - Do not run interactive commands; if the command needs a TTY or input, it fails with stdin closed and you report that.
 - Do not dispatch other agents.
-- Keep every Bash result small: the Step 1 call prints one line, and each Step 2 call is bounded by `cut -c1-150 | head -n 10`.
+- Keep every Bash result small: the Step 1 call prints one line, and every Step 2 call ends in exactly `| cut -c1-150 | head -n 10`.
