@@ -12,12 +12,12 @@ tags: [meta, hooks, chat_record, context_persistence, runtime_validated]
 # Chat Record Design History and Evidence
 
 > BLUF(opus-5-5/chat-record-devlog-management): Supplemental to [`2026-09-22-chat-record-devlog-management.md`](../proposals/2026-09-22-chat-record-devlog-management.md).
-> It holds what the proposal no longer carries: how the design reached its current shape over nine review rounds, the approaches it rejected and why, and the runtime evidence (Phase-0 canary runs, review runs, R7, R8) behind each platform fact the script depends on.
+> It holds what the proposal no longer carries: how the design reached its current shape over ten review rounds, the approaches it rejected and why, and the runtime evidence (Phase-0 canary runs, review runs, R7, R8) behind each platform fact the script depends on.
 > Read it to re-litigate a decision or re-run a check; the proposal alone is enough to implement.
 
 ## Context
 
-The proposal went through nine propose-revise rounds between 2026-09-22 and 2026-10-05.
+The proposal went through ten propose-revise rounds between 2026-09-22 and 2026-10-05.
 Round-by-round detail lives in the propose-revise devlog ([`2026-09-22-chat-record-devlog-management-propose-revise.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md)), its `-canary` chunk ([`2026-09-22-chat-record-devlog-management-propose-revise-canary.md`](../devlogs/2026-09-22-chat-record-devlog-management-propose-revise-canary.md)), the continuation devlog from round 5 ([`2026-10-05-chat-record-devlog-management-revise-r5.md`](../devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md)), and the reviews under `cdocs/reviews/*chat-record-devlog-management*`.
 This report is the condensed index of that history.
 
@@ -34,6 +34,7 @@ This report is the condensed index of that history.
 | 7 | r6 review; maintainer steer | note body on stdin via quoted heredoc; top-level-only scoping by rule text; `--record` and quoted metadata values dropped; turn end became a `-- <session> at <ts>` sign-off instead of an `@end:` speaker block |
 | 8 | r7 review; maintainer | proposal made timeless (history and evidence moved here); `Stop` table made three-row; subagent-guard rationale corrected and the `if`-scoped `PreToolUse` named as fallback |
 | 9 | maintainer, 2026-10-05 (minimal mechanism, judgment over hard rules) | record pointer became devlog `chat_record:` frontmatter; `p=` correlation dropped for marker-order turns (`Stop` reads the last marker); `@harness` dropped, only human-initiated turns checked; no `/cdocs:init` permission merge; guard reduced to the per-turn rule's scope sentence; all agent-side compaction requests, steering, `/cdocs:compact`, and `ctx:` removed; Scratchpoint limits soft |
+| 10 | r10 review (runtime-validated on 2.1.289); maintainer answers, 2026-10-05 | `/clear` and `--fork-session` treated as a fresh start (new id, new record, no lookup of the old one), resumption step 3 covers compaction only, and the A/B loses its `/clear` arm; Phase 1 removes cdocs' existing compaction cadence, loop-skill compact steps, and `overseer_ctx_est`; activation bounded by the git toplevel and gated on `cdocs/_chat/`; `--as` sanitized; no block in plan mode; `_chat/.gitattributes` union merge; per-turn rule scoped to Claude Code; record read bounded to `tail -n 80`; Scratchpoint moved into Phase 1; `--unit` test mode in CI |
 
 ## Rejected Approaches
 
@@ -65,6 +66,14 @@ This report is the condensed index of that history.
 | Positional or double-quoted note argument | shell expansion of backticks, `$(...)`, `$VAR`; single quotes break on apostrophes |
 | `/cdocs:init`-materialized project-local shim instead of `bin/` | embeds a version-specific plugin cache path that goes stale on update |
 | Per-workstream `cdocs/_chat/<task_list>/` directory | relocating a session file after its workstream is learned breaks the glob lookup and devlog pointers |
+| Newest-other-record fallback for step 3 after `/clear` (r10 review's C1 fix) | `/clear` starts an entirely new chat, so there is nothing to hand off; resumption covers only compaction, `--resume`, and `--continue`, which keep the id (maintainer, 2026-10-05) |
+| `/clear` plus step 3 as a Phase-2 A/B arm | measured a lookup that `/clear` is not meant to perform; the two `/compact` arms are enough to gate Phase 3 |
+| Keeping Pillar 2's compaction cadence (3-5 iterations, ~150K target) and the loop skills' "then compact" steps alongside a non-goal that only covered new text | the shipped pillar would both prescribe and disclaim agent-side compaction; the durable writes at task-unit boundaries are what make compaction safe, so they stay and the cadence goes |
+| Overseer-estimated context column `overseer_ctx_est` | agent-side context tracking; the judge's thinness signal keeps `inline_work` and gains Scratchpoint freshness, both observed rather than estimated |
+| Unbounded `cdocs/` walk-up from `cwd` | crosses repository boundaries (a `~/cdocs/` outside any repo would collect records); bounded at the git toplevel |
+| Recording and blocking in any project with `cdocs/` | blocks every human turn in a project whose rules lack the per-turn paragraph; gating on `cdocs/_chat/` makes the hook and the rule arrive together via `/cdocs:init` |
+| Empty `last_assistant_message` as the interrupt signal | a turn ending in tool calls only may also carry empty text, silently skipping the block; row 3 keys on `stop_hook_active` and plan mode until the interactive check finds a real signal |
+| Scratchpoint defined in Phase 2 while Phase-1 resumption steps read it | live agents would be told to refresh an undefined section between phases; moving it into Phase 1 also shares one edit pass with the compaction-text removal in the same files |
 | Directory-per-workstream for devlog chunks | the `{date}-{slug}.md` convention, hook path regexes, and `/cdocs:status` assume flat typed directories |
 
 ## Platform Evidence
@@ -87,11 +96,15 @@ Runs 1-8 are in the `-canary` chunk (2.1.280, headless, sandboxed `CLAUDE_CONFIG
 | A quoted-heredoc body reaches the script's stdin byte-exact (backticks, `$HOME`, `$(date)`, apostrophe, quotes, backslashes), and the call matches `Bash(chat-record:*)` in default mode (`permission_denials: []`) | run R7 (2026-10-05, 2.1.289, haiku, stub `chat-record` that logs stdin) | the stdin `note` body |
 | A foreground subagent's Bash has the parent's `CLAUDE_CODE_SESSION_ID` and an environment identical to the top-level's in every `CLAUDE*`/`AI_AGENT` variable (`CLAUDE_CODE_CHILD_SESSION=1` and `AI_AGENT=claude-code_2-1-289_agent` in both) | r6 review; run R7 (same run, the subagent ran the stub too) | no environment-based subagent guard; top-level scoping is rule text with the `PreToolUse` fallback |
 | The transcript carries `{"type":"custom-title","customTitle":"<name>","sessionId":"<id>"}` lines, rewritten over the session; `SessionStart` is the only hook payload documented to carry a title (`session_title`) | the round-6 revision's session (2.1.289); hooks reference | the session name in the sign-off |
+| `/clear` fires no `UserPromptSubmit` or `Stop`, then a `SessionStart` arrives with a new `session_id`, and the next turn's Bash `CLAUDE_CODE_SESSION_ID` equals the new id; `--resume <id> --fork-session` likewise mints a new id; `/compact`, `--resume <id>`, and `--continue` keep it | r10 review (2026-10-05, 2.1.289, headless stream-json canary) | `/clear` as a fresh start; resumption covers compaction only |
+| A second prompt queued while turn 1 runs fires its `UserPromptSubmit` before turn 1's single `Stop` | r10 review (headless stream-json) | the mid-turn prompt edge case |
+| Hook `cwd` follows the agent after `cd` and after entering a worktree; `permission_mode` is a common hook input field; plugin hooks are not deduplicated; `CLAUDE_PROJECT_DIR` is absent from the Bash tool's environment | hooks reference; r10 review's session | the working-directory edge case, plan-mode sign-off, the double-hooks README line |
+| `*.md merge=union` in `cdocs/_chat/.gitattributes` lets a rebase of divergent appends to one committed record, and a merge of the same record created on two branches (add/add), finish without conflict and keep every block (adjacent blank separators may collapse, which the line grammar ignores) | round-10 revision, scratch repo, git 2.54.0 | the union-merge scaffold |
 | A `PreToolUse` handler with `"if": "Bash(chat-record:*)"` runs only on `chat-record` calls (not on `echo` calls in the same session) and sees `agent_id` (null at top level, set in a foreground subagent) | run R8 (2026-10-05, 2.1.289) | the named fallback guard |
 
 Also verified, not relied on: `SessionStart` (all sources, `additionalContext` reaching the model), `PreCompact` (manual and auto), `PostCompact` (full `compact_summary`), `SessionEnd` (`reason`), `PostToolUse` (per call, and inside subagents with `agent_id`), `SubagentStart`/`SubagentStop`.
 
-Not verified: whether `Stop` fires on a user-interrupted turn; `/clear` and `/resume` effects on `session_id`; whether `/rename` is accepted as a stream-json line; whether a message typed mid-turn fires `UserPromptSubmit` mid-turn; whether a forked agent's tool calls carry `agent_id` (`subagent_type: "fork"` was not available in the R8 sandbox: "Agent type 'fork' not found").
+Not verified: whether `Stop` fires on a user-interrupted turn; whether `/rename` is accepted as a stream-json line; whether a message typed mid-turn in an interactive session fires `UserPromptSubmit` before the turn's `Stop` (headless queued prompts do); whether a forked agent's tool calls carry `agent_id` (`subagent_type: "fork"` was not available in the R8 sandbox: "Agent type 'fork' not found").
 
 ### Runs R7 and R8
 
