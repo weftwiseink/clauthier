@@ -49,6 +49,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 
 | judge_iteration | trigger | verdict | overseer_thinness | rationale | judge_path |
 |---|---|---|---|---|---|
+| 5 | review_count >= --judge-after | continue | clean | Converging: r1/r3 blockers closed fully next round; r4 F1 is a self-predicted one-edit regression. r5 must: abstract example (re-run d1/d2) + case-insensitive warn= (F4). F2 truncation line / F3 size overrun deferrable. Accept bar: containment + structure + verbatim fidelity + correct Status; escalate to maintainer if r5 raises a new blocking haiku-compliance class. | inline |
 
 ## Dispatch/Return Events
 
@@ -74,6 +75,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-4 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md, cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary-r4.md | 2026-10-05T10:27 | iteration 4 review |
 | return | rev-4 (cdocs:reviewer) | review r4 + _verify r4 | 2026-10-05T10:40 | 112a44a revise |
 | dispatch | judge-1 (cdocs:judge) | cdocs/devlogs/_judge/ (if long rationale) | 2026-10-05T10:41 | review_count >= 3 |
+| return | judge-1 (cdocs:judge) | none | 2026-10-05T10:43 | continue |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md | 2026-10-05T10:44 | iteration 5 |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 
 ## Steering Log
