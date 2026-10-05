@@ -7,10 +7,10 @@ type: proposal
 state: live
 status: implementation_accepted
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-5-5"
-  at: 2026-10-05T10:00:31-07:00
-  round: 10
+  at: 2026-10-05T11:34:24-07:00
+  round: 11
 tags: [meta, tooling, cost, hooks, context-management, agents, haiku, sonnet]
 ---
 
