@@ -197,6 +197,33 @@ The discipline still holds; only the primitive changes, and the durable state (h
 > NOTE(claude-opus-4-8/overseer-alignment-phase3): This pillar is additive to Pillars 1, 1b, and 2 and restates none of them.
 > It is discoverable from `workflow-patterns.md` and the `implement`/`propose` skills by pointer, keeping the canonical prose here per the project's deduplication value.
 
+## Bash Output Hygiene
+
+Verbose Bash output is a large share of what lands in a lead's context, and it is re-sent on every later turn.
+Any agent, not only an overseer, keeps an expected-verbose command out of its own context by dispatching it to the `cdocs:bash-runner` agent.
+This is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, extracts the salient lines with bounded shell, and returns only a short fixed-format `BASH RUNNER REPORT` naming the capture file.
+
+### When to dispatch
+
+Dispatch when a command is expected to be verbose AND its result matters, in this order of observed weight:
+
+1. **Sweeps** (the heaviest observed results): wide `grep -rn` searches, `find`, `git diff`, multi-file `cat` loops.
+2. **Builds, tests, installs**: build logs, test suites, `npm install`, linters, `terraform plan`/`apply`, container builds, `git log -p`.
+3. **Unboundable commands**: any command whose output size the caller cannot predict (an unfamiliar script or repo).
+
+Do NOT dispatch short-output commands (`git status`, a one-line `ls`, anything the caller already expects to be a few lines): the subagent round-trip costs more than it saves.
+Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
+
+### Dispatch contract
+
+The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a haiku runner misjudging "salient" is the main failure mode.
+Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
+With no spec, the runner falls back to exit code, status, error-matching lines, and a bounded tail and head.
+If more detail is needed later, grep or read the named capture file rather than re-running the command.
+
+This is a convention for an agent's dispatch decision, not something tooling enforces.
+An undispatched verbose command falls back to the platform's built-in Bash output ceiling, an accepted residual risk.
+
 ## Cross-Target Degradation
 
 Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
