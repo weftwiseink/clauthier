@@ -39,7 +39,7 @@ Don't read rules files.
 
 You don't need to be precious with context, but in the event of an _unreasonably_ large file,
 you can probe using `head`, `tail`, `shuf`, `cut`, `grep` etc, and consider noise removal idioms like:
-`python3 -c "import sys, difflib; out = []; [out.append(l) for l in sys.stdin if not any(difflib.SequenceMatcher(None, l, o).ratio() > 0.8 for o in out)]; sys.stdout.writelines(out)" < input.txt > output.txt`
+`sed -E 's/[0-9]+/N/g' <file> | sort | uniq -c | sort -rn | head -n 40` (near-duplicates collapsed to counted shapes; `awk '!seen[$0]++' <file>` drops exact repeats in order).
 
 Keep each read comfortably under the 30,000-character ceiling; if a read spills to a preview, narrow it and read again.
 
