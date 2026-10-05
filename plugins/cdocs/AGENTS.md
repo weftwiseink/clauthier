@@ -44,4 +44,4 @@ Formal agents in `plugins/cdocs/agents/` with explicit tool allowlists:
 - `judge`: meta-assessment of `/cdocs:iterate` loop health (opus; no Edit, Bash, or Task).
 - `triage`: frontmatter analysis, mechanical fixes, and iterate-devlog log-state mapping (sonnet).
 - `nit-fix`: writing-convention enforcement (haiku).
-- `bash-runner`: runs one expected-verbose command, captures its output to a file, and returns a concise fixed-format extract (haiku; Bash only). See "Bash Output Hygiene" in `rules/orchestration-discipline.md`.
+- `bash-runner`: runs one expected-verbose command, captures its output to a file, and returns a concise fixed-format extract (sonnet; Bash only). See "Bash Output Hygiene" in `rules/orchestration-discipline.md`.

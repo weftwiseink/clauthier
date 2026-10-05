@@ -216,7 +216,7 @@ Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
 
 ### Dispatch contract
 
-The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a haiku runner misjudging "salient" is the main failure mode.
+The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a runner misjudging "salient" is the main failure mode.
 Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
 The runner's report is concise (typically 10-20 verbatim lines), so an aggregate spec over many files should ask for per-file counts plus detail for the top few files only; a spec that cannot fit comes back as counts plus a `Truncated:` field naming what was omitted and a follow-up command over the capture file.
 With no spec, the runner falls back to exit code, status, error-matching lines, and the tail and head.
