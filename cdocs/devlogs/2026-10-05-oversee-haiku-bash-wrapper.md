@@ -146,6 +146,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-3 (cdocs:proposer) | proposal + new supplemental report + revise-r5 devlog | 2026-10-05T13:14 | round 8: timeless restructure |
 | return | prop-3 (cdocs:proposer) | same | 2026-10-05T13:25 | 984b636, ce7698e, 410e507; 90KB -> 41KB; R8 confirms scoped `if` hook works |
 | dispatch | crev-8 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r8.md | 2026-10-05T13:26 | round 8 review |
+| return | crev-8 (cdocs:reviewer) | review r8 | 2026-10-05T13:35 | 0df3016 ACCEPT; implementation_ready |
+| dispatch | prop-3 (cdocs:proposer) | proposal + design-history report | 2026-10-05T13:36 | accepting-round nits |
 
 ## Steering Log
 
