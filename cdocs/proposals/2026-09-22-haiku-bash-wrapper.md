@@ -250,7 +250,11 @@ Until then, track as blocked/future work; do not implement.
 - **A command produces almost no output.**
   Dispatch overhead is wasted; the "when to dispatch" convention explicitly excludes short-output commands.
 - **Capture file location and lifetime.**
-  The capture file lives in the subagent's own scratchpad directory (session-scoped, disposable); it is not a `mktemp` file and not a caller-supplied path, so it is cleaned with the session and needs no explicit teardown.
+  The capture file lives in the subagent's own scratchpad directory when its environment lists one (session-scoped, disposable); it is not a `mktemp` file and not a caller-supplied path.
+  When no scratchpad is listed, the runner falls back to `${TMPDIR:-/tmp}`, where the file persists until reboot; the report's lifetime phrase says which applies, and the caller may delete a `/tmp` capture.
+
+  > NOTE(opus-5-5/impl-1): Deviation recorded during implementation: under headless `claude -p`, no scratchpad appears in the runner's environment, so every live canary run wrote to `/tmp` via the fallback.
+  > Interactive sessions do list a subagent scratchpad. `/tmp` accumulation is accepted for now (tmpfs clears on reboot); automatic cleanup is out of scope.
 - **Consumer never runs `/cdocs:init`.**
   Then the "Bash output hygiene" dispatch guidance is never materialized, so agents dispatch the runner only when explicitly prompted to; the runner itself still works (it is a plugin agent, not a settings or rule dependency). Documented degradation, consistent with cdocs being opt-in per project.
 
@@ -323,6 +327,6 @@ The proposal's original open questions are resolved and folded in above; recorde
 - **Q1 tool allowlist:** `Bash`-only stays; `Read` is unnecessary once the runner captures to a file, and rule-loading has no consumer.
 - **Q2 init delivery:** document-only, via a section in the existing `orchestration-discipline.md` rather than a new rule file; a consent-gated `settings.json` write is a separate proposal's surface.
 - **Q3 mechanism 3:** the `PreToolUse` rewrite is deferred because it mis-targets the observed whales, not because it is broken (it works here).
-- **Q4 cap value:** 6,000 chars (p95 of the measured distribution), tunable band 4,000-8,000.
-- **Maintainer decision - capture-file location:** the subagent's own scratchpad directory.
-- **Maintainer decision (2026-10-05) - settings cap deferred:** the `bashOutputMaxChars` cap leaves shipped scope for [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md). Q2 now governs only the dispatch-guidance carrier; Q4's value is carried into the RFP as a starting point, not a shipped recommendation.
+- **Q4 cap value (carried to the RFP, not shipped):** 6,000 chars (p95 of the measured distribution), tunable band 4,000-8,000, as the RFP's starting point.
+- **Maintainer decision - capture-file location:** the subagent's own scratchpad directory, with a `${TMPDIR:-/tmp}` fallback when none is listed (see the "Capture file location and lifetime" edge case).
+- **Maintainer decision (2026-10-05) - settings cap deferred:** the `bashOutputMaxChars` cap leaves shipped scope for [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md). Q2 governs only the dispatch-guidance carrier; Q4's value is carried into the RFP as a starting point, not a shipped recommendation.
