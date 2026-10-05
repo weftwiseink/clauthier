@@ -168,6 +168,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | rev-r10 | `202e135`; REVISE: 1 critical (C1: /clear mints new session_id -> resumption step 3 points at unlisted record), 9 major (M1 unbounded cdocs/ walk-up hits ~/cdocs; M2 --as unvalidated; M3 plan-mode Stop block; M4 worktree merge conflicts -> merge=union; M5 rule ships to OC/AGENTS.md w/o chat-record; M6 existing Pillar-2 compaction cadence contradicts directive 6; M7 Scratchpoint phase ordering; M8 unbounded record read; M9 test gaps), 10 nits; 3 maintainer questions. Hook mechanics verified on 2.1.289 | 2026-10-05T11:21 | iterate held: critical found |
 | dispatch | impl-2 (cdocs:implementer, fresh) | bash-runner.md, orchestration-discipline.md (Bash Output Hygiene only), model-tiering.md, AGENTS.md, README.md, haiku-bash-wrapper proposal, this devlog (Implementation Notes) | 2026-10-05T11:26 | completeness-first revision |
 | dispatch | prop-5 (cdocs:proposer, fresh) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T11:26 | round 10 |
+| return | impl-2 | `786985a`, `54f040c`, `b6818e7`, `6fd82e0` (+ proposal edits swept into prop-5's `bde47b3` by a concurrent `git add`; content verified); all 17 items applied; build OK; N1 no-spec canary now 17/17 names | 2026-10-05T12:03 | completeness revision |
+| dispatch | rev-bw-r2 (cdocs:reviewer, fresh) | review impl-final-r2 file, canary evidence | 2026-10-05T12:04 | verify completeness revision |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
