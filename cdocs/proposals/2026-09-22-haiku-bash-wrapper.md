@@ -11,18 +11,24 @@ last_reviewed:
   by: "@claude-opus-5-5"
   at: 2026-10-05T09:31:31-07:00
   round: 7
-tags: [meta, tooling, cost, hooks, context-management, agents, haiku]
+tags: [meta, tooling, cost, hooks, context-management, agents, haiku, sonnet]
 ---
 
-# Haiku Bash-Output Wrapper: `cdocs:bash-runner`
+# Bash-Output Wrapper: `cdocs:bash-runner`
 
-> BLUF(meta/token-spend-attribution): Ship a haiku-tier `cdocs:bash-runner` agent (`Bash`-only, modeled on `nit-fix.md`) that agents opt into for expected-verbose commands; it captures the command's output to a file in its own scratchpad and returns a fixed-format salient extract, keeping the raw dump out of the parent context.
+> BLUF(meta/token-spend-attribution): Ship a sonnet-tier `cdocs:bash-runner` agent (`Bash`-only, modeled on `nit-fix.md`) that agents opt into for expected-verbose commands; it captures the command's output to a file in its own scratchpad and returns a fixed-format salient extract, keeping the raw dump out of the parent context.
 > Ship it with "when to dispatch" guidance in `orchestration-discipline.md`; unanticipated verbose Bash falls back to the platform default ceiling (~30K chars), an accepted residual risk.
 > A settings-level cap (`bashOutputMaxChars`) is DEFERRED to [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md); both output-rewriting hooks stay deferred (`updatedToolOutput` is inert for built-in Bash, [#68951](https://github.com/anthropics/claude-code/issues/68951)).
 
 > NOTE(opus-5-5/oversee): Maintainer directive 2026-10-05 removed the `bashOutputMaxChars` settings cap (formerly mechanism 2, "Adopt", delivered as `/cdocs:init` guidance) from shipped scope.
 > Rationale: the setting is global, so it also constrains `cdocs:bash-runner`'s own Bash calls (interfering with the mechanism this proposal ships), and it reaches into consumer settings policy.
 > The maintainer expects the runner plus its dispatch guidance to be adequate on its own; the cap's measured evidence is retained under [Deferred: settings-level output cap](#deferred-settings-level-output-cap-bashoutputmaxchars) and carried into the follow-up RFP.
+
+> NOTE(opus-5-5/oversee): Maintainer decision 2026-10-05: the runner moves from haiku to `model: sonnet`.
+> Rationale: any runner unreliability can negate the savings, through task degradation or fiddly UX for the opus parent; the true cost saving comes from avoiding long-term parent context bloat, not from the cheapest runner model.
+> Evidence: the live canaries behind implementation reviews r3-r5 ([`_verify/...-r3.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r3.md), [`-r4.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r4.md), [`-r5.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r5.md)).
+> On "summarize" specs, haiku drifted from the fixed report format, echoed prompt example lines as capture output, and fabricated file attributions in a self-composed count line, each surviving a prompt fix aimed at the previous shape.
+> The filename and the "haiku" references in history (landscape report, canary procedure, earlier NOTEs) are kept for link stability and traceability.
 
 ## Summary
 
@@ -37,7 +43,7 @@ The design rests on three canary-verified platform facts on Claude Code 2.1.280 
 
 The shape:
 
-- `cdocs:bash-runner` (new `plugins/cdocs/agents/bash-runner.md`, `model: haiku`, `tools: Bash`) is the primary, buildable-now mechanism. It captures-to-file-then-extracts.
+- `cdocs:bash-runner` (new `plugins/cdocs/agents/bash-runner.md`, `model: sonnet`, `tools: Bash`) is the primary, buildable-now mechanism. It captures-to-file-then-extracts.
 - A "Bash output hygiene" section in `orchestration-discipline.md` carries the when-to-dispatch convention (sweeps first) and ships to consumers via `/cdocs:init`.
 - A tightened `bashOutputMaxChars` cap is DEFERRED to the follow-up RFP: it is global (it would also cap the runner's own Bash) and is consumer settings policy.
 - The custom content-aware `PostToolUse` hook is DEFERRED, gated on the `updatedToolOutput` regression being fixed for built-in Bash.
@@ -89,26 +95,26 @@ Per [#68951](https://github.com/anthropics/claude-code/issues/68951)'s compatibi
 The feature request [#32105](https://github.com/anthropics/claude-code/issues/32105) ("allow `updatedToolOutput` for built-in tools for context budget recovery") confirms the exact use case this proposal wants is desired upstream but not shipped.
 
 **Consequence for the design.**
-The core design (the haiku wrapper) depends on neither rewrite channel, so it is robust to the environment-dependent hook behavior.
+The core design (the runner wrapper) depends on neither rewrite channel, so it is robust to the environment-dependent hook behavior.
 The custom `PostToolUse` content-aware hook is deferred on Finding 1 (genuinely inert).
 A `PreToolUse` rewrite hook is deferred on mis-targeting grounds (see its Deferred section), not on breakage.
 
 ## Proposed Solution
 
-One adopted mechanism (the haiku runner plus its dispatch convention) and three deferred ones, mirroring the landscape report's "Division-of-labor summary" table with the corrections above.
+One adopted mechanism (the sonnet runner plus its dispatch convention) and three deferred ones, mirroring the landscape report's "Division-of-labor summary" table with the corrections above.
 
-### 1. `cdocs:bash-runner` haiku agent (primary, works now)
+### 1. `cdocs:bash-runner` sonnet agent (primary, works now)
 
 A new dispatched agent at `plugins/cdocs/agents/bash-runner.md`, modeled structurally on `nit-fix.md`: frontmatter, Input, Workflow, Output Format, Constraints.
 
 **Frontmatter.**
-`model: haiku`, `tools: Bash` only, plus `maxTurns: 12` (bounding a haiku runner that could loop on extraction, following `judge.md`'s `maxTurns: 10` precedent; 12 covers capture plus several iterative targeted reads plus the report, with headroom).
+`model: sonnet`, `tools: Bash` only, plus `maxTurns: 12` (bounding a runner that could loop on extraction, following `judge.md`'s `maxTurns: 10` precedent; 12 covers capture plus several iterative targeted reads plus the report, with headroom).
 No `Read`/`Edit`/`Write`/`Task`: this agent runs one requested command plus read-only extraction over its capture file, and reports.
 Omitting `Task` prevents onward dispatch; omitting `Write`/`Edit` keeps it inert on the filesystem beyond its scratch capture file.
 The `Bash`-only allowlist survives the OpenCode build: `scripts/build-opencode.ts` `mapTools` turns `tools: Bash` into `bash: true` with `read`/`edit`/`write: false`.
 
 **No rule-reading Startup.**
-Unlike `nit-fix`, this agent reads no rule files: it emits a fixed-format block and enforces no writing convention, so loading `writing-conventions.md`/`frontmatter-spec.md` would cost 2-3k haiku input tokens per dispatch for zero output effect.
+Unlike `nit-fix`, this agent reads no rule files: it emits a fixed-format block and enforces no writing convention, so loading `writing-conventions.md`/`frontmatter-spec.md` would cost 2-3k runner input tokens per dispatch for zero output effect.
 `nit-fix` reads rules because rules ARE its rubric; that does not transfer here.
 The extraction contract is inlined in the agent prompt.
 
@@ -146,7 +152,7 @@ Full output: saved to <scratchpad-path> (<K> chars)
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
-The parent receives only the report; the raw output lives in the capture file and, at most, in the runner's own disposable haiku context, so it never enters the parent context.
+The parent receives only the report; the raw output lives in the capture file and, at most, in the runner's own disposable context, so it never enters the parent context.
 
 > NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: the runner's methodology should be no more constrained than the parent running Bash directly, since the cheaper model is the main saving.
 > Runner-internal results cost only haiku context, never the parent's, and the cap that would have motivated tight internal bounds is deferred to the RFP.
@@ -161,8 +167,8 @@ Dispatch when a command is expected to be verbose-and-important, ordered by the 
 This is guidance for an agent's dispatch decision, not something tooling enforces; the unanticipated case falls to the platform default ceiling, an accepted residual risk (see the coverage table under the `PreToolUse` deferral).
 
 **Model-tiering framing.**
-Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Mechanical / Deterministic Fan-Out Tier (haiku)" alongside `nit-fix`.
-Frame it as a named carve-out a consumer must bless, not an automatic override: a consumer with a blanket opus floor still needs to explicitly opt this dispatch down to haiku, per the rule's Precedence language.
+Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Search / Explore / Research-Aggregation Tier (sonnet)", with the rationale that verbatim-extraction fidelity matters more than the runner's own price.
+Frame it as a carve-out a consumer must bless, not an automatic override: a consumer with a blanket opus floor still needs to explicitly opt this dispatch down to sonnet, per the rule's Precedence language.
 The dispatch-decision convention (the "when to dispatch" list above) belongs in a new "Bash output hygiene" section in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md), alongside the existing fork-vs-specialist disposability guidance, since a bash-runner dispatch is the same disposable-context shape applied to a single command.
 
 ### Deferred: settings-level output cap (`bashOutputMaxChars`)
@@ -212,7 +218,7 @@ Until then, track as blocked/future work; do not implement.
 | Mechanism | Fires on | Technique | Cost | Status |
 |---|---|---|---|---|
 | Platform default (~30k valid / ~10k failure ceiling) | Every Bash call | Blind spill-to-file (valid) / head+tail excerpt (failure) | Zero | Already shipped upstream |
-| `cdocs:bash-runner` (haiku wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then judgment-driven extraction) | Small (haiku tokens + round-trip) | **Adopt** (primary, with dispatch guidance) |
+| `cdocs:bash-runner` (sonnet wrapper) | Deliberately dispatched calls | Semantic (capture-to-file, then judgment-driven extraction) | Small (sonnet tokens + round-trip) | **Adopt** (primary, with dispatch guidance) |
 | `bashOutputMaxChars` tightened | Every Bash call (including the runner's own) | Blind, tunable spill cliff | Zero | **Deferred** to [the cap RFP](2026-10-05-bash-output-cap-rfp.md) - global (interferes with the runner), consumer settings policy |
 | `PreToolUse` command-rewrite (`updatedInput`) | Matched known-verbose commands | Blind, pattern-scoped rewrite | Zero | Works here (2.1.280 Linux headless, 2/2); **deferred** - allowlist misses observed whales; rtk owns the niche |
 | `PostToolUse` content-aware truncation (`updatedToolOutput`) | Every Bash call (or matched) | Heuristic (error-line-preserving) | Zero | **Deferred/blocked** ([#68951](https://github.com/anthropics/claude-code/issues/68951), inert for built-in Bash) |
@@ -251,7 +257,7 @@ Until then, track as blocked/future work; do not implement.
 - **Binary or very-long-line output.**
   The runner's extraction uses `grep -a` and `cut -c1-N` so a single multi-megabyte line or binary blob does not fill a read result.
 - **Salient extraction misses the real signal.**
-  Haiku misjudging "salient" is a real failure mode; mitigate by having the caller pass an explicit salience spec for high-stakes calls, and by the default heuristic always including exit code and status so a `FAILED` is never hidden even if the specific error line is missed.
+  The runner misjudging "salient" is a real failure mode; mitigate by having the caller pass an explicit salience spec for high-stakes calls, and by the default heuristic always including exit code and status so a `FAILED` is never hidden even if the specific error line is missed.
 - **A command produces almost no output.**
   Dispatch overhead is wasted; the "when to dispatch" convention explicitly excludes short-output commands.
 - **Capture file location and lifetime.**
@@ -266,7 +272,7 @@ Until then, track as blocked/future work; do not implement.
 ## Test Plan
 
 - **Agent definition parses and loads.**
-  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: haiku`, `tools: Bash`, `maxTurns: 12`) is well-formed.
+  `cdocs:bash-runner` appears as a dispatchable agent; frontmatter (`model: sonnet`, `tools: Bash`, `maxTurns: 12`) is well-formed.
 - **Tool restriction holds.**
   The agent cannot call `Read`/`Write`/`Edit`/`Task` (infrastructure-enforced allowlist).
 - **Fixed-format report.**
@@ -304,16 +310,16 @@ Phases 1-2 are the adopt-now core and are largely independent; the settings cap 
 
 ### Phase 1: `cdocs:bash-runner` agent (primary)
 
-- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: haiku`, `tools: Bash`, plus `maxTurns: 12`.
+- Author `plugins/cdocs/agents/bash-runner.md` modeled on `nit-fix.md` (frontmatter -> Input -> Workflow -> Output Format -> Constraints), `model: sonnet`, `tools: Bash`, plus `maxTurns: 12`.
 - Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then judgment-driven `grep`/`sed`/`head`/`tail`/`awk`/`cut` reads over the file).
 - Inline the salience/extraction contract (line-oriented and aggregate shapes) and the fixed-format report; no rule-file read.
-- Constraints section: run the requested command exactly once; read-only extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded haiku agent does not refuse to `grep` its own capture file.)
+- Constraints section: run the requested command exactly once; read-only extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded agent does not refuse to `grep` its own capture file.)
 - Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, "Runner above the platform ceiling," and the Verification Methodology containment canary pass.
 - Do NOT modify existing agents, `hooks.json`, or the platform default.
 
 ### Phase 2: Dispatch convention + model-tiering carve-out
 
-- Add the `cdocs:bash-runner` named haiku carve-out to `model-tiering.md` alongside `nit-fix`.
+- Add `cdocs:bash-runner` to `model-tiering.md`'s sonnet tier as a named carve-out.
 - Add a "Bash output hygiene" section to `orchestration-discipline.md` carrying the "when to dispatch" convention (sweeps first, then builds/tests/installs, then unboundable commands; skip short-output commands), framed as the same disposable-context shape as the fork-vs-specialist guidance.
 - Success criteria: rule text present and consistent with the frontmatter/writing conventions; the `/cdocs:init` guidance-delivery test passes (the section materializes with no init-skill edit).
 - Dependency: independent of Phase 1's code but cites the agent by name, so land after or with Phase 1.
