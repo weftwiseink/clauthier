@@ -278,7 +278,7 @@ Until then, track as blocked/future work; do not implement.
   Dispatch overhead is wasted; the "when to dispatch" convention explicitly excludes short-output commands.
 - **Capture file location and lifetime.**
   The capture file lives in the subagent's own scratchpad directory when its environment lists one (session-scoped, disposable); it is not a `mktemp` file and not a caller-supplied path.
-  When no scratchpad is listed, the runner falls back to `${TMPDIR:-/tmp}`, where the file persists until reboot; the report's lifetime phrase says which applies, and the caller may delete a `/tmp` capture.
+  When no scratchpad is listed, the runner falls back to `${TMPDIR:-/tmp}`, where each run prunes runner captures older than ~24h before writing its own; the report's lifetime phrase says which applies.
 
   > NOTE(opus-5-5/impl-1): Deviation recorded during implementation: under headless `claude -p`, no scratchpad appears in the runner's environment, so every live canary run wrote to `/tmp` via the fallback.
   > Interactive sessions do list a subagent scratchpad. `/tmp` accumulation is accepted for now (tmpfs clears on reboot); automatic cleanup is out of scope.

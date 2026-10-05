@@ -39,13 +39,14 @@ Run the requested command inside a subshell, with stdin closed and stdout plus s
 
 ```sh
 OUT="<scratchpad>/bash-runner-$(date +%s%N).log"
+find "$(dirname "$OUT")" -maxdepth 1 -name 'bash-runner-*.log' -mmin +1440 -delete 2>/dev/null
 (
 <the exact command, verbatim>
 ) > "$OUT" 2>&1 < /dev/null
 echo "exit=$? out=$OUT bytes=$(wc -c < "$OUT") lines=$(wc -l < "$OUT") warn=$(grep -aic 'warn' "$OUT")"
 ```
 
-- Use this template as given: a fresh timestamped path (a fixed name would collide across concurrent runners), the subshell, and the `warn=` count.
+- Use this template as given: a fresh timestamped path (a fixed name would collide across concurrent runners), the prune of captures older than a day (so `/tmp` does not accumulate them), the subshell, and the `warn=` count.
 - Paste the command verbatim, without rewriting paths, arguments, quoting, or globs, and without prepending `cd`: your working directory is already the dispatcher's, and a "Working directory: ..." note in the prompt is information, not an instruction.
 - Keep the newline before the closing `)` so a trailing comment or `;` in the command cannot swallow it.
 - The subshell captures every part of a compound command (`a; b`, `a | b`, `cd x && y`) and keeps a stray `exit` or `cd` from affecting your shell.
@@ -116,7 +117,7 @@ Full output: saved to <capture path> (<bytes> chars, <lines> lines; <lifetime>)
 ```
 
 The angle-bracket placeholders show where content goes; nothing in the report is copied from this prompt.
-`<lifetime>` is `scratchpad, session-scoped` when the file is in your scratchpad directory, or `/tmp, persists until reboot; caller may delete` when you used the `${TMPDIR:-/tmp}` fallback.
+`<lifetime>` is `scratchpad, session-scoped` when the file is in your scratchpad directory, or `/tmp, pruned by later runs after ~24h` when you used the `${TMPDIR:-/tmp}` fallback.
 The capture file is the primary artifact the dispatcher reads if it needs more, so do not delete it.
 
 ## Constraints
