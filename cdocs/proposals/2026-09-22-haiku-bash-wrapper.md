@@ -154,7 +154,7 @@ Full output: saved to <scratchpad-path> (<K> chars)
 
 The whole report stays under about 4,000 characters.
 `Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` stays few and short so verbatim copying stays accurate.
-For aggregate specs, counts (from a counting command) come first, then samples for as many top files as fit; `Truncated: none` is used only when everything the spec asked for is present.
+For aggregate specs, `Excerpt:` is the whole output of two bounded commands, pasted unedited: one counting command (at most 20 lines) and one sampling command (at most 12 lines of at most 120 chars). Composed or heading lines go in `Summary:`, any total there comes from a command, and the report stays under ~4K by construction. `Truncated: none` is used only when everything the spec asked for is present.
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
