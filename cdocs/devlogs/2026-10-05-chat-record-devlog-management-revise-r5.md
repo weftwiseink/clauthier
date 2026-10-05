@@ -6,7 +6,7 @@ task_list: meta/chat-record-devlog-management
 part_of: cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [meta, tooling, context_persistence, hooks, chat_record, propose_revise]
 ---
 
@@ -87,4 +87,14 @@ Scope: Phases 1-2; Phase 3 stays a gated sketch, updated only where it leaned on
 ## Verification
 
 Document-level only (no hooks were built): `grep -n 'PostToolUse\|PostCompact\|files=\|\.quiet\|\.acted\|\.turn\|\.devlog' cdocs/proposals/2026-09-22-chat-record-devlog-management.md` after the rewrite should hit only the Phase-0 evidence table, the history NOTEs, and the Phase-3 sketch's explicit "not in Phase 1" statements.
-Result recorded below once the rewrite lands.
+Result: 17 hits, all in the Summary revision-history NOTE, the `PostCompact` upstream-status NOTE, the Non-Goals "not registered" bullets, Decisions 7, 10, and 11 (dated rationale for what was removed), the Phase-0 "also verified but not relied on" line, the Phase-1 "do not register" constraint, and the Phase-3 sketch.
+No design-body sentence still describes `files=`, a turn buffer, the quiet counter, the three-tier devlog resolution, or an `@compact` block as current.
+A second scan for round-4 framing (`seven`, `second duty`, `primary delivery`, `secondary`, `defense-in-depth`, `advisory`, `placeholder`, `nudge`) hit only the history NOTEs and the `inject-rules.ts` "nudge pattern" citation in Background.
+BLUF tightened from 1750 to about 950 characters.
+
+## Commits
+
+| sha | subject |
+|---|---|
+| `6c757a3` | docs(devlogs): open round-5 revision devlog for chat-record proposal |
+| `74169c1` | docs(chat-record-devlog-mgmt): round-5 redesign: per-turn gist with Stop block, drop PostToolUse/PostCompact, rules-driven compaction |
