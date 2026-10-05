@@ -185,6 +185,9 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | inline | overseer | chat-record proposal frontmatter | 2026-10-05T12:41 | confirmed 1a/1b success lines consistent (r12 reviewer: no full round needed); status implementation_ready, last_reviewed accepted |
 | dispatch | fork (artifact) | proposal assets/index.html; artifact LSfQwst9o1MtbjbhZ94T1e | 2026-10-05T12:42 | round-12 artifact update |
 | return | fork (artifact) | `4b24749`; republished LSfQwst9o1MtbjbhZ94T1e (v3), rendered page not viewed | 2026-10-05T12:46 | round-12 artifact |
+| inline | overseer | bash-runner.md, orchestration-discipline.md | 2026-10-05T14:09 | committed maintainer rewrite 6821b43 (diff read first) |
+| dispatch | rev-bw-rewrite (cdocs:reviewer, fresh) | review + canary evidence files | 2026-10-05T14:10 | review maintainer rewrite in its spirit |
+| dispatch | rfp-2 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md | 2026-10-05T14:10 | post-compaction resumption RFP |
 | inline | overseer | arc-state p1 in_progress; iterate devlog created | 2026-10-05T12:43 | /cdocs:iterate Phases 1a,1b,2 -> cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
@@ -204,6 +207,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T11:10 | steer | arc | Maintainer (effort raised to high): one more chat-record review+revision pass; if nothing critical, /iterate implementation (lifts p1 HOLD conditionally). Final bash-wrapper review focused on whether size-aversion degrades subtask quality; quality retention is primary. | 10 |
 | 2026-10-05T11:25 | steer | arc | Maintainer answers: (bash runner) apply all impl-final changes with defaults (~12K complete-list ceiling, list in Excerpt, self-capture named first). (chat-record) M6 remove Pillar-2 compaction cadence + skills' 'then compact' lines (keep durable handoff writes); C1 `/clear` starts a new chat, nothing to hand off -> resumption covers only /compact + auto-compaction; M1 gate on git root AND cdocs/_chat/. | 11 |
 | 2026-10-05T12:17 | decision | prop-6 | No critical in r11 (maintainer: no critical -> iterate). Overseer resolves r11 questions with minimal defaults: Q1 (b) only an agent that owns its devlog keeps a Scratchpoint (implementer notes suffice); judge thinness input = inline_work only (drop uncomputable Scratchpoint-staleness check); Q2 split Phase 1 into 1a (compaction removal + Scratchpoint text) and 1b (capture). | 11 |
+| 2026-10-05T14:08 | steer | arc | Maintainer rewrote bash-runner.md + caller guidance (committed 6821b43 on request): runner should just run a command and summarize, not be rigidly specified. Fresh review dispatched in that spirit. Post-compaction resumption -> RFP. After chat-record wraps: break down the bloated orchestration-discipline.md. | 12 |
 
 ## Implementation Notes (impl-1)
 

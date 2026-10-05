@@ -44,11 +44,13 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | return | impl-2 (cdocs:implementer) | same | 2026-10-05T13:47 | Phase 1b: `f3b4806`..`42e0b93` (17); 132/132 tests (75 unit, 57 headless); 20-turn headless record well-formed; FAILS rules check (post-compaction step 3 not followed by haiku/sonnet/opus); interactive checks + usefulness sample not run |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | 2026-10-05T13:48 | Phase 1b review |
 | return | rev-2 (cdocs:reviewer) | same | 2026-10-05T14:01 | `d208e0b` revise; awaiting maintainer decision on post-compaction placement |
+| dispatch | impl-3 (cdocs:implementer, fresh: impl-2 ~284K) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/**, .github/workflows/cdocs-hooks.yml, proposal (1 success-criterion line), this devlog (notes) | 2026-10-05T14:10 | Phase 1b fixes; NOT orchestration-discipline.md / bash-runner.md |
 
 ## Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
+| 2026-10-05T14:08 | steer-implementer | impl-3 | Maintainer: post-compaction rules check deferred to RFP (haiku results unrealistic; re-test with realistic lead models after base rules cleanup); no placement change, no SessionStart hook. After chat-record wraps, decompose the bloated rules file. | 3 |
 
 ## Implementation Notes (impl-1, Phase 1a)
 
