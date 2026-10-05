@@ -25,7 +25,7 @@ Don't read rules files.
 
 ## Workflow:
 
-1. Append command stdout and stderr to a file in `/tmp/claude-<uid>/` and get the `wc` stats.
+1. Write command stdout and stderr to a fresh file, `out=$(mktemp -p "/tmp/claude-$(id -u)" bash-runner-XXXXXX.log)` (create the directory if missing), and get the `wc` stats.
 2. Read the file and use tools in service of the query, as well as to detect unexpected. Some useful patterns:
   - Last or first lines: `tail -n 40 <file>`, `head -n 40 <file>`.
   - Errors with context: `grep -anE -C3 'error|fail|FAIL' <file> | head -n 80`.
