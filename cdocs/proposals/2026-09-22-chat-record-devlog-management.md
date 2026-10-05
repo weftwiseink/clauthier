@@ -86,7 +86,7 @@ sequenceDiagram
         H->>CR: append sign-off: -- session at end ts
     else last marker is @user, first Stop
         H-->>A: decision=block, reason names the record path and the note command
-    else last marker is @user, stop_hook_active or interrupted
+    else last marker is @user, stop_hook_active or plan mode
         H->>CR: append sign-off
     else last marker is a sign-off (turn not begun by a human prompt, no note)
         Note over H: writes nothing
@@ -101,7 +101,9 @@ sequenceDiagram
 - Path: `cdocs/_chat/YYYY-MM-DD-<session_id>.md`, full session id, date of the first recorded prompt; one file per Claude Code session.
 - Lookup is by glob `cdocs/_chat/*-<session_id>.md`, never by recomputing the date, so `--resume` on a later day appends to the same file.
 - Created lazily by the first `UserPromptSubmit` or `note`.
-- `cdocs/` is found by walking up from the payload's `cwd` (hook mode) or `$PWD` (`note`, `path`).
+- **Activation.** The script walks up from the payload's `cwd` (hook mode) or `$PWD` (`note`, `path`) to the git toplevel (`git rev-parse --show-toplevel`), stopping at the first `cdocs/`; it never looks above the toplevel, and outside a git work tree it finds nothing.
+  The record directory is that `cdocs/_chat/`, which `/cdocs:init` creates, so a project records nothing until it opts in and receives the rule text in the same step.
+- **Multiple matches.** If the glob matches more than one file (one session's record started separately in two checkouts on different days), every mode uses the earliest-dated name.
 - The session id comes from the hook payload, and in the agent's Bash from `CLAUDE_CODE_SESSION_ID` (undocumented; equal to the hook's `session_id`, asserted by a Phase-1 test).
 - `_chat/` is a mechanical asset directory like `_media/`: no frontmatter, outside the frontmatter-validation and edit-path regexes (which match only the four typed directories); `frontmatter-spec.md` gains one line saying so.
 
@@ -116,8 +118,11 @@ A list because a devlog outlives sessions; a frontmatter field because it is met
 The devlog for a record is `grep -l '<record path>' cdocs/devlogs/*.md`; chunks do not carry the field, so the match is the root.
 
 **Commit protocol.** Records are committed, because untracked durable state does not cross worktrees or sessions.
-The record grows every turn, so the overseer stages it by explicit path at each handoff (`git add cdocs/_chat/<file> cdocs/devlogs/<devlog>`) in the devlog bookkeeping commit; dispatched agents never stage `cdocs/_chat/` (no `git add -A`, no `commit -a`).
+The record grows every turn, so the top-level session stages it by explicit path whenever it commits a devlog that lists it (`git add cdocs/_chat/<file> cdocs/devlogs/<devlog>`): at each handoff in a loop, and with any devlog commit in a plain session.
+A session that never works on a devlog leaves its record untracked; nothing points to it, so nothing is lost.
+Dispatched agents never stage `cdocs/_chat/` (no `git add -A`, no `commit -a`).
 This is a carve-out to Pillar 1's "the overseer does not commit code itself": record and devlog commits are bookkeeping.
+`/cdocs:init` scaffolds `cdocs/_chat/.gitattributes` containing `*.md merge=union`, so appends made to one record in two checkouts merge or rebase without conflict, including the add/add case of a record that was uncommitted when a worktree was entered.
 
 > WARN(fable-5-1/chat-record-devlog-management): A committed record leaks two ways: text a human pastes into a prompt, and agent bullets that echo a secret from a tool result.
 > The gist guideline narrows the second; neither is closed.
@@ -161,7 +166,7 @@ The sign-off carries the end time and session name and closes the turn by positi
 The test for a bullet: would a successor reading only the `@user` blocks and these bullets know where things stand.
 Guideline, not prohibition: do not log every commit, test run, edit, or tool output, and do not paste the reply; but a commit that closes a long thread or a test result that changes the plan may be the turn's gist.
 The shape to avoid is the enumerated log (`- edited X - ran tests - committed abc`); the shape to produce is the one-line state of play.
-Slash commands are recorded as the raw invocation string; built-in `/compact` and `/clear` fire no `UserPromptSubmit` and leave no trace.
+Slash commands are recorded as the raw invocation string; built-in commands (`/compact`, `/clear`, `/model`, `/effort`, `/rename`, `/config`, and the like) fire no `UserPromptSubmit` and leave no trace.
 
 Example (user lines from a canary run; entries illustrative):
 
@@ -194,7 +199,7 @@ Bash plus `jq` (both hooks are on every turn's critical path; `npx tsx` startup 
 | hook | `${CLAUDE_PLUGIN_ROOT}/bin/chat-record UserPromptSubmit` (from `hooks.json`, timeout 5s) | append `@user` for a human prompt; skip harness envelopes (Edge Cases); never blocks |
 | hook | `${CLAUDE_PLUGIN_ROOT}/bin/chat-record Stop` (timeout 5s) | per the table below |
 | agent | `chat-record note [--as <speaker>]`, bullets on stdin | append `@<speaker>: <current time>` and the body |
-| agent | `chat-record path` | print the record path; never create the file |
+| agent | `chat-record path` | print the record path relative to the git toplevel (`cdocs/_chat/...`), the form `chat_record:` takes; never create the file |
 
 The note body is read from stdin only, and the one documented form is the quoted heredoc, which performs no expansion:
 
@@ -207,13 +212,16 @@ EOF
 A double-quoted argument would execute backticks and `$(...)` and expand `$VAR`; a single-quoted one breaks on apostrophes.
 The heredoc form delivers the body byte-exact (history report, run R7).
 
+`--as` passes through the session-token mapping (characters outside `[A-Za-z0-9._-]` become `-`), so `opus-4-6[1m]` becomes `opus-4-6-1m-` and `Opus 5.5` becomes `Opus-5.5`.
+A result that is empty, starts with `.` or `-`, or equals `user` is rejected: `note` exits non-zero and writes nothing, so a malformed speaker can neither glue the note into the preceding prompt nor forge a human header.
+
 `Stop` reads the record's last marker (`grep -E` on the two patterns, last match; escaped body lines never match), after the guards below:
 
 | Last marker | Writes | Emits |
 |---|---|---|
 | an agent header: a note was appended since the turn's `@user` or the previous sign-off | sign-off | nothing |
-| `@user`, first `Stop` of the turn, not interrupted | nothing | `{"decision":"block","reason":"<block text>"}` |
-| `@user`, and `stop_hook_active` is true or the turn was interrupted (signal per interactive check (b)) | sign-off | nothing |
+| `@user`, first `Stop` of the turn, `permission_mode` not `plan` | nothing | `{"decision":"block","reason":"<block text>"}` |
+| `@user`, and `stop_hook_active` is true or `permission_mode` is `plan` | sign-off | nothing |
 | a sign-off, or none: the turn did not begin with a human prompt and has no note | nothing | nothing |
 
 Block text, with only the record path substituted; `<your model>` stays literal for the agent to fill in (under 300 bytes):
@@ -227,17 +235,19 @@ EOF
 
 Guards and invariants:
 
-- **Silent exits, hook mode.** Exit 0 with no write and no block when: the payload carries `agent_id` (in `UserPromptSubmit` and `Stop`); `CDOCS_CHAT_RECORD=off`; `jq` is missing; no `cdocs/` above `cwd`; or (for `Stop`) no record file exists.
+- **Silent exits, hook mode.** Exit 0 with no write and no block when: the payload carries `agent_id` (in `UserPromptSubmit` and `Stop`); `CDOCS_CHAT_RECORD=off`; `jq` or `git` is missing; activation finds no `cdocs/_chat/`; or (for `Stop`) no record file exists.
   Hook mode always exits 0 and writes errors to stderr only.
-- **Agent modes fail loudly.** `note` and `path` exit non-zero with a one-line stderr reason when `CLAUDE_CODE_SESSION_ID` is unset, no `cdocs/` is found, `jq` is missing, or the write fails; `CDOCS_CHAT_RECORD=off` is a silent exit 0.
+- **Stdout.** Hook mode writes nothing to stdout except the `Stop` block JSON, because plain stdout from `UserPromptSubmit` is added to the model's context.
+- **Agent modes fail loudly.** `note` and `path` exit non-zero with a one-line stderr reason when `CLAUDE_CODE_SESSION_ID` is unset, activation finds no `cdocs/_chat/`, `jq` is missing, `--as` is rejected, or the write fails; `CDOCS_CHAT_RECORD=off` is a silent exit 0.
 - **Never loops.** `stop_hook_active=true` is never blocked, so a turn costs at most one extra short turn; an agent that ignores the block ends the turn with no entry, and the gap shows as a `@user` followed directly by its sign-off.
-- **One append path.** Every write is a single `printf ... >>` of a whole block or line (`O_APPEND`), so concurrent appends interleave at block granularity; agents read records (`tail`, offset `Read`) and never `Edit` or `Write` them.
+- **One append path.** Every write is a single `printf ... >>` of a whole block or line (`O_APPEND`), so concurrent appends normally interleave at block granularity; a block larger than the shell's write buffer may span several `write()` calls, which is harmless because concurrent writers to one record are rare.
+  Agents read records (`tail`, offset `Read`) and never `Edit` or `Write` them.
 - **No state beyond the record.** `last_assistant_message` is never written, `Stop` reads one marker line and never content, and no runtime-directory files exist.
 
 **Per-turn rule and cost.** Pillar 2 carries the rule as one paragraph, its scope sentence first:
 
-> Top-level session only: if you were dispatched by the `Agent` tool (including as a fork), never run `chat-record`.
-> In the top-level session, before ending a turn that began with a human prompt, append at least one gist bullet with `chat-record note` (quoted heredoc form), issued in the same parallel tool batch as the turn's last action when the outcome is known.
+> Claude Code top-level session only: `chat-record` exists nowhere else, and if you were dispatched by the `Agent` tool (including as a fork), never run it.
+> In the top-level session, whether or not you are overseeing a loop, before ending a turn that began with a human prompt, append at least one gist bullet with `chat-record note` (quoted heredoc form), issued in the same parallel tool batch as the turn's last action when the outcome is known.
 > Other turns (a background agent finishing) may note when they change the state of play; `Stop` does not require it.
 
 The common case then costs no extra round trip; a turn with no other tool call pays one.
@@ -341,20 +351,26 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 - **Harness prompts.** A background subagent's completion arrives as a `UserPromptSubmit` with no human input; a prompt whose first non-blank token is a known harness tag (`<task-notification`, `<system-reminder`, plus any the implementer observes) is not recorded, anything else (including pasted HTML) is `@user`.
   The turn it triggers starts after a sign-off, so `Stop` neither blocks nor writes unless the agent noted, in which case the note is followed by a sign-off.
 - **Turns with no other tool call** (an answer, a dispatch-only turn) owe a bullet when human-initiated, the gist of the outcome; `note` is then the turn's one extra round trip.
+- **Plan mode.** The harness forbids writes in plan mode, so `Stop` never blocks there; the turn gets its sign-off, and a note is optional.
 - **Headless `-p`.** The block is honored; in default permission mode `note` needs the allow rule; a one-shot non-cdocs invocation should set `CDOCS_CHAT_RECORD=off`.
 - **Interrupted turn.** If `Stop` does not fire, the turn has no entry and no sign-off, which is right for an abandoned turn.
-  If it fires, the block is suppressed (resurrecting the agent after Escape defies the user) and the sign-off is written; interactive check (b) finds the distinguishing signal (candidate: empty `last_assistant_message`).
+  If interactive check (b) shows `Stop` fires on Escape and finds a payload field that marks the interruption, that field joins the `Stop` table's sign-off row, since resurrecting the agent after Escape defies the user; until then row 3 keys on `stop_hook_active` and plan mode alone.
+  An empty `last_assistant_message` is not that signal: a turn whose final message is tool calls only may carry empty text too, and would silently skip the block.
   An interrupted human turn with no `Stop` leaves an unsigned `@user`, so the next harness-triggered turn's `Stop` blocks once; harmless, since a note then closes both.
-- **Prompt typed mid-turn.** If interactive check (d) shows it fires `UserPromptSubmit` before the turn's `Stop`, the second `@user` lands inside the turn; marker order then reads both prompts as one turn, and `Stop` requires a note after the later one.
+- **Prompt typed mid-turn.** A queued prompt fires `UserPromptSubmit` before the running turn's single `Stop` (observed headless; interactive check (d) confirms), so the second `@user` lands inside the turn; marker order then reads both prompts as one turn, and `Stop` requires a note after the later one.
   Accepted: the note covers both.
 - **Session id changes.** `/compact`, `--resume`, and `--continue` keep `session_id`, so appends continue in the same file.
   `/clear` and `--resume <id> --fork-session` mint a new `session_id`, and the Bash `CLAUDE_CODE_SESSION_ID` follows it, so the next prompt starts a new record and the old one ends at its last sign-off.
   That is the intended fresh start: no rule looks for the previous record.
   A user who wants continuity names the devlog, and step 1 adds the new record to its `chat_record:` list.
-- **Working directory moves to another worktree** with its own `cdocs/`: a second file with the same name starts there; accepted, each worktree's record covers the work done in it.
+- **Working directory moves.** Hook `cwd` and the Bash `$PWD` both follow the agent, so `note` and `Stop` always resolve the same record.
+  After `EnterWorktree` that is the worktree's copy of the record (committed from main) or a same-named new file; the union merge attribute reconciles the two when the branch merges or rebases.
+  A `cd` into another directory with its own `cdocs/_chat/` moves the turn's note and sign-off there and leaves the original `@user` unsigned; accepted.
+- **Double hooks.** Plugin hooks are not deduplicated, so a developer running `--plugin-dir` beside the enabled `cdocs@clauthier` gets doubled `@user` blocks and sign-offs; the README says to disable one.
 - **Devlog at 20KB with no closed concern:** do not split; tighten prose and split landed verification evidence as its own chunk.
 - **Chunk needed while a sub-loop's table is live:** only finished rows move; the live table stays with a pointer to the chunk.
-- **OpenCode and other targets:** hooks are Claude-Code-only and not ported; rule and skill text deliver via `/cdocs:init`, so the per-turn bullet is rule-only there, and Pillar 2's no-`/compact` degradation ("start a fresh session from the handoff doc") adds "and the chat record if one exists".
+- **OpenCode and other targets** (`.opencode/rules/`, `AGENTS.md` readers): hooks and `bin/` are Claude-Code-only and not ported, so these targets keep no chat record.
+  The per-turn paragraph reaches them through `/cdocs:init` and is inert by its scope sentence; resumption there reads the devlog's Scratchpoint and latest handoff.
 
 ## Test Plan
 
@@ -434,11 +450,12 @@ Unverified, and owned by Phase 1: `Stop` on interrupt, mid-turn prompts in an in
 
 Deliverables:
 
-1. `plugins/cdocs/bin/chat-record` per the Script section; `hooks.json` entries for `UserPromptSubmit` and `Stop`.
+1. `plugins/cdocs/bin/chat-record` per the Script section, committed as mode `100755` like the existing hook scripts (the directory marketplace runs it from the working tree); `hooks.json` entries for `UserPromptSubmit` and `Stop`.
 2. `plugins/cdocs/hooks/tests/chat-record.test.sh` with the hook and unit tests.
-3. `/cdocs:init`: scaffold `cdocs/_chat/README.md` (one paragraph: hook-written, do not edit, opt-outs); write `orchestration-discipline.md` Pillar 2 into `.claude/rules/cdocs.md`, the file Claude Code loads (today only `AGENTS.md` inlines it).
+3. `/cdocs:init`: scaffold `cdocs/_chat/README.md` (one paragraph: hook-written, do not edit, opt-outs) and `cdocs/_chat/.gitattributes` (`*.md merge=union`); write `orchestration-discipline.md` Pillar 2 into `.claude/rules/cdocs.md`, the file Claude Code loads (today only `AGENTS.md` inlines it).
 4. `frontmatter-spec.md`: one line on `_chat/`, and the optional devlog field `chat_record:` (list of repo-root record paths).
-   README "Hooks": the two hooks, block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs.
+   README "Hooks": the two hooks, activation (git toplevel, `cdocs/_chat/`), block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs, and one line on doubled hooks under `--plugin-dir` beside the installed plugin.
+   `plugins/cdocs/hooks/cdocs-hooks.ts`: its "NOT ported from CC" header lists the chat-record hooks (OpenCode keeps no record).
 5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps, the commit protocol and Pillar 1 carve-out, and "never `Edit` or `Write` `cdocs/_chat/`".
 6. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences; `## Verification` as the evidence home.
    No `chat-record` command, heredoc, or bullet categories there: dispatched implementers read the devlog skill, and the top-level scope sentence is not beside it.

@@ -16,8 +16,8 @@ tags: [meta, tooling, cost, hooks, context-management, agents, haiku, sonnet]
 
 # Bash-Output Wrapper: `cdocs:bash-runner`
 
-> BLUF(meta/token-spend-attribution): Ship a sonnet-tier `cdocs:bash-runner` agent (`Bash`-only, modeled on `nit-fix.md`) that agents opt into for expected-verbose commands; it captures the command's output to a file in its own scratchpad and returns a fixed-format salient extract, keeping the raw dump out of the parent context.
-> Ship it with "when to dispatch" guidance in `orchestration-discipline.md`; unanticipated verbose Bash falls back to the platform default ceiling (~30K chars), an accepted residual risk.
+> BLUF(meta/token-spend-attribution): Ship a sonnet-tier `cdocs:bash-runner` agent (`Bash`-only, modeled on `nit-fix.md`) that agents opt into for expected-verbose commands; it captures the command's output to a file in its own scratchpad and returns a fixed-format report that answers the caller's question completely, keeping the raw dump out of the parent context.
+> Ship it with caller guidance in `orchestration-discipline.md` (self-capture first, dispatch for distillation); unanticipated verbose Bash falls back to the platform default ceiling (~30K chars), an accepted residual risk.
 > A settings-level cap (`bashOutputMaxChars`) is DEFERRED to [`2026-10-05-bash-output-cap-rfp.md`](2026-10-05-bash-output-cap-rfp.md); both output-rewriting hooks stay deferred (`updatedToolOutput` is inert for built-in Bash, [#68951](https://github.com/anthropics/claude-code/issues/68951)).
 
 > NOTE(opus-5-5/oversee): Maintainer directive 2026-10-05 removed the `bashOutputMaxChars` settings cap (formerly mechanism 2, "Adopt", delivered as `/cdocs:init` guidance) from shipped scope.
@@ -29,6 +29,12 @@ tags: [meta, tooling, cost, hooks, context-management, agents, haiku, sonnet]
 > Evidence: the live canaries behind implementation reviews r3-r5 ([`_verify/...-r3.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r3.md), [`-r4.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r4.md), [`-r5.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r5.md)).
 > On "summarize" specs, haiku drifted from the fixed report format, echoed prompt example lines as capture output, and fabricated file attributions in a self-composed count line, each surviving a prompt fix aimed at the previous shape.
 > The filename and the "haiku" references in history (landscape report, canary procedure, earlier NOTEs) are kept for link stability and traceability.
+
+> NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05, completeness first: preserving the quality of the subtask result is the primary goal.
+> The runner exists to keep context-bloating output out of the caller's context without losing relevant information; cost savings come second, and the runner's methodology is not over-constrained.
+> Evidence: the quality canary ([`_verify/...-quality-canary.md`](../devlogs/_verify/2026-10-05-bash-runner-quality-canary.md)) and the final implementation review ([`2026-10-05-review-of-haiku-bash-wrapper-impl-final.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-final.md)).
+> Defaults chosen: (1) a report is usually under ~4K, but runs to ~12K when the spec asks for a complete list ("every"/"all"), never compressed into unlabelled shorthand; (2) the complete list goes in `Excerpt:` as one command's output, one labelled line per item, with no new report field; (3) the caller guidance names self-capture (`cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`, then a targeted read) as the first cheap path, replacing `| tail -n 5`.
+> With no spec, a failing build or test run reports each distinct failure (name, location, message).
 
 ## Summary
 
@@ -44,7 +50,7 @@ The design rests on three canary-verified platform facts on Claude Code 2.1.280 
 The shape:
 
 - `cdocs:bash-runner` (new `plugins/cdocs/agents/bash-runner.md`, `model: sonnet`, `tools: Bash`) is the primary, buildable-now mechanism. It captures-to-file-then-extracts.
-- A "Bash output hygiene" section in `orchestration-discipline.md` carries the when-to-dispatch convention (sweeps first) and ships to consumers via `/cdocs:init`.
+- A "Bash output hygiene" section in `orchestration-discipline.md` carries the caller convention (self-capture for a known need, dispatch for a distillation, sweeps first) and ships to consumers via `/cdocs:init`.
 - A tightened `bashOutputMaxChars` cap is DEFERRED to the follow-up RFP: it is global (it would also cap the runner's own Bash) and is consumer settings policy.
 - The custom content-aware `PostToolUse` hook is DEFERRED, gated on the `updatedToolOutput` regression being fixed for built-in Bash.
 - A `PreToolUse` command-rewrite hook is also DEFERRED, not because it fails (it works on this version) but because its pattern allowlist mis-targets the observed heavy traffic and a mature external tool (rtk) owns that niche.
@@ -52,7 +58,7 @@ The shape:
 ## Objective
 
 Bash command output is 28.5% of read intake per [`cdocs/reports/2026-09-20-read-source-attribution.md`](../reports/2026-09-20-read-source-attribution.md) (3.76M of 13.17M approx-tokens, 9,581 results, mean 390 tok/result): "death by a thousand cuts" from many medium-sized results, amplified by the report's separately-measured per-turn re-send factor.
-The goal is to keep verbose Bash output out of the parent (Opus) context: distilled to a salient extract when an agent anticipates verbosity.
+The goal is to keep verbose Bash output out of the parent (Opus) context without losing what the parent needs from it: distilled to a complete answer when an agent anticipates verbosity.
 Unanticipated verbosity stays bounded only by the platform default ceiling; tightening that bound is out of scope here (see the follow-up RFP).
 
 ## Background
@@ -123,9 +129,10 @@ The dispatching agent's Task prompt supplies:
 1. the exact command to run, and
 2. optionally, what "salient" means for this call.
 Salience specs come in two shapes:
-- line-oriented, for pass/fail commands: "return the exit code and any line matching `error`/`fail`/`FAIL`"; "return the final summary line plus any non-zero exit".
+- line-oriented, for pass/fail commands and per-item lists: "return the exit code and any line matching `error`/`fail`/`FAIL`"; "return the final summary line plus any non-zero exit"; "every failing test with file:line and expected vs actual".
 - aggregate, for sweeps where the matches ARE the signal: "matches per file, first 3 per file"; "the changed-file list plus per-file hunk counts"; "the file list, not per-file progress noise".
-Absent an explicit salience spec, the agent applies a default heuristic (exit code, status classification, error-matching lines, plus the tail and head).
+When the spec asks for every item, the runner lists every one, never a sample.
+Absent an explicit salience spec, the agent reports what the caller needs to act: exit code and status, each distinct failure of a failing build or test run (name, location, message), otherwise error-matching lines, and the true final lines.
 This mirrors how `nit-fix` is scoped only to the files named in its prompt.
 
 **Workflow: capture-to-file-then-extract.**
@@ -135,9 +142,9 @@ Instead:
    `OUT="<scratchpad>/bash-runner-<ts>.log"; <cmd> > "$OUT" 2>&1; echo "exit=$?"`.
    The runner's tool result is then tiny (`exit=<n>`), and the full output is always on disk regardless of the command's exit status - which also means the platform's lossy failure-path excerpt never applies to this output.
 2. Read the capture file with judgment, sized by the Step 1 byte and line counts: a small capture (about what a direct Bash call would have shown) may be read whole; a larger one is read in targeted, iterative steps (`grep -a` with context, `sed -n` ranges, `head`/`tail`, `awk` aggregation), each kept under the ceiling, with `cut -c1-N` guarding very long lines.
-3. Classify status as `OK`/`FAILED`/`WARNINGS` and return the fixed-format report.
+3. Classify status as `OK`/`FAILED`/`WARNINGS` and return the fixed-format report, answering the spec completely.
 
-**Output contract (fixed-format, cheap for the parent to parse).**
+**Output contract (fixed-format, complete for the question asked).**
 
 ```
 BASH RUNNER REPORT
@@ -145,16 +152,19 @@ Command: <exact command run>
 Exit code: <n>
 Status: OK | FAILED | WARNINGS
 Summary:
-<1-3 lines, the runner's interpretation; names and numbers grounded in the capture>
+<a few lines (usually 1-3), the runner's interpretation; names and numbers grounded in the capture>
 Excerpt:
-<a few short verbatim lines, cut by a command and copied from its output>
+<verbatim lines copied from a command's output: a few for pass/fail, one per item for a list>
 Truncated: none | <what was omitted>; see: <follow-up command over the capture file>
 Full output: saved to <scratchpad-path> (<K> chars)
 ```
 
-The whole report stays under about 4,000 characters.
-`Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` stays few and short so verbatim copying stays accurate.
-For aggregate specs, `Excerpt:` is the whole output of two bounded commands, pasted unedited: one counting command (at most 20 lines) and one sampling command (at most 12 lines of at most 120 chars). Composed or heading lines go in `Summary:`, any total there comes from a command, and the report stays at about 4K. `Truncated: none` is used only when everything the spec asked for is present.
+Completeness comes before size: a thin report sends the caller back to the raw output, the cost the runner exists to avoid.
+A report is usually under about 4,000 characters; when the spec asks for a complete list ("every", "all"), it includes all of it up to about 12,000 characters, and past that lists what fits, gives a command-computed total, and names the rest in `Truncated:`. Lines are never compressed into an unlabelled shorthand to save space.
+`Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` holds only command output, so verbatim copying stays accurate.
+A complete list goes in `Excerpt:` as one command's output (for example an `awk` over the capture), one compact, labelled line per item; there is no separate findings field.
+For aggregate specs, `Excerpt:` is the whole output of two commands, pasted unedited: one counting command and one sampling command, each `head` sized by the spec (when the spec asks for every match, the second is the complete filtered list). Composed or heading lines go in `Summary:`, and any total there comes from a command.
+`Truncated: none` is used only when everything the spec asked for is present, and `Truncated:` never lists as omitted something the report never contained.
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
@@ -171,21 +181,22 @@ The parent receives only the report; the raw output lives in the capture file an
 **Dispatch scope: opt-in judgment call, documented convention, not a hard rule.**
 The goal is to delegate context-bloating work so the lead's context is preserved without degrading its performance or losing relevant information.
 Do not route every Bash call through this agent: a subagent round-trip is not worth it for `git status`, a one-line `ls`, or any command the caller already expects to be short.
-When the caller knows exactly what it needs (pass/fail, a count, the last few lines), it self-bounds the command (`grep -c`, `grep -q`, `| tail -n 5`) instead of dispatching.
-Dispatch when a command's output is both large or unpredictable and relevant; typical candidates, listed by observed weight rather than as a mandatory order (the 15 largest Bash results in the corpus, all 22k-29k chars, are sweeps, not builds):
+When the caller knows exactly what it needs (pass/fail, the last few lines), it captures to a file itself and reads just that (`cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`, then a targeted `grep -n -C3` on failure), keeping the true exit code and every diagnostic one read away; `cmd | tail -n 5` would report `tail`'s exit status and discard the diagnostics.
+Dispatch when a command's output is large or unpredictable and what the caller needs from it is a distillation (which tests failed and why, every call site); output the caller must read line by line (a diff under review) it reads itself in pieces. Typical candidates, listed by observed weight rather than as a mandatory order (the 15 largest Bash results in the corpus, all 22k-29k chars, are sweeps, not builds):
 - wide recursive searches and diffs: `grep -rn` sweeps, `find`, `git diff`, multi-file `cat` loops (`for f in ...; do cat "$f"; done`).
 - build logs, test suites, package installs (`npm install`), linters, `terraform plan`/`apply`, container builds, `git log -p`.
 - any command whose output the caller cannot bound in advance (an unfamiliar script, an unfamiliar repo).
-A caller that needs exact bytes reads the capture file named in the report.
+Callers say "every" when they need completeness. If a report is not enough, the caller runs its `see:` command, reads a bounded range of the capture, or re-dispatches the runner with a narrower spec over the capture file, rather than acting on a partial picture or re-running the command.
 This is guidance for an agent's dispatch decision, not something tooling enforces; the unanticipated case falls to the platform default ceiling, an accepted residual risk (see the coverage table under the `PreToolUse` deferral).
 
 > NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: dispatch is a judgment call, not a reflex; delegate context-bloating work to preserve the lead's context without degrading performance or losing relevant information.
 > Known-need commands are self-bounded and run directly; the sweeps-first list is observed weight, not a mandatory order.
+> (Self-bounding is refined by the completeness-first NOTE above: a known-need command is captured to a file and read in part, not piped into `tail`.)
 
 **Model-tiering framing.**
-Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Search / Explore / Research-Aggregation Tier (sonnet)", with the rationale that verbatim-extraction fidelity matters more than the runner's own price.
+Add `cdocs:bash-runner` as a named example in [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "Search / Explore / Research-Aggregation Tier (sonnet)", with the rationale that fidelity to the capture and completeness against the caller's question matter more than the runner's own price.
 Frame it as a carve-out a consumer must bless, not an automatic override: a consumer with a blanket opus floor still needs to explicitly opt this dispatch down to sonnet, per the rule's Precedence language.
-The dispatch-decision convention (the "when to dispatch" list above) belongs in a new "Bash output hygiene" section in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md), alongside the existing fork-vs-specialist disposability guidance, since a bash-runner dispatch is the same disposable-context shape applied to a single command.
+The caller convention (self-capture, then the "when to dispatch" list above) belongs in a new "Bash output hygiene" section in [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md), alongside the existing fork-vs-specialist disposability guidance, since a bash-runner dispatch is the same disposable-context shape applied to a single command.
 
 ### Deferred: settings-level output cap (`bashOutputMaxChars`)
 
@@ -248,6 +259,9 @@ Until then, track as blocked/future work; do not implement.
 - **Capture-to-file-then-extract, not read-once.**
   The output ceiling applies to the runner's own Bash call, so a runner that let a command dump to stdout would itself only see a preview.
   Capturing to a file keeps the tool result tiny and the full output on disk (and "valid" from the platform's view regardless of exit status), which is what makes the containment claim actually hold.
+- **Completeness over brevity in the report.**
+  The runner's value is the caller acting on its report without touching the raw output, so it answers the spec in full (one command-built line per item when asked for every item) and treats report size as a default, not a hard cap.
+  A sampled or compressed report forces a follow-up that costs more than the extra report characters.
 - **Opt-in dispatch, not universal routing.**
   Round-trip overhead makes universal routing a net loss; the unanticipated case opt-in dispatch misses is left to the platform default ceiling as an accepted residual risk.
 - **Settings-level cap deferred, not shipped (maintainer, 2026-10-05).**
@@ -269,11 +283,11 @@ Until then, track as blocked/future work; do not implement.
 - **Consumer has set `bashOutputMaxChars` themselves.**
   The runner's capture call returns only a one-line summary, and its reads are sized to stay under the ceiling and narrowed when one spills, so it should tolerate a tightened ceiling at the cost of more read turns; a very low cap would force many small reads. Not tested in this scope; the composition question belongs to the cap RFP.
 - **The caller genuinely needs the full raw output later.**
-  The runner's report always names the capture file path; the caller reads or greps that file rather than re-running.
+  The runner's report always names the capture file path and a `see:` command; the caller reads a bounded range of that file, or re-dispatches with a narrower spec over it, rather than re-running.
 - **Binary or very-long-line output.**
   The runner's extraction uses `grep -a` and `cut -c1-N` so a single multi-megabyte line or binary blob does not fill a read result.
 - **Salient extraction misses the real signal.**
-  The runner misjudging "salient" is a real failure mode; mitigate by having the caller pass an explicit salience spec for high-stakes calls, and by the default heuristic always including exit code and status so a `FAILED` is never hidden even if the specific error line is missed.
+  The runner misjudging "salient" is a real failure mode; mitigate by having the caller pass a salience spec for anything it will act on (saying "every" when it needs completeness), and by the default heuristic naming each distinct failure of a failing build or test run and always including exit code and status, so a `FAILED` is never hidden.
 - **A command produces almost no output.**
   Dispatch overhead is wasted; the "when to dispatch" convention explicitly excludes short-output commands.
 - **Capture file location and lifetime.**
@@ -298,7 +312,11 @@ Until then, track as blocked/future work; do not implement.
 - **Salience: explicit spec, aggregate.**
   Given "matches per file, first 3 per file" over a `grep -rn` sweep, the report shows per-file grouping, not a flat head/tail.
 - **Salience: default heuristic.**
-  With no spec, a `FAILED` command still yields a non-`OK` status and its exit code, even if the specific error line is not extracted.
+  With no spec, a `FAILED` command yields a non-`OK` status and its exit code, and a failing test run names each distinct failing test (name, location, message).
+- **Completeness probe.**
+  Two runs over one multi-failure test fixture (for example 17 distinct `deepStrictEqual` failures across 6 `node --test` files, outside the repo): one with an "every failing test: name, file:line, expected vs actual" spec, one with no spec.
+  Each report is checked against ground truth derived from the fixture sources: the spec'd run lists every failure exactly, in labelled lines inside `Excerpt:` built by a command; the no-spec run names every failing test.
+  The procedure in [`_verify/2026-10-05-bash-runner-quality-canary.md`](../devlogs/_verify/2026-10-05-bash-runner-quality-canary.md) is the template.
 - **Runner above the platform ceiling.**
   The runner returns the true last line of `seq 1 200000` (~1.2MB, far above the ~30K default ceiling), proving the capture-to-file flow is not itself defeated by the ceiling on its own Bash call. Covered by the Verification Methodology canary.
 - **Containment (the core claim).**
@@ -320,6 +338,9 @@ Verify it directly with a canary:
 5. As a negative control, run the same command as a direct `Bash` call in the parent. For a valid command the parent gets a ~2,000-char preview plus a file path (the platform-default spill cliff), not the full raw output; what the wrapper saves versus this is the read-back of that file plus the semantic extraction. For a failing command the parent gets the lossy head+tail excerpt with no file - the case the wrapper's capture-with-`2>&1` avoids entirely.
 The containment check (steps 2-4) is the verification floor: if the parent transcript holds the raw dump, or the runner does not return the true last line, the wrapper has failed its one job.
 
+Containment alone is not acceptance: a report can be small, well-formatted and verbatim and still useless to the caller.
+Every acceptance bar also includes the Test Plan's completeness probe, alongside the format and fidelity checks: the spec'd run must list every failure, and the no-spec run must name every failing test.
+
 ## Implementation Phases
 
 Phases 1-2 are the adopt-now core and are largely independent; the settings cap and the two hook mechanisms are deferred, not implemented.
@@ -330,13 +351,13 @@ Phases 1-2 are the adopt-now core and are largely independent; the settings cap 
 - Implement the capture-to-file-then-extract Workflow (capture into the subagent scratchpad with `> "$OUT" 2>&1; echo "exit=$?"`, then judgment-driven `grep`/`sed`/`head`/`tail`/`awk`/`cut` reads over the file).
 - Inline the salience/extraction contract (line-oriented and aggregate shapes) and the fixed-format report; no rule-file read.
 - Constraints section: run the requested command exactly once; read-only extraction commands over the capture file are expected; no other commands, no re-runs, no onward dispatch. (State this explicitly so a literal-minded agent does not refuse to `grep` its own capture file.)
-- Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, "Runner above the platform ceiling," and the Verification Methodology containment canary pass.
+- Success criteria: Test Plan items "Agent definition parses," "Tool restriction holds," "Fixed-format report," all three salience tests, the completeness probe, "Runner above the platform ceiling," and the Verification Methodology containment canary pass.
 - Do NOT modify existing agents, `hooks.json`, or the platform default.
 
 ### Phase 2: Dispatch convention + model-tiering carve-out
 
 - Add `cdocs:bash-runner` to `model-tiering.md`'s sonnet tier as a named carve-out.
-- Add a "Bash output hygiene" section to `orchestration-discipline.md` carrying the "when to dispatch" convention (sweeps first, then builds/tests/installs, then unboundable commands; skip short-output commands), framed as the same disposable-context shape as the fork-vs-specialist guidance.
+- Add a "Bash output hygiene" section to `orchestration-discipline.md` carrying the caller convention (self-capture for a known need; dispatch for a distillation, sweeps first, then builds/tests/installs, then unboundable commands; skip short-output commands; say "every" for completeness), framed as the same disposable-context shape as the fork-vs-specialist guidance.
 - Success criteria: rule text present and consistent with the frontmatter/writing conventions; the `/cdocs:init` guidance-delivery test passes (the section materializes with no init-skill edit).
 - Dependency: independent of Phase 1's code but cites the agent by name, so land after or with Phase 1.
 - Do NOT add any `bashOutputMaxChars` recommendation or `settings.json` snippet (deferred to the cap RFP), and do NOT add a new `rules/*.md` file (which would force an init-skill edit).
