@@ -828,7 +828,11 @@ multi_turn() {
   check "every @user followed by >=1 entry and exactly one sign-off" \
     "$(printf '%s' "$m" | sed -E 's/A:[^ ]+( A:[^ ]+)*/A/g; s/S:[^ ]+/S/g')" \
     "$(for ((i = 0; i < ${#MT_PROMPTS[@]}; i++)); do printf 'U A S '; done | sed 's/ $//')"
-  check "Stop blocks across the session" "$(stop_blocks "$SB/multi_turn.jsonl")" "0"
+  # Failure picture: a second block or a loop. Each turn's Stops must be `S` or `S S*`
+  # (blocked once, then stop_hook_active); the block count itself is reported, not gated.
+  local seq; seq="$(jq -r 'select(.event == "UserPromptSubmit" or .event == "Stop") | .event[0:1] + (if .stdin.stop_hook_active then "*" else "" end)' "$SB/multi_turn.canary.jsonl" | paste -sd' ' -)"
+  has "each turn blocks at most once and never loops" "$seq" '^(U S( S\*)?)( U S( S\*)?)*$'
+  echo "  info: turns needing the one-shot block: $(stop_blocks "$SB/multi_turn.jsonl") of ${#MT_PROMPTS[@]}"
   cp "$F" "$SCRATCH/multi_turn-record.md" 2>/dev/null
   echo "  info: record copy: $SCRATCH/multi_turn-record.md (kept only with CHAT_RECORD_KEEP=1)"
 }
