@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/devlog-autoflush-hook
 type: proposal
 state: live
-status: request_for_proposal
+status: evolved
 tags: [hooks, devlog, context_persistence, harness_enforcement]
 ---
 
@@ -13,6 +13,8 @@ tags: [hooks, devlog, context_persistence, harness_enforcement]
 
 > BLUF(claude-sonnet-5/devlog-autoflush-hook): Add a `PreCompact`/`SessionEnd` hook that checkpoints the active devlog to disk, so "always create a devlog" is harness-backed rather than model-obeyed.
 > Motivated By: `cdocs/proposals/2026-08-28-overseer-alignment.md` (Pillar 2, context persistence and cleanliness).
+
+> NOTE(opus-5-5/cdocs/chat-record-devlog-management): Evolved into [`2026-09-22-chat-record-devlog-management.md`](2026-09-22-chat-record-devlog-management.md): a `Stop` hook forces at most one write per human-initiated turn (a chat-record entry, by block), and a session's devlogs are those whose `chat_record:` lists its record.
 
 ## Objective
 
