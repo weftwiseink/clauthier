@@ -148,6 +148,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | crev-8 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r8.md | 2026-10-05T13:26 | round 8 review |
 | return | crev-8 (cdocs:reviewer) | review r8 | 2026-10-05T13:35 | 0df3016 ACCEPT; implementation_ready |
 | dispatch | prop-3 (cdocs:proposer) | proposal + design-history report | 2026-10-05T13:36 | accepting-round nits |
+| return | prop-3 (cdocs:proposer) | same | 2026-10-05T13:40 | 043b884, b927846; p1 pre-step done, HOLD |
 
 ## Steering Log
 
