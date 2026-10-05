@@ -53,7 +53,7 @@ Never compress lines into an unlabelled shorthand to save space.
 ```
 BASH RUNNER REPORT
 Command: <exact command run; truncated if over 200 chars with "...">
-Output: <file_abspath> (lines: <line_count> words: <word_count>)
+Output: <file_abspath> (lines: <line_count> bytes: <byte_count>)
 Status: OK | FAILED | WARNINGS (returncode: <n>)
 Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>
 Summary:
