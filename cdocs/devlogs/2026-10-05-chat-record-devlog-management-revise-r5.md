@@ -213,3 +213,5 @@ So `if` is honored on 2.1.289 and the handler never runs on other Bash calls.
 Size 90205 bytes before, about 41KB after; report about 11.5KB.
 `grep '@end\|--record\|Round [0-9]\|qchar'` over the proposal: no hits.
 Frontmatter: `status: review_ready`; `last_reviewed` as the r7 reviewer set it.
+
+Post-acceptance nits (r8 review, [`2026-10-05-review-of-chat-record-devlog-management-r8.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r8.md)): optional ` p=` suffix in `SIGNOFF_RE`; top-level-only test asserts via a `PreToolUse` `agent_id` canary and `p=` rather than speaker; "block granularity"; "record present" on the no-matching-`@user` case; "no hook entries beyond" constraint; report `first_authored.at`, evidence-row labels, and round-2/3 rows corrected. No design change.
