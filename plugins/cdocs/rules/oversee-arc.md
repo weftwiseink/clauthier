@@ -51,8 +51,8 @@ Field semantics that carry the reconciliation logic:
 - The reconciled TRIPLE (proposal frontmatter `status`, the proposal's final devlog handoff, and `arc_state`), not any single field, is the durable decision basis for advance-vs-escalate.
   No single field is trusted to have been written atomically at the terminal moment.
 
-The overseer writes this file at EVERY arc-level transition (proposal start, proposal terminal, escalation, claim acquire/release), BEFORE compacting.
-This is the arc-altitude analogue of Pillar 2's handoff-before-compact applied to the machine substrate; the prose half of the same checkpoint still goes to the arc devlog.
+The overseer writes this file at EVERY arc-level transition (proposal start, proposal terminal, escalation, claim acquire/release).
+This is the arc-altitude analogue of Pillar 2's handoff applied to the machine substrate; the prose half of the same checkpoint still goes to the arc devlog.
 
 ## Claim Registry (extends Pillar 1b to cross-arc altitude)
 
@@ -88,7 +88,7 @@ The decisive signal for serialize-vs-interleave is footprint overlap: do two pro
 
 1. **Footprint declaration.** Each proposal declares a `footprint:` (a set of path globs its implementation will touch), read from a proposal frontmatter field or derived by a cheap footprint scout (sonnet tier per [`model-tiering.md`](./model-tiering.md)) that reads the proposals' Implementation Phases and predicts the touched paths.
 2. **Overlap test.** Intersect the two footprints' glob sets. A non-empty intersection means the proposals CONFLICT.
-3. **Decision.** Conflicting proposals SERIALIZE (run in arc order, one terminal before the next starts). Disjoint proposals are eligible to INTERLEAVE under the single overseer, subject to the one-specialist-per-workstream bound (Pillar 3) and the overseer's own context budget.
+3. **Decision.** Conflicting proposals SERIALIZE (run in arc order, one terminal before the next starts). Disjoint proposals are eligible to INTERLEAVE under the single overseer, subject to the one-specialist-per-workstream bound (Pillar 3).
 4. **Uncertainty defaults to serialize.** If footprints cannot be predicted with confidence (low scout confidence, or broad globs like `**/*`), serialize: a false conflict costs only latency, a missed conflict costs a clobber.
 
 This adds the missing WHETHER-two-streams-may-run-at-all piece decided by real footprint intersection; the one-specialist-per-workstream bound from Pillar 3 remains the adjacent constraint that caps HOW MANY interleaved streams.
@@ -138,5 +138,4 @@ Only the RUNTIME mechanics degrade where a target lacks Claude-Code-only primiti
 
 - Where `fork` / `SendMessage` are absent, interleaved durable specialists degrade to fresh sessions restarted from the arc-state file plus each proposal's devlog handoff, the same fallback Pillar 1b / Pillar 3 name.
   Practically, absent these primitives the arc runs SEQUENTIAL only (no interleaving), since one session cannot hold multiple warm specialists.
-- Where `/compact` is absent, the proposal-boundary checkpoint degrades to "start a fresh session from the arc-state file and the last handoff," Pillar 2's stated fallback.
-- The arc-state file and the claim registry are plain files and are the durable substrate that makes every one of these fallbacks faithful; they carry no Claude-Code dependency.
+- The arc-state file and the claim registry are plain files and are the durable substrate that makes these fallbacks faithful; they carry no Claude-Code dependency.
