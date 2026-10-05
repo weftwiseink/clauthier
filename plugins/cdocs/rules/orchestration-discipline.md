@@ -15,7 +15,7 @@ Concretely, the overseer does NOT:
 
 - run `npm test` or other test suites itself,
 - read full file contents when a returned summary would serve,
-- commit code itself,
+- commit code itself (devlog and chat-record bookkeeping is the exception; see Pillar 2 "Commit protocol"),
 - run build or dev commands itself.
 
 These are dispatched to subagents.
@@ -119,7 +119,7 @@ This `overseer_thinness` field, not prose guidance, is what makes the judge-back
 
 ## Pillar 2: Context Persistence and Cleanliness
 
-The overseer keeps its own turns thin across a long loop and keeps its durable state current, so a compaction or a fresh session resumes from written state rather than from a lossy summary.
+The overseer keeps its own turns thin across a long loop and keeps its durable state current, so a compaction or a fresh session resumes from written state (the devlog's Scratchpoint and handoffs, and on Claude Code the session's chat record) rather than from a lossy summary.
 The thinness column and the judge's `overseer_thinness` verdict (see "Judge-Observable Thinness Signal" above) make bloat legible; this pillar is the discipline that keeps the signal clean.
 
 ### Handoff format
@@ -162,7 +162,48 @@ A devlog's owner keeps one `## Scratchpoint` section of current state, replaced 
 - **Not a thinness input:** the judge's `overseer_thinness` reads the `inline_work` column alone.
 
 Raw evidence (settings, commands, log lines) goes in the devlog's `## Verification` section, not the Scratchpoint.
-After a compaction, re-read your devlog's `## Scratchpoint` and latest handoff before acting.
+
+### Chat record
+
+Claude Code top-level session only: `chat-record` exists nowhere else, and if you were dispatched by the `Agent` tool (including as a fork), never run it.
+In the top-level session, whether or not you are overseeing a loop, before ending a turn that began with a human prompt, append at least one gist bullet with `chat-record note` (quoted heredoc form), issued in the same parallel tool batch as the turn's last action when the outcome is known.
+Other turns (a background agent finishing) may note when they change the state of play; `Stop` does not require it.
+
+```bash
+chat-record note --as opus-4-8 <<'EOF'
+- gist: Stop block is the enforcer; reviewer r5 returned revise on two blockers
+EOF
+```
+
+The record is `cdocs/_chat/YYYY-MM-DD-<session_id>.md`, active once `/cdocs:init` has created `cdocs/_chat/`.
+Hooks append each human prompt verbatim and a `-- <session> at <time>` sign-off that closes the turn; `Stop` blocks once when a human-initiated turn has no entry.
+
+- **Speaker:** `--as` takes your model id without `claude-` and any `-YYYYMMDD` suffix (`opus-4-8`, `fable-5-1`).
+- **Body:** stdin only, in the quoted heredoc form above, which delivers it byte-exact; a quoted argument would expand backticks, `$(...)`, and `$VAR`, or break on an apostrophe.
+- **Bullets:** aim for one to three, one line each, under ~120 characters, each with a prefix: `gist:` what the turn concluded, decided, or changed; `query:` a search that proved useful and what it found; `read:` a high-salience file and why; `follow-up:` an open thread.
+  The test for a bullet: would a successor reading only the prompts and these bullets know where things stand.
+  Avoid the enumerated log (`- edited X - ran tests - committed abc`) and never paste the reply; a commit that closes a long thread or a test result that changes the plan may be the turn's gist.
+- **Reading:** read a record with `tail` or an offset `Read`; never `Edit` or `Write` anything under `cdocs/_chat/`.
+
+### Resumption
+
+A compaction, a resumed session, and a continued session keep the session id and its record.
+A cleared or forked session starts a new id and a new record; nothing carries over, which is what starting fresh means, so no step below applies to it.
+
+1. **First turn a session works on a devlog:** run `chat-record path` and append the result to the devlog's `chat_record:` frontmatter list if absent.
+2. **At each handoff:** refresh the Scratchpoint, and commit the devlog and the record by explicit path (see "Commit protocol").
+3. **After a compaction:** run `chat-record path`; read the `## Scratchpoint` and latest handoff of each devlog that lists that path (`grep -l '<path>' cdocs/devlogs/*.md`), newest Scratchpoint `as_of` first, then the record's last 80 lines (`tail -n 80`, widened with an offset read if one long paste fills them); do not re-derive state from the summary.
+   If no devlog lists the path, the session kept none and the record tail is its whole durable state.
+   Without a record (a dispatched agent, or a project without `cdocs/_chat/`), read your devlog's `## Scratchpoint` and latest handoff alone.
+
+### Commit protocol
+
+Records are committed, because untracked durable state does not cross worktrees or sessions.
+The top-level session stages its record by explicit path whenever it commits a devlog that lists it (`git add cdocs/_chat/<file> cdocs/devlogs/<devlog>`): at each handoff in a loop, and with any devlog commit in a plain session.
+A session that never works on a devlog leaves its record untracked; nothing points to it, so nothing is lost.
+Dispatched agents never stage `cdocs/_chat/` (no `git add -A`, no `commit -a`).
+This is a carve-out to Pillar 1's "the overseer does not commit code itself": record and devlog commits are bookkeeping.
+`cdocs/_chat/.gitattributes` (`*.md merge=union`, scaffolded by `/cdocs:init`) lets appends made to one record in two checkouts merge or rebase without conflict.
 
 ### CLAUDE.md reseed mechanism
 
@@ -258,6 +299,6 @@ An undispatched verbose command falls back to the platform's built-in Bash outpu
 ## Cross-Target Degradation
 
 Rule *content* delivers to OpenCode cleanly: `/cdocs:init` globs this file into `.opencode/rules/cdocs/` automatically.
-Only the *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
-Likewise, off Claude Code, resumption reads the devlog's Scratchpoint and latest handoff.
+The *runtime* mechanics of Pillar 1b degrade: if a target lacks `SendMessage`/`fork` equivalents, single-writer ownership and on-resume reconciliation fall back to starting a fresh session from the handoff doc plus the Iteration Log's event rows.
+Pillar 2's chat record is Claude-Code-only (its hooks and `bin/` script are not ported), so off Claude Code there is no record and resumption reads the devlog's Scratchpoint and latest handoff.
 The discipline still holds; only the primitive changes.
