@@ -798,12 +798,14 @@ rules_check() {
     "/compact" \
     "Continue with the next step: add a --name flag to greeter.py."
   J="$SB/rules_check.jsonl"
-  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | "\(.name) \(.input.command // .input.file_path // "")"' 2>/dev/null | head -n 6)"
+  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | "\(.name) \(.input.command // .input.file_path // "")"' 2>/dev/null | head -n 8)"
   echo "  info: first post-compaction tool calls:"; printf '%s\n' "$post" | sed 's/^/    /'
   has "a compaction happened" "$(grep -c '"compact_boundary"' "$J")" '^[1-9]'
   has "first post-compaction call runs chat-record path" "$(printf '%s\n' "$post" | head -n 1)" 'chat-record path'
-  has "Scratchpoint devlog read after compaction" "$(printf '%s\n' "$post" | head -n 4)" 'cdocs/devlogs/'
-  has "record tail read after compaction" "$(printf '%s\n' "$post" | head -n 4)" 'tail .*cdocs/_chat/|cdocs/_chat/.*'
+  # Reads that count must precede the first Write or Edit outside the devlog (acting on the task).
+  local before; before="$(printf '%s\n' "$post" | awk '/^(Write|Edit) / && !/cdocs\/devlogs\// {exit} {print}')"
+  has "devlog (Scratchpoint, handoff) read before acting" "$before" '^(Read .*cdocs/devlogs/|Bash .*(cat|sed|head|grep|awk).*cdocs/devlogs/)'
+  has "record tail read before acting" "$before" 'tail -n 80|^Read .*cdocs/_chat/'
   hasnt "no hook emitted additionalContext" "$(jq -r 'select(.type == "system" and .subtype == "hook_response") | .stdout' "$J")" 'additionalContext'
   echo "  info: devlog chat_record: $(grep -A2 '^chat_record:' "$P"/cdocs/devlogs/*.md 2>/dev/null | tr '\n' ' ')"
   echo "  info: record markers: $(markers "$(the_rec "$P")")"
