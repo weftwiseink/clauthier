@@ -5,7 +5,7 @@ first_authored:
 task_list: meta/chat-record-devlog-management
 type: proposal
 state: live
-status: implementation_ready
+status: review_ready
 last_reviewed:
   status: revision_requested
   by: "@claude-opus-5-5"
@@ -39,7 +39,7 @@ How the design reached this shape, the approaches it rejected, and the runtime e
 
 ## Objective
 
-Make the compaction summary's quality irrelevant to resumption: at any moment, durable state exists that is at most one turn stale, and a fresh or post-compaction window is seeded from that state rather than from a summary.
+Make the compaction summary's quality irrelevant to resumption: at any moment, durable state exists that is at most one turn stale, and a post-compaction window (or, in Phase 3, a reseeded specialist) is seeded from that state rather than from a summary.
 Keep devlogs skimmable by splitting them where the work has seams, so a resuming agent reads one relevant chunk rather than a 40KB chronology.
 
 ## Background
@@ -47,7 +47,7 @@ Keep devlogs skimmable by splitting them where the work has seams, so a resuming
 1. [`2026-09-22-chat-record-scratchpoint-design.md`](../reports/2026-09-22-chat-record-scratchpoint-design.md): capture and delivery are complementary; scoping; 3-phase rollout.
 2. [`2026-09-20-token-spend-by-role.md`](../reports/2026-09-20-token-spend-by-role.md) workstream 1 (the capture mechanisms) and workstream 4 (cap-and-reseed, which depends on them).
 3. [`2026-09-19-devlog-methodology-value.md`](../reports/2026-09-19-devlog-methodology-value.md) recommendations 2 and 3: point post-compaction resumption at the devlog; split past ~10-15KB or ~5 rounds.
-4. [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md) Pillar 2 (handoff format, reseed: unscoped rules re-inject on every compaction) and the judge-observable thinness columns.
+4. [`orchestration-discipline.md`](../../plugins/cdocs/rules/orchestration-discipline.md) Pillar 2 (handoff format, reseed: unscoped rules re-inject on every compaction) and the judge-observable thinness signal.
 5. [`plugins/cdocs/skills/devlog/SKILL.md`](../../plugins/cdocs/skills/devlog/SKILL.md) and `template.md`, which the `chat_record:` field, the Scratchpoint, and the split rule extend.
 6. [`plugins/cdocs/hooks/hooks.json`](../../plugins/cdocs/hooks/hooks.json), the README's "Sandbox testing notes", and the plugin reference's `bin/` rule (a plugin's `bin/` is on the Bash tool's `PATH` while enabled; `CLAUDE_PLUGIN_ROOT` is not exported to Bash-tool commands).
 7. [`2026-09-01-devlog-autoflush-hook.md`](2026-09-01-devlog-autoflush-hook.md): RFP stub answered here (a hook can force a write once per turn via a `Stop` block; the active devlog is the one whose `chat_record:` lists the session's record); marked `evolved` at Phase 1.
@@ -271,8 +271,6 @@ If the Phase-1 subagent or fork scenario shows a leak, the fallback is a `PreToo
 ### Resumption guidance (rules only)
 
 Compaction happens when the user runs `/compact` or the harness auto-compacts ([#71803](https://github.com/anthropics/claude-code/issues/71803)); this proposal does not schedule, request, or anticipate it.
-Compaction, `--resume`, and `--continue` keep the session id, so the session keeps its record.
-`/clear` and `--fork-session` start a new session with a new id and a new record; nothing carries over, which is what starting fresh means, and they are not resumption.
 Its guidance lives where it survives compaction: Pillar 2 of `orchestration-discipline.md`, which `/cdocs:init` writes into `.claude/rules/cdocs.md` and which re-injects on every compaction.
 Pillar 2 gains three steps:
 
@@ -280,6 +278,9 @@ Pillar 2 gains three steps:
 2. **At each handoff:** refresh the Scratchpoint, and commit devlog and record by explicit path.
 3. **After a compaction:** run `chat-record path`; read the `## Scratchpoint` and latest handoff of the devlog that lists that path, then the record's last 80 lines (`tail -n 80`, widened with an offset read if one long paste fills them); do not re-derive state from the summary.
    If no devlog lists the path, the session kept none and the record tail is its whole durable state.
+
+Compaction, `--resume`, and `--continue` keep the session id, so the session keeps its record.
+`/clear` and `--fork-session` start a new session with a new id and a new record; nothing carries over, which is what starting fresh means, so they are not resumption and no step applies to them.
 
 The steps make compaction a trimming event whose summary quality no longer decides resumption quality; for durable specialists, Phase 3's cap-and-reseed avoids compaction entirely.
 
@@ -332,7 +333,7 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 
 1. **Both capture and delivery.** Without capture, a post-compaction window seeds from a devlog up to a task unit stale; without delivery, captured state is never read.
 2. **Line-delimited markdown, not JSONL.** The readers are a post-compaction agent and a human with `tail`; one regex per line type suffices.
-3. **One file per session, full id in the name.** `session_id` is the only key both hooks and the agent have, sessions are the compaction unit, and the full id has no collision case.
+3. **One file per session, full id in the name.** `session_id` is the only key both hooks and the agent have, sessions are the compaction unit, and the full id has no collision case; a new session (`/clear`, `--fork-session`) is a new record by design.
 4. **Turns delimited by marker order, no correlation ids.** The session id ties the record together and a sign-off closes each turn, so `Stop` decides from one line; ids would add a token to every header and a flag to every note for no reader.
 5. **One append path; end time as a sign-off.** A single `>>` routine shared by hook and agent means nothing rewrites the file under a racing append; the end time is an appended sign-off because `@` headers mean attribution and the hook is not a speaker.
 6. **Human prompts only; only human-initiated turns are checked.** A harness envelope is not something a successor needs verbatim, and the turn it triggers is reflected in the agent's own note when it matters; checking only turns that open with `@user` keeps the `Stop` rule one line.
@@ -383,9 +384,9 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 `--unit` runs the pure-shell tests (no `claude`, no credentials) and runs in CI; the default mode also runs the headless scenarios, a manual Phase-1 gate because they need credentials.
 
 **Phase 1 headless scenarios.**
-Headless sandbox per the README recipe (sandboxed `CLAUDE_CONFIG_DIR` with copied credentials, empty `cdocs/` in an out-of-repo `cwd`, `--model haiku`, never `--bare`, `--plugin-dir <worktree under test>/plugins/cdocs`), run with `--permission-mode bypassPermissions` unless marked *default mode*.
+Headless sandbox per the README recipe (sandboxed `CLAUDE_CONFIG_DIR` with copied credentials, a `git init`ed project outside this repo with an empty `cdocs/_chat/`, `--model haiku`, never `--bare`, `--plugin-dir <worktree under test>/plugins/cdocs`), run with `--permission-mode bypassPermissions` unless marked *default mode*.
 *Default mode* scenarios run with `--permission-mode default` and are optional: they document the README allow rule and are not Phase-1 gates.
-Each scenario is setup, then assertion on the record and the `--include-hook-events` stream (the sandbox project is a `git init`ed directory with `cdocs/_chat/`):
+Each scenario is setup, then assertion on the record and the `--include-hook-events` stream:
 
 - `command -v chat-record` -> resolves into the worktree under test.
 - read a file, then note `- read: a.txt: canary fixture` -> one `@user`, one `@haiku-4-5` entry with that body, one sign-off `-- <sid8> at <ts>`, in that order; one `Stop`, no `decision`.
@@ -428,7 +429,7 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 - Multiple matches: two files for one session id -> `note` and `Stop` use the earliest-dated.
 - Merge: in a scratch repo with the init-scaffolded `.gitattributes`, two branches each appending a turn to one committed record, and two branches each creating the same record -> merge and rebase finish without conflict and keep every block.
 
-**Phase 1 interactive check** (once, recorded in the devlog with a record excerpt): (a) a forgotten note is blocked and recovered in one turn; (b) Escape mid-tool-call: whether `Stop` fires, its payload, whether it blocked; (c) `/rename` shows in the next sign-off; (d) a message typed mid-turn: whether `UserPromptSubmit` fires before the turn's `Stop` (see Edge Cases).
+**Phase 1 interactive check** (once, recorded in the devlog with a record excerpt): (a) a forgotten note is blocked and recovered in one turn; (b) Escape mid-tool-call: whether `Stop` fires, its payload, whether it blocked; (c) `/rename` shows in a sign-off within two turns; (d) a message typed mid-turn: whether `UserPromptSubmit` fires before the turn's `Stop` (see Edge Cases).
 
 **Phase 1 rules check.** The `.claude/rules/cdocs.md` that `/cdocs:init` writes contains the per-turn rule's scope sentence; then a sandboxed session with those rules is compacted mid-task, and its first post-compaction tool calls are `chat-record path` and reads of the Scratchpoint and record tail, with no hook emitting `additionalContext`.
 
