@@ -68,6 +68,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 |---|---|---|---|---|
 | 2026-10-05T09:01 | steer-implementer | p0 proposal | Defer `bashOutputMaxChars` cap to follow-up RFP; ship runner + dispatch guidance only | pre-step (prop-1) |
 | 2026-10-05T09:10 | steer-implementer | impl-1 | Size runner extraction bounds so its own Bash results stay well under any plausible consumer cap (report body <= ~2K chars) - makes the runner cap-safe regardless of the RFP outcome | 1 |
+| 2026-10-05T09:50 | steer-implementer | impl-1 | Maintainer: do not over-constrain the runner's methodology vs. the parent running Bash directly; the cheaper model is the main saving. SUPERSEDES the 09:10 cap-safety steer (its premise, the deferred cap, is out of scope). Runner-internal reads are judgment-driven (capture-to-file + size check stays; small outputs may be read whole; larger ones extracted with targeted, iterative commands, no fixed `head -n 10` suffix). Only the REPORT returned to the parent stays bounded. | 3 (pending) |
 
 ## Implementation Notes (impl-1)
 
