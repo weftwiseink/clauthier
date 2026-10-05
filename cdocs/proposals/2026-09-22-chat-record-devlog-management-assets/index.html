@@ -4,7 +4,7 @@ Color: cool engineering-slate ground, one structural accent (blue) for the agent
   confirmed/unverified chips kept apart from the build-status chips.
 Type: IBM Plex Sans / Sans Condensed / Mono, matching this project's engineering-artifact series.
 Layout: dense single-column technical reference, numbered sections in reading order of the mechanism
-  (where things live -> one turn -> format -> script -> scoping -> compaction -> scratchpoint -> split -> phases).
+  (where things live -> one turn -> format -> script -> scoping -> resumption -> scratchpoint -> split -> phases).
 -->
 <title>Chat-Record Design</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap">
@@ -138,14 +138,15 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 .cats .card p{font:12px/1.5 'IBM Plex Mono',monospace}
 </style>
 
+
 <main>
-<p class="eyebrow">Design reference &middot; meta/chat-record-devlog-management &middot; status: implementation_ready &middot; accepted round 8</p>
+<p class="eyebrow">Design reference &middot; meta/chat-record-devlog-management &middot; status: implementation_ready</p>
 <h1>Chat Record, Scratchpoint &amp; Devlog Splitting</h1>
-<p class="sub">How the accepted design works: what one turn writes, the record format, the script and its two hooks, how the record stays top-level only, where compaction guidance lives, the Scratchpoint, the split rule, and the phase plan.</p>
+<p class="sub">How the design works: what one turn writes, the record format, the script and its two hooks, how the record stays top-level only, the resumption guidance, the Scratchpoint, the split rule, and the phase plan.</p>
 
 <blockquote>
-<p><strong>Three artifacts, each with one job.</strong> A per-session <strong>chat record</strong> holds your prompts verbatim and at least one short gist bullet from the agent per turn, each turn closed by a <code>-- &lt;session&gt; at &lt;time&gt;</code> sign-off. A <strong>Scratchpoint</strong> in the devlog holds current state, replaced in place. <strong>Devlog chunks</strong> split a long devlog where a concern has closed.</p>
-<p>The mechanism is small: two hooks (<code>UserPromptSubmit</code>, <code>Stop</code>), one script on the agent's PATH (<code>chat-record</code>), one permission rule written by <code>/cdocs:init</code>. The record knows nothing about compaction; what to do around a compaction is rule text that re-injects after one.</p>
+<p><strong>Three artifacts, each with one job.</strong> A per-session <strong>chat record</strong> holds your prompts verbatim and at least one short gist bullet from the agent for every turn you start, each turn closed by a <code>-- &lt;session&gt; at &lt;time&gt;</code> sign-off. A <strong>Scratchpoint</strong> in the devlog holds current state, replaced in place. <strong>Devlog chunks</strong> split a long devlog where a concern has closed.</p>
+<p>The mechanism is small: two hooks (<code>UserPromptSubmit</code>, <code>Stop</code>) and one script on the agent's PATH (<code>chat-record</code>). The session id ties a record together and the order of its lines delimits turns. A devlog lists its records in <code>chat_record:</code> frontmatter. The record knows nothing about compaction; what to re-read after one is rule text.</p>
 </blockquote>
 
 <div class="legend">
@@ -164,19 +165,23 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 <div class="tw"><table>
 <thead><tr><th>Artifact</th><th>Author</th><th>Cadence</th><th>Location</th></tr></thead>
 <tbody>
-<tr><td>Chat record</td><td><code>UserPromptSubmit</code> hook (your prompts) and <code>Stop</code> hook (sign-offs); the top-level agent (gist bullets, via <code>chat-record note</code>). One script does every append.</td><td>every turn</td><td><code>cdocs/_chat/YYYY-MM-DD-&lt;session_id&gt;.md</code>, one file per session</td></tr>
+<tr><td>Chat record</td><td><code>UserPromptSubmit</code> hook (your prompts) and <code>Stop</code> hook (sign-offs); the top-level agent (gist bullets, via <code>chat-record note</code>). One script does every append.</td><td>every turn you start</td><td><code>cdocs/_chat/YYYY-MM-DD-&lt;session_id&gt;.md</code>, one file per session</td></tr>
 <tr><td>Scratchpoint</td><td>the overseer of any loop, or a durable specialist</td><td>every state-changing turn, replaced in place</td><td><code>## Scratchpoint</code> in the devlog that agent owns</td></tr>
 <tr><td>Devlog chunks</td><td>the devlog's author</td><td>at a handoff, once a concern has closed</td><td><code>cdocs/devlogs/YYYY-MM-DD-&lt;root&gt;-&lt;concern&gt;.md</code>; the root becomes an index</td></tr>
 </tbody>
 </table></div>
-<p>The record path comes from the session id: the hooks read it from their payload, and the agent's Bash has it as <code>CLAUDE_CODE_SESSION_ID</code>. The file is found by the glob <code>cdocs/_chat/*-&lt;session_id&gt;.md</code>, so <code>--resume</code> on a later day appends to the same file. The devlog links to its record from a two-line <code>## Chat Record</code> section that the agent fills on its first turn with <code>chat-record path</code>. Records are committed by explicit path in the devlog bookkeeping commit; dispatched agents never stage <code>cdocs/_chat/</code>.</p>
-<p class="ref">proposal &sect; Chat record &rarr; Location and naming, Commit protocol</p>
+<p>The record path comes from the session id: the hooks read it from their payload, and the agent's Bash has it as <code>CLAUDE_CODE_SESSION_ID</code>. The file is found by the glob <code>cdocs/_chat/*-&lt;session_id&gt;.md</code>, so <code>--resume</code> on a later day appends to the same file.</p>
+<p>A devlog names the records of every session that worked on it in an optional frontmatter list. It is a list because a devlog outlives sessions, and frontmatter because it stays with the root when a devlog splits. The devlog for a record is <code>grep -l '&lt;record path&gt;' cdocs/devlogs/*.md</code>.</p>
+<div class="rec">chat_record:
+  - cdocs/_chat/2026-10-05-3f2a9c1e-....md</div>
+<p>Records are committed by explicit path in the devlog bookkeeping commit at each handoff; dispatched agents never stage <code>cdocs/_chat/</code>.</p>
+<p class="ref">proposal &sect; Chat record &rarr; Location and naming, Devlog link, Commit protocol</p>
 
 <h2><span class="no">2</span>One turn</h2>
-<p>Every turn writes your prompt, at least one agent bullet, and a sign-off. The <code>Stop</code> hook only checks that a bullet exists for this turn's prompt id; it never reads or judges content. If the bullet is missing it blocks once, and the second <code>Stop</code> always lets the turn end.</p>
+<p>A turn you start writes your prompt, at least one agent bullet, and a sign-off. The <code>Stop</code> hook reads only the record's last marker line (a header or a sign-off); it never reads or judges content. If the last marker is still your <code>@user</code>, no note was written, so it blocks once, and the second <code>Stop</code> always lets the turn end.</p>
 
 <figure class="fig">
-<svg viewBox="0 0 900 520" role="img" aria-label="Sequence of one turn across four lanes: User, Agent, chat-record script, and the record file. UserPromptSubmit appends the user block; the agent appends its note via heredoc; Stop finds the note and appends the sign-off, or blocks once, after which the agent notes and the second Stop appends the sign-off.">
+<svg viewBox="0 0 900 540" role="img" aria-label="Sequence of one turn across four lanes: User, Agent, chat-record script, and the record file. UserPromptSubmit appends the user block; the agent appends its note via heredoc; Stop reads the last marker: an agent header means it appends the sign-off; @user means it blocks once, after which the agent notes and the second Stop appends the sign-off; a sign-off or no marker means it writes nothing.">
 <defs>
 <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 <marker id="ara" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
@@ -185,16 +190,16 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 <text x="290" y="26" class="hdr" text-anchor="middle">Agent (top-level)</text>
 <text x="540" y="26" class="hdr" text-anchor="middle">chat-record</text>
 <text x="800" y="26" class="hdr" text-anchor="middle">cdocs/_chat/&lt;session&gt;.md</text>
-<line x1="70" y1="38" x2="70" y2="500" class="lane"/>
-<line x1="290" y1="38" x2="290" y2="500" class="lane"/>
-<line x1="540" y1="38" x2="540" y2="500" class="lane"/>
-<line x1="800" y1="38" x2="800" y2="500" class="lane"/>
+<line x1="70" y1="38" x2="70" y2="520" class="lane"/>
+<line x1="290" y1="38" x2="290" y2="520" class="lane"/>
+<line x1="540" y1="38" x2="540" y2="520" class="lane"/>
+<line x1="800" y1="38" x2="800" y2="520" class="lane"/>
 
 <line x1="70" y1="66" x2="530" y2="66" class="arrow" marker-end="url(#ar)"/>
 <text x="90" y="60" class="lbl-b">UserPromptSubmit (hook)</text>
 <line x1="540" y1="92" x2="790" y2="92" class="arrow" marker-end="url(#ar)"/>
-<text x="556" y="86" class="lbl">@user: &lt;submit ts&gt; p=&lt;pid8&gt;</text>
-<text x="556" y="106" class="lbl mute">creates the file if absent</text>
+<text x="556" y="86" class="lbl">@user: &lt;submit ts&gt;</text>
+<text x="556" y="106" class="lbl mute">human prompts only; creates the file</text>
 
 <rect x="200" y="122" width="180" height="40" rx="5" class="box"/>
 <text x="290" y="140" class="lbl" text-anchor="middle">does the work;</text>
@@ -204,25 +209,25 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 <text x="306" y="180" class="lbl-b">chat-record note &lt;&lt;'EOF'</text>
 <text x="306" y="200" class="lbl mute">same tool batch as the last action</text>
 <line x1="540" y1="214" x2="790" y2="214" class="arrow-accent" marker-end="url(#ara)"/>
-<text x="556" y="208" class="lbl">@&lt;model&gt;: &lt;ts&gt; p=&lt;pid8&gt; + bullets</text>
+<text x="556" y="208" class="lbl">@&lt;model&gt;: &lt;ts&gt; + bullets</text>
 
 <line x1="290" y1="250" x2="530" y2="250" class="arrow" marker-end="url(#ar)"/>
 <text x="306" y="244" class="lbl-b">Stop (hook)</text>
 <rect x="420" y="262" width="240" height="34" rx="4" class="box-code"/>
-<text x="540" y="283" class="lbl" text-anchor="middle">entry with this p= exists?</text>
+<text x="540" y="283" class="lbl" text-anchor="middle">last marker in the record?</text>
 
-<text x="672" y="276" class="lbl-b">yes</text>
+<text x="672" y="276" class="lbl-b">agent header</text>
 <line x1="660" y1="288" x2="790" y2="314" class="arrow" marker-end="url(#ar)"/>
 <text x="610" y="332" class="lbl">-- &lt;session&gt; at &lt;end ts&gt;</text>
 
-<text x="440" y="316" class="lbl-b">no (first Stop)</text>
+<text x="420" y="316" class="lbl-b">@user (first Stop)</text>
 <line x1="530" y1="342" x2="300" y2="342" class="arrow" marker-end="url(#ar)"/>
 <text x="318" y="336" class="lbl">decision: block</text>
 <text x="318" y="358" class="lbl mute">reason names the real record path</text>
-<text x="318" y="372" class="lbl mute">and the exact note command with --p</text>
+<text x="318" y="372" class="lbl mute">and the heredoc note command</text>
 
 <line x1="290" y1="400" x2="530" y2="400" class="arrow-accent" marker-end="url(#ara)"/>
-<text x="306" y="394" class="lbl-b">chat-record note --p &lt;pid8&gt;</text>
+<text x="306" y="394" class="lbl-b">chat-record note &lt;&lt;'EOF'</text>
 <line x1="540" y1="420" x2="790" y2="420" class="arrow-accent" marker-end="url(#ara)"/>
 <text x="556" y="414" class="lbl">@&lt;model&gt; entry</text>
 
@@ -230,50 +235,51 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 <text x="306" y="442" class="lbl-b">Stop (stop_hook_active)</text>
 <line x1="540" y1="472" x2="790" y2="472" class="arrow" marker-end="url(#ar)"/>
 <text x="556" y="466" class="lbl">sign-off; never blocks twice</text>
+
+<text x="306" y="508" class="lbl mute">last marker a sign-off, or none (a turn you did not start, with no note): Stop writes nothing</text>
 </svg>
 </figure>
 <figcaption>The accent arrows are the agent's own writes. A turn costs no extra round trip when the note goes out in the same parallel batch as the turn's last action; a turn with no other tool call pays one. With every block ignored, the record still has your prompts and the sign-offs, and the gap shows as a <code>@user</code> followed directly by its sign-off.</figcaption>
-<p class="ref">proposal &sect; Layer map, Script &rarr; Stop behavior, Per-turn rule and cost</p>
+<p class="ref">proposal &sect; Layer map, Script &rarr; Stop table, Per-turn rule and cost</p>
 
 <h2><span class="no">3</span>Record format</h2>
-<p>A record is a sequence of blocks. Only real speakers get an <code>@</code> header; the hook is not a speaker, so the turn's end time is a sign-off line after the agent's block rather than a block of its own.</p>
+<p>A record is a sequence of blocks. Only real speakers get an <code>@</code> header; the hook is not a speaker, so the turn's end time is a sign-off line after the agent's block rather than a block of its own. Headers and sign-offs are the record's markers, and their order alone delimits turns.</p>
 
-<div class="rec"><span class="hdu">@user: 2026-10-05T12:50:03-07:00 p=3f9a0c1e</span>
-<span class="body">@end lines should be `-- $session_name at $timestamp` lines to serve more as postscripts</span>
+<div class="rec"><span class="hdu">@user: 2026-10-05T10:45:12-07:00</span>
+<span class="body">lets make chat record path frontmatter attribute instead of a section maybe?</span>
 
-<span class="hd">@opus-5-5: 2026-10-05T12:51:20-07:00 p=3f9a0c1e</span>
-<span class="body">- gist: sign-off replaces the @end block; steer sent to the round-7 proposer mid-round</span>
+<span class="hd">@opus-5-5: 2026-10-05T10:46:40-07:00</span>
+<span class="body">- gist: seven simplification steers sent to a fresh round-9 proposer; artifact update after accept</span>
 
-<span class="so">-- clauth-opt-context at 2026-10-05T12:51:24-07:00</span>
+<span class="so">-- clauth-opt-context at 2026-10-05T10:46:44-07:00</span>
 
-<span class="hdu">@harness: 2026-10-05T13:00:41-07:00 p=7c2e55d0</span>
-<span class="body">&lt;task-notification&gt; ... Agent "Revise chat-record proposal r7" finished ...</span>
+<span class="hdu">@user: 2026-10-05T10:58:03-07:00</span>
+<span class="body">runner tmp: yeah that deletion seems fine</span>
 
-<span class="hd">@opus-5-5: 2026-10-05T13:02:10-07:00 p=7c2e55d0</span>
-<span class="body">- gist: r7 committed (62febaa); no env var separates subagent Bash, so the guard is rule text
-- follow-up: whether a mid-turn prompt fires UserPromptSubmit; interactive check (e)</span>
+<span class="hd">@opus-5-5: 2026-10-05T10:59:10-07:00</span>
+<span class="body">- gist: runner captures older than ~24h are pruned before each run (552684d); exit code preserved
+- follow-up: plugin version bump and OpenCode republish still pending</span>
 
-<span class="so">-- clauth-opt-context at 2026-10-05T13:02:15-07:00</span></div>
+<span class="so">-- clauth-opt-context at 2026-10-05T10:59:15-07:00</span></div>
 <p class="ref">illustrative excerpt in the proposal's grammar, built from this arc's own turns</p>
 
 <ul class="notes">
-<li><span class="who hook">hook</span><b>@user / @harness</b>written by <code>UserPromptSubmit</code> at submission time, prompt verbatim. A prompt whose first token is a harness tag such as <code>&lt;task-notification</code> is <code>@harness</code>; it owes a bullet like any other turn.</li>
-<li><span class="who agent">agent</span><b>@&lt;model-short&gt;</b>written by <code>chat-record note --as &lt;model-short&gt;</code>; the script adds the timestamp and the <code>p=</code> that ties the entry to its prompt. Without <code>--as</code> the speaker is <code>assistant</code>.</li>
+<li><span class="who hook">hook</span><b>@user</b>written by <code>UserPromptSubmit</code> at submission time, prompt verbatim. Harness envelopes (a prompt opening with <code>&lt;task-notification</code> or <code>&lt;system-reminder</code>) are not recorded; a background agent's result is reflected in the agent's own note when it matters.</li>
+<li><span class="who agent">agent</span><b>@&lt;model-short&gt;</b>written by <code>chat-record note --as &lt;model-short&gt;</code>; the script adds the timestamp. The agent supplies the model name, since no hook payload carries one; without <code>--as</code> the speaker is <code>assistant</code>.</li>
 <li><span class="who hook">hook</span><b>-- &lt;session&gt; at &lt;ts&gt;</b>written by <code>Stop</code>. The session token is the <code>/rename</code> title from the transcript, mapped to <code>[A-Za-z0-9._-]</code>, else the first 8 hex of the session id. A turn's duration is its <code>@user</code> time to its sign-off.</li>
 </ul>
 
 <div class="tw"><table>
 <thead><tr><th>Pattern</th><th>Regex</th></tr></thead>
 <tbody>
-<tr><td>header</td><td><code>^@[A-Za-z0-9][A-Za-z0-9._-]*:</code> then <code>&lt;timestamp&gt;</code> and optional <code>p=&lt;pid8&gt;</code></td></tr>
-<tr><td>sign-off</td><td><code>^-- [A-Za-z0-9._-]+ at &lt;ISO-8601 with offset&gt;( p=[0-9a-f]{8})?$</code></td></tr>
+<tr><td>header</td><td><code>^@[A-Za-z0-9][A-Za-z0-9._-]*:</code> then an optional <code>&lt;timestamp&gt;</code></td></tr>
+<tr><td>sign-off</td><td><code>^-- [A-Za-z0-9._-]+ at &lt;ISO-8601 with offset&gt;$</code></td></tr>
 <tr><td>body</td><td>any line matching neither; a body line that looks like either gets one leading backslash, stripped on read</td></tr>
 </tbody>
 </table></div>
-<p>The optional <code>p=</code> on a sign-off is written only if prompts typed mid-turn turn out to fire <code>UserPromptSubmit</code> before the turn's <code>Stop</code>; readers then match by <code>p=</code> instead of position.</p>
 
 <h3>Gist bullets</h3>
-<p>One to three bullets per turn, one line each, under about 120 characters. The test for a bullet: would a successor reading only the prompts and these bullets know where things stand?</p>
+<p>At least one bullet per turn you start; aim for one to three, one line each, under about 120 characters. The test for a bullet: would a successor reading only the prompts and these bullets know where things stand?</p>
 <div class="cats">
 <div class="card"><h4>gist: (default)</h4><p>what the turn concluded, decided or changed</p></div>
 <div class="card"><h4>query:</h4><p>a search that proved useful and what it found</p></div>
@@ -288,60 +294,66 @@ svg .box-code{fill:var(--code);stroke:var(--line);stroke-width:1}
 <div class="tw"><table>
 <thead><tr><th>Mode</th><th>Invocation</th><th>Behavior</th></tr></thead>
 <tbody>
-<tr><td>hook</td><td><code>chat-record UserPromptSubmit</code></td><td>append <code>@user</code> or <code>@harness</code> with <code>p=</code>; never blocks</td></tr>
-<tr><td>hook</td><td><code>chat-record Stop</code></td><td>sign-off, or block once (table below)</td></tr>
-<tr><td>agent</td><td><code>chat-record note [--as m] [--p pid8]</code>, bullets on stdin</td><td>append an entry; <code>p=</code> from <code>--p</code>, else the last prompt header</td></tr>
+<tr><td>hook</td><td><code>chat-record UserPromptSubmit</code></td><td>append <code>@user</code> for a human prompt; skip harness envelopes; never blocks</td></tr>
+<tr><td>hook</td><td><code>chat-record Stop</code></td><td>sign-off, block once, or nothing (table below)</td></tr>
+<tr><td>agent</td><td><code>chat-record note [--as m]</code>, bullets on stdin</td><td>append <code>@&lt;m&gt;: &lt;now&gt;</code> and the body</td></tr>
 <tr><td>agent</td><td><code>chat-record path</code></td><td>print the record path; never creates the file</td></tr>
 </tbody>
 </table></div>
 
 <p>The note body comes only from stdin, written as a quoted heredoc, which does no shell expansion. A double-quoted argument would execute backticks and <code>$(...)</code>, and a single-quoted one breaks on apostrophes.</p>
 <div class="rec">chat-record note --as opus-5-5 &lt;&lt;'EOF'
-- query: `rg -n "prompt_id"` found the Stop/UserPromptSubmit correlation
+- query: `rg -n "stop_hook_active"` found the one-shot guard; didn't need the binary
 EOF</div>
 
 <div class="tw"><table>
-<thead><tr><th>Stop sees</th><th>Writes</th><th>Emits</th></tr></thead>
+<thead><tr><th>Last marker</th><th>Writes</th><th>Emits</th></tr></thead>
 <tbody>
-<tr><td>an agent entry with this turn's <code>p=</code>, or <code>stop_hook_active</code></td><td>sign-off</td><td>nothing</td></tr>
-<tr><td>no entry, block allowed</td><td>nothing</td><td><code>decision: block</code> with the real path and the exact note command</td></tr>
-<tr><td>no entry, block suppressed (interrupted turn, or no <code>prompt_id</code>)</td><td>sign-off</td><td>nothing</td></tr>
+<tr><td>an agent header (a note since the turn began)</td><td>sign-off</td><td>nothing</td></tr>
+<tr><td><code>@user</code>, first <code>Stop</code>, not interrupted</td><td>nothing</td><td><code>decision: block</code> with the real path and the note command</td></tr>
+<tr><td><code>@user</code>, with <code>stop_hook_active</code> or an interrupted turn</td><td>sign-off</td><td>nothing</td></tr>
+<tr><td>a sign-off, or none (a turn you did not start, with no note)</td><td>nothing</td><td>nothing</td></tr>
 </tbody>
 </table></div>
 
 <ul>
 <li><strong>Hook mode exits silently</strong> (exit 0, no write, no block) when the payload carries <code>agent_id</code>, <code>CDOCS_CHAT_RECORD=off</code>, <code>jq</code> is missing, there is no <code>cdocs/</code> above the working directory, or (for <code>Stop</code>) no record exists.</li>
 <li><strong>Agent modes fail loudly</strong>: <code>note</code> and <code>path</code> exit non-zero with a one-line reason when the session id is unset, no <code>cdocs/</code> is found, or the write fails.</li>
-<li><strong>One append path.</strong> Every write is one <code>printf &gt;&gt;</code> of a whole block, so racing writes interleave by block. Agents read records and never edit them. No runtime state files exist.</li>
-<li><strong>Permissions.</strong> <code>/cdocs:init</code> merges <code>"Bash(chat-record:*)"</code> into <code>permissions.allow</code>; without it the per-turn call prompts interactively and is denied headless.</li>
+<li><strong>One append path.</strong> Every write is one <code>printf &gt;&gt;</code> of a whole block, so racing writes interleave by block. Agents read records and never edit them. No state exists beyond the record itself.</li>
+<li><strong>No settings edits.</strong> <code>/cdocs:init</code> touches no permissions. Under skip-permissions nothing is needed; in default mode the README says to allow <code>Bash(chat-record:*)</code>, since an unallowed <code>note</code> prompts every turn and is denied headless.</li>
 </ul>
 <p class="ref">proposal &sect; Script: plugins/cdocs/bin/chat-record, Permissions</p>
 
 <h2><span class="no">5</span>Top-level only</h2>
-<p>The record belongs to the top-level session. Inside a subagent, <code>CLAUDE_CODE_SESSION_ID</code> is the parent's id and nothing in the environment tells the two apart, so a subagent's <code>note</code> would land in the parent's record and could satisfy the parent's <code>Stop</code> check.</p>
+<p>The record belongs to the top-level session. Hook mode is guarded by <code>agent_id</code>, but inside a subagent <code>CLAUDE_CODE_SESSION_ID</code> is the parent's id and nothing in the environment tells the two apart, so a subagent's <code>note</code> would land in the parent's record and could satisfy the parent's <code>Stop</code> check.</p>
+<p>The guard is one sentence that opens the per-turn rule in Pillar 2, so it sits beside the instruction it limits. No agent definition, skill or template carries <code>chat-record</code> text at all.</p>
+<blockquote>
+<p>Top-level session only: if you were dispatched by the <code>Agent</code> tool (including as a fork), never run <code>chat-record</code>.</p>
+<p>In the top-level session, before ending a turn that began with a human prompt, append at least one gist bullet with <code>chat-record note</code> (quoted heredoc form), issued in the same parallel tool batch as the turn's last action when the outcome is known.</p>
+<p>Other turns (a background agent finishing) may note when they change the state of play; <code>Stop</code> does not require it.</p>
+</blockquote>
 <ul>
-<li><strong>Guard: rule text.</strong> The per-turn rule opens "Top-level session only: if you were dispatched by the Agent tool (including as a fork), never run chat-record", and each cdocs agent definition carries the same line. An agent knows whether it was dispatched.</li>
-<li><strong>Fallback: a scoped <code>PreToolUse</code> deny.</strong> A hook with <code>"if": "Bash(chat-record:*)"</code> runs only on <code>chat-record</code> calls and sees <code>agent_id</code>. It ships if the Phase-1 subagent or fork test shows a leak.</li>
+<li><strong>Fallback: a scoped <code>PreToolUse</code> deny.</strong> A hook with <code>"if": "Bash(chat-record:*)"</code> runs only on <code>chat-record</code> calls and sees <code>agent_id</code>. It ships only if the Phase-1 subagent or fork test shows a leak.</li>
 <li><strong>Tiered or per-workstream records</strong>, including attributed subagent notes, are scoped in <code>cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md</code>.</li>
 </ul>
 
-<h2><span class="no">6</span>Compaction guidance lives in rules</h2>
-<p>The record has no compaction hook and no session or compaction lines. Compaction is a user action, so the guidance sits in Pillar 2 of <code>orchestration-discipline.md</code>, which <code>/cdocs:init</code> writes into <code>.claude/rules/cdocs.md</code> and which re-injects after every compaction.</p>
+<h2><span class="no">6</span>Resumption guidance</h2>
+<p>Compaction happens when you run <code>/compact</code> or the harness auto-compacts. The design does not schedule, request or anticipate it, and no agent tracks its own context. The guidance for what to do afterwards sits in Pillar 2 of <code>orchestration-discipline.md</code>, which <code>/cdocs:init</code> writes into <code>.claude/rules/cdocs.md</code> and which re-injects after every compaction.</p>
 <ol class="steps">
-<li><strong>First turn of a session:</strong> run <code>chat-record path</code> and write the result into the devlog's <code>## Chat Record</code> section.</li>
-<li><strong>At a task-unit boundary:</strong> write the handoff, refresh the Scratchpoint, commit devlog and record by path, then ask the user to run <code>/clear</code> or a steered <code>/compact Preserve verbatim from cdocs/devlogs/&lt;devlog&gt;.md: the ## Scratchpoint block and the latest handoff…</code></li>
-<li><strong>After any compaction or clear:</strong> run <code>chat-record path</code>; read the Scratchpoint and latest handoff of the devlog that names that path, then the last five blocks of the record. Don't rebuild state from the summary.</li>
+<li><strong>First turn a session works on a devlog:</strong> run <code>chat-record path</code> and append the result to the devlog's <code>chat_record:</code> list if absent.</li>
+<li><strong>At each handoff:</strong> refresh the Scratchpoint, and commit devlog and record by explicit path.</li>
+<li><strong>After a compaction or <code>/clear</code>:</strong> run <code>chat-record path</code>; read the Scratchpoint and latest handoff of the devlog that lists that path, then the last five blocks of the record. Don't rebuild state from the summary. If no devlog lists the path, create or resume one and add it.</li>
 </ol>
-<p>This does not stop auto-compaction in headless or AFK sessions. It makes the summary's quality irrelevant to how well the next window resumes.</p>
-<p class="ref">proposal &sect; Compaction guidance (rules only)</p>
+<p>Compaction then becomes a trimming event: the summary's quality no longer decides how well the next window resumes.</p>
+<p class="ref">proposal &sect; Resumption guidance (rules only)</p>
 
 <h2><span class="no">7</span>Scratchpoint</h2>
-<p>One <code>## Scratchpoint</code> section, replaced in place on every state-changing turn: at most 15 lines and 8 <code>files:</code> entries. The record accumulates; the Scratchpoint is overwritten. A reader after a compaction takes the Scratchpoint first and the record's tail second.</p>
+<p>One <code>## Scratchpoint</code> section, replaced in place on every state-changing turn. Aim for at most about 15 lines and 8 <code>files:</code> entries, moving anything older into a handoff; the agent judges what current state needs. The record accumulates; the Scratchpoint is overwritten. A reader after a compaction takes the Scratchpoint first and the record's tail second.</p>
 <div class="rec">## Scratchpoint
 
-- as_of: 2026-09-22T18:40:11-07:00 ctx: ~140K (10% inline)
+- as_of: 2026-09-22T18:40:11-07:00
 - now: wiring the Stop check; block reason text not final
-- since_handoff: Stop.prompt_id matches UserPromptSubmit.prompt_id
+- since_handoff: Stop decides from the record's last marker line alone
 - open: interrupt behavior of Stop; /clear effect on session_id
 - next: run interactive canary, then commit hooks.json entry
 - files:
@@ -380,8 +392,8 @@ EOF</div>
 <text x="350" y="24" class="hdr">after: root is the index</text>
 <rect x="350" y="36" width="230" height="110" rx="8" class="box-accent"/>
 <text x="362" y="56" class="lbl-b">root (index)</text>
-<text x="362" y="74" class="lbl mute">frontmatter, Objective,</text>
-<text x="362" y="88" class="lbl mute">## Chat Record, ## Scratchpoint,</text>
+<text x="362" y="74" class="lbl mute">frontmatter (chat_record:),</text>
+<text x="362" y="88" class="lbl mute">Objective, ## Scratchpoint,</text>
 <text x="362" y="102" class="lbl mute">live tables, ## Chunks</text>
 <text x="362" y="122" class="lbl mute">~6KB, Phase-2 A/B only</text>
 <rect x="350" y="164" width="230" height="64" rx="6" class="box-code"/>
@@ -407,7 +419,7 @@ EOF</div>
 <text x="622" y="244" class="lbl mute">and opens at most one chunk</text>
 </svg>
 </figure>
-<figcaption>Chunks are flat siblings with the root's date prefix and a concern slug. Each has full frontmatter, <code>status: done</code>, a new optional <code>part_of</code> pointing at the root, and a standalone BLUF. Rows shared by two concerns, open concerns and live tables stay in the root; a concern under about 3KB merges into a neighbor.</figcaption>
+<figcaption>Chunks are flat siblings with the root's date prefix and a concern slug. Each has full frontmatter, <code>status: done</code>, a new optional <code>part_of</code> pointing at the root, no <code>chat_record:</code>, and a standalone BLUF. Rows shared by two concerns, open concerns and live tables stay in the root; a concern under about 3KB merges into a neighbor.</figcaption>
 <p class="ref">proposal &sect; Devlog splitting at closed-concern boundaries</p>
 
 <h2><span class="no">9</span>Phases</h2>
@@ -415,9 +427,9 @@ EOF</div>
 <thead><tr><th>Phase</th><th>Status</th><th>Contents</th><th>Done when</th></tr></thead>
 <tbody>
 <tr><td>0 &middot; hook canary</td><td><span class="chip done">done</span></td><td>platform facts the script depends on</td><td>evidence in the history report</td></tr>
-<tr><td>1 &middot; capture</td><td><span class="chip ships-now">next to build</span></td><td><code>bin/chat-record</code>, two <code>hooks.json</code> entries, tests, <code>/cdocs:init</code> permission rule and Pillar 2 materialization, the per-turn rule, compaction steps, one top-level-only line per agent</td><td>tests green in default permission mode; a real session of 20+ turns with a bullet and one sign-off per prompt; 80% of 20 sampled bullets pass the successor test</td></tr>
-<tr><td>2 &middot; Scratchpoint + splitting</td><td><span class="chip ships-now">after 1</span></td><td>Scratchpoint rule and template, split rule, <code>part_of</code>, judge staleness condition</td><td>resumption A/B: steered compact + durable state wins or ties the native summary on three workstreams; split dry-run opens at most one chunk</td></tr>
-<tr><td>3</td><td><span class="chip gated">gated on the A/B</span></td><td>cap-and-reseed for durable specialists; <code>/cdocs:compact</code> prints the line for the user to run</td><td>pointer only; tiered records go to the RFP</td></tr>
+<tr><td>1 &middot; capture</td><td><span class="chip ships-now">next to build</span></td><td><code>bin/chat-record</code>, two <code>hooks.json</code> entries, hook and unit tests, Pillar 2 materialized by <code>/cdocs:init</code>, the per-turn rule with its scope sentence, the three resumption steps, the <code>chat_record:</code> field, a README allow-rule note</td><td>tests green; a real session of 20+ turns where every <code>@user</code> has an entry and one sign-off; 80% of 20 sampled bullets pass the successor test</td></tr>
+<tr><td>2 &middot; Scratchpoint + splitting</td><td><span class="chip ships-now">after 1</span></td><td>Scratchpoint rule and template, split rule, <code>part_of</code>, judge staleness condition</td><td>resumption A/B: <code>/compact</code> plus step 3 wins or ties plain <code>/compact</code> on three workstreams; split dry-run opens at most one chunk</td></tr>
+<tr><td>3</td><td><span class="chip gated">gated on the A/B</span></td><td>cap-and-reseed for durable specialists, at a cutoff on the specialist's harness-reported usage</td><td>pointer only; tiered records go to the RFP</td></tr>
 </tbody>
 </table></div>
 
@@ -425,22 +437,23 @@ EOF</div>
 <div class="tw"><table>
 <thead><tr><th>Fact</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td><code>Stop.prompt_id</code> equals the turn's <code>UserPromptSubmit.prompt_id</code></td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
+<tr><td>one <code>Stop</code> per top-level turn, never for a subagent</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
 <tr><td>one honored <code>Stop</code> block, then <code>stop_hook_active=true</code></td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
-<tr><td><code>CLAUDE_CODE_SESSION_ID</code> in Bash equals the hook's <code>session_id</code></td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
+<tr><td><code>UserPromptSubmit</code> fires on a background agent's completion, with the harness envelope as the prompt</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
+<tr><td><code>CLAUDE_CODE_SESSION_ID</code> in Bash equals the hook's <code>session_id</code>, in subagents too</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
 <tr><td>a plugin's <code>bin/</code> is on the Bash PATH</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
-<tr><td>heredoc note body arrives byte-exact under the allow rule</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
+<tr><td>heredoc note body arrives byte-exact</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
 <tr><td><code>"if": "Bash(chat-record:*)"</code> scopes a <code>PreToolUse</code> hook; it sees <code>agent_id</code> in subagents</td><td><span class="chip confirmed"><span class="dot"></span>confirmed</span></td></tr>
 <tr><td>whether <code>Stop</code> fires on an interrupted turn</td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td></tr>
 <tr><td>effect of <code>/clear</code> and <code>/resume</code> on <code>session_id</code></td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td></tr>
-<tr><td>whether a prompt typed mid-turn fires <code>UserPromptSubmit</code> before <code>Stop</code></td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td></tr>
+<tr><td>whether a prompt typed mid-turn fires <code>UserPromptSubmit</code> before <code>Stop</code> (either way the note covers both)</td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td></tr>
 <tr><td>whether a fork's tool calls carry <code>agent_id</code></td><td><span class="chip unverified"><span class="dot"></span>unverified</span></td></tr>
 </tbody>
 </table></div>
 
 <h2><span class="no">10</span>Sources</h2>
 <ul>
-<li><code>cdocs/proposals/2026-09-22-chat-record-devlog-management.md</code>: the accepted proposal, primary source</li>
+<li><code>cdocs/proposals/2026-09-22-chat-record-devlog-management.md</code>: the proposal, primary source</li>
 <li><code>cdocs/reports/2026-10-05-chat-record-design-history.md</code>: how the design reached this shape, rejected approaches, and the platform evidence table</li>
 <li><code>cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md</code>: per-workstream records and attributed subagent notes</li>
 <li><code>cdocs/proposals/2026-09-23-chat-record-redaction-scanning-rfp.md</code>: redaction and secret scanning for committed records</li>
