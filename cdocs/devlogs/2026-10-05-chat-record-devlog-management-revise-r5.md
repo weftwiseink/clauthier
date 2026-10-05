@@ -289,3 +289,34 @@ History report: a271766 (round-10 row, eight rejected-approach rows, four eviden
 
 - Phase 1 now carries the compaction-text removal across about twelve plugin files besides the chat-record work. That is a broader footprint, but each change is a deletion or a short rewording.
 - The `cd`-into-sibling case leaves the original `@user` unsigned (accepted, as the review framed it). The test asserts only that the note and `Stop` agree.
+
+## Round 11
+
+Inputs: the r11 review ([`2026-10-05-review-of-chat-record-devlog-management-r11.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r11.md), a1b1ae2, verdict revise: M1, M2, N1-N8, two questions), with the overseer's minimal defaults: only a devlog's owner keeps a Scratchpoint, thinness reads `inline_work` alone, Phase 1 splits into 1a (text) and 1b (capture).
+
+### Evidence gathered
+
+- Ran the widened grep over `plugins/cdocs` before editing. It hits every removal target in deliverable 1 of Phase 1a and no descriptive mention.
+  `iterate/SKILL.md:146` ("soft budget") was missed by the review's pattern, so `soft.budget` was added.
+  The two `/compact`-only lines that the widened pattern misses (`oversee-arc.md:141`, `oversee/SKILL.md:171`) are covered by the second grep, which must return only the reseed line (`orchestration-discipline.md:148`).
+- `agents/implementer.md:40` confirmed: the implementer appends only to `## Changes Made` and `### Implementer Notes`.
+- `skills/init/SKILL.md:37`: `--minimal` skips README and rules creation.
+- `date +%Y-%m-%dT%H:%M:%S%z | sed 's/\(..\)$/:\1/'` output equals `date -Iseconds` (GNU, this host).
+
+### Decisions
+
+- **M1.** The Scratchpoint's writer is the devlog's owner. In `iterate` that is the overseer, and the implementer keeps none. `implement` references the Scratchpoint for top-level mode only. The staleness rule is dropped instead of re-keyed on Events `at` values, since `inline_work` already gives the judge an observed signal.
+- **M2.** `triage.md` says "a context-estimate column" without naming it. This is simpler than a grep exclusion and keeps the acceptance check free of exceptions.
+- **Q2.** Split as the review sketched it. 1a holds deliverable 6 (now deliverable 1), the Scratchpoint subsection, the template section, the `## Verification` pointer, and the loop-skill one-liners. 1b holds everything else. The Cross-Target Degradation sentence reads "off Claude Code, resumption reads the devlog's Scratchpoint and latest handoff" in 1a, so it does not mention a record that does not exist yet; 1b adds that there is no chat record off Claude Code.
+- **N5.** Used portable commands rather than declaring GNU-only, because each needed only one changed pipeline.
+
+### Changes
+
+Proposal cde1e55. History report 83ddd32 (round-11 row and five rejected-approach rows; the `overseer_ctx_est` row no longer claims Scratchpoint freshness).
+
+### Verification
+
+- `grep -n -i 'warm implementer\|staleness\|freshness\|maintain one\|today\|tac \|Iteration Log rows'` over the proposal: no stale hit (the remaining `date -Iseconds` mention is the equivalence statement).
+- Every unsplit "Phase 1" reference is now 1a or 1b.
+- Frontmatter: `status: review_ready`, `last_reviewed` untouched. No plugin file or artifact HTML edited.
+- Proposal 57.0KB (53.4KB before), mostly the split's second success and constraints block.
