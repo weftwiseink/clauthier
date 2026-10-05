@@ -84,10 +84,18 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
   A line that does not fit is omitted, never retyped, shortened by hand, or replaced with `...`.
   Use bare capture lines (`grep -h`, no `-n`) unless the spec asks for line numbers.
   With no spec, prefer error-matching lines, then the true final lines.
-- **Aggregate or grouped specs** (for example "matches per file, first 3 per file"): put the counts first, produced by a counting command; then sample lines for as many top files as fit; then list the rest under `Truncated:`.
+- **Aggregate or grouped specs** (for example "matches per file, first 3 per file"): the `Excerpt:` is built from exactly two bounded commands, each pasted whole and unedited:
+  1. **Counts**: the entire output of one counting command, for example `cut -d: -f1 <file> | sort | uniq -c | sort -rn | head -n 20 | cut -c1-120`.
+  2. **Samples**: the entire output of one sampling command, for example `awk -F: 'c[$1]++ < 1' <file> | cut -c1-120 | head -n 12`.
+  Take as many samples per file as the spec asks only if they fit in 12 lines; otherwise take 1 per file and disclose the rest in `Truncated:`.
+  Do not hand-cut lines, pick lines out of a larger read, or add headings or composed lines (such as "1 each: ...") inside `Excerpt:`; labels and condensations go in `Summary:`.
+  Any total in `Summary:` (matches, files) comes from a command you ran (for example `wc -l < <file>` or `cut -d: -f1 <file> | sort -u | wc -l`), never from adding numbers yourself.
+  With at most 20 count lines and 12 sample lines, each at most 120 characters, the report stays under about 4,000 characters by construction.
+  If either command's `head` dropped lines, say so in `Truncated:` (for example "count lines 21-40 and samples for 13 files") with the unbounded command as the `see:`.
 - **Keep the true end.** When the spec asks for the last line or a summary, or the status is `FAILED`, the excerpt includes the capture's actual final line(s).
 - **Truncated**: name everything the spec asked for that is not in the report (files without samples, a dropped final line, the cut width if lines were cut), plus a ready-to-run command over the capture path that fetches it.
   Use `Truncated: none` only if everything the spec asked for is present.
+  `Truncated:` is for things you left out of the report, not for information the capture does not contain (say that in `Summary:`).
 
 ## Output Format
 
