@@ -170,6 +170,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-5 (cdocs:proposer, fresh) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T11:26 | round 10 |
 | return | impl-2 | `786985a`, `54f040c`, `b6818e7`, `6fd82e0` (+ proposal edits swept into prop-5's `bde47b3` by a concurrent `git add`; content verified); all 17 items applied; build OK; N1 no-spec canary now 17/17 names | 2026-10-05T12:03 | completeness revision |
 | dispatch | rev-bw-r2 (cdocs:reviewer, fresh) | review impl-final-r2 file, canary evidence | 2026-10-05T12:04 | verify completeness revision |
+| return | prop-5 | `92005e1`, `bde47b3`, `9d04656`, `ac169ec`, `277b19e`, `7a11084`, `a271766`, `82f94ae`; C1/M1-M9/N1-N10 resolved; overseer_ctx_est removed; Scratchpoint moved to Phase 1; Phase-1 footprint widened (~12 plugin files for compaction removal); review_ready | 2026-10-05T12:08 | round 10 |
+| dispatch | rev-r11 (cdocs:reviewer, fresh) | review r11 file | 2026-10-05T12:09 | verify r10 revisions |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
