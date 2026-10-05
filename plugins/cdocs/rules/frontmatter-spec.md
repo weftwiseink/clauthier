@@ -25,6 +25,8 @@ last_reviewed?:                                    # not on reviews themselves
   by: "@reviewer"
   at: 2026-01-29T09:00:00-08:00
   round: 1
+chat_record?:                                      # devlogs only
+  - cdocs/_chat/YYYY-MM-DD-<session_id>.md
 tags: [architecture, future_work, ...]
 ---
 ```
@@ -76,6 +78,10 @@ Tracks review history. Reviews themselves do not have this field.
 - **`at`**: Same format as `first_authored.at`.
 - **`round`**: Integer count of review rounds.
 
+### `chat_record` (optional, devlogs only)
+List of repo-root paths (`review_of` path semantics) to the chat records of every Claude Code session that worked on the devlog, one entry appended per session.
+How it is filled is in `orchestration-discipline.md` Pillar 2 "Resumption".
+
 ### `tags` (required)
 Limited freeform set of the most relevant topics.
 - Reviews should use tags like: `self`, `fresh_agent`, `rereview_agent`, `runtime_validated`, `ui_validated`, `architecture`.
@@ -93,3 +99,5 @@ Examples:
 
 Media files are dated, saved to `cdocs/_media/`, and embedded into the relevant doc.
 Format: `YYYY-MM-DD-description.ext`
+
+`cdocs/_chat/` is a mechanical asset directory like `_media/`: hook-written chat records (`YYYY-MM-DD-<session_id>.md`) with no frontmatter, outside frontmatter validation.
