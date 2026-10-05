@@ -236,7 +236,7 @@ A subagent's `note` would therefore land in the top-level record and, taking `p=
 - **Named fallback: a `PreToolUse` deny.** If the Phase-1 subagent or fork scenario shows a leak, add `{"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(chat-record:*)", "command": "${CLAUDE_PLUGIN_ROOT}/bin/chat-record PreToolUse"}]}`, a mode that denies with a one-line reason when the payload carries `agent_id`.
   The `if` field limits it to `chat-record` calls (verified on 2.1.289, run R8), so its cost is one entry and roughly one process spawn per turn; it is held back only to keep the two-hook surface.
 
-> NOTE(opus-5-5/chat-record-devlog-management): Whether subagents should instead write attributed notes for higher-level agents to curate is under maintainer discussion; this section is the only place that decision lives.
+> NOTE(opus-5-5/chat-record-devlog-management): Top-level scoping is via rule text (an agent knows whether it is top-level) with the `PreToolUse` deny as a named fallback; attributed subagent notes and any tiered/per-workstream record are deferred to [`2026-10-05-tiered-chat-records-rfp.md`](2026-10-05-tiered-chat-records-rfp.md).
 
 ### Compaction guidance (rules only)
 
@@ -439,6 +439,6 @@ Constraints: the `overseer_ctx_est`/`inline_work` columns and `overseer_thinness
 
 1. **Cap-and-reseed durable specialists:** at a cutoff (tentatively ~0.4-0.6M tokens) the overseer has the specialist write a final Scratchpoint and handoff, then dispatches a fresh leg seeded from them; dispatch-level and agent-controllable today.
 2. **`/cdocs:compact`:** user-invoked; performs the Pillar 2 boundary step and prints the line for the user to run (`/compact <steering>`, or `/clear` plus a resume pointer per the arm-3 result).
-3. **Per-workstream record (pointer only):** records spanning a `task_list`'s legs, likely via `SubagentStart`/`SubagentStop` with the `agent_id` guard relaxed; needs its own canary and proposal.
+3. **Per-workstream record:** scoped in [`2026-10-05-tiered-chat-records-rfp.md`](2026-10-05-tiered-chat-records-rfp.md).
 
 Success criteria: a reseeded specialist continues without re-reading its predecessor's files; `/cdocs:compact` plus the printed line yields a turn that acts on the Scratchpoint's `next` without re-orientation.
