@@ -153,6 +153,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-4 (cdocs:proposer, fresh) | chat-record proposal, design-history report, revise-r5 devlog | 2026-10-05T10:46 | round 9 |
 | return | prop-4 | `7b2633a`, `ca7218c`; status review_ready; flagged 3 tensions (default-mode note denial README-only; Phase-3 cap uses harness-reported tokens; mid-turn prompt boundary unverified) | 2026-10-05T10:51 | round 9 |
 | dispatch | rev-r9 (cdocs:reviewer, fresh) | review r9 file | 2026-10-05T10:52 | round 9 |
+| return | rev-r9 | `76e4d77`; REVISE: 1 blocker (devlog-skill deliverable leaks note instructions to subagents, directive 5), 6 nits; tensions a/b/c judged acceptable | 2026-10-05T10:55 | round 9 |
+| dispatch | prop-4 (warm, SendMessage) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T10:56 | round 9 fixes |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
