@@ -148,3 +148,39 @@ Net target: hooks = `UserPromptSubmit` + `Stop`, one `bin/chat-record`, rules te
 Stale-term scan (`SessionStart|PreCompact|PostCompact|SessionEnd|compact-begin|@session|announce|sid8|\.prompt|runtime.dir|never-list|n=<|chat-record\.sh`) over the rewritten proposal: every hit is in the Summary history NOTE, Decisions 7, 8, 10, and 12 (dated rationale), the Phase-0 table and its "also verified but not relied on" line, the Phase-1 "do not register" constraint, the example's own `query:` text, the Scratchpoint example's description of today's `hooks.json`, or the Phase-3 sketch.
 Frontmatter: `status: review_ready`; `last_reviewed` left exactly as the r5 reviewer set it (`revision_requested`, round 5).
 Proposal size 86KB; BLUF about 1000 characters.
+
+## Round 7
+
+Inputs: the r6 review ([`2026-10-05-review-of-chat-record-devlog-management-r6.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r6.md), verdict revise: subagents write into the top-level record; shell expansion of the note argument), standing maintainer intent (minimal: two hooks, one script, rule text, one init permission rule; keep a true end time), and a mid-round maintainer steer (2026-10-05): the turn-end stamp is a sign-off line `-- <session> at <ts>`, not an `@end:` speaker block.
+
+### Run R7 (2026-10-05, Claude Code 2.1.289, `--model haiku`, default permission mode)
+
+Sandbox: scratch `CLAUDE_CONFIG_DIR` with copied credentials and `settings.json` `{"permissions":{"allow":["Bash(chat-record:*)"]}}`; `env -i` so the parent session's variables do not leak; a stub `chat-record` on PATH that appends its argv to a log, writes stdin to a file, and dumps `env | grep -E '^(CLAUDE|AI_AGENT)'`.
+Prompt: (1) run `chat-record note --as haiku-4-5 <<'EOF'` with body ``- query: `echo RAN` didn't run; $HOME stays; $(date) stays`` and `- read: "quoted" \back\slash`; (2) dispatch a foreground `general-purpose` subagent told to run `chat-record note --as sub <<'EOF'` / `- gist: from subagent` / `EOF`.
+
+- `init`: `permissionMode: default`, `claude_code_version: 2.1.289`.
+- Result: `permission_denials: []`, `num_turns: 3`; argv log `note --as haiku-4-5`, `note --as sub`.
+- Top-level stdin file `cmp`-identical to the expected two lines: no expansion, no command substitution, apostrophe and backslashes intact.
+- Env dumps from the top-level call and the subagent call: identical (`diff` empty with the messaging token filtered out).
+  Both carry `CLAUDE_CODE_SESSION_ID=<the top-level id>`, `CLAUDE_CODE_CHILD_SESSION=1`, `AI_AGENT=claude-code_2-1-289_agent`, `CLAUDE_CODE_ENTRYPOINT=sdk-cli`, `CLAUDE_PID`, `CLAUDE_CODE_MESSAGING_SOCKET`.
+- Cross-check from this agent (a subagent of the overseer): same variable set; `/proc/$CLAUDE_PID/environ` has none of them, so the Claude process injects them into every Bash child, not only a subagent's.
+
+Finding: no environment variable distinguishes a subagent's Bash from the top-level's; `CLAUDE_CODE_CHILD_SESSION` means "child process of a Claude session", not "subagent".
+
+### Decisions (recorded as Decision 13 in the proposal)
+
+- **Blocker 1, subagents.** No mechanical guard exists in the environment; a `PreToolUse` Bash hook could see `agent_id` but is a third hook on every Bash call, rejected unless the rule fails in test.
+  Guard is rule text: Pillar 2's per-turn rule opens "top-level session only", and Phase 1 adds one line to each of the seven `plugins/cdocs/agents/*.md`; a Phase-1 scenario runs a multi-round foreground subagent and asserts no subagent entry and that the top-level `Stop` still blocks.
+- **Blocker 2, shell expansion.** `note` reads the body from stdin only (no positional form: one path is simpler and the argument forms are the hazard); the quoted heredoc is the single documented form in the rule, the `Stop` block reason, and the devlog skill; R7 is the evidence, and a Phase-1 test repeats it against the real script.
+- **Turn end as a sign-off.** `Stop` appends `-- <session-token> at <ts>` after the turn's last block.
+  No `p=`: adjacency ties it to the turn, and the `Stop` check keys on the agent header's `p=`.
+  Grammar gains `SIGNOFF_RE`, escaped in bodies exactly like `HEADER_RE`.
+  The r6 two-block alternative (dropping the end stamp) was not adopted: the maintainer asked for the end time.
+- **Simplifications adopted.** Session name mapped to a `[A-Za-z0-9._-]` token (quoted-value grammar and its fixture deleted); `--record` and the absent-variable fallback deleted, `note`/`path` exit non-zero on failure (opt-out stays a silent 0); `path` never creates; `note` omits `p=` when no prompt header exists; title read with `tac | grep -m1`; Phase-3 per-workstream sketch cut to a two-sentence pointer; `/cdocs:init` explicitly writes Pillar 2 into `.claude/rules/cdocs.md` with a presence test; `--plugin-dir` and a `command -v chat-record` assertion in the test harness; cwd-change edge case and a queued-prompt interactive check (e) added.
+- **Stale lines cleaned.** `read:` example and the Scratchpoint `files:` example now point at `validate-cdocs-edit-path.sh`; the "claim ... was false (round-5 review)" clause and the `--record` degraded-path sentence deleted.
+
+### Verification
+
+`grep -n '@end'` over the proposal: one hit, in Decision 4's sentence explaining why the stamp is not an `@end` block.
+`--record` appears only in the history NOTE and Decision 13.
+Frontmatter: `status: review_ready`, `last_reviewed` untouched.
