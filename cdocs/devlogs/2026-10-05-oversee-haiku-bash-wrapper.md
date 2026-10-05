@@ -43,6 +43,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r1.md | ~45K (10% inline) | yes | containment re-run by rev-1 (970-char report, true last line); F1 blocking: example shapes omit `| head -n 10` bound; overseer ran canaries inline (read-only) |
 | 2 | impl-1 (cdocs:implementer) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md | ~60K (5% inline) | no | F1 closed (max internal result 1,453); accept NOT terminal: maintainer steer ca5916f (relax internal bounds) pending -> iteration 3 |
 | 3 | impl-1 (cdocs:implementer) | rev-3 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md | ~75K (5% inline) | no | steer fully applied, floor passes (229-char containment report); F1: report format drifts on 'summarize' specs (fence, missing Full output line) |
+| 4 | impl-1 (cdocs:implementer) | rev-4 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md | ~85K (5% inline) | no | r3 F1 closed 5/5; new F1: filled example leaks into a report (d2); judge due (3 revise verdicts) |
 
 ## Judge Log
 
@@ -71,6 +72,9 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md (+ wording in AGENTS.md, model-tiering.md) | 2026-10-05T10:22 | iteration 4: report-format robustness |
 | return | impl-1 (cdocs:implementer) | same | 2026-10-05T10:26 | 6d773d2..df03c9b |
 | dispatch | rev-4 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md, cdocs/devlogs/_verify/2026-10-05-bash-runner-live-canary-r4.md | 2026-10-05T10:27 | iteration 4 review |
+| return | rev-4 (cdocs:reviewer) | review r4 + _verify r4 | 2026-10-05T10:40 | 112a44a revise |
+| dispatch | judge-1 (cdocs:judge) | cdocs/devlogs/_judge/ (if long rationale) | 2026-10-05T10:41 | review_count >= 3 |
+| dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 
 ## Steering Log
 
