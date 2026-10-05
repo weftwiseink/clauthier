@@ -79,12 +79,12 @@ die() { echo "chat-record: $*" >&2; exit 1; }
 # --- hook modes ------------------------------------------------------------------------
 
 hook_main() {
+  local input meta agent_id session_id cwd stop_hook_active permission_mode transcript_path
+  input="$(cat)" # drain stdin first, so an early exit never breaks the harness's pipe
   [ "${CDOCS_CHAT_RECORD:-}" = "off" ] && return 0
   command -v jq >/dev/null 2>&1 || return 0
   command -v git >/dev/null 2>&1 || return 0
 
-  local input meta agent_id session_id cwd stop_hook_active permission_mode transcript_path
-  input="$(cat)"
   meta="$(printf '%s' "$input" | jq -r '[
       (.agent_id // ""), (.session_id // ""), (.cwd // ""),
       ((.stop_hook_active // false) | tostring), (.permission_mode // ""),
