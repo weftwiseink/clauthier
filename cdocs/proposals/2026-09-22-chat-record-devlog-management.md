@@ -216,8 +216,8 @@ EOF
 A double-quoted argument would execute backticks and `$(...)` and expand `$VAR`; a single-quoted one breaks on apostrophes.
 The heredoc form delivers the body byte-exact (history report, run R7).
 
-`--as` passes through the session-token mapping (characters outside `[A-Za-z0-9._-]` become `-`), so `opus-4-6[1m]` becomes `opus-4-6-1m-` and `Opus 5.5` becomes `Opus-5.5`.
-The result must match the speaker part of `HEADER_RE` (`^[A-Za-z0-9][A-Za-z0-9._-]*$`, so an empty value or one starting with `.`, `-`, or `_` fails) and must not equal `user` in any case; otherwise `note` exits non-zero and writes nothing, so a malformed speaker can neither glue the note into the preceding prompt nor forge a human header.
+`--as` is reduced to one short id per model: lowercased, a leading `claude` and its separator, a trailing `[...]`, and a `-YYYYMMDD` date dropped, dots mapped to `-`, then the session-token mapping (characters outside `[A-Za-z0-9._-]` become `-`); so `Claude Opus 4.6`, `opus-4-6[1m]`, and `opus-4-6 [1m]` become `opus-4-6`, and `claude-haiku-4-5-20251001` and `Haiku-4.5` become `haiku-4-5`.
+The result must match the speaker part of `HEADER_RE` (`^[A-Za-z0-9][A-Za-z0-9._-]*$`, so an empty value or one starting with `.`, `-`, or `_` fails) and must not equal `user`; otherwise `note` exits non-zero and writes nothing, so a malformed speaker can neither glue the note into the preceding prompt nor forge a human header.
 
 `Stop` reads the record's last marker (`grep -E` on the two patterns, last match; escaped body lines never match), after the guards below:
 
@@ -228,11 +228,11 @@ The result must match the speaker part of `HEADER_RE` (`^[A-Za-z0-9][A-Za-z0-9._
 | `@user`, and `stop_hook_active` is true or `permission_mode` is `plan` | sign-off | nothing |
 | a sign-off, or none: the turn did not begin with a human prompt and has no note | nothing | nothing |
 
-Block text, with only the record path substituted; `<your model>` stays literal for the agent to fill in (under 300 bytes):
+Block text, with only the record path substituted; `<your model id>` stays literal for the agent to fill in (under 300 bytes):
 
 ```
 No chat-record entry for this turn (record: cdocs/_chat/2026-10-05-<session_id>.md). Run, then finish:
-chat-record note --as <your model> <<'EOF'
+chat-record note --as <your model id> <<'EOF'
 - gist: <what a successor should know from this turn>
 EOF
 ```
@@ -425,7 +425,7 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 - `Stop` decision: synthetic payloads against fixture records whose last marker is an agent header, `@user`, `@user` with `stop_hook_active`, a sign-off, and none; plus a record whose last line is an escaped `\@user: x` body line after an agent header -> outputs match the `Stop` table row for row.
 - Harness skip: `UserPromptSubmit` payloads starting `<task-notification` and `<system-reminder` (after leading blanks) write nothing; `<div>` and `hello <task-notification` write `@user`.
 - Exit codes: `CLAUDE_CODE_SESSION_ID` unset -> `note` and `path` exit non-zero, write nothing; `CDOCS_CHAT_RECORD=off` -> both exit 0, write nothing.
-- Speaker: `--as 'opus-4-6[1m]'` -> header `@opus-4-6-1m-:`; `--as 'Opus 5.5'` -> `@Opus-5.5:`; `--as user`, `--as User`, `--as ''`, `--as -x`, `--as _x` -> non-zero exit, nothing written.
+- Speaker: `--as 'opus-4-6[1m]'`, `'opus-4-6 [1m]'`, `'Claude Opus 4.6'` -> header `@opus-4-6:`; `--as 'Opus 5.5'` -> `@opus-5-5:`; `--as Haiku-4.5`, `claude-haiku-4-5-20251001` -> `@haiku-4-5:`; `--as user`, `--as User`, `--as claude-user`, `--as ''`, `--as claude-`, `--as -x`, `--as _x` -> non-zero exit, nothing written.
 - Stdout: `UserPromptSubmit` mode, recorded and skipped prompts alike, emits empty stdout; `Stop` emits only the block JSON.
 - Plan mode: a `Stop` payload with `permission_mode: "plan"` against a record ending in `@user` -> sign-off, no output.
 - Activation: a fixture with `cdocs/_chat/` above the git toplevel (the `~/cdocs/` case) and none inside -> no file; `cdocs/` without `_chat/` -> no file, no output; `path` relative to the toplevel prints `cdocs/_chat/...`.
@@ -509,7 +509,7 @@ Depends on Phase 1a: resumption step 3 reads the Scratchpoint.
 Deliverables:
 
 1. `plugins/cdocs/bin/chat-record` per the Script section, committed as mode `100755` like the existing hook scripts (the directory marketplace runs it from the working tree); `hooks.json` entries for `UserPromptSubmit` and `Stop`, and its `description` string names the chat record.
-2. `plugins/cdocs/hooks/tests/chat-record.test.sh` with the headless scenarios and the `--unit` suite; a CI workflow `.github/workflows/cdocs-hooks.yml`, path-filtered to `plugins/cdocs/bin/**`, `plugins/cdocs/hooks/**`, and the workflow file itself, running `--unit` on `ubuntu-latest` (bash, `jq`, `git`).
+2. `plugins/cdocs/hooks/tests/chat-record.test.sh` with the headless scenarios and the `--unit` suite; a CI workflow `.github/workflows/cdocs-hooks.yml`, path-filtered to `plugins/cdocs/bin/**`, `plugins/cdocs/hooks/**`, and the workflow file itself, running `--unit` on `ubuntu-latest` and `macos-latest` (bash, `jq`, `git`; BSD `sed`, `awk`, and `tr` on macOS).
 3. `/cdocs:init`: scaffold `cdocs/_chat/README.md` (one paragraph: hook-written, do not edit, opt-outs) and `cdocs/_chat/.gitattributes` (`*.md merge=union`); write `orchestration-discipline.md` Pillar 2 into `.claude/rules/cdocs.md`, the file Claude Code loads.
    `--minimal`, which writes no rules file, creates no `cdocs/_chat/`, so the hooks never run in a project without the rule text.
 4. `frontmatter-spec.md`: one line on `_chat/`, and the optional devlog field `chat_record:` (list of repo-root record paths).
@@ -518,7 +518,7 @@ Deliverables:
 5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps (step 3 replaces 1a's Scratchpoint reader line; the resumption text names no slash command, calling `/clear` and `--fork-session` "a cleared or forked session"), the commit protocol and Pillar 1 carve-out, and "never `Edit` or `Write` `cdocs/_chat/`"; Cross-Target Degradation's resumption sentence adds that there is no chat record off Claude Code.
 6. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences.
    No `chat-record` command, heredoc, or bullet categories there: dispatched implementers read the devlog skill, and the top-level scope sentence is not beside it.
-7. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
+7. The interactive check and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down (the rules check is deferred to [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md)).
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
 Success criteria: the `--unit` suite green in CI and every non-optional headless scenario green locally; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive check passes, and the rules check is deferred to [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md) (re-test with realistic lead models once the base rules context is cleaned up; haiku-based results are not realistic); Phase 1a's two greps, scoped to rules, skills, and agents, still give the same results (1b's test script and README sit outside that scope and may name `/compact` and `/clear`).
