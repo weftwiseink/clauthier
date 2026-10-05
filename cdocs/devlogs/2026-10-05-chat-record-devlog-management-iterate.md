@@ -26,6 +26,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 |---|---|---|---|---|---|---|---|
 | 1 (1a) | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | no | Phase 1a accepted; greps re-run by reviewer; 6 non-blocking wording nits batched into Phase 1b; overseer default: iterate/template.md gains `## Scratchpoint` in 1b |
 | 2 (1b) | impl-2 (cdocs:implementer) | rev-2 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | no | blocking: macOS sed `\r` in escape_body; rules check fails post-compaction (reviewer A/B: 3-line CLAUDE.md block beside import line 2/3 haiku); 7 non-blocking; maintainer interactive checks listed |
+| 3 (1b) | impl-3 (cdocs:implementer) | rev-3 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | no | 94/94 unit (incl. bash 3.2, BSD-sed sim), 25/25 non-optional headless; rules_check deferred to RFP; maintainer checklist (CI push, interactive a-d, 20-turn opus session, 16/20 sample) pending; minors: speaker regex gap, proposal sync lines |
 
 ## Judge Log
 
@@ -47,6 +48,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | impl-3 (cdocs:implementer, fresh: impl-2 ~284K) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/**, .github/workflows/cdocs-hooks.yml, proposal (1 success-criterion line), this devlog (notes) | 2026-10-05T14:10 | Phase 1b fixes; NOT orchestration-discipline.md / bash-runner.md |
 | return | impl-3 (cdocs:implementer) | same | 2026-10-05T14:33 | `4963600`..`5bc490b`; 94/94 unit; headless 25/27 (2 = deferred rules_check); --as normalisation deviates from proposal Script examples |
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | 2026-10-05T14:34 | verify 1b fixes |
+| return | rev-3 (cdocs:reviewer) | same | 2026-10-05T15:02 | `fac1568` accept |
+| dispatch | impl-3 (warm, SendMessage) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/tests/chat-record.test.sh, proposal (sync lines) | 2026-10-05T15:03 | 1b minors (speaker regex, proposal sync) |
 
 ## Steering Log
 
