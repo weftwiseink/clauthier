@@ -19,6 +19,7 @@ tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-m
 > BLUF(fable-5-1/chat-record-devlog-management): A per-session **chat record** under `cdocs/_chat/` holds hook-captured verbatim human prompts plus at least one terse agent-written gist bullet per human-initiated turn, each turn closed by a `Stop`-written `-- <session> at <time>` sign-off; `Stop` blocks once when such a turn has no entry.
 > Two hooks and one script (`plugins/cdocs/bin/chat-record`, note text on stdin via quoted heredoc); a devlog lists its records in `chat_record:` frontmatter; post-compaction re-reading lives in rules, not hooks.
 > A rolling devlog **`## Scratchpoint`** holds current state; devlogs split at closed-concern boundaries.
+> cdocs' existing agent-side compaction cadence and context self-estimates are removed; handoffs stay at task-unit boundaries.
 
 ## Summary
 
@@ -32,6 +33,8 @@ This proposal operationalizes [`2026-09-22-chat-record-scratchpoint-design.md`](
 
 The chat record is chronology (what a successor should know, in the order it was learned); the Scratchpoint is a short current-state snapshot; both are agent-authored and terse, and no hook supplies content.
 The session id ties a record together and block order delimits its turns.
+The hooks stay silent in a project until `/cdocs:init` creates `cdocs/_chat/`.
+Compaction is left to the user and the harness: Phase 1 removes cdocs' existing instructions for agents to compact or estimate their own context (Pillar 2's cadence, the loop skills' compact steps, the `overseer_ctx_est` column) and keeps the durable writes that make any compaction lossless.
 How the design reached this shape, the approaches it rejected, and the runtime evidence behind each platform fact are in the supplemental [`2026-10-05-chat-record-design-history.md`](../reports/2026-10-05-chat-record-design-history.md).
 
 ## Objective
@@ -57,7 +60,7 @@ Keep devlogs skimmable by splitting them where the work has seams, so a resuming
 - Cross-agent content sharing: the gists give awareness, not cheaper re-reads, and make no claim on the measured 97.4% cross-agent re-read figure.
 - Mechanical capture of files touched (no `PostToolUse` hook).
 - Compaction awareness in the record: no compaction hook, no session start, end, or compaction lines.
-- Agent-side compaction management: nothing here asks the user to compact, times compaction, or has the agent track its own context usage; the rules act only after a compaction has happened.
+- Agent-side compaction management: no cdocs text asks the user to compact, schedules or times compaction, or has an agent estimate its own context usage; Phase 1 removes the existing instructions that did, and the rules act only after a compaction has happened.
 - Recording harness envelopes (task notifications, system reminders).
 - Chat records for dispatched subagents (Phase 3 pointer only).
 - Hook-authored scratchpoints: a hook can nudge, never author.
@@ -303,7 +306,7 @@ One `## Scratchpoint` section in the devlog the agent owns, replaced in place on
   At each handoff the list rolls into the handoff's Completed subsection and restarts empty.
 - **Writers:** the overseer of any loop (`iterate`, `propose-revise`, `full-send`, `oversee`) and any Pillar-3 durable specialist; one-shot legs do not (their return summary is their checkpoint).
 - **Versus the chat record:** the record accumulates, the Scratchpoint is overwritten; a post-compaction reader takes the Scratchpoint first and the record tail second.
-- **Versus the thinness columns:** the columns stay as the judge's per-row bloat signal; a Scratchpoint whose `as_of` is older than two Iteration Log rows, or absent, is reported as the judge's existing `overseer_thinness: signal_missing`.
+- **Versus the thinness signal:** the judge reads the per-row `inline_work` column and the Scratchpoint's freshness; a Scratchpoint whose `as_of` is older than two Iteration Log rows, or absent, is reported as `overseer_thinness: signal_missing`.
 
 Raw evidence (settings, commands, log lines) goes in the devlog's existing `## Verification` section, which splits as a standard chunk once its campaign lands.
 
@@ -336,7 +339,9 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 7. **Record pointer in devlog frontmatter.** It is metadata about the devlog, a list fits multiple sessions, and frontmatter stays with the root when a devlog splits.
 8. **Scratchpoint replace-in-place, soft size.** History is the record's job; appending state per turn would rebuild the devlog bloat the split rule exists to fix; the size is a target because the agent judges what current state needs.
 9. **Semantic split, flat naming, root index.** A closed concern is a unit someone reads alone; flat names keep every path assumption intact.
-10. **Resumption guidance in rules only.** Pillar 2 re-injects on every compaction and the record path is available from the environment, so no hook carries anything across the boundary, and no agent-side compaction management is needed.
+10. **Resumption guidance in rules only; no agent-side compaction or context tracking.** Pillar 2 re-injects on every compaction and the record path is available from the environment, so no hook carries anything across the boundary.
+    Compaction belongs to the user and the harness, and a pillar that both schedules compaction and disclaims it contradicts itself, so the existing cadence, compact steps, and self-estimated context column go.
+    What made compaction safe was never its timing but the durable writes at task-unit boundaries, which stay; the judge reads thinness from `inline_work` and Scratchpoint freshness, which are observed rather than estimated.
 11. **Two hooks and one `bin/` script; no settings edits.** `bin/` is the documented way to run a plugin file as a bare command; the cost is that a plugin with `bin/` is not installable through claude.ai or Cowork, which a CLI and OpenCode plugin accepts.
     `/cdocs:init` stays non-invasive; skip-permissions users need nothing and default-mode users add one rule.
 12. **Committed by default, explicit-path staging.** Durability across worktrees outweighs the accepted leak channels in the WARN.
@@ -468,15 +473,26 @@ Deliverables:
    README "Hooks": the two hooks, activation (git toplevel, `cdocs/_chat/`), block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs, and one line on doubled hooks under `--plugin-dir` beside the installed plugin.
    `plugins/cdocs/hooks/cdocs-hooks.ts`: its "NOT ported from CC" header lists the chat-record hooks (OpenCode keeps no record).
 5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps, the commit protocol and Pillar 1 carve-out, and "never `Edit` or `Write` `cdocs/_chat/`".
-6. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences; `## Verification` as the evidence home.
+6. Remove agent-side compaction instructions and context self-estimates everywhere in the plugin, keeping each durable-state write at its task-unit boundary so a user-run or automatic compaction loses nothing:
+   - `plugins/cdocs/rules/orchestration-discipline.md`: delete Pillar 2's "Proactive compaction cadence" subsection (the `/compact`/`/clear` instruction, the 3-to-5-iteration trigger, the ~150K target); the Pillar 2 lead says the overseer keeps durable state current instead of "checkpointing and compacting deliberately"; "Handoff-before-compact format" becomes "Handoff format", written at each task-unit boundary, without "BEFORE compacting" or the compact-without-handoff sentence; the reseed subsection's "aggressive compaction" becomes "compaction"; the inline-floor line's "durable state before compact" becomes "durable state at task-unit boundaries", and the NOTE listing "proactive compaction cadence" drops that item; "Judge-Observable Thinness Signal" keeps `inline_work` as the overseer-written signal and drops the context estimate and its example; Cross-Target Degradation replaces the compaction-cadence sentence with "off Claude Code there is no chat record; resumption reads the devlog's Scratchpoint and latest handoff".
+   - `plugins/cdocs/rules/oversee-arc.md`: the arc-state write happens at every arc-level transition, without "BEFORE compacting"; "handoff-before-compact" becomes "handoff"; the "Where `/compact` is absent" degradation bullet is deleted.
+   - `plugins/cdocs/skills/iterate/SKILL.md`: the inline floor's "before compacting" becomes "at task-unit boundaries"; "Checkpoint (handoff-before-compact)" becomes "Checkpoint (handoff)", firing at each judge assessment and on Accept, without the 3-to-5-iteration trigger, "THEN compact (`/compact`, or `/clear` for a hard reset)", or "compacting without it is a failure"; Termination's soft-budget sentence drops "Overseer context trending past the ~150K target"; the Iteration Log paragraph drops `overseer_ctx_est`.
+   - `plugins/cdocs/skills/iterate/template.md`: the `overseer_ctx_est` column leaves both table headers, the field list, and the example row; `signal_missing` keys on the `inline_work` column.
+   - `plugins/cdocs/skills/oversee/SKILL.md` and `plugins/cdocs/skills/oversee/template.md`: the inline floor, the "Transition-write BEFORE compact" bullet, and "Checkpoint (proposal boundary)" lose "before compacting", "then compact (`/compact`, or `/clear` for a hard reset)", and "compacting without them is a failure"; the concurrency cap drops "against the overseer's ~150K-token budget"; Cross-Target Degradation drops the "absent `/compact`" clause.
+   - `plugins/cdocs/skills/propose-revise/SKILL.md`, `plugins/cdocs/skills/full-send/SKILL.md`, `plugins/cdocs/skills/ablate/SKILL.md`: "before compacting" becomes "at task-unit boundaries".
+   - `plugins/cdocs/agents/judge.md`: `overseer_thinness` and the escalate weighing read the `inline_work` column; the `overseer_ctx_est` trend and "context trending past target" go, leaving loop length as the soft cap.
+   - `plugins/cdocs/agents/triage.md`: the schema-drift note gives the template's current column count and names `overseer_ctx_est` as a column older devlogs may carry (reading by header name already copes).
+
+   Descriptive mentions stay: the reseed subsection, `triage/SKILL.md` "Context Management", and the resumption steps.
+7. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences; `## Verification` as the evidence home.
    No `chat-record` command, heredoc, or bullet categories there: dispatched implementers read the devlog skill, and the top-level scope sentence is not beside it.
-7. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
-8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
+8. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
+9. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
 Success criteria: the `--unit` suite green in CI and every non-optional headless scenario green locally; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass.
 If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` fallback ships before Phase 1 closes.
 
-Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence); Pillar 2 text this proposal adds contains no instruction to request, time, or estimate compaction or context usage.
+Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence); after Phase 1 no plugin file tells an agent to run, request, or time `/compact` or `/clear` or to estimate its own context (`grep -rn 'ctx_est\|150K' plugins/cdocs` is empty and every `compact` hit is descriptive), while `inline_work` and `overseer_thinness` keep their names.
 
 ### Phase 2: scratchpoint and semantic splitting
 
@@ -489,7 +505,7 @@ Depends on Phase 1 (the resumption steps name the Scratchpoint).
 5. The A/B and split dry-run, results in the devlog.
 
 Success criteria: the A/B pass bar; the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
-Constraints: the `overseer_ctx_est`/`inline_work` columns and `overseer_thinness` are not removed or renamed; no directory-per-workstream layout.
+Constraints: no directory-per-workstream layout.
 
 ### Phase 3 (gated on the Phase-2 A/B)
 
