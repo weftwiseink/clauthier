@@ -320,3 +320,7 @@ Proposal cde1e55. History report 83ddd32 (round-11 row and five rejected-approac
 - Every unsplit "Phase 1" reference is now 1a or 1b.
 - Frontmatter: `status: review_ready`, `last_reviewed` untouched. No plugin file or artifact HTML edited.
 - Proposal 57.0KB (53.4KB before), mostly the split's second success and constraints block.
+
+## Round 12
+
+Applied the r12 review ([`2026-10-05-review-of-chat-record-devlog-management-r12.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r12.md), 5e569fb) in f2bf11f: M1 and N1-N4 as listed there. The scoped greps still return 45 and 7 hits, all of them planned removals except the reseed line.
