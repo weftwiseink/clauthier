@@ -189,3 +189,34 @@ It also folds in the still-applicable rev-2 nits from [`2026-10-05-review-of-hai
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
   The OC build emits no `maxTurns` (same as `judge.md`).
 - Live canaries (containment, grepsweep, warnings) are pending the overseer's re-run.
+
+## Implementation Notes (impl-1, iteration 4)
+
+Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md); only the report contract changes, and the relaxed internal reads stay as they are.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `6d773d2` | `plugins/cdocs/agents/bash-runner.md` | F1: spec selects lines, never format; plain-text report, size cue, filled example, pre-send self-check. F2: concrete truncation trigger. F3/N1: Step 1 template mandatory, no `cd` prefix |
+| `e7ff402` | `plugins/cdocs/AGENTS.md`, `plugins/cdocs/rules/model-tiering.md` | N2: "bounded" -> "concise fixed-format extract", matching the agent description |
+
+### Implementer Notes
+
+- **F1 (blocking).**
+  - Step 3 now says a spec chooses WHICH lines go in and never changes the format. A "summarize"/"describe"/"explain" spec still gets verbatim lines plus counts (for example `warnings: 3`), never prose.
+  - Output Format opens with the rule: plain text, first line `BASH RUNNER REPORT`, last line `Full output: saved to`, with no fence, headings, bold, or summary paragraph, and nothing before or after.
+  - Size cue: about 2,000 characters typical, never more than about 4,000.
+  - The literal template is labelled "the fence is only for display here; do not output it". It is followed by one filled example for a "summarize the build" spec.
+  - A 3-item pre-send self-check closes the section: first and last lines, no paraphrase, and the truncation line whenever detail was omitted.
+- **F2.** The truncation trigger is now concrete: "whenever the spec asks for more than fits in the report (for example detail for every file when only some fit)". It is also self-check item 3.
+- **F3 / N1.**
+  - Step 1 says "Always use this exact template": a fresh timestamped path (never a fixed name, which concurrent runners would collide on), the subshell, and `warn=`.
+  - New clause: "Do not prepend `cd`: your working directory is already the dispatcher's". A "Working directory: ..." line in the Task prompt is information, not an instruction.
+- **N3 (scope of "run no other commands").** The rule survives the steer because it keeps the runner a single-command container. A follow-up into source files a log points at belongs to the dispatcher, which holds the context to judge it; the steer relaxed how the runner reads its own capture, not what it may touch.
+- **Risk:** the filled example's lines are illustrative. If haiku ever echoes example content instead of its capture, replace the example with an abstract one.
+
+### Verification
+
+- `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
+- Live checks are pending the reviewer's re-run: two b-probes (grepsweep: truncation line present) and two d-probes ("summarize" build: exact report structure with the `Full output: saved to` line).
