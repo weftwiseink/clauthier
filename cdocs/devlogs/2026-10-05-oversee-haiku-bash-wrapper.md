@@ -181,6 +181,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | impl-2 | `1d59c2f`, `b61692c`, `fd2f91e`, `2c7394a`; F5 + nits + 2 slip clauses; build OK; N2 canary 45/45 name+location (message omitted w/ honest Truncated pointer; one unsupported Summary speculation) | 2026-10-05T12:31 | overseer: accept with residuals, p0 done |
 | return | rev-r12 | `5e569fb`; REVISE: r11 all resolved, 1a greps hit only planned targets; M1 1b test file trips 1a greps (scope to rules/skills/agents); N1-N4 nits; no further full round needed | 2026-10-05T12:36 | round 12 |
 | dispatch | prop-6 (warm) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T12:37 | r12 fixes; overseer confirms success lines then iterate |
+| return | prop-6 | `f2bf11f`, `aaa9290`, `e346f31`; M1 greps scoped to rules/skills/agents, N1-N4 applied | 2026-10-05T12:40 | round 12 fixes |
+| inline | overseer | chat-record proposal frontmatter | 2026-10-05T12:41 | confirmed 1a/1b success lines consistent (r12 reviewer: no full round needed); status implementation_ready, last_reviewed accepted |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
