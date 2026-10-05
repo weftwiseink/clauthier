@@ -44,6 +44,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2 | impl-1 (cdocs:implementer) | rev-2 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r2.md | ~60K (5% inline) | no | F1 closed (max internal result 1,453); accept NOT terminal: maintainer steer ca5916f (relax internal bounds) pending -> iteration 3 |
 | 3 | impl-1 (cdocs:implementer) | rev-3 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r3.md | ~75K (5% inline) | no | steer fully applied, floor passes (229-char containment report); F1: report format drifts on 'summarize' specs (fence, missing Full output line) |
 | 4 | impl-1 (cdocs:implementer) | rev-4 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md | ~85K (5% inline) | no | r3 F1 closed 5/5; new F1: filled example leaks into a report (d2); judge due (3 revise verdicts) |
+| 5 | impl-1 (cdocs:implementer) | rev-5 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r5.md | ~95K (5% inline) | no | containment 6/6, Status 6/6, no prompt leakage; FAIL structure (d1 extra ## Summary) + fidelity (runner-authored 'Warnings: 3 (...)' names wrong files). New class per judge-1 rule -> ESCALATED to maintainer (hold) |
 
 ## Judge Log
 
@@ -79,6 +80,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md | 2026-10-05T10:44 | iteration 5 |
 | return | impl-1 (cdocs:implementer) | + orchestration-discipline.md, proposal | 2026-10-05T10:50 | 295f0b7..12baa90 |
 | dispatch | rev-5 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r5.md, _verify r5 | 2026-10-05T10:51 | iteration 5 review; judge-1 acceptance bar |
+| return | rev-5 (cdocs:reviewer) | review r5 + _verify r5 | 2026-10-05T11:00 | 72c93b2 revise; escalate |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 
 ## Steering Log
