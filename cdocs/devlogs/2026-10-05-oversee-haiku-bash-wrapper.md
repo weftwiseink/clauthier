@@ -89,6 +89,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 | return | prop-2 (cdocs:proposer, fable) | same + cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:03 | 6c757a3, 74169c1, cfbb241; status review_ready |
 | dispatch | crev-5 (cdocs:reviewer, fable) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md | 2026-10-05T11:04 | propose-revise round 5 review |
+| return | crev-5 (cdocs:reviewer, fable) | review r5 | 2026-10-05T11:35 | caf3b3d revise (bin/ PATH, permissions; CLAUDE_CODE_SESSION_ID exported to Bash) |
+| dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:37 | round 6: maintainer simplification + r5 findings |
 
 ## Steering Log
 
