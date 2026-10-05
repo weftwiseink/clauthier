@@ -201,7 +201,7 @@ The discipline still holds; only the primitive changes, and the durable state (h
 
 Verbose Bash output is a large share of what lands in a lead's context, and it is re-sent on every later turn.
 Any agent, not only an overseer, keeps an expected-verbose command out of its own context by dispatching it to the `cdocs:bash-runner` agent.
-This is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, extracts the salient lines with bounded shell, and returns only a short fixed-format `BASH RUNNER REPORT` naming the capture file.
+This is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, reads the salient lines out of that file, and returns only a short fixed-format `BASH RUNNER REPORT` naming the capture file.
 
 ### When to dispatch
 
@@ -218,8 +218,8 @@ Do NOT dispatch interactive or TTY-dependent commands: the runner closes stdin.
 
 The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a haiku runner misjudging "salient" is the main failure mode.
 Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
-The runner returns at most 10 salient lines, so an aggregate spec over many files should ask for per-file counts plus detail for the top few files only; a spec that cannot fit comes back as counts plus one `[spec truncated: ...]` line naming a follow-up command over the capture file.
-With no spec, the runner falls back to exit code, status, error-matching lines, and a bounded tail and head.
+The runner's report is concise (typically 10-20 verbatim lines), so an aggregate spec over many files should ask for per-file counts plus detail for the top few files only; a spec that cannot fit comes back as counts plus one `[spec truncated: ...]` line naming a follow-up command over the capture file.
+With no spec, the runner falls back to exit code, status, error-matching lines, and the tail and head.
 If more detail is needed later, grep or read the named capture file rather than re-running the command.
 
 This is a convention for an agent's dispatch decision, not something tooling enforces.
