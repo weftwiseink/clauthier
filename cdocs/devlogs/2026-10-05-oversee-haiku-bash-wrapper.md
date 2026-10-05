@@ -162,6 +162,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | fork (artifact) | proposal assets/index.html; artifact LSfQwst9o1MtbjbhZ94T1e | 2026-10-05T11:02 | round-9 artifact update |
 | return | prop-4 | `8b8be1b`; nit folded; status implementation_ready (p1 still HOLD for maintainer go) | 2026-10-05T11:03 | round 9 done |
 | return | fork (artifact) | `dafd77b`; republished LSfQwst9o1MtbjbhZ94T1e (v2) | 2026-10-05T11:05 | round-9 artifact |
+| dispatch | rev-r10 (cdocs:reviewer, fresh, high effort) | review r10 file | 2026-10-05T11:10 | final pre-impl review; no critical -> iterate Phases 1-2 |
+| dispatch | rev-bw-final (cdocs:reviewer, fresh, high effort) | review impl-final file, optional canary evidence | 2026-10-05T11:10 | over-conditioning on output size vs subtask quality |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
@@ -177,6 +179,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T12:50 | steer-implementer | prop-3 (chat-record r7) | Maintainer: turn-end stamp is a postscript line `-- <session_name> at <timestamp>`, not an `@end:` speaker block, to keep @-attribution semantics clean. | 7 (applied, 62febaa) |
 | 2026-10-05T13:13 | steer-implementer | prop-3 (chat-record r8) | Maintainer: proposals should be timeless; move revision history and past approaches into a supplemental report (repo convention). Keep phases together (Phase 3 depends on 1-2). Guard: rule text + scoped PreToolUse fallback (subagent-notes alternative under discussion). | 8 |
 | 2026-10-05T10:45 | steer-implementer | prop-4 (chat-record r9) | Maintainer: chat-record path as devlog frontmatter attr; drop prompt-id (p=) correlation; drop @harness records; no permission edits by init (usage runs skip-permissions); guard text only beside the per-turn instruction (no per-agent copies); remove all agent-side compaction/context-tracking instructions (compaction purely rules-side, on user/auto compaction); Scratchpoint caps -> 'aim for at most'. Then update artifact. | 9 |
+| 2026-10-05T11:10 | steer | arc | Maintainer (effort raised to high): one more chat-record review+revision pass; if nothing critical, /iterate implementation (lifts p1 HOLD conditionally). Final bash-wrapper review focused on whether size-aversion degrades subtask quality; quality retention is primary. | 10 |
 
 ## Implementation Notes (impl-1)
 
