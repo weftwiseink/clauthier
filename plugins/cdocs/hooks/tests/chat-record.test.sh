@@ -126,6 +126,8 @@ unit_suite() {
     '${CLAUDE_PLUGIN_ROOT}/bin/chat-record Stop'
   has "hooks.json description names the chat record" \
     "$(jq -r .description "$PLUGIN/hooks/hooks.json")" "chat record"
+  check "init's rule order names every rule file once (init_rules uses it)" \
+    "$(init_rule_order | sort | paste -sd' ' -)" "$(cd "$PLUGIN/rules" && ls *.md | sort | paste -sd' ' -)"
   check "awk supports regex intervals (reference splitter needs them)" \
     "$(echo aaaa | awk '/^a{4}$/ {print "y"}')" "y"
 
@@ -474,6 +476,8 @@ stop_responses() { jq -c 'select(.type == "system" and .subtype == "hook_respons
 stop_count() { jq -c 'select(.event == "Stop")' "${1%.jsonl}.canary.jsonl" 2>/dev/null | grep -c . ; }
 stop_blocks() { stop_responses "$1" | grep -c 'decision' ; }
 stream_sid() { jq -r 'select(.type == "system" and .subtype == "init") | .session_id' "$1" | head -n 1; }
+# Results of the top-level Agent tool calls only (the subagents' final reports).
+agent_results() { jq -rs '[.[] | select(.type == "assistant" and .parent_tool_use_id == null) | .message.content[]? | select(.type == "tool_use" and .name == "Agent") | .id] as $ids | .[] | select(.type == "user") | .message.content[]? | select(.type == "tool_result" and (.tool_use_id as $t | $ids | index($t))) | (.content | if type == "array" then map(.text // "") | join("") else . end)' "$1"; }
 tool_results() { jq -r 'select(.type == "user") | .message.content[]? | select(.type == "tool_result") | (.content | if type == "array" then map(.text // "") | join("") else . end)' "$1"; }
 # Records are dated files; README.md is not one.
 the_rec() { ls "$1"/cdocs/_chat/[0-9]*.md 2>/dev/null | head -n 1; }
@@ -633,19 +637,24 @@ and then reply received." --permission-mode bypassPermissions
 
   if hs foreground_agent "foreground Agent reading a file: nothing written for agent_id events"; then
     P="$(hproj foreground_agent)"
-    claude_run foreground_agent "$P" -- -p "$(note_prompt 'Use the Agent tool (foreground, general-purpose) to dispatch an agent whose task is: read the file a.txt and report its contents. Wait for its result.' '- gist: subagent read a.txt')" --permission-mode bypassPermissions
+    # Agents run in the background by default in 2.1.289; this forces a foreground run.
+    claude_run foreground_agent "$P" CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p "$(note_prompt 'Use the Agent tool (foreground, general-purpose) to dispatch an agent whose task is: read the file a.txt and report its contents. Wait for its result.' '- gist: subagent read a.txt')" --permission-mode bypassPermissions
     J="$SB/foreground_agent.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "one @user, one entry, one sign-off" "$(markers "$F")" "U A:haiku-4-5 S:${sid:0:8}"
     check "UserPromptSubmit/Stop payloads with agent_id" \
       "$(jq -c 'select(.event != "PreToolUse" and (.stdin.agent_id // null) != null)' "$SB/foreground_agent.canary.jsonl" | grep -c .)" "0"
     has "an agent actually ran" "$(jq -c 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | .name' "$J")" '"(Agent|Task)"'
+    out="$(agent_results "$J")"
+    hasnt "the agent ran in the foreground" "$out" 'Async agent launched'
+    has "the agent reported a.txt" "$out" 'canary fixture'
   fi
 
   if hs top_level_only "rules loaded; proposer and fork dispatched; no subagent chat-record call"; then
     P="$(hproj top_level_only)"
     init_rules "$P"
-    # Forks are gated behind CLAUDE_CODE_FORK_SUBAGENT in 2.1.289.
-    claude_run top_level_only "$P" CLAUDE_CODE_FORK_SUBAGENT=1 -- -p 'Do not run chat-record yourself unless a hook tells you to. First, use the Agent tool to dispatch a foreground agent with subagent_type "cdocs:proposer" whose task is: write a short 3-section proposal stub about adding a --verbose flag to a hypothetical CLI, at cdocs/proposals/2026-10-05-verbose-flag.md, then re-read it and tighten one sentence. Wait for it. Second, use the Agent tool with subagent_type "fork" and the task: report the first line of a.txt. Wait for it. Then reply done.' --permission-mode bypassPermissions
+    # Forks are gated behind CLAUDE_CODE_FORK_SUBAGENT in 2.1.289, and agents run in the
+    # background by default there; CLAUDE_CODE_DISABLE_BACKGROUND_TASKS forces foreground.
+    claude_run top_level_only "$P" CLAUDE_CODE_FORK_SUBAGENT=1 CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p 'Do not run chat-record yourself unless a hook tells you to. First, use the Agent tool to dispatch a foreground agent with subagent_type "cdocs:proposer" whose task is: write a short 3-section proposal stub about adding a --verbose flag to a hypothetical CLI, at cdocs/proposals/2026-10-05-verbose-flag.md, then re-read it and tighten one sentence. Wait for it. Second, use the Agent tool with subagent_type "fork" and the task: report the first line of a.txt. Wait for it. Then reply done.' --permission-mode bypassPermissions
     J="$SB/top_level_only.jsonl"; F="$(the_rec "$P")"
     check "no chat-record call with an agent_id" \
       "$(jq -c 'select(.event == "PreToolUse" and (.stdin.agent_id // null) != null)' "$SB/top_level_only.canary.jsonl" 2>/dev/null | grep -c .)" "0"
@@ -654,6 +663,15 @@ and then reply received." --permission-mode bypassPermissions
     echo "  info: Agent subagent_types dispatched: $out"
     has "a cdocs:proposer and a fork were dispatched" "$out" 'cdocs:proposer.*fork|fork.*cdocs:proposer'
     hasnt "the fork dispatch was not refused" "$(tool_results "$J")" "Agent type 'fork' not found"
+    # Positive controls: the no-leak check above is vacuous unless the subagents worked.
+    out="$(agent_results "$J")"
+    hasnt "both dispatches ran in the foreground" "$out" 'Async agent launched'
+    has "the fork reported a.txt's first line" "$out" 'canary fixture'
+    [ -s "$P/cdocs/proposals/2026-10-05-verbose-flag.md" ] && ok "the proposer wrote its proposal" \
+      || bad "the proposer wrote no cdocs/proposals/2026-10-05-verbose-flag.md"
+    out="$(jq -r 'select(.type == "assistant" and .parent_tool_use_id != null) | .message.content[]? | select(.type == "tool_use") | .name' "$J" | sort | uniq -c | awk '{printf "%s%s=%s", (NR > 1 ? "," : ""), $2, $1}')"
+    echo "  info: subagent tool calls: $out"
+    has "the subagents made tool calls under the rules" "$out" '(Write|Edit)='
   fi
 
   if hs slash_command "user slash command recorded as the raw invocation"; then
@@ -769,15 +787,18 @@ Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
   fi
 }
 
+# Rule files in /cdocs:init's order (its AGENTS.md block, which step 3 follows).
+init_rule_order() { sed -n 's/.*\[Full content of \([a-z-]*\.md\), frontmatter stripped\].*/\1/p' "$PLUGIN/skills/init/SKILL.md"; }
+
 # init_rules <proj>: materialize the cdocs rules the way /cdocs:init does (marker plus every
-# rule body) and the CLAUDE.md import line, plus the _chat scaffold.
+# rule body, in init's order) and the CLAUDE.md import line, plus the _chat scaffold.
 init_rules() {
-  local p="$1" hash
+  local p="$1" hash f
   mkdir -p "$p/.claude/rules"
   hash="$(cd "$PLUGIN/rules" && ls *.md | sort | xargs cat | sha256sum | awk '{print $1}')"
   {
     echo "<!-- cdocs rules v$(jq -r .version "$PLUGIN/.claude-plugin/plugin.json") hash=$hash - regenerate with /cdocs:init (use version from plugin.json) -->"
-    for f in "$PLUGIN"/rules/*.md; do echo; awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {fm=0; next} !fm' "$f"; done
+    for f in $(init_rule_order); do f="$PLUGIN/rules/$f"; echo; awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {fm=0; next} !fm' "$f"; done
   } > "$p/.claude/rules/cdocs.md"
   printf '# Project\n\n@.claude/rules/cdocs.md\n' > "$p/CLAUDE.md"
   mkdir -p "$p/cdocs/devlogs" "$p/cdocs/proposals" "$p/cdocs/reviews" "$p/cdocs/reports" "$p/cdocs/_chat"
@@ -816,13 +837,16 @@ rules_check() {
     "/compact" \
     "Continue with the next step: add a --name flag to greeter.py."
   J="$SB/rules_check.jsonl"
-  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | "\(.name) \(.input.command // .input.file_path // "")"' 2>/dev/null | head -n 8)"
+  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | "\(.name) \(.input.command // .input.file_path // "" | gsub("\n"; "; "))"' 2>/dev/null | head -n 8)"
   echo "  info: first post-compaction tool calls:"; printf '%s\n' "$post" | sed 's/^/    /'
   has "a compaction happened" "$(grep -c '"compact_boundary"' "$J")" '^[1-9]'
   has "first post-compaction call runs chat-record path" "$(printf '%s\n' "$post" | head -n 1)" 'chat-record path'
   # Reads that count must precede the first Write or Edit outside the devlog (acting on the task).
   local before; before="$(printf '%s\n' "$post" | awk '/^(Write|Edit) / && !/cdocs\/devlogs\// {exit} {print}')"
-  has "devlog (Scratchpoint, handoff) read before acting" "$before" '^(Read .*cdocs/devlogs/|Bash .*(cat|sed|head|grep|awk).*cdocs/devlogs/)'
+  # A read means the devlog's content was opened: a Read, or cat/sed/head/tail/awk on its
+  # path. A lookup (`grep -l <path> cdocs/devlogs/*.md`) finds the devlog but reads nothing.
+  has "devlog (Scratchpoint, handoff) read before acting" "$before" \
+    '^(Read .*cdocs/devlogs/[^/]+\.md|Bash (.*[^A-Za-z0-9_-])?(cat|sed|head|tail|awk) [^|;&]*cdocs/devlogs/)'
   has "record tail read before acting" "$before" 'tail -n 80|^Read .*cdocs/_chat/'
   hasnt "no hook emitted additionalContext" "$(jq -r 'select(.type == "system" and .subtype == "hook_response") | .stdout' "$J")" 'additionalContext'
   echo "  info: devlog chat_record: $(grep -A2 '^chat_record:' "$P"/cdocs/devlogs/*.md 2>/dev/null | tr '\n' ' ')"
