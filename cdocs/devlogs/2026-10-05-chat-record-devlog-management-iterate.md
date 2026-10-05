@@ -25,6 +25,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
 |---|---|---|---|---|---|---|---|
 | 1 (1a) | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | no | Phase 1a accepted; greps re-run by reviewer; 6 non-blocking wording nits batched into Phase 1b; overseer default: iterate/template.md gains `## Scratchpoint` in 1b |
+| 2 (1b) | impl-2 (cdocs:implementer) | rev-2 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | no | blocking: macOS sed `\r` in escape_body; rules check fails post-compaction (reviewer A/B: 3-line CLAUDE.md block beside import line 2/3 haiku); 7 non-blocking; maintainer interactive checks listed |
 
 ## Judge Log
 
@@ -42,6 +43,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | impl-2 (cdocs:implementer, fresh: new phase, impl-1 context ~150K) | plugins/cdocs/bin/**, plugins/cdocs/hooks/**, plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/README.md, scripts/cdocs-hooks.ts, .github/workflows/cdocs-hooks.yml, cdocs/_chat/**, this devlog (notes) | 2026-10-05T13:00 | Phase 1b + 1a nits |
 | return | impl-2 (cdocs:implementer) | same | 2026-10-05T13:47 | Phase 1b: `f3b4806`..`42e0b93` (17); 132/132 tests (75 unit, 57 headless); 20-turn headless record well-formed; FAILS rules check (post-compaction step 3 not followed by haiku/sonnet/opus); interactive checks + usefulness sample not run |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | 2026-10-05T13:48 | Phase 1b review |
+| return | rev-2 (cdocs:reviewer) | same | 2026-10-05T14:01 | `d208e0b` revise; awaiting maintainer decision on post-compaction placement |
 
 ## Steering Log
 
