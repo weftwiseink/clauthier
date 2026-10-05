@@ -200,18 +200,20 @@ The discipline still holds; only the primitive changes, and the durable state (h
 ## Bash Output Hygiene
 
 Verbose Bash output is a large share of what lands in a lead's context, and it is re-sent on every later turn.
-Any agent, not only an overseer, can delegate a context-bloating command to the `cdocs:bash-runner` agent.
-The goal is to preserve the lead's context without degrading its performance or losing relevant information, so dispatch is a judgment call, not a reflex.
-This is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, reads the salient lines out of that file, and returns only a short fixed-format `BASH RUNNER REPORT` naming the capture file.
+The goal is to keep that output out of the lead's context without losing relevant information: a result the lead cannot act on forces a re-run or a follow-up, which costs more than the context it saved.
+Any agent, not only an overseer, can do this itself by capturing output to a file, or can delegate a context-bloating command to the `cdocs:bash-runner` agent; which path fits is a judgment call, not a reflex.
+A runner dispatch is the same disposable-context shape as "Fork for side-context" applied to a single command: the runner captures the full output to a file in its own scratchpad, reads what the caller needs out of that file, and returns a fixed-format `BASH RUNNER REPORT` naming the capture file.
 
 ### When to dispatch
 
-Dispatch when a command's output is both large or unpredictable AND relevant to the task.
-Otherwise prefer a cheaper path:
+Start with the cheapest path that keeps what you need:
 
-- **Known need, self-bound it.** When the caller knows exactly what it needs (pass/fail, a count, the last few lines), bound the command itself (`grep -c`, `grep -q`, `| tail -n 5`) and run it directly.
+- **Known need: bound what you read, not what you keep.** When you know exactly what you need (pass/fail, the last few lines), capture to a file and read just that: `cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`, with `<file>` in your scratchpad or `/tmp`. The exit code survives (`cmd | tail -n 5` reports `tail`'s status, not `cmd`'s), and if the run fails, the details are one `grep -n -C3 <pattern> <file>` away, with no re-run. Pipe straight into `grep -c`/`grep -q` only when the count or match is the whole answer.
 - **Trivial or known-small commands** (`git status`, a one-line `ls`) run directly: the subagent round-trip costs more than it saves.
 - **Interactive or TTY-dependent commands** are never dispatched: the runner closes stdin.
+
+Dispatch when a command's output is large or unpredictable and what you need from it is a distillation: which tests failed and why, every call site, whether the build warned.
+When you need every line itself (a diff you will review line by line), read it yourself in pieces: a relay adds a round trip and nothing else.
 
 Typical dispatch candidates, listed by observed weight in past transcripts (the heaviest results were sweeps), not as a mandatory order:
 
@@ -221,12 +223,11 @@ Typical dispatch candidates, listed by observed weight in past transcripts (the 
 
 ### Dispatch contract
 
-The Task prompt gives the exact command and, for high-stakes calls, an explicit salience spec, since a runner misjudging "salient" is the main failure mode.
-Salience specs are line-oriented for pass/fail commands ("exit code plus any line matching `error`/`FAIL`") or aggregate for sweeps ("matches per file, first 3 per file"), because a blind head/tail destroys a sweep's signal.
-The report carries status, a `Summary:` of up to 3 lines (the runner's interpretation, with names and numbers grounded in the capture), a few short verbatim `Excerpt:` lines, a `Truncated:` field, and the capture path, within about 4,000 characters.
-So a "summarize" spec is fine, and an aggregate spec over many files gets an excerpt made of two bounded commands pasted whole (per-file counts, then a few samples per file), with any total in the summary computed by a command, and a `Truncated:` field naming what was omitted plus a follow-up command over the capture file.
-With no spec, the runner falls back to exit code, status, error-matching lines, and the true final lines.
-If more detail is needed later, grep or read the named capture file rather than re-running the command; a caller that needs exact bytes reads the capture file, since the report's excerpt is cut and bounded.
+The Task prompt gives the exact command and, for anything you will act on, a salience spec saying what you need, since a runner misjudging "salient" is the main failure mode.
+Say when you need completeness ("every failing test with file:line and expected vs actual", "every call site as file:line"): the runner then lists every item instead of sampling.
+For sweeps, a per-file shape ("matches per file, first 3 per file") beats a blind head/tail, which destroys a sweep's signal.
+The report carries `Status`, a short `Summary:`, verbatim `Excerpt:` lines, a `Truncated:` field with a ready-to-run `see:` command, and the capture path.
+If the report is not enough, do not act on a partial picture and do not re-run the command: run the `see:` command, read a bounded range of the capture (`sed -n`, `grep -n -C`), or dispatch the runner again with a narrower spec over the capture file.
 
 This is a convention for an agent's dispatch decision, not something tooling enforces.
 An undispatched verbose command falls back to the platform's built-in Bash output ceiling, an accepted residual risk.
