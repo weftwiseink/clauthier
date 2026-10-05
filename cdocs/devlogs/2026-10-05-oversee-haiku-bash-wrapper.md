@@ -164,6 +164,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | return | fork (artifact) | `dafd77b`; republished LSfQwst9o1MtbjbhZ94T1e (v2) | 2026-10-05T11:05 | round-9 artifact |
 | dispatch | rev-r10 (cdocs:reviewer, fresh, high effort) | review r10 file | 2026-10-05T11:10 | final pre-impl review; no critical -> iterate Phases 1-2 |
 | dispatch | rev-bw-final (cdocs:reviewer, fresh, high effort) | review impl-final file, optional canary evidence | 2026-10-05T11:10 | over-conditioning on output size vs subtask quality |
+| return | rev-bw-final | `9b80e84` (review + _verify/2026-10-05-bash-runner-quality-canary.md, 8 canaries); REVISE wording-only, no critical: contract ranks size over completeness (N1 no-spec default lost 17/17 test names; E2 compressed to unlabelled shorthand; caller `\| tail -n 5` loses diagnostics + exit code). 10 major / 7 nit; 3 maintainer decisions (complete-list ceiling ~12K, list in Excerpt, name self-capture pattern) | 2026-10-05T11:19 | awaiting maintainer |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
