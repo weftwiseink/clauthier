@@ -270,3 +270,47 @@ Addresses [`2026-10-05-review-of-haiku-bash-wrapper-impl-r4.md`](../reviews/2026
 - Stale-text check: `grep` finds no `spec truncated` and no `warn|WARN` left in the agent, the rules, or the proposal.
 - `npm run build:cdocs` -> `Agents converted: 7`, no model warning.
 - Live checks are pending the reviewer's re-run: d-probes (no example lines leaking into reports, exact structure) and b-probes (`Truncated:` filled with a `see:` command on overflow).
+
+## Implementation Notes (impl-1, iteration 6)
+
+Applies the maintainer decision that resolved the rev-5 escalation ([`2026-10-05-review-of-haiku-bash-wrapper-impl-r5.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r5.md)): the runner moves to `model: sonnet`.
+Maintainer rationale: any unreliability can negate the savings, through task degradation or fiddly UX for the opus parent; the true cost saving comes from avoiding long-term parent context bloat, not from the cheapest runner model.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `f345ddb` | `plugins/cdocs/agents/bash-runner.md` | `model: sonnet`; simplified Step 1 bullets, Step 3, Output Format, Constraints; explicit fidelity rule; strict `Truncated: none` |
+| `bd292bb` | `plugins/cdocs/rules/model-tiering.md` | `bash-runner` moved from the haiku carve-out to the sonnet tier, with rationale |
+| `54d6fee` | `plugins/cdocs/AGENTS.md`, `plugins/cdocs/rules/orchestration-discipline.md` | "(haiku; Bash only)" -> "(sonnet; Bash only)"; "a haiku runner misjudging" -> "a runner misjudging" |
+| `307fe41` | proposal | Title drops "Haiku"; BLUF/tier/frontmatter/table/Test Plan/Phase text -> sonnet; dated maintainer NOTE citing the r3-r5 canaries; history and link text left as is |
+
+### Implementer Notes
+
+- **Kept unchanged:**
+  - Step 2 (judgment-driven reads).
+  - The Step 1 capture template, `maxTurns: 12`, and Bash-only.
+  - The report structure, including the `Truncated:` and `Full output` fields and the Status rules.
+- **Simplified (haiku-only compensation):**
+  - Merged the emphatic Step 1 bullets (template, verbatim, no `cd`).
+  - Dropped the 3-item pre-send self-check and the "fence is only for display" aside.
+  - Dropped the "summarize = counts + key lines" sentence. That sentence licensed the fabricated count line (r5 F1).
+  - Collapsed the repeated plain-text and size rules into one Output Format sentence.
+  - Softened the CAPS in Constraints.
+  - Net: 20 insertions and 38 deletions in the agent file.
+- **Fidelity rule (explicit):**
+  - "Every file name, path, message, or other detail in the report must appear in a line you copied from the capture."
+  - "A count line ... must be the output of a command you actually ran in Step 1 or Step 2, not your own tally or attribution."
+  - "Do not shorten, merge, or annotate copied lines." This targets r5 F4's shortened paths and `...` cuts.
+- **Strict `Truncated:` (rev-5 follow-up, r5 F3):**
+  - The field is non-`none` "if the spec asked for anything you did not include (for example first-3 lines for every file but only some fit, or fewer lines than your read produced)".
+  - "Use `Truncated: none` only when everything the spec asked for is in the report."
+- **Proposal scope:** the "haiku" mentions left in the proposal are history or links: the filename, landscape-report and review links, `nit-fix` (still haiku), the round-1 canary cost, Finding 2's headless haiku runs, and the earlier dated steer NOTE.
+- **Precedence framing:** a consumer with an opus floor still has to opt `bash-runner` down to sonnet.
+
+### Verification
+
+- `npm run build:cdocs` -> `Agents converted: 7`.
+  The built `agents/bash-runner.md` has `model: anthropic/claude-sonnet-4-20250514` (mapped through `MODEL_MAP`) and no `Unknown model alias` warning.
+  The only warnings are the 3 `Unknown CC tool "*"` lines, which come from the `tools: "*"` agents and were there before this change.
+- Live sonnet canaries are pending the reviewer's re-run.
