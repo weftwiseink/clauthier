@@ -1,0 +1,30 @@
+# CI for the cdocs Claude Code hooks and bin/ scripts.
+# Runs the chat-record --unit suite (bash, jq, git; no claude, no credentials).
+# The headless scenarios need credentials and stay a manual gate.
+
+name: CDocs Hooks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/cdocs/bin/**"
+      - "plugins/cdocs/hooks/**"
+      - ".github/workflows/cdocs-hooks.yml"
+  pull_request:
+    paths:
+      - "plugins/cdocs/bin/**"
+      - "plugins/cdocs/hooks/**"
+      - ".github/workflows/cdocs-hooks.yml"
+
+jobs:
+  chat-record-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tool versions
+        run: bash --version | head -n 1; jq --version; git --version; awk --version 2>&1 | head -n 1 || true
+
+      - name: chat-record unit suite
+        run: bash plugins/cdocs/hooks/tests/chat-record.test.sh --unit
