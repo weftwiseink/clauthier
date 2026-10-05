@@ -257,8 +257,8 @@ The same applies to the Scratchpoint (Pillar 2): a durable specialist keeps one 
 
 When dispatching commands, either:
 1. **You know what you need**: Use the pattern `cmd > <file> 2>&1; echo "exit=$? wc=$(wc <file>)"; tail -n 20 <file>`.
-   Then have a sonnet subagent extract important info if more context is needed.
-   Similar patterns can also be used for interactive or tty-dependent commands.
+   Then have a `cdocs:bash-runner` (or other sonnet) subagent extract important info if more context is needed.
+   Similar patterns can also be used for interactive or tty-dependent commands, which are not dispatched (they hang without a terminal).
 2. **The command is well known with low-output**, i.e. `git status` or `ls`: run directly.
 3. **Output may be large, command is non-trivial, flexibility is wanted, saliency is loosely defined**: Use `cdocs:bash-runner` agents.
 
