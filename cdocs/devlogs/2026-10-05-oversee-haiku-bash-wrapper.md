@@ -97,6 +97,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | crev-5 (cdocs:reviewer, fable) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r5.md | 2026-10-05T11:04 | propose-revise round 5 review |
 | return | crev-5 (cdocs:reviewer, fable) | review r5 | 2026-10-05T11:35 | caf3b3d revise (bin/ PATH, permissions; CLAUDE_CODE_SESSION_ID exported to Bash) |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T11:37 | round 6: maintainer simplification + r5 findings |
+| return | prop-2 (cdocs:proposer, fable) | same | 2026-10-05T12:10 | 6548206, 6c1a4e4 |
+| dispatch | crev-6 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r6.md | 2026-10-05T12:11 | propose-revise round 6 review |
 
 ## Steering Log
 
