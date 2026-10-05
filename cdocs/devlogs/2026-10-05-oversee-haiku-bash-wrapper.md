@@ -60,3 +60,44 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 |---|---|---|---|---|
 | 2026-10-05T09:01 | steer-implementer | p0 proposal | Defer `bashOutputMaxChars` cap to follow-up RFP; ship runner + dispatch guidance only | pre-step (prop-1) |
 | 2026-10-05T09:10 | steer-implementer | impl-1 | Size runner extraction bounds so its own Bash results stay well under any plausible consumer cap (report body <= ~2K chars) - makes the runner cap-safe regardless of the RFP outcome | 1 |
+
+## Implementation Notes (impl-1)
+
+Scope: proposal Phases 1-2 (runner agent, model-tiering carve-out, "Bash Output Hygiene" dispatch convention); no settings-cap content anywhere.
+
+### Changes Made
+
+| commit | file(s) | change |
+|---|---|---|
+| `60979d9` | `plugins/cdocs/agents/bash-runner.md` | New haiku agent: `tools: Bash`, `maxTurns: 8`, capture-to-file-then-extract, fixed-format `BASH RUNNER REPORT` |
+| `6aa2352` | `plugins/cdocs/rules/model-tiering.md` | `bash-runner` named as a haiku carve-out alongside `nit-fix`, consumer-floor-wins framing |
+| `789fed8` | `plugins/cdocs/rules/orchestration-discipline.md` | New "Bash Output Hygiene" section: when to dispatch (sweeps, builds/tests/installs, unboundable), dispatch contract, residual risk |
+| `56ac9fc`, `6647fc3` | `plugins/cdocs/README.md` | OC agent count 6 -> 7; note that `bash-runner` reads no rule files |
+| `bef31aa` | proposal frontmatter | `implementation_ready` -> `implementation_wip` |
+
+### Implementer Notes
+
+- **Cap-safe bounds (steering 09:10).** Every extraction command must end in `| cut -c1-150 | head -n 10` (each Bash result <= ~1.5K chars); the capture call prints one line; the report is capped at 10 salient lines of <= 150 chars plus a <= 200-char command echo, about 2K chars total.
+- **Capture form.** The command runs in a subshell with a newline before `)`, stdin from `/dev/null`, stdout+stderr to the capture file.
+  This captures every part of compound commands, survives a trailing comment, contains a stray `exit`/`cd`, and makes interactive commands fail fast instead of hanging.
+- **Literal path across calls.** Each Bash call is a fresh shell, so the capture call echoes `out=<path>` and the prompt tells the runner to reuse the literal path, never `$OUT`.
+
+> NOTE(opus-5-5/impl-1): Minor deviation: the proposal says the capture file lives in "the subagent's own scratchpad directory".
+> The agent uses the `Scratchpad directory` listed in its environment, falling back to `${TMPDIR:-/tmp}` when none is listed (OpenCode and other targets may not list one).
+> Whether a CC subagent's environment actually lists a scratchpad is unverified here; the live canary below will show the path used.
+
+- **Rule-edit hygiene.** No version bump: the freshness hook compares a content hash, not the version, and prior rule edits (`b90818a`, `4c72b00`) did not bump `plugin.json`.
+  This repo has no materialized copies to refresh (`.claude/rules/cdocs.md` and `AGENTS.md` absent; CLAUDE.md `@`-imports the source rules), and no tests pin the hash.
+
+### Verification (emulated runner procedure, scratchpad)
+
+- Canary capture `( seq 1 200000 ) > "$OUT" 2>&1 < /dev/null` -> `exit=0 bytes=1288895 lines=200000`; `tail -n 1 | cut -c1-150` -> `200000`.
+- Buried error: compound `cd /nonexistent; seq 1 50000; echo "ERROR: buried" >&2; seq 1 50000; exit 3 # trailing comment` -> `exit=3 lines=100002`; bounded grep -> `50002:ERROR: buried`.
+- Single 3MB line: bounded `tail | cut | head` result is 151 bytes.
+- Aggregate: `grep -rn agent plugins/cdocs/rules` (11,158 bytes) -> per-file counts via `cut -d: -f1 | sort | uniq -c`; `awk 'c[$1]++ < 3'` first-3-per-file extract is 1,484 bytes.
+- `npm run build:cdocs` -> `Agents converted: 7`; built `agents/bash-runner.md` has `bash: true`, `read`/`edit`/`write: false`, no unknown-alias warning.
+  Built `rules/orchestration-discipline.md` contains `## Bash Output Hygiene`; `bashOutputMaxChars` appears in no built or source rule file.
+- Freshness hook against a sandbox project marked with the pre-change hash (`37b01a5f`) emits the refresh nudge naming the new hash (`fd12e2bd`), so consumers pick up the section via `/cdocs:init` with no init-skill edit.
+- Frontmatter keys match `judge.md`'s shape (`name`, `model`, `description`, `tools`, `color`, `maxTurns`); no YAML lib is installed, so parsing was checked via the build script's parser only.
+
+Not verified here (needs a live dispatch, see the implementer's Investigation Requested): `cdocs:bash-runner` appearing as a dispatchable agent, the tool restriction, and the parent-side containment canary.
