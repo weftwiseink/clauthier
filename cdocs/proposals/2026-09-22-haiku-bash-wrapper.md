@@ -35,6 +35,7 @@ tags: [meta, tooling, cost, hooks, context-management, agents, haiku, sonnet]
 > Evidence: the quality canary ([`_verify/...-quality-canary.md`](../devlogs/_verify/2026-10-05-bash-runner-quality-canary.md)) and the final implementation review ([`2026-10-05-review-of-haiku-bash-wrapper-impl-final.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-final.md)).
 > Defaults chosen: (1) a report is usually under ~4K, but runs to ~12K when the spec asks for a complete list ("every"/"all"), never compressed into unlabelled shorthand; (2) the complete list goes in `Excerpt:` as one command's output, one labelled line per item, with no new report field; (3) the caller guidance names self-capture (`cmd > <file> 2>&1; echo "exit=$?"; tail -n 20 <file>`, then a targeted read) as the first cheap path, replacing `| tail -n 5`.
 > With no spec, a failing build or test run reports each distinct failure (name, location, message).
+> Refined after the r2 verification review ([`...-impl-final-r2.md`](../reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-final-r2.md)): the no-spec complete list covers any failing run with distinct errors (builds, tests, linters, type-checkers), one line each with name, location and a short message, under the same ~12K allowance.
 
 ## Summary
 
@@ -132,7 +133,7 @@ Salience specs come in two shapes:
 - line-oriented, for pass/fail commands and per-item lists: "return the exit code and any line matching `error`/`fail`/`FAIL`"; "return the final summary line plus any non-zero exit"; "every failing test with file:line and expected vs actual".
 - aggregate, for sweeps where the matches ARE the signal: "matches per file, first 3 per file"; "the changed-file list plus per-file hunk counts"; "the file list, not per-file progress noise".
 When the spec asks for every item, the runner lists every one, never a sample.
-Absent an explicit salience spec, the agent reports what the caller needs to act: exit code and status, each distinct failure of a failing build or test run (name, location, message), otherwise error-matching lines, and the true final lines.
+Absent an explicit salience spec, the agent reports what the caller needs to act: exit code and status; for a failing run that reports distinct errors (a build, test suite, linter, or type-checker), every distinct error or failing test as a complete list, one line each with name, location and a short message; otherwise error-matching lines; and the true final lines.
 This mirrors how `nit-fix` is scoped only to the files named in its prompt.
 
 **Workflow: capture-to-file-then-extract.**
@@ -148,7 +149,7 @@ Instead:
 
 ```
 BASH RUNNER REPORT
-Command: <exact command run>
+Command: <exact command run; if over 200 characters, the first 200 then "...">
 Exit code: <n>
 Status: OK | FAILED | WARNINGS
 Summary:
@@ -156,15 +157,15 @@ Summary:
 Excerpt:
 <verbatim lines copied from a command's output: a few for pass/fail, one per item for a list>
 Truncated: none | <what was omitted>; see: <follow-up command over the capture file>
-Full output: saved to <scratchpad-path> (<K> chars)
+Full output: saved to <capture path> (<bytes> chars, <lines> lines; <lifetime>)
 ```
 
 Completeness comes before size: a thin report sends the caller back to the raw output, the cost the runner exists to avoid.
-A report is usually under about 4,000 characters; when the spec asks for a complete list ("every", "all"), it includes all of it up to about 12,000 characters, and past that lists what fits, gives a command-computed total, and names the rest in `Truncated:`. Lines are never compressed into an unlabelled shorthand to save space.
+A report is usually under about 4,000 characters; when the spec asks for a complete list ("every", "all"), or a failing run with no spec lists its failures, it includes all of it up to about 12,000 characters, and past that lists what fits, gives a command-computed total, and names the rest in `Truncated:`. Lines are never compressed into an unlabelled shorthand to save space.
 `Summary:` gives the runner a sanctioned place for interpretation, so it does not leak prose elsewhere; `Excerpt:` holds only command output, so verbatim copying stays accurate.
 A complete list goes in `Excerpt:` as one command's output (for example an `awk` over the capture), one compact, labelled line per item; there is no separate findings field.
 For aggregate specs, `Excerpt:` is the whole output of two commands, pasted unedited: one counting command and one sampling command, each `head` sized by the spec (when the spec asks for every match, the second is the complete filtered list). Composed or heading lines go in `Summary:`, and any total there comes from a command.
-`Truncated: none` is used only when everything the spec asked for is present, and `Truncated:` never lists as omitted something the report never contained.
+`Truncated: none` is used only when everything the spec asked for is present, and `Truncated:` describes omissions exactly, never claiming a cut that did not happen.
 
 The `saved to` line is the default and is load-bearing: the capture file is the primary artifact, not a copy, so nothing is silently destroyed.
 State the path and its lifetime (the subagent's scratchpad directory, which is session-scoped and disposable).
@@ -173,10 +174,12 @@ The parent receives only the report; the raw output lives in the capture file an
 > NOTE(opus-5-5/oversee): Maintainer steer 2026-10-05: the runner's methodology should be no more constrained than the parent running Bash directly, since the cheaper model is the main saving.
 > Runner-internal results cost only haiku context, never the parent's, and the cap that would have motivated tight internal bounds is deferred to the RFP.
 > So internal reads are judgment-driven (small captures read whole, larger ones read iteratively), while capture-first, the one-line `exit/out/bytes/lines/warn` summary, and the concise fixed-format report stay mandatory.
+> (Refined by the completeness-first NOTE above: the report stays fixed-format, but its size is a default that a complete list may exceed.)
 > (The "cheaper model is the main saving" premise is superseded by the 2026-10-05 sonnet NOTE above; the relaxed-reading conclusion stands.)
 
 > NOTE(opus-5-5/oversee): Maintainer-approved report contract v2, 2026-10-05: `Summary:` (interpretation) plus `Excerpt:` (few short verbatim lines) replace a single verbatim `Salient output:` block.
 > Evidence: the r6 live canaries ([`_verify/...-r6.md`](../devlogs/_verify/2026-10-05-bash-runner-live-canary-r6.md)): sonnet kept adding prose despite a ban, and retyping ~50 long lines in 8.6-10KB sweep reports drifted the content of a few. v2 sanctions the prose and keeps the verbatim part small enough to copy accurately.
+> (Refined by the completeness-first NOTE above: `Excerpt:` may hold one command-built line per item, since a command, not retyping, produces it.)
 
 **Dispatch scope: opt-in judgment call, documented convention, not a hard rule.**
 The goal is to delegate context-bloating work so the lead's context is preserved without degrading its performance or losing relevant information.
@@ -312,10 +315,11 @@ Until then, track as blocked/future work; do not implement.
 - **Salience: explicit spec, aggregate.**
   Given "matches per file, first 3 per file" over a `grep -rn` sweep, the report shows per-file grouping, not a flat head/tail.
 - **Salience: default heuristic.**
-  With no spec, a `FAILED` command yields a non-`OK` status and its exit code, and a failing test run names each distinct failing test (name, location, message).
+  With no spec, a `FAILED` command yields a non-`OK` status and its exit code, and a failing run with distinct errors (build, tests, linter, type-checker) lists every one, with name, location and a short message, even past the ~4K default.
 - **Completeness probe.**
-  Two runs over one multi-failure test fixture (for example 17 distinct `deepStrictEqual` failures across 6 `node --test` files, outside the repo): one with an "every failing test: name, file:line, expected vs actual" spec, one with no spec.
-  Each report is checked against ground truth derived from the fixture sources: the spec'd run lists every failure exactly, in labelled lines inside `Excerpt:` built by a command; the no-spec run names every failing test.
+  Two runs over a multi-failure `node --test` fixture outside the repo: one with an "every failing test: name, file:line, expected vs actual" spec, one with no spec.
+  The no-spec run uses a fixture whose failure list exceeds the ~4K default (about 40 or more failures, for example 45 distinct `deepStrictEqual` failures across 9 files); at 17 failures a no-spec regression is invisible.
+  Each report is checked against ground truth derived from the fixture sources: the spec'd run lists every failure exactly, in labelled lines inside `Excerpt:` built by a command; the no-spec run names every failing test with its location.
   The procedure in [`_verify/2026-10-05-bash-runner-quality-canary.md`](../devlogs/_verify/2026-10-05-bash-runner-quality-canary.md) is the template.
 - **Runner above the platform ceiling.**
   The runner returns the true last line of `seq 1 200000` (~1.2MB, far above the ~30K default ceiling), proving the capture-to-file flow is not itself defeated by the ceiling on its own Bash call. Covered by the Verification Methodology canary.
@@ -339,7 +343,7 @@ Verify it directly with a canary:
 The containment check (steps 2-4) is the verification floor: if the parent transcript holds the raw dump, or the runner does not return the true last line, the wrapper has failed its one job.
 
 Containment alone is not acceptance: a report can be small, well-formatted and verbatim and still useless to the caller.
-Every acceptance bar also includes the Test Plan's completeness probe, alongside the format and fidelity checks: the spec'd run must list every failure, and the no-spec run must name every failing test.
+Every acceptance bar also includes the Test Plan's completeness probe, alongside the format and fidelity checks: the spec'd run must list every failure, and the no-spec run must name every failing test with its location.
 
 ## Implementation Phases
 
