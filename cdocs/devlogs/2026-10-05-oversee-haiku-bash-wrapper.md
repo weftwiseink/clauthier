@@ -174,6 +174,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | rev-r11 (cdocs:reviewer, fresh) | review r11 file | 2026-10-05T12:09 | verify r10 revisions |
 | return | rev-r11 | `a1b1ae2`; REVISE, no critical: r10 all resolved; M1 overseer_ctx_est replacement underspecified (implementer Scratchpoint ownership, uncomputable as_of staleness, signal_missing mismatch); M2 triage.md vs grep contradiction; N1-N8 | 2026-10-05T12:16 | round 11 |
 | dispatch | prop-6 (cdocs:proposer, fresh) | chat-record proposal, history report, revise-r5 devlog | 2026-10-05T12:17 | round 11 fixes; overseer defaults: Scratchpoint only for devlog-owning agent, judge thinness = inline_work only, split Phase 1a/1b |
+| return | rev-bw-r2 | `d6d90af` (canary r2, 18 runs), `b31a02d`; REVISE: F5 no-spec 45-failure run names 0/45 in 2/3 (12K allowance gated on "every" spec; patched copy 3/3), probe needs >=40-failure fixture, nits F1-F4; spec cases A/B/E/O/P all correct | 2026-10-05T12:21 | verify completeness |
+| dispatch | impl-2 (warm, SendMessage) | bash-runner.md, haiku-bash-wrapper proposal, this devlog (Implementation Notes) | 2026-10-05T12:22 | F5 + nits; overseer defaults: no-spec list covers any failing run with distinct errors; each line name+location+message |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
