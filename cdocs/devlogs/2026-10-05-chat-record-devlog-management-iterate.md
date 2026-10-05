@@ -50,6 +50,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | 2026-10-05T14:34 | verify 1b fixes |
 | return | rev-3 (cdocs:reviewer) | same | 2026-10-05T15:02 | `fac1568` accept |
 | dispatch | impl-3 (warm, SendMessage) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/tests/chat-record.test.sh, proposal (sync lines) | 2026-10-05T15:03 | 1b minors (speaker regex, proposal sync) |
+| return | impl-3 | same | 2026-10-05T15:10 | `8707a4f` speaker regex, `418326c` proposal sync; 95/95 unit. Phase 1b done pending maintainer checklist; Phase 2 awaiting maintainer scope decision (A/B -> post-compaction RFP?) |
 
 ## Steering Log
 
