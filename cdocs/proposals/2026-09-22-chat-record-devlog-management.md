@@ -462,7 +462,7 @@ The script depends on: one `Stop` per top-level turn, never for a subagent; a si
 Also established: `/clear` and `--fork-session` mint a new `session_id` that the Bash variable follows, while `/compact`, `--resume`, and `--continue` keep it; a prompt queued mid-turn fires `UserPromptSubmit` before the turn's single `Stop` (headless).
 Unverified, and owned by Phase 1: `Stop` on interrupt, mid-turn prompts in an interactive session, `agent_id` on fork tool calls.
 
-### Phase 1: capture, per-turn rule, resumption guidance
+### Phase 1: capture, per-turn rule, Scratchpoint, resumption guidance
 
 Deliverables:
 
@@ -472,7 +472,7 @@ Deliverables:
 4. `frontmatter-spec.md`: one line on `_chat/`, and the optional devlog field `chat_record:` (list of repo-root record paths).
    README "Hooks": the two hooks, activation (git toplevel, `cdocs/_chat/`), block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs, and one line on doubled hooks under `--plugin-dir` beside the installed plugin.
    `plugins/cdocs/hooks/cdocs-hooks.ts`: its "NOT ported from CC" header lists the chat-record hooks (OpenCode keeps no record).
-5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps, the commit protocol and Pillar 1 carve-out, and "never `Edit` or `Write` `cdocs/_chat/`".
+5. `orchestration-discipline.md` Pillar 2: the per-turn rule paragraph (Script section), the three resumption steps, the commit protocol and Pillar 1 carve-out, "never `Edit` or `Write` `cdocs/_chat/`", and a Scratchpoint subsection (format, soft size, writers, cadence, staleness rule); the handoff's Completed subsection gains `files:` gists; Pillar 3 says durable specialists keep a Scratchpoint.
 6. Remove agent-side compaction instructions and context self-estimates everywhere in the plugin, keeping each durable-state write at its task-unit boundary so a user-run or automatic compaction loses nothing:
    - `plugins/cdocs/rules/orchestration-discipline.md`: delete Pillar 2's "Proactive compaction cadence" subsection (the `/compact`/`/clear` instruction, the 3-to-5-iteration trigger, the ~150K target); the Pillar 2 lead says the overseer keeps durable state current instead of "checkpointing and compacting deliberately"; "Handoff-before-compact format" becomes "Handoff format", written at each task-unit boundary, without "BEFORE compacting" or the compact-without-handoff sentence; the reseed subsection's "aggressive compaction" becomes "compaction"; the inline-floor line's "durable state before compact" becomes "durable state at task-unit boundaries", and the NOTE listing "proactive compaction cadence" drops that item; "Judge-Observable Thinness Signal" keeps `inline_work` as the overseer-written signal and drops the context estimate and its example; Cross-Target Degradation replaces the compaction-cadence sentence with "off Claude Code there is no chat record; resumption reads the devlog's Scratchpoint and latest handoff".
    - `plugins/cdocs/rules/oversee-arc.md`: the arc-state write happens at every arc-level transition, without "BEFORE compacting"; "handoff-before-compact" becomes "handoff"; the "Where `/compact` is absent" degradation bullet is deleted.
@@ -480,12 +480,13 @@ Deliverables:
    - `plugins/cdocs/skills/iterate/template.md`: the `overseer_ctx_est` column leaves both table headers, the field list, and the example row; `signal_missing` keys on the `inline_work` column.
    - `plugins/cdocs/skills/oversee/SKILL.md` and `plugins/cdocs/skills/oversee/template.md`: the inline floor, the "Transition-write BEFORE compact" bullet, and "Checkpoint (proposal boundary)" lose "before compacting", "then compact (`/compact`, or `/clear` for a hard reset)", and "compacting without them is a failure"; the concurrency cap drops "against the overseer's ~150K-token budget"; Cross-Target Degradation drops the "absent `/compact`" clause.
    - `plugins/cdocs/skills/propose-revise/SKILL.md`, `plugins/cdocs/skills/full-send/SKILL.md`, `plugins/cdocs/skills/ablate/SKILL.md`: "before compacting" becomes "at task-unit boundaries".
-   - `plugins/cdocs/agents/judge.md`: `overseer_thinness` and the escalate weighing read the `inline_work` column; the `overseer_ctx_est` trend and "context trending past target" go, leaving loop length as the soft cap.
+   - `plugins/cdocs/agents/judge.md`: `overseer_thinness` and the escalate weighing read the `inline_work` column and the Scratchpoint staleness condition; the `overseer_ctx_est` trend and "context trending past target" go, leaving loop length as the soft cap.
    - `plugins/cdocs/agents/triage.md`: the schema-drift note gives the template's current column count and names `overseer_ctx_est` as a column older devlogs may carry (reading by header name already copes).
 
    Descriptive mentions stay: the reseed subsection, `triage/SKILL.md` "Context Management", and the resumption steps.
-7. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; records quoted only in fences; `## Verification` as the evidence home.
+7. `plugins/cdocs/skills/devlog/SKILL.md` and `template.md`: name the optional `chat_record:` field and point to Pillar 2's per-turn rule for how it is filled; `template.md` gains `## Scratchpoint`; records quoted only in fences; `## Verification` as the evidence home.
    No `chat-record` command, heredoc, or bullet categories there: dispatched implementers read the devlog skill, and the top-level scope sentence is not beside it.
+   `iterate`, `propose-revise`, `full-send`, `oversee`, and `implement` reference the Scratchpoint rule in one line each, in the same pass as deliverable 6; `agents/implementer.md` tells a warm implementer to maintain one.
 8. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
 9. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
@@ -494,15 +495,13 @@ If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` 
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence); after Phase 1 no plugin file tells an agent to run, request, or time `/compact` or `/clear` or to estimate its own context (`grep -rn 'ctx_est\|150K' plugins/cdocs` is empty and every `compact` hit is descriptive), while `inline_work` and `overseer_thinness` keep their names.
 
-### Phase 2: scratchpoint and semantic splitting
+### Phase 2: semantic splitting and the resumption A/B
 
-Depends on Phase 1 (the resumption steps name the Scratchpoint).
+Depends on Phase 1 (the A/B measures its resumption steps).
 
-1. `orchestration-discipline.md`: a Scratchpoint subsection under Pillar 2 (format, soft size, writers, cadence, staleness rule); the handoff's Completed subsection gains `files:` gists; Pillar 3 says durable specialists keep one.
-2. Devlog `template.md` gains `## Scratchpoint`; `iterate`, `propose-revise`, `full-send`, `oversee`, and `implement` reference the rule in one line each; `agents/implementer.md` tells a warm implementer to maintain it.
-3. Devlog `SKILL.md`: "Splitting a devlog" with the trigger, closure test, cut and merge rules, naming, Chunks table, chunk frontmatter and backlink; Pillar 2's handoff step adds the size check.
-4. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` group by it; `agents/judge.md` gains the Scratchpoint staleness condition.
-5. The A/B and split dry-run, results in the devlog.
+1. Devlog `SKILL.md`: "Splitting a devlog" with the trigger, closure test, cut and merge rules, naming, Chunks table, chunk frontmatter and backlink; Pillar 2's handoff step adds the size check.
+2. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` group by it.
+3. The A/B and split dry-run, results in the devlog.
 
 Success criteria: the A/B pass bar; the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
 Constraints: no directory-per-workstream layout.
