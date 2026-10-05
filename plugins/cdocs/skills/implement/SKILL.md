@@ -82,6 +82,7 @@ The implementor should follow these conventions throughout:
 - The devlog is important for future understanding for the implementation session.
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
+- Top-level mode: keep the devlog's `## Scratchpoint` current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Scratchpoint"; a dispatched implementer writes into the overseer's devlog and keeps none.
 
 ### Use cdocs skills as appropriate (top-level mode)
 - `/cdocs:review` when implementation is complete and ready for evaluation.

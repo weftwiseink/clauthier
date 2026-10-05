@@ -23,7 +23,7 @@ The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestr
   Doing an arm's work inline would both violate overseer thinness AND contaminate the ablation with the overseer's own tokens, destroying the measurement.
 - Only the deterministic mechanics run inline, via [`ablate.sh`](./ablate.sh): worktree lifecycle, meter normalization, usage detection, the outcome decision, and scorecard assembly.
   Judgment (the task itself, and the context-gap verdict) lives ONLY in the dispatched subagents.
-- Write durable run state (the tool-set diff, the pinned base, per-arm meters) to the run directory before compacting.
+- Write durable run state (the tool-set diff, the pinned base, per-arm meters) to the run directory at task-unit boundaries.
 
 > NOTE(claude-opus-4-8/cdocs/mcp-ablation): This skill CANNOT run from inside a subagent: it dispatches subagents (the two arms and the evaluator), and the platform forbids subagent-from-subagent dispatch (`Task` is unavailable inside subagents).
 > It is invoked by a top-level (overseer) session, or driven as a top-level e2e test.
