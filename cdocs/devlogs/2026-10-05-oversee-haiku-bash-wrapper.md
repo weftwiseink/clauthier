@@ -161,6 +161,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-4 (warm) | chat-record proposal | 2026-10-05T11:02 | fold accept nit, status implementation_ready |
 | dispatch | fork (artifact) | proposal assets/index.html; artifact LSfQwst9o1MtbjbhZ94T1e | 2026-10-05T11:02 | round-9 artifact update |
 | return | prop-4 | `8b8be1b`; nit folded; status implementation_ready (p1 still HOLD for maintainer go) | 2026-10-05T11:03 | round 9 done |
+| return | fork (artifact) | `dafd77b`; republished LSfQwst9o1MtbjbhZ94T1e (v2) | 2026-10-05T11:05 | round-9 artifact |
 | dispatch+return | rfp-1 (cdocs:proposer, sonnet) | cdocs/proposals/2026-10-05-tiered-chat-records-rfp.md, chat-record proposal (2 pointer edits) | 2026-10-05T13:55 | 41daf76, b0d2878; maintainer: top-level only via rule text, tiered records -> RFP |
 
 ## Steering Log
