@@ -374,10 +374,13 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 
 ## Test Plan
 
-**Phase 1 hook tests, `plugins/cdocs/hooks/tests/chat-record.test.sh`.**
+`plugins/cdocs/hooks/tests/chat-record.test.sh` carries both suites.
+`--unit` runs the pure-shell tests (no `claude`, no credentials) and runs in CI; the default mode also runs the headless scenarios, a manual Phase-1 gate because they need credentials.
+
+**Phase 1 headless scenarios.**
 Headless sandbox per the README recipe (sandboxed `CLAUDE_CONFIG_DIR` with copied credentials, empty `cdocs/` in an out-of-repo `cwd`, `--model haiku`, never `--bare`, `--plugin-dir <worktree under test>/plugins/cdocs`), run with `--permission-mode bypassPermissions` unless marked *default mode*.
 *Default mode* scenarios run with `--permission-mode default` and are optional: they document the README allow rule and are not Phase-1 gates.
-Each scenario is setup, then assertion on the record and the `--include-hook-events` stream:
+Each scenario is setup, then assertion on the record and the `--include-hook-events` stream (the sandbox project is a `git init`ed directory with `cdocs/_chat/`):
 
 - `command -v chat-record` -> resolves into the worktree under test.
 - read a file, then note `- read: a.txt: canary fixture` -> one `@user`, one `@haiku-4-5` entry with that body, one sign-off `-- <sid8> at <ts>`, in that order; one `Stop`, no `decision`.
@@ -400,17 +403,25 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 - stream-json `/compact` between two prompts -> nothing between the first sign-off and the second `@user`; no line mentions compaction.
 - stream-json `/clear` then a prompt -> a second file named by the new `session_id`; `echo $CLAUDE_CODE_SESSION_ID` in that turn prints the new id; the first file is unchanged after its last sign-off.
 - `claude -p --resume <id>` and `--continue` -> new `@user` in the same file; `--resume <id> --fork-session` -> a new file.
-- `/rename my-canary` (or an injected `custom-title` line) -> next sign-off `-- my-canary at <ts>`.
+- `/rename my-canary` (or an injected `custom-title` line), then two prompts -> the second turn's sign-off is `-- my-canary at <ts>` (the transcript is written asynchronously, so the first may lag).
+- `--permission-mode plan`, one prompt -> one `Stop`, no `decision`; `@user` then sign-off.
+- a turn that `cd`s into a sibling directory with its own `cdocs/_chat/` and notes there -> the note and the sign-off land in the sibling's record; one `Stop`, no `decision`.
 - `CDOCS_CHAT_RECORD=off`, told not to note -> no file; one `Stop`, no `decision`.
-- no `cdocs/` -> no file, no block.
+- `cdocs/` without `_chat/`, and a directory outside any git work tree -> no file, no block.
 - payload shape -> `prompt`, `stop_hook_active`, `transcript_path`, `session_id`, `cwd` present.
 
-**Phase 1 unit tests (pure shell).**
+**Phase 1 unit tests (`--unit`).**
 
 - Grammar: the test carries a ~10-line awk reference splitter sourcing `HEADER_RE` and `SIGNOFF_RE` from the script; round-trip on a fixture of a header-shaped first line, `@alice: hey`, LESS and CSS at-rules, headers inside fences, `\@` lines, a sign-off-shaped body line, an empty body, and CRLF input recovers every body and sign-off exactly; title `my canary "v2"` maps to `my-canary--v2-` and `""` to sid8.
 - `Stop` decision: synthetic payloads against fixture records whose last marker is an agent header, `@user`, `@user` with `stop_hook_active`, a sign-off, and none; plus a record whose last line is an escaped `\@user: x` body line after an agent header -> outputs match the `Stop` table row for row.
 - Harness skip: `UserPromptSubmit` payloads starting `<task-notification` and `<system-reminder` (after leading blanks) write nothing; `<div>` and `hello <task-notification` write `@user`.
 - Exit codes: `CLAUDE_CODE_SESSION_ID` unset -> `note` and `path` exit non-zero, write nothing; `CDOCS_CHAT_RECORD=off` -> both exit 0, write nothing.
+- Speaker: `--as 'opus-4-6[1m]'` -> header `@opus-4-6-1m-:`; `--as 'Opus 5.5'` -> `@Opus-5.5:`; `--as user`, `--as ''`, `--as -x` -> non-zero exit, nothing written.
+- Stdout: `UserPromptSubmit` mode, recorded and skipped prompts alike, emits empty stdout; `Stop` emits only the block JSON.
+- Plan mode: a `Stop` payload with `permission_mode: "plan"` against a record ending in `@user` -> sign-off, no output.
+- Activation: a fixture with `cdocs/_chat/` above the git toplevel (the `~/cdocs/` case) and none inside -> no file; `cdocs/` without `_chat/` -> no file, no output; `path` relative to the toplevel prints `cdocs/_chat/...`.
+- Multiple matches: two files for one session id -> `note` and `Stop` use the earliest-dated.
+- Merge: in a scratch repo with the init-scaffolded `.gitattributes`, two branches each appending a turn to one committed record, and two branches each creating the same record -> merge and rebase finish without conflict and keep every block.
 
 **Phase 1 interactive check** (once, recorded in the devlog with a record excerpt): (a) a forgotten note is blocked and recovered in one turn; (b) Escape mid-tool-call: whether `Stop` fires, its payload, whether it blocked; (c) `/rename` shows in the next sign-off; (d) a message typed mid-turn: whether `UserPromptSubmit` fires before the turn's `Stop` (see Edge Cases).
 
@@ -451,7 +462,7 @@ Unverified, and owned by Phase 1: `Stop` on interrupt, mid-turn prompts in an in
 Deliverables:
 
 1. `plugins/cdocs/bin/chat-record` per the Script section, committed as mode `100755` like the existing hook scripts (the directory marketplace runs it from the working tree); `hooks.json` entries for `UserPromptSubmit` and `Stop`.
-2. `plugins/cdocs/hooks/tests/chat-record.test.sh` with the hook and unit tests.
+2. `plugins/cdocs/hooks/tests/chat-record.test.sh` with the headless scenarios and the `--unit` suite; a CI workflow `.github/workflows/cdocs-hooks.yml`, path-filtered to `plugins/cdocs/bin/**` and `plugins/cdocs/hooks/**`, running `--unit` on `ubuntu-latest` (bash, `jq`, `git`).
 3. `/cdocs:init`: scaffold `cdocs/_chat/README.md` (one paragraph: hook-written, do not edit, opt-outs) and `cdocs/_chat/.gitattributes` (`*.md merge=union`); write `orchestration-discipline.md` Pillar 2 into `.claude/rules/cdocs.md`, the file Claude Code loads (today only `AGENTS.md` inlines it).
 4. `frontmatter-spec.md`: one line on `_chat/`, and the optional devlog field `chat_record:` (list of repo-root record paths).
    README "Hooks": the two hooks, activation (git toplevel, `cdocs/_chat/`), block semantics, the one-line allow-rule note for default permission mode, the `bin/` installability trade-off, opt-outs, and one line on doubled hooks under `--plugin-dir` beside the installed plugin.
@@ -462,7 +473,7 @@ Deliverables:
 7. The interactive check, rules check, and usefulness sample, recorded in the devlog with the interrupt and mid-turn decisions written down.
 8. Mark `2026-09-01-devlog-autoflush-hook.md` `status: evolved` with a pointer here.
 
-Success criteria: all non-optional tests green; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass.
+Success criteria: the `--unit` suite green in CI and every non-optional headless scenario green locally; a real session of at least twenty turns in this repo commits a record in which every `@user` is followed by at least one top-level entry and exactly one sign-off before the next `@user`, with gist-shaped bullets and a passing usefulness sample; the interactive and rules checks pass.
 If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` fallback ships before Phase 1 closes.
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence); Pillar 2 text this proposal adds contains no instruction to request, time, or estimate compaction or context usage.
