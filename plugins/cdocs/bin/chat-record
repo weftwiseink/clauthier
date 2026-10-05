@@ -4,7 +4,8 @@
 #   chat-record UserPromptSubmit     hook: append `@user: <ts>` and the human prompt
 #   chat-record Stop                 hook: sign off the turn, or block once if a human
 #                                    turn has no agent entry
-#   chat-record note [--as <model>]  agent: append `@<model>: <ts>` and the stdin body
+#   chat-record note [--as <model>]  agent: append `@<model>: <ts>` (model id, short form)
+#                                    and the stdin body
 #   chat-record path                 agent: print the record path (repo-root relative)
 #
 # Spec: cdocs/proposals/2026-09-22-chat-record-devlog-management.md ("Script").
@@ -30,6 +31,14 @@ now_ts() { date +%Y-%m-%dT%H:%M:%S%z | sed 's/\(..\)$/:\1/'; }
 
 # Map every character outside [A-Za-z0-9._-] to '-'.
 sanitize() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '-'; }
+
+# One spelling per model for --as: lowercase; drop a `claude-` prefix, a `[...]` suffix,
+# and a `-YYYYMMDD` date; dots to dashes (`Haiku-4.5`, `claude-haiku-4-5-20251001` ->
+# `haiku-4-5`).
+short_id() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
+    | sed -E -e 's/^claude-//' -e 's/\[[^]]*\]$//' -e 's/-[0-9]{8}$//' -e 's/\./-/g'
+}
 
 # Normalize CRLF and escape body lines that would parse as a marker. The CR is passed to
 # sed as a literal byte ($'...'): POSIX leaves `\r` in a regex undefined, and BSD sed
@@ -147,7 +156,7 @@ hook_stop() {
       if [ "$active" != "true" ] && [ "$pmode" != "plan" ]; then
         rel="${file#"$TOP"/}"
         reason="$(printf 'No chat-record entry for this turn (record: %s). Run, then finish:\n%s\n%s\n%s' \
-          "$rel" "chat-record note --as <your model> <<'EOF'" \
+          "$rel" "chat-record note --as <your model id> <<'EOF'" \
           "- gist: <what a successor should know from this turn>" "EOF")"
         jq -cn --arg r "$reason" '{decision: "block", reason: $r}'
         return 0
@@ -183,10 +192,10 @@ agent_note() {
     esac
   done
   agent_setup
-  speaker="$(sanitize "$speaker")"
-  printf '%s' "$speaker" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$' \
+  speaker="$(sanitize "$(short_id "$speaker")")"
+  printf '%s' "$speaker" | grep -Eq '^[a-z0-9][a-z0-9._-]*$' \
     || die "invalid --as speaker '$speaker'"
-  [ "$(printf '%s' "$speaker" | tr '[:upper:]' '[:lower:]')" = "user" ] && die "--as may not be 'user'"
+  [ "$speaker" = "user" ] && die "--as may not be 'user'"
   [ -t 0 ] && die "note body goes on stdin: chat-record note --as <model> <<'EOF' ... EOF"
   body="$(escape_body)"
   printf '%s' "$body" | grep -q '[^[:space:]]' || die "empty note body"

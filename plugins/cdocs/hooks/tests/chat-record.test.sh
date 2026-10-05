@@ -208,7 +208,7 @@ unit_suite() {
   check "last=@user, first Stop: decision block" "$(printf '%s' "$OUT" | jq -r .decision)" "block"
   has "block reason names the record path" "$(printf '%s' "$OUT" | jq -r .reason)" "record: cdocs/_chat/2026-10-05-$SID\.md\)"
   has "block reason carries the heredoc note command" "$(printf '%s' "$OUT" | jq -r .reason)" \
-    "chat-record note --as <your model> <<'EOF'"
+    "chat-record note --as <your model id> <<'EOF'"
   r="$(printf '%s' "$OUT" | jq -r .reason)"
   [ "${#r}" -lt 300 ] && ok "block reason under 300 bytes (${#r})" || bad "block reason ${#r} bytes"
   check "block JSON has exactly decision and reason" "$(printf '%s' "$OUT" | jq -c 'keys')" '["decision","reason"]'
@@ -283,16 +283,19 @@ unit_suite() {
 
   section "unit: speaker"
   P="$U/speaker"; newproj "$P"
-  echo "- gist: a" | note "$P" --as 'opus-4-6[1m]'
-  echo "- gist: b" | note "$P" --as 'Opus 5.5'
+  local as
+  for as in 'opus-4-6[1m]' 'Opus 5.5' Haiku-4.5 haiku-4-5 claude-haiku-4-5-20251001 'Sonnet 4 6'; do
+    echo "- gist: $as" | note "$P" --as "$as"
+  done
   echo "- gist: c" | note "$P"
-  check "speakers mapped; default assistant" "$(markers "$(rec "$P")")" "A:opus-4-6-1m- A:Opus-5.5 A:assistant"
+  local spk="A:opus-4-6 A:opus-5-5 A:haiku-4-5 A:haiku-4-5 A:haiku-4-5 A:sonnet-4-6 A:assistant"
+  check "speakers normalized to one short id per model; default assistant" "$(markers "$(rec "$P")")" "$spk"
   local bad_as
-  for bad_as in user User '' -x _x; do
+  for bad_as in user User claude-user '' claude- -x _x; do
     (echo "- gist: z" | note "$P" --as "$bad_as" 2>/dev/null); rc=$?
     [ "$rc" -ne 0 ] && ok "--as '$bad_as' rejected ($rc)" || bad "--as '$bad_as' accepted"
   done
-  check "rejected speakers wrote nothing" "$(markers "$(rec "$P")")" "A:opus-4-6-1m- A:Opus-5.5 A:assistant"
+  check "rejected speakers wrote nothing" "$(markers "$(rec "$P")")" "$spk"
 
   section "unit: activation"
   local A="$U/act"
@@ -539,7 +542,7 @@ headless_suite() {
     J="$SB/block_recover.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     out="$(stop_responses "$J" | grep decision | head -n 1 | jq -r . | jq -r .reason 2>/dev/null)"
     has "first Stop blocks with the real path" "$out" "record: cdocs/_chat/$(basename "$F")"
-    has "block carries the heredoc command" "$out" "chat-record note --as <your model> <<'EOF'"
+    has "block carries the heredoc command" "$out" "chat-record note --as <your model id> <<'EOF'"
     check "two Stops, one block" "$(stop_count "$J"):$(stop_blocks "$J")" "2:1"
     has "one entry then sign-off" "$(markers "$F")" "^U A:[^ ]+ S:${sid:0:8}\$"
   fi
