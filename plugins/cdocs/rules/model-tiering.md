@@ -22,7 +22,7 @@ When the workload is "find information and summarize it" rather than "reason dee
 It is cheaper and fast enough for this class, and the overseer validates the returned summary before acting on it.
 This tier covers exploratory search sweeps, codebase reconnaissance, and straightforward research aggregation.
 
-The `bash-runner` agent (`cdocs:bash-runner`) sits in this tier at `model: sonnet`: it runs one expected-verbose command with output captured to a scratch file and returns a fixed-format report (see "Bash Output Hygiene" in `orchestration-discipline.md`).
+The `bash-runner` agent (`cdocs:bash-runner`) sits in this tier at `model: sonnet`: it runs one expected-verbose command with output captured to a scratch file and returns a fixed-format report (see "Bash: Avoid context bloat from careless bash commands" in `orchestration-discipline.md`).
 Its job looks mechanical but is not: a runner that drifts from the capture, or under-reports what the dispatcher asked for, misleads it or forces a follow-up, and that cost outweighs a cheaper model, since the saving comes from keeping raw output out of the parent's context, not from the runner's own price.
 A consumer with a blanket opus floor keeps that floor for this dispatch until it opts `bash-runner` down to sonnet (see "Precedence").
 
