@@ -60,7 +60,7 @@ Enforcement is graded, not hard: a hard tool-allowlist on the top-level session 
 Three layers back the discipline:
 
 1. **Written rule plus self-check.** This file, plus the per-dispatch self-check above.
-2. **Judge-remit backstop (iterate-only).** The `judge` agent, fresh each invocation, checks for overseer-as-workhorse and context bloat and can `escalate`.
+2. **Judge-remit backstop (iterate-only).** The `judge` agent, fresh each invocation, checks for overseer-as-workhorse turns (runs of inline work) and can `escalate`.
    This backstop is real only because the overseer logs a thinness signal (the inline-work column below) and the judge logs its own `overseer_thinness` diagnosis; absent both logged fields this layer reduces to self-policing.
    `propose-revise` and `full-send` have no judge and fall back to the written self-check plus the optional future hook, with no independent enforcer.
 3. **Optional `PreToolUse` advisory hook (Phase 5, not built).** A future advisory that warns on long runs of inline `Edit`/`Write`/`Bash` from the top-level session. Advisory only, since a hook cannot reliably detect overseer mode.
@@ -125,7 +125,7 @@ The thinness column and the judge's `overseer_thinness` verdict (see "Judge-Obse
 ### Handoff format
 
 At each task-unit boundary the overseer writes a handoff into the devlog.
-The checkpoint is not complete until the handoff is written: a compaction's summary is lossy, and the hand-written handoff is what a resuming reader trusts.
+A task-unit boundary is not closed until its handoff is written: a compaction's summary is lossy, and the hand-written handoff is what a resuming reader trusts.
 
 The handoff is a markdown section with exactly three subsections:
 
@@ -157,7 +157,8 @@ A devlog's owner keeps one `## Scratchpoint` section of current state, replaced 
   At each handoff the list rolls into the handoff's Completed subsection and restarts empty.
 - **Size:** aim for at most ~15 lines and ~8 `files:` entries; move anything older into a handoff.
 - **Writers:** the devlog's owner alone, such as the overseer of a loop (`iterate`, `propose-revise`, `full-send`, `oversee`), a top-level `implement` or plain session, or a durable specialist that keeps its own devlog (Pillar 3).
-  An agent writing into another agent's devlog keeps none: the `iterate` implementer writes only `## Changes Made` and `### Implementer Notes`, and its return summary is its checkpoint, as it is for one-shot legs.
+  An agent writing into another agent's devlog keeps none: the `iterate` implementer writes only `## Changes Made` and `### Implementer Notes`, and its return summary is its checkpoint.
+  A one-shot agent that owns its devlog may leave the section empty when its return summary carries the same state; one that runs across turns or handoffs keeps it like any owner.
 - **Not a thinness input:** the judge's `overseer_thinness` reads the `inline_work` column alone.
 
 Raw evidence (settings, commands, log lines) goes in the devlog's `## Verification` section, not the Scratchpoint.
