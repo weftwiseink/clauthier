@@ -45,6 +45,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | 2026-10-05T13:48 | Phase 1b review |
 | return | rev-2 (cdocs:reviewer) | same | 2026-10-05T14:01 | `d208e0b` revise; awaiting maintainer decision on post-compaction placement |
 | dispatch | impl-3 (cdocs:implementer, fresh: impl-2 ~284K) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/**, .github/workflows/cdocs-hooks.yml, proposal (1 success-criterion line), this devlog (notes) | 2026-10-05T14:10 | Phase 1b fixes; NOT orchestration-discipline.md / bash-runner.md |
+| return | impl-3 (cdocs:implementer) | same | 2026-10-05T14:33 | `4963600`..`5bc490b`; 94/94 unit; headless 25/27 (2 = deferred rules_check); --as normalisation deviates from proposal Script examples |
+| dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | 2026-10-05T14:34 | verify 1b fixes |
 
 ## Steering Log
 
