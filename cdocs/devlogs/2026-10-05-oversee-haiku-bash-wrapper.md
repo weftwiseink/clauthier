@@ -77,6 +77,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | judge-1 (cdocs:judge) | cdocs/devlogs/_judge/ (if long rationale) | 2026-10-05T10:41 | review_count >= 3 |
 | return | judge-1 (cdocs:judge) | none | 2026-10-05T10:43 | continue |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/agents/bash-runner.md | 2026-10-05T10:44 | iteration 5 |
+| return | impl-1 (cdocs:implementer) | + orchestration-discipline.md, proposal | 2026-10-05T10:50 | 295f0b7..12baa90 |
+| dispatch | rev-5 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-haiku-bash-wrapper-impl-r5.md, _verify r5 | 2026-10-05T10:51 | iteration 5 review; judge-1 acceptance bar |
 | dispatch | prop-2 (cdocs:proposer, fable) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-09-22-chat-record-devlog-management-propose-revise.md | 2026-10-05T10:41 | arc p1 pre-step: propose-revise round 5 (disjoint footprint from p0) |
 
 ## Steering Log
