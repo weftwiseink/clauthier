@@ -148,12 +148,14 @@ unit_suite() {
     '-- my-canary at 2026-10-05T12:00:00-07:00'
     ''
     $'crlf line one\r\ncrlf line two\r\n'
+    $'line ending in r\ncrlf line ending in r\r\nuse the bar'
   )
   local expected="$U/grammar.expected" b nb
   : > "$expected"
   for b in "${bodies[@]}"; do
     ups "$P" "$b" >/dev/null
-    nb="$(printf '%s\n' "$b" | sed 's/\r$//')"
+    # Expected body without sed, so a sed that mishandles \r cannot agree with the script.
+    nb="${b//$'\r\n'/$'\n'}"; nb="${nb%$'\r'}"; nb="$(printf '%s' "$nb")"
     { echo "<<H user>>"; [ -n "$nb" ] && printf '%s\n' "$nb"; } >> "$expected"
     if [ -n "$b" ]; then
       printf '%s\n' "$b" | note "$P" --as tester
@@ -169,6 +171,8 @@ unit_suite() {
     bad "round trip differs:"; cat "$U/grammar.diff"
   fi
   hasnt "no CR survives in the record" "$(cat "$f")" $'\r'
+  check "a line ending in r keeps its r (with and without CRLF)" \
+    "$(grep -cE '^(line ending in r|crlf line ending in r|use the bar)$' "$f")" "6"
   check "only real markers parse as markers" "$(grep -cE -e "$HEADER_RE" -e "$SIGNOFF_RE" "$f")" \
     "$(( ${#bodies[@]} * 2 + ${#bodies[@]} - 1 ))"
 
