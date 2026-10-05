@@ -142,6 +142,8 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | dispatch | prop-3 (cdocs:proposer, fresh) | cdocs/proposals/2026-09-22-chat-record-devlog-management.md, cdocs/devlogs/2026-10-05-chat-record-devlog-management-revise-r5.md | 2026-10-05T12:31 | round 7; fresh author (prop-2 ctx ~220K) |
 | return | prop-3 (cdocs:proposer, fresh) | same | 2026-10-05T13:00 | 62febaa, 3a7a5c3; no env var distinguishes subagent Bash -> rule-text guard; proposal 90KB |
 | dispatch | crev-7 (cdocs:reviewer) | cdocs/reviews/2026-10-05-review-of-chat-record-devlog-management-r7.md | 2026-10-05T13:01 | round 7 review |
+| return | crev-7 (cdocs:reviewer) | review r7 | 2026-10-05T13:10 | 76ca30d revise (Decision 13 rationale wrong; doc 90KB ~3x) |
+| dispatch | prop-3 (cdocs:proposer) | proposal + new supplemental report + revise-r5 devlog | 2026-10-05T13:14 | round 8: timeless restructure |
 
 ## Steering Log
 
@@ -154,6 +156,7 @@ Failure picture: the parent context receives the raw output (or a >~4K-char exce
 | 2026-10-05T11:45 | steer-implementer | impl-1 | Maintainer: adopt report contract v2: `Summary:` <=3 lines labelled interpretation; `Excerpt:` verbatim lines kept short/few (cut by command) to minimise transcription drift; hard ~4K cap; aggregate specs = counts + per-file samples that fit + honest `Truncated:` with follow-up cmd; Status/Truncated/Full output unchanged. | 7 |
 | 2026-10-05T12:25 | steer-implementer | impl-1 / Bash Output Hygiene | Maintainer: goal is delegating context-bloating work to preserve the lead's context without degrading performance or losing relevant info. Don't be too aggressive: trivial/known-small commands need no subagent, and self-bounding (`grep -c`, `-q`, `| tail -n 5`) is preferred when the caller knows exactly what it needs. Soften 'Any agent ... keeps ... by dispatching' to a judgment call. Apply after rev-8 returns (reviewer is reading these files). | post-accept (82149b2) |
 | 2026-10-05T12:50 | steer-implementer | prop-3 (chat-record r7) | Maintainer: turn-end stamp is a postscript line `-- <session_name> at <timestamp>`, not an `@end:` speaker block, to keep @-attribution semantics clean. | 7 (applied, 62febaa) |
+| 2026-10-05T13:13 | steer-implementer | prop-3 (chat-record r8) | Maintainer: proposals should be timeless; move revision history and past approaches into a supplemental report (repo convention). Keep phases together (Phase 3 depends on 1-2). Guard: rule text + scoped PreToolUse fallback (subagent-notes alternative under discussion). | 8 |
 
 ## Implementation Notes (impl-1)
 
