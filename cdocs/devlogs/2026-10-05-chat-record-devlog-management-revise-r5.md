@@ -242,3 +242,9 @@ Frontmatter: `status: review_ready`; `last_reviewed` left at round 8.
 - Default permission mode without the allow rule: `note` is denied (run C), so every human turn takes the one-shot block and an extra turn; documented, not mitigated by init.
 - Phase-3 cap-and-reseed still uses a token cutoff, now phrased as harness-reported specialist usage rather than agent self-tracking; kept as a gated dispatch-level item.
 - Marker-order turns rely on one `Stop` per top-level turn (runs 5, 6); a mid-turn prompt (unverified, check (d)) merges two prompts into one turn.
+
+### r9 review fixes
+
+Review [`2026-10-05-review-of-chat-record-devlog-management-r9.md`](../reviews/2026-10-05-review-of-chat-record-devlog-management-r9.md) (revise).
+Blocking: Phase-1 deliverable 6 now has the devlog skill and template name only `chat_record:` and point to Pillar 2; no `chat-record` command, heredoc, or categories there (dispatched implementers read the skill without the scope sentence); the no-`chat-record`-text constraint covers skills and templates.
+Nits: Summary correlation-token clause dropped; non-goal narrowed to the agent's own context; "aim for one to three" bullets; block text substitutes only the record path; interrupted-turn edge case notes the unsigned `@user` makes the next harness turn's `Stop` block once; report `n=` row no longer cites the `## Chat Record` section.
