@@ -31,9 +31,6 @@ Copy the five H2 sections below into the devlog body verbatim (skip `## Scratchp
 
 ## Steering Log
 
-| at | kind | target | content | applied_at_iteration |
-|---|---|---|---|---|
-
 ## Column Semantics
 
 The Scratchpoint's fields, size, and owner-only writer rule are in `orchestration-discipline.md` Pillar 2 "Scratchpoint"; the overseer owns it.
@@ -81,11 +78,6 @@ Records each child dispatch and return so a resumed overseer can reconcile liven
 
 **Steering Log**
 
-Records human directives that arrive after Turn 0 so the overseer can fold them into the *next* dispatch (never an in-flight subagent) and a fresh overseer can recover pending directives on resume (see `SKILL.md` "Injection points" and "On-Resume Reconciliation").
+Free-text bullets, one per human directive, written when the overseer first sees it:
 
-- `at`: ISO 8601 timestamp the directive was received.
-- `kind`: one of `steer-implementer`, `steer-reviewer-floor`, `pause`, `resume`, `override-judge`.
-- `target`: which future actor/turn the directive applies to, e.g. `impl-2`, `rev-3`, `judge-escalate@i4`.
-- `content`: the actual instruction, floor text, or override rationale, as free text.
-- `applied_at_iteration`: the iteration number where the overseer folded the directive into a dispatch prompt; `pending` while queued/not-yet-applied; `n/a` for a `pause`/`resume` marker row.
-  The overseer appends the row the moment it notices the directive (even if application is deferred) and updates this field when it actually folds the content into a dispatch.
+- 2026-05-13T10:02, for impl-2: also cover the empty-list case (applied: iteration 3)

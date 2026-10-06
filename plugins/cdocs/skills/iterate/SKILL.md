@@ -139,26 +139,10 @@ Between checkpoints the overseer keeps the devlog's `## Scratchpoint` current pe
 The loop terminates on Accept, Reject, judge `escalate`, or user interrupt.
 No retry-count cap on Accept-bound progress: a patient overseer is bounded by review-signal quality and judge meta-assessment.
 
-A `pause` steering directive (see "Injection points") is NOT a fourth loop-terminal verdict: it suspends turn advancement without invoking Accept, Reject, or the judge, and makes no claim about the work's quality.
-On a `pause` the overseer finishes the turn in flight, writes its Iteration Log or Judge Log row as it otherwise would, and yields with a resumable closing note; it does not touch the Accept/Reject/Escalate taxonomy.
+## Steering
 
-## Injection points
-
-The overseer already pauses between turns: it dispatches one subagent, waits for it to report, then decides. These existing pauses are the only injection points for human steering; no new interrupt machinery is introduced.
-
-The concrete point where the overseer consults the Steering Log is **Turn N.c (Decide)** — its own reasoning turn between Review and the next dispatch, where it already reads the verdict and branches. After Turn N.b (Review) resolves, the overseer at Turn N.c consults the Steering Log before the next dispatch (Turn (N+1).a, or Turn N.d if the judge threshold fired). After Turn N.d (Judge) resolves it consults the Steering Log again before Turn (N+1).a — this is the post-judge dispatch boundary, not a second Decide turn, since the judge verdict branches directly to the next dispatch with no named Decide turn after it.
-
-A user message that arrives while a subagent is actively dispatched (mid Task call) is **queued, not injected**: the overseer never interrupts or reinjects into an in-flight subagent, since that would breach the same freshness/isolation invariant the DISPATCHED reviewer and judge are built on (isolation binds the dispatched subagent, not the overseer session; see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Isolation is a dispatched-agent property"). The queued message is applied at the next injection point instead.
-
-Directives are recorded in the devlog's `## Steering Log` table (see `./template.md`). The overseer appends a row the moment it notices the directive (even if application is deferred) and updates `applied_at_iteration` when it actually folds the content into a dispatch. The five `kind` values and their handling:
-
-- `steer-implementer`: at the next injection point, include the row's `content` verbatim in the next implementer's dispatch prompt as additional Brief context (not a rewrite of the proposal).
-- `steer-reviewer-floor`: the row's `content` replaces the active verification floor for the next Review turn onward. Prior Iteration Log rows keep their already-recorded `review_proof` value — per the history-agnostic convention a floor change does not retroactively invalidate past `confirmed` rows.
-- `pause`: the overseer finishes the turn in flight (writing its Iteration Log or Judge Log row as it would have anyway), then writes a closing devlog note naming the resumption point (e.g. "Turn 4.a, impl-2 continues") plus a pointer to any `pending` Steering Log rows, and stops WITHOUT invoking Accept, Reject, or the judge. This extends the existing "write a final row before yielding" resumption discipline from crash-driven to deliberate interruption; see "Termination".
-- `resume` (possibly a fresh overseer session): re-read the Iteration Log, Judge Log, and Steering Log, reconstruct the resumption point from the closing note, re-queue any `pending` Steering Log directives (the Steering Log, not the closing note, is the source of truth for pending directives), and continue from there.
-- `override-judge`: a human explicitly instructs the overseer to continue past a judge `escalate` verdict. The Judge Log row is NEVER edited — the judge's assessment stays a legible record even when overridden. The next Iteration Log row's `notes` column cross-references the override (e.g. `[user-override: see Steering Log <at>]`) so the audit trail shows a human, not the judge, authorized continuation.
-
-Overriding a terminal Accept or Reject verdict is out of scope: those are Decide-turn verdicts the overseer acts on directly (loop termination), materially different from overriding an in-progress judge assessment.
+A human message that arrives while a subagent is in flight is queued, never injected: fold it into the next dispatch.
+Note each directive in the devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it, so a resumed overseer can pick up any not yet applied.
 
 ## On-Resume Reconciliation
 
@@ -168,11 +152,11 @@ If you believe a child (implementer, reviewer, or judge) is in flight but the ha
 Likewise, before dispatching a writer against a path, check the event rows for an open ownership claim by another live agent and serialize or re-scope rather than dispatch a second concurrent writer.
 See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 1b for the full liveness-reconciliation and single-writer-ownership disciplines.
 
-A fresh overseer resuming a paused loop also re-reads the Steering Log and re-queues any row whose `applied_at_iteration` is `pending` (a directive noticed but not yet folded into a dispatch), applying it at the next injection point (see "Injection points"). The Steering Log, not the pause closing note, is the source of truth for pending directives, so a `pause` interrupted mid-directive never silently drops it.
+Re-queue any Steering Log directive not yet applied.
 
 ## Iteration Log and Judge Log
 
-Four tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0: the Iteration Log, the Judge Log, the Dispatch/Return Events table, and the Steering Log (see "Injection points" for the Steering Log's role).
+Four tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0: the Iteration Log, the Judge Log, the Dispatch/Return Events table, and the Steering Log (see "Steering").
 
 The Dispatch/Return Events table records each child dispatch and return (with the target files it claims) so a resumed overseer can reconcile liveness and file-ownership from the log rather than from in-window belief (see "On-Resume Reconciliation" above).
 
