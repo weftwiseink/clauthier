@@ -34,9 +34,9 @@ Address only with minimal wording, if at all:
 ## Scratchpoint
 
 - as_of: 2026-10-06T09:50
-- now: propose round 1 (RFP elaboration)
+- now: iterate impl-1, Phases 1-5
 - open: none
-- next: review round 1
+- next: implementation review r1
 - files: this devlog, the RFP
 
 ## Iteration Log
@@ -44,6 +44,7 @@ Address only with minimal wording, if at all:
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
 |---|---|---|---|---|---|---|---|
 | 1 (propose) | prop-1 (cdocs:proposer) | rev-1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | no | 4 blocking: Phase 2 gate ambiguity (moot: maintainer approved), split-check clause dropped silently, smoke doesn't prove explicit-path staging, Phase 1 check vs init Pillar 2 line; 7 non-blocking; overseer defaults: keep split clause, merge Phases 4-6 |
+| 2 (propose) | prop-1 (warm) | rev-2 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r2.md | no | proposal accepted; 3 nits folded into implementation (README Pillar 2 line in Phase 1, judge NOTE once in Phase 3, Scratchpoint `as_of`) |
 
 ## Dispatch/Return Events
 
@@ -56,6 +57,8 @@ Address only with minimal wording, if at all:
 | dispatch | prop-1 (warm) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-06T10:21 | revision r1 + maintainer answers |
 | return | prop-1 | same | 2026-10-06T10:24 | `3f60b53` review_ready; all r1 items addressed; phases 4-6 merged (5 phases) |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r2.md | 2026-10-06T10:25 | proposal review r2 |
+| return | rev-2 | same | 2026-10-06T10:29 | `02a3db3` accept |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/scripts/postinstall.js, plugins/cdocs/README.md, plugins/cdocs/AGENTS.md, CLAUDE.md (approved edit only), new follow-up RFP, this devlog (notes) | 2026-10-06T10:30 | iterate: Phases 1-5 |
 
 ## Steering Log
 
