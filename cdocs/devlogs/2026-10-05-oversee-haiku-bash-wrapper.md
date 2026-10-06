@@ -621,3 +621,20 @@ Applies the small, non-blocking fixes from the rewrite review ([`2026-10-05-revi
   - **Ground truth** (Python matcher over `truth_F.json`): **17/17 exact** on name, `it` line, expected and actual.
   - **Containment:** no raw output line (`setup fixture`) appears in any parent-level event.
   - **Credentials:** the normal `HOME` was used, so no credential copies were made; a `find` over the scratchpad run dir and `/tmp/claude-1000` found none.
+
+## Arc Handoff (p1 terminal, 2026-10-06)
+
+### Completed
+
+- p0 bash-runner: done (maintainer rewrite `6821b43`, small fixes via impl-3).
+- p1 chat-record Phases 1a-2: `implementation_accepted`; loop record and handoff in [the iterate devlog](2026-10-05-chat-record-devlog-management-iterate.md).
+
+### Decisions Made
+
+- Thresholds and size guidance in lines/words, not KB.
+- p2 (rules-context decomposition) also takes the findings of an overseer-rules simplification review (maintainer, 2026-10-06: lean on agent intuition, fewer formalisms).
+
+### Open Todos
+
+- p2: `/cdocs:full-send cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md`, once the simplification review lands; delete non-Claude-Code blocks; file the reintroduction RFP.
+- This devlog and the iterate devlog both exceed the ~1,500-word split trigger.
