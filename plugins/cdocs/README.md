@@ -48,7 +48,7 @@ Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typi
 Rule files ship with the plugin and are delivered to consuming projects via `/cdocs:init`:
 
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
-- **`workflow-patterns.md`:** Parallel agent dispatch, subagent-driven development, completeness checklists.
+- **`workflow-patterns.md`:** Parallel investigation, loops and multi-phase plans, the pre-review pipeline, completeness.
 - **`orchestration-discipline.md`:** Overseer discipline (stay thin, resume from disk, one writer per file, verification floor, durable state, chat record) and bash output hygiene.
 - **`model-tiering.md`:** Advisory model tiers (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins).
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
