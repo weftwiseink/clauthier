@@ -135,7 +135,7 @@ Devlogs grow forward: at a seam, start a new devlog instead of moving written te
   |---|---|---|---|
   | [-canary](2026-09-22-x-iterate-canary.md) | hook canary | done | you need a hook's payload fields |
   ```
-- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<top-level-slug>-<concern>.md` (the top-level's date), with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md); see its Workstream Devlogs table for siblings.`
+- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<top-level-slug>-<concern>.md` (the top-level's date), with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md), indexed in its Workstream Devlogs table.`
   Each is a normal devlog with its own Scratchpoint, and short concerns share one.
 - **Tables.** Loop tables stay in the top-level, and their rows do not count toward its size.
   Continuing them forward is a judgment call at a loop or phase boundary: the continuation holds only the tables (no Scratchpoint), and a line under each top-level table points to it.

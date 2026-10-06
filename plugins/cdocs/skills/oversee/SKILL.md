@@ -51,7 +51,7 @@ Up: the proposal's frontmatter status, its loop's final handoff, and the arc fil
 
 Keep `.claude/oversee/<arc-id>.json` current at each proposal start, end, and escalation (shape in [`./template.md`](./template.md)): per proposal its path, frontmatter status, arc_state (pending / in_progress / blocked / done), devlog (the proposal's top-level devlog), footprint globs, and verification floor; plus `position` and `afk`.
 Add whatever fields a cold resume needs (scope, gates, notes).
-Keep an arc devlog beside it for the arc narrative and links to each proposal's top-level devlog, with a handoff at each proposal boundary; loop tables stay in the top-levels.
+Keep an arc devlog beside it for the arc narrative and links to each proposal's top-level devlog, with a handoff at each proposal boundary, while loop tables stay in the top-levels.
 
 ## Concurrency
 

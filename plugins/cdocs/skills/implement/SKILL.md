@@ -85,7 +85,7 @@ The implementor should follow these conventions throughout:
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
 - Keep the `## Scratchpoint` of the devlog you are writing current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state", and write a handoff beside it when the overseer asks for a restart.
-- At each return or handoff, look for a seam per the devlog skill's "Continuing in a new devlog"; dispatched, report any successor sub-devlog you start.
+- At each return or handoff, look for a seam per the devlog skill's "Continuing in a new devlog", and report any successor sub-devlog you start to your overseer.
 
 ### Use cdocs skills as appropriate (top-level mode)
 - `/cdocs:review` when implementation is complete and ready for evaluation.
