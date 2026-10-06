@@ -16,7 +16,7 @@ tags: [rules, architecture, orchestration_discipline, oversee, init, context_bud
 
 # Rules Context Decomposition
 
-> BLUF(@claude-opus-5-5/cdocs/rules-context-decomposition): Compress the always-loaded cdocs rules from 797 lines / 8,054 words to about 300 lines / 2,100 words, then lay them out.
+> BLUF(@claude-opus-5-5/cdocs/rules-context-decomposition): Compress the always-loaded cdocs rules from 797 lines / 8,054 words to about 300 lines / 2,150 words, then lay them out.
 > `orchestration-discipline.md` becomes about 60 lines of observed-failure lessons under descriptive headings.
 > `oversee-arc.md` is deleted: its generic lessons become three lines in that rule, and its arc-only material moves into the `oversee` skill.
 > The thinness signal, claim registry, Steering Log kinds, and every Cross-Target block are deleted, not relocated, and a follow-up RFP covers target-specific guidance.
@@ -60,7 +60,6 @@ Shrink and declutter the rules context that every session and dispatched subagen
 - Sync guard: `plugins/cdocs/hooks/tests/chat-record.test.sh --unit` asserts that init step 6's `[Full content of X.md ...]` list names exactly the files in `rules/`.
   The `init_real` and `rules_check` extras assert two literal chat-record phrases in the materialized rules.
 - `triage` keys on the `## Iteration Log` heading and on the `review_verdict` and Judge Log `verdict` column headers.
-- The chat-record proposal is `implementation_accepted`, so its rule text can be compressed here without colliding with an in-flight loop.
 
 ## Proposed Solution
 
@@ -68,13 +67,13 @@ Shrink and declutter the rules context that every session and dispatched subagen
 
 | File | Loaded | Before (lines / words) | After (approx.) |
 |---|---|---|---|
-| `rules/orchestration-discipline.md` | always | 270 / 3,531 | 63 / 660 |
+| `rules/orchestration-discipline.md` | always | 270 / 3,531 | 63 / 680 |
 | `rules/oversee-arc.md` | always | 141 / 1,623 | deleted |
 | `rules/workflow-patterns.md` | always | 132 / 1,020 | 21 / 190 |
 | `rules/model-tiering.md` | always | 51 / 744 | 9 / 140 |
 | `rules/writing-conventions.md` | always | 93 / 560 | unchanged |
 | `rules/frontmatter-spec.md` | always (inlined by init) | 110 / 576 | unchanged except one pointer |
-| **Always-loaded total** | | **797 / 8,054** | **~300 / ~2,100** |
+| **Always-loaded total** | | **797 / 8,054** | **~300 / ~2,150** |
 | `skills/iterate/SKILL.md` | with `/iterate` | 217 / 2,917 | ~120 / ~1,450 |
 | `skills/iterate/template.md` | with `/iterate` | 96 / 806 | ~35 / ~250 |
 | `skills/oversee/SKILL.md` | with `/oversee` | 173 / 2,243 | ~70 / ~850 |
@@ -99,9 +98,11 @@ A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `over
 Delegate anything beyond a trivial few-liner (bulk reads, sweeps, builds, tests, implementation) to subagents; you hold the plan and the decisions.
 Trust returned summaries: re-reading a subagent's files to double-check it is the pattern this rule exists to prevent.
 Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to a `fork`.
+Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
 
 ## Resume from disk, not memory
 
+Log each dispatch and return (agent, target files) in the devlog as it happens.
 The harness notifies you only when *no* children remain live.
 After any interruption, re-derive what is in flight from the devlog's dispatch/return rows and on-disk artifacts: if you believe a child is running but control has returned, it has ended, so read what it left and proceed.
 
@@ -118,10 +119,8 @@ When a loop is stuck debugging, isolate the fault (minimal repro, bisect, a focu
 
 ## Durable state
 
-At each task-unit boundary write a devlog handoff (Completed / Decisions Made / Open Todos) a cold reader can act on; compaction summaries are lossy.
+At each task-unit boundary write a devlog handoff (Completed / Decisions Made / Open Todos) a cold reader can act on, and check the devlog against the devlog skill's split trigger; compaction summaries are lossy.
 Between handoffs keep a short `## Scratchpoint` (now, next, open, files touched) current in any devlog you own; an agent writing into another agent's devlog keeps none.
-
-Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
 
 ## Chat record
 
@@ -207,7 +206,7 @@ The "verify via dev server" requirement is project-specific and is cut.
 
 `skills/oversee/SKILL.md` keeps:
 - its purpose,
-- the TOP-LEVEL ONLY note,
+- the TOP-LEVEL ONLY note, made self-contained ("subagents cannot dispatch, so a dispatched `/oversee` declines or runs advisory only"),
 - the `chain` / `full` / `resume` invocations with `--afk`, `-m`, and `-f`,
 - the composition table,
 - the hard-gate list (reject, unresolvable footprint conflict, choosing the `full` proposal set).
@@ -237,17 +236,8 @@ Accepted but marked in_progress: mark done and advance. Ambiguous: re-run the lo
 With no arc-id, resume the single non-terminal arc file, or ask (under AFK, take the most recently written one and log the choice).
 ```
 
-It drops:
-- the claim registry and the `claims` field,
-- `skip-blocked` and `afk_policy`,
-- the `.claude/oversee/pause` marker and the escalation marker files (escalations go into the arc file),
-- `--max-parallel` and the interleaving explanation,
-- the footprint-scout role (deriving footprints from Implementation Phases becomes one clause of the Concurrency section),
-- the troubleshooting counter and `budget`,
-- `required_rung` (replaced by a `verification_floor` prose field),
-- the Mermaid flowchart (the numbered steps remain),
-- the isolation-routing paragraph,
-- the Cross-Target section.
+Everything else in the skill goes, including the claim registry, the unused AFK and interleaving machinery (`skip-blocked`, pause and escalation marker files, `--max-parallel`), the retry counter, the Mermaid flowchart, and the Cross-Target section.
+`required_rung` becomes a `verification_floor` prose field, and escalations go into the arc file.
 
 `skills/oversee/template.md` keeps only the arc-state JSON example with the fields named above and the arc-devlog note.
 The `description` and `argument-hint` frontmatter drop "claim registry", "verification-depth ladder", `=skip-blocked`, and `--max-parallel`.
@@ -255,12 +245,9 @@ The `description` and `argument-hint` frontmatter drop "claim registry", "verifi
 ### `iterate` skill, template, and `judge`
 
 `skills/iterate/SKILL.md`:
-- **Keep unchanged:** Invocation, Graphify scoping, Roles, Turns 0 through N.d, freshness disciplines, and the dispatch/return-row instruction.
-- **Header:** keep the 2-3 line inline floor and delete the isolation sentence.
-- **Loop protocol:** delete the Mermaid diagram, because the Decide bullets carry the same logic plus "Reject pre-empts judge".
-- **Decide:** delete the Accept branch's isolation-routing paragraph.
+- **Keep:** Invocation, Graphify scoping, Roles, Turns 0 through N.d, the 2-3 line inline floor, freshness disciplines, and the dispatch/return-row instruction.
+- **Delete:** the Mermaid diagram (the Decide bullets carry the same logic), every isolation restatement, and the `pause` and soft-thinness paragraphs.
 - **Checkpoint:** one line, "write the handoff per the rule's Durable state; keep the Scratchpoint current between handoffs".
-- **Termination:** delete the `pause` and soft-thinness paragraphs.
 - **Injection points:** replace the section with the review's wording 4:
 
   ```markdown
@@ -279,7 +266,7 @@ The `description` and `argument-hint` frontmatter drop "claim registry", "verifi
 - Delete the Iteration Log `inline_work` column and the Judge Log `overseer_thinness` column.
 - Keep the other column names, since `triage` keys on `review_verdict` and `verdict`.
 - The Steering Log becomes a free-text bullet list under its heading.
-- Replace the Column Semantics prose with one example row per table.
+- Replace the Column Semantics prose with one example row per table, kept below the copied sections so an example `accept` row never lands in a live devlog where `triage` would read it.
 
 `agents/judge.md`:
 - Delete workflow steps 4 and 7, the "Overseer thinness" section, the inline-work sentences under `escalate`, and the stale startup NOTE.
@@ -288,23 +275,21 @@ The `description` and `argument-hint` frontmatter drop "claim registry", "verifi
 
 ### Cross-Target deletions
 
-Deleted outright, with no relocation:
-- `model-tiering.md` `## Cross-Target Degradation`: removed by the full replacement above.
-- `oversee-arc.md` `## Cross-Target Degradation`: removed by the file deletion.
-- `skills/oversee/SKILL.md` `## Cross-Target Degradation`.
+Deleted outright, with no relocation.
+The `model-tiering.md`, `oversee-arc.md`, and `oversee` Cross-Target sections go with their full replacements; the remaining blocks are:
 - `skills/init/SKILL.md` step 6 `NOTE(claude-opus-4-6/cross-target-rules)`.
 - The fallback NOTE in each of `agents/implementer.md`, `proposer.md`, `nit-fix.md`, `reviewer.md`, `judge.md`, and `triage.md`.
   The NOTE claims the rule content arrives "via the SessionStart hook injection", which is no longer true, because the hook only nudges.
   It is replaced by one plain sentence: "If neither path resolves, use the rule content already in your context."
 
-Init steps 5 (OpenCode copy) and 6 (`AGENTS.md` inline) are delivery mechanics, not guidance, so they stay; see Open Questions.
+Init steps 5 (OpenCode copy) and 6 (`AGENTS.md` inline) are delivery mechanics, not guidance, so they stay, with the stale-file cleanup below; their future belongs to the follow-up RFP.
 
 ### Inbound references to update
 
 Dropping "Pillar N" removes every numbered cross-reference.
 Point each one at the new descriptive heading, or delete it where a skill only restated the rule:
 - `rules/frontmatter-spec.md` (`chat_record`): "Pillar 2 Resumption" becomes `orchestration-discipline.md` "Chat record".
-- `skills/devlog/SKILL.md` (lines 31 and 42) and `skills/devlog/template.md`: update the pointers, and use the same five Scratchpoint fields as the iterate template.
+- `skills/devlog/SKILL.md` (Template and Sections) and `skills/devlog/template.md`: update the pointers, and use the same five Scratchpoint fields as the iterate template.
 - `skills/implement/SKILL.md`: update the thin-lead and Scratchpoint pointers, and cut the isolation restatement to one clause.
 - `skills/propose/SKILL.md` (author checklist): update the pointer.
 - `skills/full-send/SKILL.md`: update the Scratchpoint pointer, and replace the liveness restatement with a pointer.
@@ -313,8 +298,8 @@ Point each one at the new descriptive heading, or delete it where a skill only r
 - `rules/workflow-patterns.md`: covered by the full replacement.
 - `plugins/cdocs/README.md`:
   - Rules list: drop `oversee-arc.md` and re-describe `orchestration-discipline.md`.
-  - Line 41: update the `oversee` row.
-  - Line 131: update the "Pillar 2" pointer.
+  - Skills table: update the `oversee` row.
+  - Hooks "Chat record": update the "Pillar 2" pointer.
   - "Rules Integration": add two sentences that hold the deleted rationale.
     One says loop skills keep a 2-3 line inline floor because an un-init'd install loads no rule text.
     The other says `/cdocs:init` writes unscoped rules because Claude Code re-injects unscoped rules and root `CLAUDE.md` after compaction, while path-scoped rules may not be re-injected.
@@ -325,14 +310,13 @@ Point each one at the new descriptive heading, or delete it where a skill only r
   - Step 6: drop the Overseer Arc entry.
 - `plugins/cdocs/scripts/postinstall.js` `copyRules`: clear the namespaced destination before copying, so a removed rule does not linger.
 
-The root `CLAUDE.md` is maintainer-owned.
-The proposed edit is below, and it lands only with maintainer approval:
+Root `CLAUDE.md` (maintainer-approved edit) replaces its Orchestration line with:
 
 ```markdown
 - **Orchestration discipline** (stay thin, resume from disk, one writer per file, verification floor, durable state, chat record): `@plugins/cdocs/rules/orchestration-discipline.md`
 ```
 
-The edit replaces the existing Orchestration line and deletes the "Overseer arc" line, which `@`-imports the deleted file.
+It also deletes the "Overseer arc" line, which `@`-imports the deleted file.
 In "Cross-Target Rules Architecture", add one sentence after item 1: "Rule files carry Claude Code guidance only; target-specific guidance is tracked in `<follow-up RFP path>`."
 
 ### Follow-up RFP
@@ -353,6 +337,7 @@ Scope:
   The claim registry was never written.
   The judge keeps one prose line about an overseer doing the work itself.
 - **Descriptive headings, not "Pillar N".** Headings survive edits, and numbered references across many files did not.
+- **Init steps 5 and 6 stay.** They deliver files rather than give guidance; only the stale-file cleanup changes, and their future goes to the follow-up RFP.
 - **Init stays all-or-nothing.** Five short files do not justify a subset selector.
   The unit test that ties init's list to `rules/` is the sync guard.
 - **Keep the inline floors in the skills.** A 2-3 line floor in each loop skill is what an un-init'd install has.
@@ -368,8 +353,8 @@ Scope:
   `triage` keys on headers, so extra columns do no harm, and "add whatever fields" covers older arc files.
 - **The loop that implements this proposal runs under the rules it edits.** Its own devlog keeps its current table shape; the implementer does not rewrite live tables in an in-flight devlog.
   The live smoke runs as a separate top-level `claude -p`, so it tests the new text and not the loop's in-window copy.
-- **Dangling import in the source repo.** If `oversee-arc.md` is deleted before the `CLAUDE.md` edit is approved, root `CLAUDE.md` keeps an `@`-import of a missing file.
-  Phase 2 is therefore gated on that approval (see Implementation Phases).
+- **Chat-record verification grep.** The chat-record proposal's Phase 1a check expects `grep -rn '/compact\|/clear' plugins/cdocs/{rules,skills,agents}` to return one line, the reseed subsection.
+  After this proposal it returns zero, because that rationale moves to the README; this supersedes that check and is not a regression.
 - **`nit-fix` reads every `rules/*.md`.** A smaller set removes nothing it enforces, because the writing conventions are unchanged.
 
 ## Test Plan
@@ -381,12 +366,10 @@ Scope:
 - The dead-reference grep returns no hits:
 
   ```sh
-  grep -rnE 'inline_work|overseer_thinness|signal_missing|[Cc]laim [Rr]egistry|oversee/claims|skip-blocked|max-parallel|afk_policy|full_cycle_retries|required_rung|steer-reviewer-floor|override-judge|oversee-arc|Cross-Target|cross-target-rules|SessionStart hook injection|Pillar [0-9]|Graded Enforcement|reseed' plugins/cdocs AGENTS.md CLAUDE.md
+  grep -rnE 'inline_work|overseer_thinness|signal_missing|[Cc]laim [Rr]egistry|oversee/claims|skip-blocked|max-parallel|afk_policy|full_cycle_retries|required_rung|steer-reviewer-floor|override-judge|oversee-arc|Cross-Target|cross-target-rules|SessionStart hook injection|Pillar [0-9]|Graded Enforcement|reseed|Isolation is a dispatched|Judge-Observable|Durable Specialist|Inline Discipline Floor' plugins/cdocs CLAUDE.md
   ```
 
-  Two hits in root `CLAUDE.md` are allowed.
-  One is its user-owned "Cross-Target Rules Architecture" heading.
-  The other is its "Overseer arc" line, which stays until the maintainer approves the edit.
+  The one allowed hit is root `CLAUDE.md`'s "Cross-Target Rules Architecture" heading.
 - `wc -l -w plugins/cdocs/rules/*.md` comes within the budget guideline.
 
 ## Verification Methodology
@@ -398,17 +381,17 @@ The failure picture is a lead that does the work inline, leaves no dispatch rows
 2. **Resumption smoke:** `plugins/cdocs/hooks/tests/chat-record.test.sh --headless --only rules_check` exercises the compressed chat-record and resumption text through a real compaction.
    Its first post-compaction call should be `chat-record path`, followed by reads of the devlog and the record tail before any action.
 3. **Loop smoke:** set up a throwaway sandbox following README "Sandbox testing notes":
-   - `git init`,
+   - `git init` with a local `user.name` and `user.email`,
    - the `cdocs/` directories,
-   - `.claude/rules/cdocs.md` materialized the way the test's `init_rules` helper does it,
+   - `.claude/rules/cdocs.md` materialized by copying the `init_rules` function from `chat-record.test.sh` (marker line, rule bodies concatenated in init order),
    - a `CLAUDE.md` with the import,
    - a tiny `implementation_ready` proposal (for example, "add `greet.sh`; `./greet.sh bob` prints `hello bob`").
 
-   Then run `claude -p --plugin-dir plugins/cdocs --model sonnet --permission-mode bypassPermissions '/cdocs:iterate <proposal> --verification-floor "./greet.sh bob prints hello bob; failure: missing file, wrong output, or non-zero exit"'` with stream-json output.
+   Then run `claude -p --plugin-dir <absolute path to plugins/cdocs> --model sonnet --permission-mode bypassPermissions '/cdocs:iterate <proposal> --verification-floor "./greet.sh bob prints hello bob; failure: missing file, wrong output, or non-zero exit"'` with stream-json output.
    Pass when all of the following hold:
-   - the transcript shows the lead dispatching an implementer and a reviewer, and the lead makes no `Write` or `Edit` to `greet.sh`,
+   - the transcript shows the lead dispatching an implementer and a reviewer, and no lead tool call other than a read names `greet.sh`,
    - the devlog has dispatch and return rows,
-   - no transcript the run left (lead or subagent) contains `git add -A`, `git add .`, or `commit -a`.
+   - at least one transcript (lead or subagent) shows a `git add <explicit path>`, and none contains `git add -A`, `git add .`, or `commit -a`.
 
    An optional baseline run on the pre-change commit shows whether the check discriminates.
 
@@ -431,7 +414,7 @@ Each phase leaves the tree buildable, and the unit suite passes after every phas
 
 1. Replace `orchestration-discipline.md` above the Bash section with the wording above.
 2. Update every inbound pointer listed under "Inbound references to update" that targets this rule.
-   This covers frontmatter-spec, devlog, implement, propose, full-send, propose-revise, reviewer, and README line 131.
+   This covers frontmatter-spec, devlog, implement, propose, full-send, propose-revise, reviewer, the README hooks pointer, and the init step 3 sentence.
    In the same pass, cut the isolation and liveness restatements in those files.
 3. Add the two rationale sentences to README "Rules Integration".
 
@@ -440,12 +423,9 @@ Those files are `oversee-arc.md`, `workflow-patterns.md`, and the `iterate` and 
 
 ### Phase 2: Fold `oversee-arc.md` into `oversee`; delete the claim registry
 
-Gate: surface the root `CLAUDE.md` edit to the maintainer (the overseer asks) before deleting the rule.
-
 1. Rewrite `skills/oversee/SKILL.md` and `template.md` per the oversee spec above.
-2. Delete `rules/oversee-arc.md`.
-3. Update init step 6, `plugins/cdocs/AGENTS.md`, and the README rules list and `oversee` row.
-4. Apply the approved `CLAUDE.md` edit.
+2. In one commit, delete `rules/oversee-arc.md`, drop its init step 6 entry, and apply the `CLAUDE.md` edit; the unit suite fails if the deletion and the init entry land apart.
+3. Update `plugins/cdocs/AGENTS.md` and the README rules list and `oversee` row.
 
 Check: the unit suite passes (the init list must match `rules/`), and `npm run build:cdocs` exits 0.
 
@@ -458,42 +438,28 @@ Check: the unit suite passes (the init list must match `rules/`), and `npm run b
 
 Check: the unit suite passes, and the dead-reference grep is clean for `iterate`, `judge`, and the template.
 
-### Phase 4: Cross-Target deletions and delivery fixes
+### Phase 4: Cleanup
 
-1. Delete the Cross-Target blocks and the six agent NOTEs listed above.
-2. Make the init step 3 and step 5 edits, and the `postinstall.js` cleanup.
-
-Check: `npm run build:cdocs` exits 0, and a scratch run of `postinstall.js` against a directory holding a stale rule file removes that file.
-
-### Phase 5: Compress `model-tiering.md` and `workflow-patterns.md`
-
-Replace both files with the wording above, then update any pointer to their removed sections (`implement` line 57 cites `workflow-patterns.md` generally and stays valid).
-Check: the budget `wc` is within the guideline.
-
-### Phase 6: Follow-up RFP and devlog-splitting wording
-
-1. File the follow-up RFP, and put its path into the `CLAUDE.md` sentence if that edit was approved.
-2. Optionally, add minimal wording to `skills/devlog/SKILL.md` "Splitting a devlog" from the loop devlog's friction notes.
-   Keep it to four clauses:
+1. Delete the init step 6 NOTE and the six agent NOTEs, replacing the latter with the one plain sentence.
+2. Make the init step 5 cleanup and the `postinstall.js` fix.
+3. Replace `model-tiering.md` and `workflow-patterns.md` with the wording above.
+4. File the follow-up RFP and put its path into the `CLAUDE.md` sentence.
+5. Optionally, add minimal wording to `skills/devlog/SKILL.md` "Splitting a devlog" from the loop devlog's friction notes, at most four clauses:
    - a single oversized closed concern may be cut at a natural round or phase boundary,
    - chunk frontmatter fields not otherwise stated copy the root's,
    - reword relative phrases ("this devlog", "the table above") in moved text,
    - when every row of a live table moves, leave a one-line summary (for example, the verdict sequence) beside the pointer.
 
-### Phase 7: Verification
+Check: `npm run build:cdocs` exits 0, the budget `wc` is within the guideline, and a scratch `INIT_CWD=<scratch> node plugins/cdocs/scripts/postinstall.js` against a directory holding a stale rule file removes that file.
+
+### Phase 5: Verification
 
 Run the Verification Methodology in full and record the evidence in the devlog's Verification section.
 
 ## Open Questions
 
-- **Init steps 5 and 6.** Proposed: the OpenCode copy and the `AGENTS.md` inline stay as delivery mechanics, and only guidance is deleted.
-  The alternative is to delete them too and fold them into the follow-up RFP.
-  Maintainer: confirm.
-- **Scope beyond the review.** Phase 5 compresses `model-tiering.md` and `workflow-patterns.md` by the same observed-failure test, although the review covered only the overseer rules.
-  It is independent and can be dropped.
-- **Root `CLAUDE.md` edit.** The text proposed above needs maintainer approval, and it gates Phase 2.
+None open: the maintainer approved the root `CLAUDE.md` edit, kept init steps 5 and 6, and included the `model-tiering.md` and `workflow-patterns.md` compression.
 
 > NOTE(@claude-opus-5-5/cdocs/rules-context-decomposition): The RFP's original questions resolve as follows.
-> Sequencing: the chat-record proposal is `implementation_accepted`, so this proceeds now, and the post-compaction resumption re-test follows it.
 > Salience: this proposal makes no claim that a smaller file improves post-compaction behavior; the `rules_check` run gives one data point, and the resumption RFP owns the question.
 > Chat record adjacency: it stays in `orchestration-discipline.md` beside Durable state, so no separate rule is needed.
