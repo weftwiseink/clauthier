@@ -102,3 +102,15 @@ Finished rows moved to their concern's chunk: [-p0-haiku-r1-r5](2026-10-05-overs
 - Claim registry: delete. Steering Log: free text plus "a message arriving mid-dispatch is queued, never injected".
 - Compression lands inside the p2 rules-context decomposition: compress first, then decide layout.
 
+## Arc Handoff (arc terminal, 2026-10-06)
+
+### Completed
+
+- p0 bash-runner, p1 chat-record Phases 1a-2, p2 rules-context decomposition: all `implementation_accepted`.
+- p2 record: [the full-send devlog](2026-10-06-rules-context-decomposition-full-send.md).
+
+### Open Todos
+
+- Maintainer: chat-record 1b checklist (CI after push, interactive checks, 20-turn opus session, usefulness sample); root `CLAUDE.md` "Workflow patterns" line.
+- Filed RFPs, not active: bash output cap, OC model mapping, OC YAML parser, tiered chat records, post-compaction resumption (now unblocked by the rules cleanup), target-specific guidance.
+

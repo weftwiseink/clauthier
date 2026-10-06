@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-context-decomposition
 type: devlog
 state: live
-status: wip
+status: done
 tags: [rules, architecture, orchestration_discipline, init, full_send]
 ---
 
@@ -34,9 +34,9 @@ Address only with minimal wording, if at all:
 ## Scratchpoint
 
 - as_of: 2026-10-06T09:50
-- now: iterate impl-1, Phases 1-5
-- open: none
-- next: implementation review r1
+- now: loop closed (accept)
+- open: see Handoff
+- next: none
 - files: this devlog, the RFP
 
 ## Iteration Log
@@ -64,6 +64,7 @@ Address only with minimal wording, if at all:
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-impl-r1.md | 2026-10-06T10:47 | implementation review r1 |
 | return | rev-1 | same | 2026-10-06T10:53 | `37ec531` accept |
 | dispatch | impl-2 (cdocs:implementer, sonnet) | plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/skills/propose-revise/SKILL.md, plugins/cdocs/agents/reviewer.md, cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md, cdocs/proposals/2026-09-17-browser-delegation-plugin.md, this devlog (notes) | 2026-10-06T10:54 | accept nits |
+| return | impl-2 | same | 2026-10-06T10:58 | `127c312`, `52f792f`, `ad3f2ec`, `3d45e4a`, `31cd610`; build OK; 95/95 unit |
 
 ## Steering Log
 
@@ -155,3 +156,25 @@ Address only with minimal wording, if at all:
 > NOTE(sonnet-5/cdocs/rules-context-decomposition, correction per review r1 action item 3): two misattributions above, left in place rather than rewritten.
 > Phase 5 verification's baseline bullet ("though its reviewer staged the broad `git add cdocs`"): it was the **lead** (`parent_tool_use_id` null) that ran `git add cdocs` twice on the baseline tree; the baseline reviewer did not commit at all.
 > This section's "existing compliance gap" line: the new-tree reviewer committed because the **lead's dispatch prompt** explicitly asked it to ("Commit the review by explicit path"), not as a spontaneous violation of `reviewer.md`.
+
+## Handoff (loop close, 2026-10-06)
+
+### Completed
+
+- Proposal accepted (rounds 1-2) and implemented (`209ec08..a57c78e`, nits `127c312..31cd610`); `status: implementation_accepted`.
+- Always-loaded rules 797 lines / 8,054 words -> 297 / 2,145; `oversee-arc.md` deleted (generic lessons in `orchestration-discipline.md`, arc material in `skills/oversee/SKILL.md`); thinness signal, claim registry, steering kinds, Cross-Target sections deleted.
+- Follow-up RFP: [target-specific guidance](../proposals/2026-10-06-target-specific-guidance-rfp.md).
+
+### Decisions Made
+
+- Compress before relocating; chat record and resumption stay in the orchestration rule.
+- init steps 5-6 kept (delivery, no CC context cost) with stale-file cleanup; their future is the follow-up RFP's.
+- Reviewers may commit only the review file, by explicit path, when the dispatch asks.
+
+### Open Todos
+
+- Root `CLAUDE.md` "Workflow patterns" line describes the old file (maintainer-owned).
+- Dispatch/return rows are often written after the fact rather than at dispatch (pre-existing; not a regression).
+- Source `postinstall.js` uses `require` under a `"type": "module"` root `package.json` (pre-existing; the built copy works).
+- Post-compaction resumption check still fails on old and new rules; tracked by [the post-compaction RFP](../proposals/2026-10-05-post-compaction-resumption-rfp.md).
+
