@@ -43,6 +43,7 @@ Address only with minimal wording, if at all:
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | inline_work | notes |
 |---|---|---|---|---|---|---|---|
+| 1 (propose) | prop-1 (cdocs:proposer) | rev-1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | no | 4 blocking: Phase 2 gate ambiguity (moot: maintainer approved), split-check clause dropped silently, smoke doesn't prove explicit-path staging, Phase 1 check vs init Pillar 2 line; 7 non-blocking; overseer defaults: keep split clause, merge Phases 4-6 |
 
 ## Dispatch/Return Events
 
@@ -51,6 +52,8 @@ Address only with minimal wording, if at all:
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-06T09:51 | elaborate RFP in place |
 | return | prop-1 | same | 2026-10-06T10:10 | `1d0734f` review_ready; oversee-arc deleted (3 lessons to orchestration rule, arc-only to oversee skill); always-loaded ~797/8,054 -> ~296/2,120 lines/words; 7 phases; 3 maintainer questions (init steps 5/6, Phase 5 scope, CLAUDE.md edit) |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | 2026-10-06T10:11 | proposal review r1 |
+| return | rev-1 | same | 2026-10-06T10:20 | `bb26381` revise |
+| dispatch | prop-1 (warm) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-06T10:21 | revision r1 + maintainer answers |
 
 ## Steering Log
 
@@ -58,4 +61,4 @@ Address only with minimal wording, if at all:
 |---|---|---|---|---|
 | 2026-10-06T09:45 | steer-implementer | prop-1 | Maintainer answers on the simplification review (see Brief scope 1). | 1 |
 | 2026-10-06T09:58 | steer-implementer | prop-1 | Maintainer: oversee-arc split by tacit use, not references. Generic lessons (verification floor depth, isolate fault before costly full-cycle retries, serialize when overlap unsure) compress into the always-loaded orchestration rule; arc-only material goes skill-side on demand. | 1 |
-| 2026-10-06T10:14 | steer-implementer | next reviser + implementer | Maintainer: root CLAUDE.md edit approved as drafted (Phase 2 ungated); init steps 5-6 kept with stale-file cleanup fix, future left to the follow-up RFP; Phase 5 (model-tiering + workflow-patterns compression) included. | pending |
+| 2026-10-06T10:14 | steer-implementer | prop-1 r1 revision | Maintainer: root CLAUDE.md edit approved as drafted (Phase 2 ungated); init steps 5-6 kept with stale-file cleanup fix, future left to the follow-up RFP; Phase 5 (model-tiering + workflow-patterns compression) included. | 1 |
