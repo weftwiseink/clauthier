@@ -42,14 +42,12 @@ You may also be asked to read older review documents to spot recurring patterns.
 1. Read the rule files listed above.
 2. Read the devlog's Iteration Log and Judge Log sections fully.
 3. Read each of the recent review documents linked from the iteration log.
-4. Assess overseer thinness from the Iteration Log's `inline_work` column (see "Overseer thinness" below).
-5. Do not read source code.
+4. Do not read source code.
    Do not run verification commands.
    Do not open the live system.
    Your question is "should this loop continue, rotate, or escalate," not "is this code correct."
-6. Decide on one of three verdicts.
-7. Diagnose `overseer_thinness` and write it in the Judge Log row (`clean`, `bloat_detected`, or `signal_missing`); this is a separate field from the verdict.
-8. Write a short rationale.
+5. Decide on one of three verdicts.
+6. Write a short rationale.
    If it fits in one or two sentences, return it inline.
    If it does not, write the longer rationale to a new file under `cdocs/devlogs/_judge/YYYY-MM-DD-judge-of-<task>-i<N>.md` and reference that path.
 
@@ -63,23 +61,11 @@ You may also be asked to read older review documents to spot recurring patterns.
   A fresh implementer that onboards from the iteration log is likely to unblock.
 - **escalate**: the loop is structurally stuck.
   Symptoms include: conflicting requirements that every iteration satisfies one of by violating the other; the reviewer and implementer are talking past each other on definitional points; unresolvable design tension.
-  Overseer bloat is one input among these meta-health signals: a run of `inline_work: yes` turns across rows weighs toward `escalate` when it coexists with stalled progress.
-  Weigh it against forward progress: a run of inline-work turns WITH clear progress may still be `continue` (the bloat is logged, not acted on); WITHOUT progress it escalates.
   An over-long run of iterations the overseer surfaces is one such input, weighed the same way against progress, not a hard trigger.
   Surface to the user.
 
 Reject pre-empts judge: if the most recent reviewer verdict is `reject`, the overseer should not have dispatched you.
 If you find yourself in this position, return `escalate` and note the dispatch confusion in your rationale.
-
-## Overseer thinness
-
-At EVERY invocation you write `overseer_thinness: clean | bloat_detected | signal_missing` in the Judge Log row.
-This field is SEPARATE from the continue/rotate-implementer/escalate verdict, not a fourth verdict: a healthy-but-bloated loop logs `bloat_detected` and `continue` in the same row, keeping the bloat diagnosis auditable independent of whether it alone triggered escalation.
-
-- `clean`: the overseer's `inline_work` column is present and shows few or no inline-work turns.
-- `bloat_detected`: the column is present and shows a run of `inline_work: yes` turns.
-- `signal_missing`: the overseer's `inline_work` column is absent from the Iteration Log.
-  Write this rather than silently passing, and flag the omission in your rationale so the unenforced checkpoint is visible in the response, not just the log.
 
 ## Output Format
 
@@ -90,18 +76,16 @@ JUDGE VERDICT
 =============
 verdict: continue | rotate-implementer | escalate
 trigger: review_count >= --judge-after | discretionary
-overseer_thinness: clean | bloat_detected | signal_missing
 
 RATIONALE:
 <one or two sentences inline, OR>
 See cdocs/devlogs/_judge/<filename>.md
 
 JUDGE LOG ROW:
-| <judge_iteration> | <trigger> | <verdict> | <overseer_thinness> | <rationale inline or "see judge_path"> | <judge_path or "inline"> |
+| <judge_iteration> | <trigger> | <verdict> | <rationale inline or "see judge_path"> | <judge_path or "inline"> |
 ```
 
 The overseer appends the JUDGE LOG ROW to the Judge Log table verbatim.
-The `overseer_thinness` column matches the Judge Log schema in `../skills/iterate/template.md`; when it is `signal_missing`, the rationale must name the missing column.
 
 ## Constraints
 

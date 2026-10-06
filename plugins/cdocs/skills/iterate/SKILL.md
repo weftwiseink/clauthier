@@ -142,10 +142,6 @@ No retry-count cap on Accept-bound progress: a patient overseer is bounded by re
 A `pause` steering directive (see "Injection points") is NOT a fourth loop-terminal verdict: it suspends turn advancement without invoking Accept, Reject, or the judge, and makes no claim about the work's quality.
 On a `pause` the overseer finishes the turn in flight, writes its Iteration Log or Judge Log row as it otherwise would, and yields with a resumable closing note; it does not touch the Accept/Reject/Escalate taxonomy.
 
-A soft thinness signal is a JUDGE INPUT weighed against progress, never a hard kill.
-A run of inline-work turns or excessive loop length is surfaced by the overseer to the judge, which weighs it against forward progress; it does not itself terminate the loop.
-This preserves the accept/reject/escalate/interrupt contract: the soft signal informs a verdict, it never overrides one.
-
 ## Injection points
 
 The overseer already pauses between turns: it dispatches one subagent, waits for it to report, then decides. These existing pauses are the only injection points for human steering; no new interrupt machinery is introduced.
@@ -177,11 +173,6 @@ A fresh overseer resuming a paused loop also re-reads the Steering Log and re-qu
 ## Iteration Log and Judge Log
 
 Four tables live in the devlog body (not in frontmatter); copy them from `./template.md` on Turn 0: the Iteration Log, the Judge Log, the Dispatch/Return Events table, and the Steering Log (see "Injection points" for the Steering Log's role).
-
-The Iteration Log carries one thinness column for overseer legibility: `inline_work` (a yes/no flag for whether the overseer did inline work this turn).
-The overseer writes it each row; the judge reads it to key `escalate` and writes its own `overseer_thinness` verdict (`clean`/`bloat_detected`/`signal_missing`) in the Judge Log.
-Absent the `inline_work` column, the judge logs `signal_missing`, so the checkpoint is enforceable rather than only inferable from prose.
-See [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Judge-Observable Thinness Signal."
 
 The Dispatch/Return Events table records each child dispatch and return (with the target files it claims) so a resumed overseer can reconcile liveness and file-ownership from the log rather than from in-window belief (see "On-Resume Reconciliation" above).
 
