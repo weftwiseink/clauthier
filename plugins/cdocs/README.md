@@ -49,7 +49,7 @@ Rule files ship with the plugin and are delivered to consuming projects via `/cd
 
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
 - **`workflow-patterns.md`:** Parallel agent dispatch, subagent-driven development, completeness checklists.
-- **`orchestration-discipline.md`:** Canonical overseer discipline (thin lead, single-writer ownership, liveness reconciliation, durable specialists), plus Pillar 2's Scratchpoint, chat-record rule, and resumption steps.
+- **`orchestration-discipline.md`:** Overseer discipline (stay thin, resume from disk, one writer per file, verification floor, durable state, chat record) and bash output hygiene.
 - **`model-tiering.md`:** Advisory model tiers (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins).
 - **`oversee-arc.md`:** Arc-layer primitives for `/cdocs:oversee` (arc-state schema, claim registry, footprint heuristic, troubleshooting budget, verification-depth ladder).
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
@@ -76,6 +76,9 @@ Rule delivery is `/cdocs:init`-driven: the skill materializes rule content into 
    The `Read` tool result populates the session's context with the current rule content; the agent treats the read content as authoritative over the `@`-imported version baked into the system prompt at session start.
 
 Hash-based comparison (rather than version-based) avoids spurious refresh nudges on version-only bumps where the rule content did not change.
+
+`/cdocs:init` writes the rules unscoped because Claude Code re-injects unscoped rules and the root `CLAUDE.md` after a compaction, while path-scoped rules may not be re-injected.
+The loop skills (`iterate`, `propose-revise`, `full-send`) each keep a 2-3 line inline discipline floor because an install that has not run `/cdocs:init` loads no rule text.
 
 ### Known Limitations
 
@@ -128,7 +131,7 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 ### Chat record
 
 `UserPromptSubmit` appends each human prompt verbatim as an `@user` block (harness envelopes such as background-agent notifications are skipped).
-The top-level agent appends its gist bullets with `chat-record note`, per `orchestration-discipline.md` Pillar 2 "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
+The top-level agent appends its gist bullets with `chat-record note`, per `orchestration-discipline.md` "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
 `Stop` then appends a `-- <session> at <time>` sign-off, or, when a human-initiated turn has no entry, blocks once with the record path and the note command; a second `Stop` (`stop_hook_active`) never blocks, and plan mode never blocks, so a turn costs at most one extra short turn.
 Subagent payloads (`agent_id`) are ignored.
 
