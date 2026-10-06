@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/devlog-ownership-rework
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-06-devlog-ownership-rework-full-send.md
 tags: [devlog, orchestration_discipline, implementation]
 ---
