@@ -125,7 +125,7 @@ Devlogs grow forward: at a seam, start a new devlog instead of moving written te
   A restart, rotation, new turn, or full context is not a seam: continue the open concern's devlog from its Scratchpoint and latest handoff, replacing the Scratchpoint.
 - **Who.** Whoever is writing at the seam closes the devlog it leaves (handoff, `status: done`, `next:` naming the successor) and starts the next.
   A dispatched agent writes the sub-devlog its lead names and reports any successor it starts.
-  When the next concern goes to another writer, the leaving writer marks the finished devlog `done`, else the lead does.
+  If the next concern goes to another writer and the finished devlog is still open, the lead marks it `done`.
 - **Top-level.** The lead's devlog (no `part_of`) holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and an index the lead keeps:
 
   ```markdown
@@ -135,7 +135,8 @@ Devlogs grow forward: at a seam, start a new devlog instead of moving written te
   |---|---|---|---|
   | [-canary](2026-09-22-x-iterate-canary.md) | hook canary | done | you need a hook's payload fields |
   ```
-- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<top-level-slug>-<concern>.md` (the top-level's date), with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md), indexed in its Workstream Devlogs table.`
+- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<concern-slug>.md`, using the top-level's date, with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md), indexed in its Workstream Devlogs table.`
+  Lookup goes through `part_of`, not the filename, so the slug has no fixed shape.
   Each is a normal devlog with its own Scratchpoint, and short concerns share one.
 - **Tables.** Loop tables stay in the top-level, and their rows do not count toward its size.
   Continuing them forward is a judgment call at a loop or phase boundary: the continuation holds only the tables (no Scratchpoint), and a line under each top-level table points to it.
