@@ -60,7 +60,8 @@ Scaffold the CDocs documentation structure in the current project.
       ```
       Strip any existing YAML frontmatter from the source rule file before prepending the OC frontmatter.
       Add a version-and-hash comment after the frontmatter: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->` (same shape as `.claude/rules/cdocs.md`; see Step 3 for hash computation)
-   c. The OC-enhanced frontmatter activates rules conditionally via the `opencode-rules` plugin: they load only when editing cdocs files or mentioning cdocs-specific terms.
+   c. Delete any file in `.opencode/rules/cdocs/` that has no source rule file, so a removed rule does not linger.
+   d. The OC-enhanced frontmatter activates rules conditionally via the `opencode-rules` plugin: they load only when editing cdocs files or mentioning cdocs-specific terms.
 
 6. **AGENTS.md creation (cross-tool fallback):**
    Create or update an `AGENTS.md` in the project root with inlined rule content (not `@`-imports, for maximum tool compatibility).

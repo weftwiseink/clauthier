@@ -14,7 +14,7 @@
  * Set CDOCS_SKIP_POSTINSTALL=1 to skip this step.
  */
 
-const { cpSync, mkdirSync, existsSync, readdirSync } = require("fs");
+const { cpSync, mkdirSync, existsSync, readdirSync, rmSync } = require("fs");
 const { join, resolve } = require("path");
 
 // Allow users to opt out
@@ -69,6 +69,8 @@ function copyRules(src, dest) {
     console.log("cdocs-opencode: rules source not found, skipping");
     return;
   }
+  // dest is cdocs-namespaced: clear it so a rule removed upstream does not linger.
+  rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
   cpSync(src, dest, { recursive: true });
   console.log(`cdocs-opencode: rules copied to ${dest}`);
