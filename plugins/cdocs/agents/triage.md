@@ -56,7 +56,7 @@ For each file:
    - If document appears complete and status is `wip`, recommend `review_ready`.
    - If unsure, do NOT recommend a status change.
 6. **Locate the iterate devlog and read its logs** (`type: proposal` only; skip for other types). Run this analysis BEFORE "Check workflow state". When a matching devlog is found, its log-state mapping (below) takes precedence over the blind workflow-state heuristics in step 7.
-   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`, skipping chunks (`part_of` set): a chunk holds only finished rows, and the root keeps the live tables.
+   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`. A chunk (`part_of` set) stands for its root: steps 2-4 match the root together with its chunks, and when a root table read in step 6 has no rows, read its last row from the newest chunk that has one.
    2. **Filter to iterate devlogs**: keep only devlogs containing a `## Iteration Log` heading (produced by `/cdocs:iterate` Turn 0).
    3. **Filter to this proposal**: `task_list` match is necessary but not sufficient — a workstream can span multiple proposals — so further keep only devlogs whose body cites this proposal's path explicitly (the Turn 0 Brief cites the proposal path).
    4. **Pick one**: if multiple devlogs remain, take the most recently dated one (filename date, tie-broken by `first_authored.at`; if that also ties, flag the ambiguity in the report and recommend `[NONE]` rather than guessing).
