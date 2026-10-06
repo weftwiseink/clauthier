@@ -68,6 +68,7 @@ Starts at `wip`. Additional values depend on type:
 - `review_ready`: Statement of work complete, ready for review. Used by devlogs, proposals, reports.
   - For devlogs, reviews apply to the work that was done, not just the document.
 - `implementation_ready`: Proposal design has been reviewed and accepted, ready to implement. Proposals only.
+- `implementation_wip`: Proposal is being implemented. Set by `/cdocs:implement` during implementation. Proposals only.
 - `evolved`: Proposal has been superseded by a new version or follow-up proposal.
 - `implementation_accepted`: Proposal's implementation has been completed and accepted.
 - `done`: Work complete and verified.
