@@ -11,7 +11,7 @@ tags: [devlog, orchestration_discipline, full_send]
 
 # Devlog Ownership Rework: Full Send
 
-> BLUF(opus-5-5/cdocs/devlog-ownership-rework): Full-send loop for [the proposal](../proposals/2026-10-06-devlog-ownership-rework.md): the lead's top-level devlog is the workstream's index and state record (Brief, Scratchpoint, `## Devlogs` index, loop tables, handoffs), and the work itself goes in sub-devlogs started forward at soft, content-driven seams, written by whichever implementer is on that concern.
+> BLUF(opus-5-5/cdocs/devlog-ownership-rework): Full-send loop for [the proposal](../proposals/2026-10-06-devlog-ownership-rework.md): the lead's top-level devlog is the workstream's index and state record (Brief, Scratchpoint, `## Workstream Devlogs` index, loop tables, handoffs), and the work itself goes in sub-devlogs started forward at soft, content-driven seams, written by whichever implementer is on that concern.
 
 ## Brief
 
@@ -30,7 +30,7 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 ## Scratchpoint
 
 - as_of: 2026-10-06T11:40
-- now: revision round 1
+- now: review round 2
 - open: none
 - next: revise or accept
 - files: this devlog, the proposal
@@ -50,10 +50,12 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | 2026-10-06T11:51 | proposal review r1 (weigh both designs) |
 | return | rev-1 | same | 2026-10-06T12:01 | `ac72773` revise |
 | dispatch | prop-1 (warm) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T12:02 | revision r1 + steer |
+| return | prop-1 | same | 2026-10-06T12:12 | `e1a2a7a` review_ready; steer + all r1 items applied; overseer renamed index heading inline |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r2.md | 2026-10-06T12:14 | proposal review r2 |
 
 ## Steering Log
 
 | at | target | content | applied |
 |---|---|---|---|
 | 2026-10-06T11:55 | prop-1 r1 revision | Maintainer: sub-devlog boundaries are soft and content-driven, not coupled to implementer identity, turns, restarts or context. Short phases can share one devlog; a large testing phase done in a single turn by one implementer can get its own. (Queued: rev-1 in flight.) | 1 |
-| 2026-10-06T12:05 | after prop-1 r1 revision | Maintainer confirms open-question answers: loop tables stay top-level; no reviewer devlogs; sub-devlog seams as proposed. Index heading is `## Workstream Devlogs` (not `## Devlogs`). (Queued: prop-1 in flight.) | pending |
+| 2026-10-06T12:05 | after prop-1 r1 revision | Maintainer confirms open-question answers: loop tables stay top-level; no reviewer devlogs; sub-devlog seams as proposed. Index heading is `## Workstream Devlogs` (not `## Devlogs`). (Queued: prop-1 in flight.) | 1 (overseer inline rename after revision) |

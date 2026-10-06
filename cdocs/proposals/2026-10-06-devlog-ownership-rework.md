@@ -16,7 +16,7 @@ tags: [orchestration_discipline, devlog, architecture]
 
 # Devlog Ownership: Lead Devlog as Index, Sub-Devlogs by Concern
 
-> BLUF(opus-5-5/cdocs/devlog-ownership-rework): A workstream's top-level devlog belongs to its lead (the overseer in a loop): it holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and a `## Devlogs` index.
+> BLUF(opus-5-5/cdocs/devlog-ownership-rework): A workstream's top-level devlog belongs to its lead (the overseer in a loop): it holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and a `## Workstream Devlogs` index.
 > Implementation notes go in sub-devlogs (`part_of` the top-level), cut by content: a concern, not an agent, a turn, or a context window.
 > Whoever is working an open concern writes its sub-devlog, one writer at a time, and a new one starts forward at a natural seam instead of being split out afterwards.
 > Recommended over the smaller "implementer owns the workstream devlog" variant (see Alternative Considered).
@@ -67,19 +67,19 @@ The goal: each devlog is a real devlog with one writer at a time, the overseer k
 
 ```mermaid
 flowchart LR
-  T["top-level devlog<br/>writer: lead (overseer)<br/>Brief, Scratchpoint, Devlogs index,<br/>loop tables, handoffs"]
+  T["top-level devlog<br/>writer: lead (overseer)<br/>Brief, Scratchpoint, Workstream Devlogs index,<br/>loop tables, handoffs"]
   C1["sub-devlog -phase1<br/>writer: current implementer<br/>Scratchpoint, notes, Verification, handoff"]
   C2["sub-devlog -phase2-fixes<br/>writer: current implementer"]
   R["review docs<br/>writer: each reviewer"]
   C1 -- part_of --> T
   C2 -- part_of --> T
-  T -. Devlogs rows .-> C1
-  T -. Devlogs rows .-> C2
+  T -. Workstream Devlogs rows .-> C1
+  T -. Workstream Devlogs rows .-> C2
 ```
 
 - **Top-level devlog**: the lead's devlog for the workstream, named as loop devlogs are today (`YYYY-MM-DD-<slug>-<loop>.md`, such as `-full-send` or `-iterate`).
   In a loop the lead is the overseer; in solo `/cdocs:implement` it is the implementer, and solo work changes only when a devlog reaches a seam worth cutting.
-  It holds the Brief (scope, floor, proposal path), the lead's Scratchpoint, a `## Devlogs` table (`| devlog | writer | status | read this when |`), the loop tables, and handoffs, and it carries the top-level session's `chat_record:`.
+  It holds the Brief (scope, floor, proposal path), the lead's Scratchpoint, a `## Workstream Devlogs` table (`| devlog | writer | status | read this when |`), the loop tables, and handoffs, and it carries the top-level session's `chat_record:`.
   One top-level per workstream, continued by later loops on the same proposal (propose-revise then iterate, or a resumed iterate).
 - **Sub-devlog**: a concern's devlog, at `YYYY-MM-DD-<top-level-slug>-<concern>.md` (the top-level's date; a concern such as `-phase1b`, `-phase2-fixes`, `-canary`), with `part_of: <top-level path>` and a first-line backlink NOTE.
   It is a normal devlog: Objective (proposal, predecessor if any), Scratchpoint, Plan, Implementation Notes, Changes Made, Verification, handoff.
@@ -93,7 +93,7 @@ flowchart LR
 
 | Content | Lives in | Writer |
 |---|---|---|
-| Brief, lead Scratchpoint, Devlogs index, Iteration/Judge/Dispatch-Return/Steering tables, loop handoffs | top-level | overseer |
+| Brief, lead Scratchpoint, Workstream Devlogs index, Iteration/Judge/Dispatch-Return/Steering tables, loop handoffs | top-level | overseer |
 | Implementer Scratchpoint, notes, Changes Made, Verification, handoff | the open concern's sub-devlog | whichever implementer is on that concern, one at a time |
 | Review, judge rationale | `cdocs/reviews/`, `cdocs/devlogs/_judge/` | reviewer, judge |
 
@@ -107,7 +107,7 @@ Devlogs grow by starting a new sub-devlog at a seam, never by moving written tex
 - **Look at every return or handoff.** Start a new sub-devlog when a new concern begins that is big enough to stand alone (a phase, a fix round, a verification campaign), or when the current one is around ~1,500 words (`wc -w`) and a natural seam arrives.
   Size prompts the look; the content chooses the cut.
 - **Who.** Whoever is writing when the seam arrives: an implementer mid-dispatch closes its sub-devlog, starts the successor, and reports the path in its return; the overseer names a new one when it dispatches a new concern.
-  The overseer adds the `## Devlogs` row either way.
+  The overseer adds the `## Workstream Devlogs` row either way.
 - **Agents do not set the boundary.** A restart, a rotation, a new turn, or a full context continues the open concern's sub-devlog; a new file only when the content calls for one.
 - **Top-level tables.** Table rows do not count toward the top-level's size (agents read their last rows).
   Continuing the tables in a forward sub-devlog is a judgment call at a loop or phase boundary, with a line under each table pointing to the continuation.
@@ -118,7 +118,7 @@ Devlogs grow by starting a new sub-devlog at a seam, never by moving written tex
 On the ~400K restart ("Stay thin") or a judge `rotate-implementer`:
 1. The outgoing implementer, when it can, writes its handoff beside its Scratchpoint and commits both by explicit path.
 2. The overseer dispatches the next implementer with the proposal path, the sub-devlog to continue (or a new one if the concern changed), the top-level path, the latest review path, scope, and floor.
-3. The next implementer reads that sub-devlog's Scratchpoint and latest handoff, the proposal, and the review (and the top-level's Devlogs "read this when" column as needed), then replaces the Scratchpoint and keeps writing.
+3. The next implementer reads that sub-devlog's Scratchpoint and latest handoff, the proposal, and the review (and the top-level's Workstream Devlogs "read this when" column as needed), then replaces the Scratchpoint and keeps writing.
 
 ### Lookup
 
@@ -139,8 +139,8 @@ On the ~400K restart ("Stay thin") or a judge `rotate-implementer`:
 | `skills/devlog/SKILL.md` | Scratchpoint bullet: one live per writer, replaced in place. `chat_record` bullet: drop the "another agent's devlog" clause. "Splitting a devlog" becomes "Continuing in a new devlog" (the bullets above, including naming and the backlink), plus: a dispatched agent writes the sub-devlog its lead names. |
 | `skills/implement/SKILL.md` | Step 3, dispatched: write the sub-devlog the overseer names (create it with `part_of` if absent, else continue from its Scratchpoint and handoff). Scratchpoint line: the sub-devlog's own; look for a seam at each return; on a restart request, write the handoff. |
 | `agents/implementer.md` | Constraints: write the sub-devlog in your Task prompt and keep its Scratchpoint; the top-level devlog and its tables are the overseer's and you do not edit them; report any successor sub-devlog you start. |
-| `skills/iterate/SKILL.md` | Turn 0: create or continue the workstream's top-level devlog (task_list match, cites the proposal, no `part_of`). Turn N.a: name the sub-devlog to write (the open concern's, or a new one for a new concern) and add Devlogs rows, including any the implementer reports. Turn N.b: point the reviewer at the proposal and the sub-devlog. Checkpoint: drop "the dispatched implementer keeps none". Steering and resume: "your devlog". |
-| `skills/iterate/template.md` | Header: the sections are the top-level devlog's; add an empty `## Devlogs` table. |
+| `skills/iterate/SKILL.md` | Turn 0: create or continue the workstream's top-level devlog (task_list match, cites the proposal, no `part_of`). Turn N.a: name the sub-devlog to write (the open concern's, or a new one for a new concern) and add Workstream Devlogs rows, including any the implementer reports. Turn N.b: point the reviewer at the proposal and the sub-devlog. Checkpoint: drop "the dispatched implementer keeps none". Steering and resume: "your devlog". |
+| `skills/iterate/template.md` | Header: the sections are the top-level devlog's; add an empty `## Workstream Devlogs` table. |
 | `skills/propose-revise/SKILL.md` | The loop devlog is the workstream's top-level, owned by the overseer, and a later iterate continues it. (`full-send` already reads correctly.) |
 | `skills/oversee/SKILL.md`, `template.md` | The arc overseer starts a top-level devlog per proposal; the arc file's per-proposal `devlog` is that top-level; the arc devlog holds arc narrative and links. |
 | `agents/judge.md` | Input: the overseer's top-level devlog (tables may continue in a forward sub-devlog). Rotation onboarding: from the open sub-devlog's handoff and the reviews. |
@@ -166,7 +166,7 @@ A sub-devlog (`part_of` set) stands for its top-level: steps 2-6 read the family
 4. **Reuse `part_of`, no new field.** The recommended shape is the shape split devlogs already have, so `part_of`, the index table, and triage/status grouping carry over; only "chunk" semantics (`done` by construction, no `chat_record`) relax.
 5. **Tables stay in the top-level and do not count toward its size.** A `-loop` sub-devlog would add a file to every short loop, and counting rows would make table continuation routine (chat-record's tables reached ~1,450 words in six iterations).
 6. **Highest iteration, not file order.** Earlier chunks copied their root's `first_authored`, so timestamps cannot order a family; iteration numbers can.
-7. **`## Devlogs`, not `## Chunks`.** The entries are live documents with their own writers, not pieces cut from the root; lookups key off `part_of`, so legacy `## Chunks` headings keep working.
+7. **`## Workstream Devlogs`, not `## Chunks`.** The entries are live documents with their own writers, not pieces cut from the root; lookups key off `part_of`, so legacy `## Chunks` headings keep working.
 
 ## Alternative Considered: Implementer Owns the Workstream Devlog
 
@@ -194,7 +194,7 @@ The recommended design keeps this alternative's real strength, continuity of an 
 
 - **Propose-revise only:** the top-level holds proposer and reviewer rows; no sub-devlogs exist.
 - **A writer stops without a handoff** (stuck, killed): the next implementer continues the sub-devlog from its Scratchpoint, last notes, and the latest review. If the concern is abandoned instead, the successor or the overseer may set the dead writer's file to `done`; a dead writer is not a live one.
-- **Parallel implementers on disjoint footprints:** different concerns, one sub-devlog each; only the overseer writes the top-level, so Devlogs rows never collide.
+- **Parallel implementers on disjoint footprints:** different concerns, one sub-devlog each; only the overseer writes the top-level, so Workstream Devlogs rows never collide.
 - **A later loop misses the existing top-level:** triage picks the most recent matching family (step 6.4, unchanged); iterate Turn 0 continues the top-level without `part_of`.
 - **Solo session that continues forward:** the session lists its `chat_record` in each devlog it works on and closes the one it leaves.
 - **Earlier split devlogs:** read as families; the highest-iteration rule finds the verdict whether rows sit in the root or in chunks.
@@ -223,7 +223,7 @@ Live smoke: adapt the loop-smoke driver described in [the rules-context-decompos
 Check from the transcripts, not only the files:
 - Every Write/Edit on the top-level comes from the lead; every Write/Edit on the sub-devlog comes from an implementer transcript, and no two implementer transcripts overlap in time on it.
 - Each devlog has exactly one `## Scratchpoint`.
-- The top-level has the Iteration Log row, dispatch and return rows, and a Devlogs row naming the sub-devlog; the sub-devlog has `part_of`, notes, and Verification; neither holds the other's sections.
+- The top-level has the Iteration Log row, dispatch and return rows, and a Workstream Devlogs row naming the sub-devlog; the sub-devlog has `part_of`, notes, and Verification; neither holds the other's sections.
 - Staging is by explicit path in every transcript.
 - Triage run in the sandbox afterwards reports the loop's verdict from the top-level.
 
@@ -248,7 +248,7 @@ Success: triage fixtures 1-5 pass, the devlog skill shrinks, and `grep -rni chun
 ### Phase 3: Loop skills
 
 Files: `skills/iterate/SKILL.md`, `skills/iterate/template.md`, `skills/propose-revise/SKILL.md`, `skills/oversee/SKILL.md`, `skills/oversee/template.md`, `agents/judge.md`.
-Depends on Phases 1-2 for the terms (top-level, sub-devlog, Devlogs table).
+Depends on Phases 1-2 for the terms (top-level, sub-devlog, Workstream Devlogs table).
 Success: build passes; the stale-reference grep is clean; iterate's Turn 0, N.a, N.b, Checkpoint, Steering, and resume text name the right file for each write.
 
 ### Phase 4: Verification
