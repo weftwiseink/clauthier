@@ -11,7 +11,7 @@ tags: [devlog, orchestration_discipline, full_send]
 
 # Devlog Ownership Rework: Full Send
 
-> BLUF(opus-5-5/cdocs/devlog-ownership-rework): Full-send loop for [the proposal](../proposals/2026-10-06-devlog-ownership-rework.md): the workstream devlog becomes the implementers' devlog again, and the overseer keeps its own continuous per-workstream sub-devlog for loop state.
+> BLUF(opus-5-5/cdocs/devlog-ownership-rework): Full-send loop for [the proposal](../proposals/2026-10-06-devlog-ownership-rework.md): the lead's top-level devlog is the workstream's index and state record (Brief, Scratchpoint, `## Devlogs` index, loop tables, handoffs), and the work itself goes in sub-devlogs started forward at soft, content-driven seams, written by whichever implementer is on that concern.
 
 ## Brief
 
@@ -23,12 +23,14 @@ Maintainer direction (2026-10-06):
 - First reviewer must weigh the alternative: the top-level devlog is always the overseer/high-level devlog (an index of other devlogs plus the workstream state record), with fresh devlogs started as size limits or phase checkpoints are hit, instead of retroactive splitting.
 
 Principles: lean on agent intuition, fewer formalisms; sizes in lines/words; every agent commits its own work by explicit path.
-Verification floor: build, frontmatter validator and `chat-record.test.sh --unit` pass; a grep finds no stale references to the old ownership (overseer tables in the workstream devlog, "top of your own section"); triage locates loop state on a fixture devlog pair; and a live sonnet `/cdocs:iterate` smoke in a sandbox produces a workstream devlog written by the implementer (with its Scratchpoint) and a separate overseer devlog with the dispatch/return and iteration rows. Failure picture: the overseer's rows land in the workstream devlog, or triage cannot find the loop's latest verdict.
+Verification floor: build, frontmatter validator and `chat-record.test.sh --unit` pass; a grep finds no stale references to the old ownership (overseer tables in the workstream devlog, "top of your own section"); triage locates loop state on a fixture devlog pair; and a live sonnet `/cdocs:iterate` smoke in a sandbox produces a top-level devlog written only by the lead (tables, index, Scratchpoint) and a sub-devlog written only by the implementer (with its Scratchpoint). Failure picture: the lead's rows land in a sub-devlog or an implementer writes the top-level, or triage cannot find the loop's latest verdict.
+
+> NOTE(opus-5-5/cdocs/devlog-ownership-rework): Design A (lead's top-level + forward sub-devlogs) adopted after review r1; the bullets above describe the original direction.
 
 ## Scratchpoint
 
 - as_of: 2026-10-06T11:40
-- now: review round 1
+- now: revision round 1
 - open: none
 - next: revise or accept
 - files: this devlog, the proposal
@@ -37,6 +39,7 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| 1 (propose) | prop-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | A (lead top-level + forward sub-devlogs at content seams, one writer at a time) chosen; blocking: adopt soft-boundary steer, size check at every return/handoff, one live Scratchpoint per writer per workstream; open questions answered |
 
 ## Dispatch/Return Events
 
@@ -45,9 +48,11 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T11:41 | author proposal |
 | return | prop-1 | same | 2026-10-06T11:50 | `67e497a` review_ready; recommends maintainer's alternative (top-level = lead's devlog + index + tables; per-implementer sub-devlogs; forward continuation replaces retroactive split); 4 open questions |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | 2026-10-06T11:51 | proposal review r1 (weigh both designs) |
+| return | rev-1 | same | 2026-10-06T12:01 | `ac72773` revise |
+| dispatch | prop-1 (warm) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T12:02 | revision r1 + steer |
 
 ## Steering Log
 
 | at | target | content | applied |
 |---|---|---|---|
-| 2026-10-06T11:55 | next revision | Maintainer: sub-devlog boundaries are soft and content-driven, not coupled to implementer identity, turns, restarts or context. Short phases can share one devlog; a large testing phase done in a single turn by one implementer can get its own. (Queued: rev-1 in flight.) | pending |
+| 2026-10-06T11:55 | prop-1 r1 revision | Maintainer: sub-devlog boundaries are soft and content-driven, not coupled to implementer identity, turns, restarts or context. Short phases can share one devlog; a large testing phase done in a single turn by one implementer can get its own. (Queued: rev-1 in flight.) | 1 |
