@@ -28,9 +28,9 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 ## Scratchpoint
 
 - as_of: 2026-10-06T11:40
-- now: propose round 1
+- now: review round 1
 - open: none
-- next: review round 1
+- next: revise or accept
 - files: this devlog, the proposal
 
 ## Iteration Log
@@ -43,3 +43,5 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T11:41 | author proposal |
+| return | prop-1 | same | 2026-10-06T11:50 | `67e497a` review_ready; recommends maintainer's alternative (top-level = lead's devlog + index + tables; per-implementer sub-devlogs; forward continuation replaces retroactive split); 4 open questions |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | 2026-10-06T11:51 | proposal review r1 (weigh both designs) |
