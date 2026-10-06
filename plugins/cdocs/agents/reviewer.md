@@ -24,8 +24,7 @@ rules/writing-conventions.md
 
 If those paths yield no results, try `plugins/cdocs/rules/frontmatter-spec.md` and `plugins/cdocs/rules/writing-conventions.md` as fallbacks for source-repo contexts.
 
-> NOTE(claude-opus-4-6/cross-target-rules): If the files are not found via either path (e.g., in an external CC install), the rule content may still be available in session context via the SessionStart hook injection.
-> Proceed with any rule content present in your context.
+If neither path resolves, use the rule content already in your context.
 
 ## Input
 

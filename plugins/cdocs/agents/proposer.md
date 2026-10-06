@@ -27,8 +27,7 @@ rules/frontmatter-spec.md
 
 If those paths yield no results, try `plugins/cdocs/rules/writing-conventions.md` and `plugins/cdocs/rules/frontmatter-spec.md` as fallbacks for source-repo contexts.
 
-> NOTE(claude-sonnet-5/agent-dispatch-labeling): If the files are not found via either path (e.g., in an external CC install), the rule content may still be available in session context via the SessionStart hook injection.
-> Proceed with any rule content present in your context.
+If neither path resolves, use the rule content already in your context.
 
 ## Input
 

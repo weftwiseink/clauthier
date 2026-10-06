@@ -25,8 +25,7 @@ Before processing any documents, discover and read all rule files:
 These files are the source of truth for all conventions you enforce.
 Adding a new rule file to `rules/` extends your enforcement surface with no prompt changes.
 
-> NOTE(claude-opus-4-6/cross-target-rules): If no rule files are found via Glob (e.g., in an external CC install where paths do not resolve), rules may still be available in session context via the SessionStart hook injection.
-> Proceed with any rules present in your context.
+If neither path resolves, use the rule content already in your context.
 
 ## Input
 

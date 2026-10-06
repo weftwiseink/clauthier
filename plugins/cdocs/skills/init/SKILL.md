@@ -96,9 +96,6 @@ Scaffold the CDocs documentation structure in the current project.
    - Add a version-and-hash comment inside the delimiters: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->` (same shape as `.claude/rules/cdocs.md`; see Step 3 for hash computation)
    - This is idempotent: running init multiple times updates the content between delimiters without duplication.
 
-   > NOTE(claude-opus-4-6/cross-target-rules): The inlined content can drift from the source rule files if the plugin is updated but init is not re-run.
-   > The version comment helps users identify when regeneration is needed.
-
 ## README Templates
 
 ### devlogs/README.md

@@ -23,8 +23,7 @@ If that path yields no results, try `plugins/cdocs/rules/frontmatter-spec.md` as
 
 This is the source of truth for required fields, valid values, and field formats.
 
-> NOTE(claude-opus-4-6/cross-target-rules): If the file is not found via either path (e.g., in an external CC install), the frontmatter spec may still be available in session context via the SessionStart hook injection.
-> Proceed with any spec content present in your context.
+If neither path resolves, use the rule content already in your context.
 
 ## Input
 
