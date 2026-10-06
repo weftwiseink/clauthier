@@ -13,7 +13,7 @@ Add whatever fields a cold resume needs (scope, gates, notes).
       "path": "cdocs/proposals/2026-08-10-a.md",
       "status": "implementation_ready",
       "arc_state": "pending",
-      "devlog": null, // the proposal's top-level devlog, once its loop starts
+      "devlog": null,
       "footprint": ["plugins/cdocs/**"],
       "verification_floor": "the artifact starts and does its job; failure: it exits non-zero"
     }
