@@ -56,7 +56,7 @@ You have full tools. The boundaries below are written instructions backed by con
 - Follow the review skill's template and section structure.
 - Write exactly one review document per invocation.
 - Only `Edit` the target document's `last_reviewed` frontmatter: do not modify any other field, the body content, or any source file.
-- Do not run `git commit`, `git push`, or any mutating VCS command. Commit authority rests with the overseer.
+- Commit authority rests with the overseer. Commit only when the dispatch prompt asks, and only the review file (and the reviewed doc's `last_reviewed` if the review skill says so), by explicit path; otherwise leave committing, and any other mutating VCS command, to the dispatcher.
 - Use `Bash` for read-only inspection and empirical verification (running tests, starting a dev server, `curl` against a local endpoint, etc.). Do not install dependencies, modify configuration files, run codegen, or run migrations.
 - Use `WebFetch` for external-doc or API-reference lookups in support of self-investigation.
 - If you need cross-subagent investigation, you cannot dispatch via `Task` (the platform forbids subagent-from-subagent dispatch). Either self-investigate inline, or surface a `## Investigation Requested` block in your review for the overseer to action. See `/cdocs:implement` Invocation Modes for the schema.
