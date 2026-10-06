@@ -52,7 +52,7 @@ Update a specific document's frontmatter field.
 ```
 
 5. Apply filters from `$ARGUMENTS` if present.
-6. Group devlog chunks (frontmatter `part_of`) under their root: each chunk's row follows its root's, with its File prefixed `↳ `; a chunk whose root is not in the filtered results keeps its place and adds `(part_of <root>)`.
+6. Group sub-devlogs (frontmatter `part_of`) under their top-level: each sub-devlog's row follows its top-level's, with its File prefixed `↳ `, and a sub-devlog whose top-level is not in the filtered results keeps its place and adds `(part_of <top-level>)`.
 7. Report total counts and breakdown by type/status.
 
 ### Update Mode

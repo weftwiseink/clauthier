@@ -39,7 +39,7 @@ For each file:
    - Required: `first_authored` (by, at), `task_list`, `type`, `state`, `status`, `tags`
    - Reviews also require: `review_of`
    - Non-reviews may have: `last_reviewed` (status, by, at, round)
-   - Devlog chunks carry `part_of` (repo-root path to their root devlog) and no `chat_record`; report a `part_of` naming no existing devlog, but do not edit it.
+   - Sub-devlogs carry `part_of` (repo-root path to their top-level devlog). Report a `part_of` naming no existing devlog, or naming a devlog that has its own `part_of` (nesting is one level), but do not edit it.
 3. **Apply mechanical fixes directly via Edit:**
    - Add missing required fields with sensible defaults where deterministic (e.g., `state: live`, `status: wip`).
    - Fix malformed timestamps to ISO 8601 with timezone.
@@ -49,18 +49,18 @@ For each file:
 5. **Analyze status** (check completeness signals):
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence.
-     A devlog chunk (`part_of` set) is `status: done` by construction and skips this check; recommend `done` if it is not.
+     A closed sub-devlog (`part_of` set, with a successor named in its `next:` or handoff, or a finished loop) skips this check and should be `status: done`: recommend `done` if it is not.
    - Reports: BLUF present, key findings and analysis sections filled.
    - Reviews: all sections filled, verdict present.
    - If document appears complete and status is `wip`, recommend `review_ready`.
    - If unsure, do NOT recommend a status change.
 6. **Locate the iterate devlog and read its logs** (`type: proposal` only; skip for other types). Run this analysis BEFORE "Check workflow state". When a matching devlog is found, its log-state mapping (below) takes precedence over the blind workflow-state heuristics in step 7.
-   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`. A chunk (`part_of` set) stands for its root: steps 2-6 read the root and its chunks as one devlog, and where a root table is missing or has no rows, its last row is the latest row across the chunks.
+   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`. A sub-devlog (`part_of` set) stands for its top-level: steps 2-6 read the family as one devlog, and each table's last row is its row with the highest iteration number across the family.
    2. **Filter to iterate devlogs**: keep only devlogs containing a `## Iteration Log` heading (produced by `/cdocs:iterate` Turn 0).
    3. **Filter to this proposal**: `task_list` match is necessary but not sufficient — a workstream can span multiple proposals — so further keep only devlogs whose body cites this proposal's path explicitly (the Turn 0 Brief cites the proposal path).
    4. **Pick one**: if multiple devlogs remain, take the most recently dated one (filename date, tie-broken by `first_authored.at`; if that also ties, flag the ambiguity in the report and recommend `[NONE]` rather than guessing).
    5. **Graceful fallback**: if none remain — or the matched devlog's Iteration Log is empty (Turn 0 only, loop never actually started) — fall back to the blind `last_reviewed`-based heuristics in step 7, unchanged. For proposals with no iterate history this refinement is purely additive.
-   6. **Read the last row of each table**: read the matched devlog's `## Iteration Log` and `## Judge Log` tables and take the **last row of each**. Key every field off its column *header name*, NEVER a fixed column position. The Iteration Log schema drifts across devlog vintages: the 2026-05-13 devlog has six columns and no `review_proof`; the 2026-05-18 devlog adds `review_proof`; the current `template.md` carries seven, and some older devlogs carry an extra context-estimate column. Positional indexing would misread the older logs. The mapping needs only the Iteration Log's `review_verdict` and the Judge Log's `verdict`.
+   6. **Read the last row of each table**: read the matched devlog's `## Iteration Log` and `## Judge Log` tables and take the **last row of each** (per step 1, the highest iteration number across the family). Key every field off its column *header name*, NEVER a fixed column position. The Iteration Log schema drifts across devlog vintages: the 2026-05-13 devlog has six columns and no `review_proof`; the 2026-05-18 devlog adds `review_proof`; the current `template.md` carries seven, and some older devlogs carry an extra context-estimate column. Positional indexing would misread the older logs. The mapping needs only the Iteration Log's `review_verdict` and the Judge Log's `verdict`.
 
    **Log-state -> recommendation mapping.** These rules are checked before the "Check workflow state" table in step 7 and, when a matching devlog exists, take precedence over it:
 
@@ -107,7 +107,7 @@ STATUS RECOMMENDATIONS:
 
 ITERATE LOOP STATE:
 - <path>:
-  devlog: <path to matched iterate devlog>
+  devlog: <path to matched iterate devlog (a family's top-level)>
   iteration_log_last_row: review_verdict=<value> (<other keyed fields>)
   judge_log_last_row: verdict=<value> (or "no Judge Log rows")
 
@@ -116,7 +116,7 @@ WORKFLOW RECOMMENDATIONS:
 ```
 
 Use repo-root-relative paths. Do not editorialize.
-Group devlog chunks under their root: in each section, list a chunk directly after its root's entry when both are triaged, and otherwise append `(part_of <root>)` to its path.
+Group sub-devlogs under their top-level: in each section, list a sub-devlog directly after its top-level's entry when both are triaged, and otherwise append `(part_of <top-level>)` to its path.
 Omit the `ITERATE LOOP STATE:` entry for a document when no matching iterate devlog was found (per Analysis step 6); include it whenever a devlog matched, even when the resulting recommendation is `[NONE]`, so the report stays auditable.
 
 ## Constraints
