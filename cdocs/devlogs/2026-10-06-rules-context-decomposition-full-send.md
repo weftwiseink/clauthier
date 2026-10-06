@@ -58,3 +58,4 @@ Address only with minimal wording, if at all:
 |---|---|---|---|---|
 | 2026-10-06T09:45 | steer-implementer | prop-1 | Maintainer answers on the simplification review (see Brief scope 1). | 1 |
 | 2026-10-06T09:58 | steer-implementer | prop-1 | Maintainer: oversee-arc split by tacit use, not references. Generic lessons (verification floor depth, isolate fault before costly full-cycle retries, serialize when overlap unsure) compress into the always-loaded orchestration rule; arc-only material goes skill-side on demand. | 1 |
+| 2026-10-06T10:14 | steer-implementer | next reviser + implementer | Maintainer: root CLAUDE.md edit approved as drafted (Phase 2 ungated); init steps 5-6 kept with stale-file cleanup fix, future left to the follow-up RFP; Phase 5 (model-tiering + workflow-patterns compression) included. | pending |
