@@ -49,6 +49,8 @@ Address only with minimal wording, if at all:
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-06T09:51 | elaborate RFP in place |
+| return | prop-1 | same | 2026-10-06T10:10 | `1d0734f` review_ready; oversee-arc deleted (3 lessons to orchestration rule, arc-only to oversee skill); always-loaded ~797/8,054 -> ~296/2,120 lines/words; 7 phases; 3 maintainer questions (init steps 5/6, Phase 5 scope, CLAUDE.md edit) |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | 2026-10-06T10:11 | proposal review r1 |
 
 ## Steering Log
 
