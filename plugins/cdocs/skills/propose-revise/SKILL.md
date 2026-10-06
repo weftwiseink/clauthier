@@ -16,7 +16,7 @@ terminates on accept-or-escalate, and should AskUserQuestion if the proposal has
 
 The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
 Inline floor: dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule default); write durable state at task-unit boundaries; use a fresh reviewer each round.
-If the overseer keeps a devlog for the loop, it keeps that devlog's `## Scratchpoint` current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state".
+A loop devlog is expected, since [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory" has every dispatch and return logged there; keep its `## Scratchpoint` current per that rule's "Durable state".
 The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
