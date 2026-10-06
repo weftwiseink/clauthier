@@ -59,6 +59,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | rev-4 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md | 2026-10-06T09:16 | Phase 2 review |
 | return | rev-4 (cdocs:reviewer) | same | 2026-10-06T09:21 | `89991d9` revise (1 major: triage chunk skip in 6.1) |
 | dispatch | impl-5 (cdocs:implementer, fresh) | plugins/cdocs/agents/triage.md, cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md, this devlog (notes) | 2026-10-06T09:22 | Phase 2 fixes (rev-4 major + minor) |
+| return | impl-5 | same | 2026-10-06T09:24 | `6d54540` triage chunk-as-root (Iteration + Judge Log fallback), `b4c519b` RFP pass bar as starting point, notes `3b7683d`; build OK |
+| dispatch | rev-5 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r2.md | 2026-10-06T09:25 | verify Phase 2 fixes |
 
 ## Steering Log
 
