@@ -59,6 +59,8 @@ Address only with minimal wording, if at all:
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r2.md | 2026-10-06T10:25 | proposal review r2 |
 | return | rev-2 | same | 2026-10-06T10:29 | `02a3db3` accept |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/scripts/postinstall.js, plugins/cdocs/README.md, plugins/cdocs/AGENTS.md, CLAUDE.md (approved edit only), new follow-up RFP, this devlog (notes) | 2026-10-06T10:30 | iterate: Phases 1-5 |
+| return | impl-1 | same | 2026-10-06T10:46 | `209ec08..a57c78e` + notes `0de1747`; always-loaded 797/8,054 -> 297/2,145; static checks pass; loop smoke pass (baseline also passes); rules_check 3/5 fail on old and new trees (RFP-tracked); reviewer committed despite reviewer.md (pre-existing) |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-impl-r1.md | 2026-10-06T10:47 | implementation review r1 |
 
 ## Steering Log
 
