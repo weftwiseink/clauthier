@@ -150,7 +150,7 @@ Instead:
 ```
 BASH RUNNER REPORT
 Command: <exact command run; truncated if over 200 chars with "...">
-Output: <file_abspath> (lines: <line_count> bytes: <byte_count>)
+Output: <file_abspath> (lines: <line_count> words: <word_count>)
 Status: OK | FAILED | WARNINGS (returncode: <n>)
 Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>
 Summary:
@@ -160,7 +160,7 @@ Excerpt:
 ```
 
 Completeness comes before size: a thin report sends the caller back to the raw output, the cost the runner exists to avoid.
-A report is usually under 4,000 characters, always includes all requested info, flags critical info like errors, and never compresses lines into an unlabelled shorthand to save space.
+A report is usually under ~600 words, always includes all requested info, flags critical info like errors, and never compresses lines into an unlabelled shorthand to save space.
 `Summary:` gives the runner a sanctioned place for interpretation; `Excerpt:` holds lines copied from a command's output.
 A requested list may go in a labelled section of its own.
 

@@ -46,14 +46,14 @@ Keep each read comfortably under the 30,000-character ceiling; if a read spills 
 ## Output Format
 
 Your final message is only this plain-text report.
-It should usually be under 4,000 characters.
+It should usually be under ~600 words.
 Always include all requested info, and flag critical info like errors.
 Never compress lines into an unlabelled shorthand to save space.
 
 ```
 BASH RUNNER REPORT
 Command: <exact command run; truncated if over 200 chars with "...">
-Output: <file_abspath> (lines: <line_count> bytes: <byte_count>)
+Output: <file_abspath> (lines: <line_count> words: <word_count>)
 Status: OK | FAILED | WARNINGS (returncode: <n>)
 Truncated: none | <what was omitted>; see: <ready-to-run command over the capture path>
 Summary:
