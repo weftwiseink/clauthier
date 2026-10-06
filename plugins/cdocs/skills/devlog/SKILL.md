@@ -40,7 +40,7 @@ You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
 - **Scratchpoint:** Short current state (`as_of`, `now`, `next`, `open`, `files`), replaced in place by the devlog's owner between handoffs; see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state".
-  An agent writing into another agent's devlog keeps none.
+  An agent writing its own section of another agent's devlog keeps one at the top of that section.
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.
   - Skipping test-first for prototyping? Acknowledge it: "Rapid prototyping without test-first, will add coverage after."

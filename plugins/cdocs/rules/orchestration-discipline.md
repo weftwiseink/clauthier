@@ -7,6 +7,8 @@ A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `over
 Delegate anything beyond a trivial few-liner (bulk reads, sweeps, builds, tests, implementation) to subagents; you hold the plan and the decisions.
 Trust returned summaries: re-reading a subagent's files to double-check it is the pattern this rule exists to prevent.
 Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to a `fork`.
+Stay aware of a warm subagent's context: its reported tokens (`subagent_tokens` in the task notification) track its current context.
+Once that passes ~250K after a turn, have it write a handoff beside its Scratchpoint and commit both, then continue with a fresh subagent seeded from them.
 Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
 
 ## Resume from disk, not memory
@@ -29,7 +31,7 @@ When a loop is stuck debugging, isolate the fault (minimal repro, bisect, a focu
 ## Durable state
 
 At each task-unit boundary write a devlog handoff (Completed / Decisions Made / Open Todos) a cold reader can act on, and check the devlog against the devlog skill's split trigger; compaction summaries are lossy.
-Between handoffs keep a short `## Scratchpoint` (as_of, now, next, open, files touched) current in any devlog you own; an agent writing into another agent's devlog keeps none.
+Between handoffs keep a short Scratchpoint (as_of, now, next, open, files touched) current after each substantial turn, in what you own: `## Scratchpoint` in your own devlog, or the top of your own section (such as a dispatched implementer's notes) in another agent's devlog.
 
 ## Chat record
 
