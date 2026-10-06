@@ -23,11 +23,11 @@ Out of scope: propose-vs-implement row ambiguity (RFP `b9ab8e0`), proposal `stat
 
 ## Scratchpoint
 
-- as_of: 2026-10-06T13:35
-- now: all four phases done and verified; status review_ready
-- next: overseer: Workstream Devlogs row, implementation review
-- open: follow-ups listed under Handoff (none blocking)
-- files: this devlog; scratch evidence under `devown/`
+- as_of: 2026-10-06T14:05
+- now: accept nits from review r1 landed, one commit each; see "Accept nits" below
+- next: overseer: fold into Workstream Devlogs row, close out the implementation
+- open: review r1's remaining follow-ups (restart/rotation smoke, fixture 2 non-discrimination, batched dispatch rows) are deferred, not fixed here
+- files: this devlog; `plugins/cdocs/rules/frontmatter-spec.md`, `plugins/cdocs/skills/devlog/SKILL.md`, `plugins/cdocs/rules/orchestration-discipline.md`, `plugins/cdocs/skills/oversee/template.md`, `plugins/cdocs/agents/triage.md`, `cdocs/proposals/2026-09-22-haiku-bash-wrapper.md`
 
 ## Plan
 
@@ -178,4 +178,27 @@ Open Todos (follow-ups, none blocking):
 - Smoke2's lead staged `cdocs/devlogs` as a directory: explicit, but broader than one path.
 - Fixture 2 passes on the old text too (see the NOTE above), so the highest-iteration rule is verified as working, not as necessary.
 - Sandbox credentials removed: every `.credentials.json` and `cfg/.claude.json` under the session scratchpad was deleted after the runs.
+
+## Accept nits
+
+Dispatched `/cdocs:implement --dispatched` to fold [review r1](../reviews/2026-10-06-review-of-devlog-ownership-rework-impl-r1.md)'s action items 1, 2, 3, 4, 5, 8, one commit each:
+
+| commit | file | fix |
+|---|---|---|
+| `f11df72` | `frontmatter-spec.md` | add `implementation_wip` to the proposal `status` list (item 1) |
+| `1bda727` | `skills/devlog/SKILL.md` | sub-devlog naming loosened to the top-level's date plus a concern slug; "Who" bullet's repeated sentence dropped (items 2, 5) |
+| `71182d0` | `rules/orchestration-discipline.md` | "stage by explicit path" -> "explicit file path (no directories)" (item 3) |
+| `8f8fa7b` | `skills/oversee/template.md` | dropped the `//` comment duplicating `oversee/SKILL.md` (item 3 of the template's own list, review's item 3) |
+| `34363d9` | `agents/triage.md` | step 5 runs the Verification check on closed sub-devlogs instead of skipping it (item 4) |
+| `6ffc555` | `cdocs/proposals/2026-09-22-haiku-bash-wrapper.md` | `last_reviewed` restored to the impl-r8 accept (round 10), not impl-final-r2's later revise (item 8) |
+
+Not done here (review r1 marked these follow-up, not nit): item 6 (overseer's own top-level Scratchpoint, owned by the overseer, not this implementer), item 7 (a real restart/rotation smoke).
+Items 2 ("nit" judge) and the questions for the maintainer were resolved per the review's own "recommended" options.
+
+Verification: `npm run build:cdocs` exit 0 (7 agents converted); `cdocs-validate-frontmatter.sh` on the changed proposal, silent/exit 0; `chat-record.test.sh --unit` 95 passed, 0 failed.
+
+### Implementer Notes
+
+> NOTE(sonnet-5/cdocs/devlog-ownership-rework): For item 8, no review document under `cdocs/reviews/` carries an Accept verdict after `impl-final-r2`'s Revise; the devlog `2026-10-05-oversee-haiku-bash-wrapper-p0-completeness.md` records the overseer accepting with residuals instead of dispatching another formal review round.
+> Restored `last_reviewed` to `impl-r8`'s accept (round 10, `at: 2026-10-05T10:00:31-07:00`), confirmed against `git log -p` on the proposal file as the exact triple that commit `908aa15` wrote, rather than inventing a new accepted stamp for the un-reviewed override.
 
