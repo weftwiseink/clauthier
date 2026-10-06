@@ -55,6 +55,7 @@ Test the marketplace locally: `/plugin marketplace add .` then `/plugin install 
 
 cdocs rules are delivered `/cdocs:init`-first, with graceful degradation:
 1. **`/cdocs:init` materialization** (primary) — writes rule content into the consuming project: `.claude/rules/cdocs.md` (loaded via CC `@`-import), `.opencode/rules/cdocs/*.md` (OpenCode), and an inlined block in `AGENTS.md` (cross-tool: Codex, Cursor, Copilot, Aider). Each carries a version + sha256 marker.
+   Rule files carry Claude Code guidance only; target-specific guidance is tracked in `cdocs/proposals/2026-10-06-target-specific-guidance-rfp.md`.
 2. **CC SessionStart freshness hook** (`inject-rules.ts`) — compares the plugin's rule-content hash to the materialized marker; on mismatch emits a short (<500B) `additionalContext` directive to re-run `/cdocs:init` and `Read` the result. It is a freshness nudge, not a content channel: silent when uninitialized or fresh. Interim workaround pending a plugin-native `rules` field ([#14200](https://github.com/anthropics/claude-code/issues/14200)).
 3. **Agent relative paths** — agents try `rules/*.md` from their directory first, falling back to `plugins/cdocs/rules/*.md`.
 
