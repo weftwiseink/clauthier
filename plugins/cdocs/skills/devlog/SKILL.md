@@ -117,6 +117,28 @@ When dispatching parallel agents for multi-failure debugging, document in "Issue
 - Make the devlog the single source of truth for the work session.
 - Ensure the devlog contains enough context for another agent to resume the work.
 
+## Splitting a devlog
+
+A long devlog splits where its work has seams, so a reader opens one relevant chunk instead of the whole chronology.
+
+- **Trigger.** At each handoff, past ~1,500 words (`wc -w`) or ~5 loop rounds, look for a closed concern; size prompts the look, never chooses the cut.
+- **Closed concern.** A completed phase, finished sub-loop, resolved investigation, or landed verification campaign that has its own H2 or H3, has no open todo in the latest handoff (done, or moved into the root's handoff), and feeds no live table in the root.
+- **Cut.** Move each closed concern into its own chunk with everything belonging to it: notes, debugging, its Changes Made and Verification rows, finished Iteration Log rows.
+  Merge a concern under ~400 words into an adjacent chunk.
+  Rows shared by two concerns, open concerns, and live tables stay in the root; a live table whose finished rows moved points to their chunk.
+  No closed concern means no split: tighten prose instead.
+- **Naming.** Flat siblings `cdocs/devlogs/YYYY-MM-DD-<root-slug>-<concern-slug>.md`, with the root's date and a concern-named slug (`-canary`, `-phase2-hooks`, `-iterate-r1-r5`).
+- **Root as index.** The root keeps its frontmatter (including `chat_record:`), Objective, `## Scratchpoint`, current handoff, and live tables, and gains a `## Chunks` table:
+
+  ```markdown
+  ## Chunks
+
+  | chunk | concern | status | read this when |
+  |---|---|---|---|
+  | [-canary](2026-09-22-x-canary.md) | Phase-0 hook canary | done | you need a hook's exact payload fields |
+  ```
+- **Chunks stand alone.** Full frontmatter with the root's `task_list`, `status: done`, `part_of: cdocs/devlogs/<root>.md`, and no `chat_record:`; a backlink as the first line under the title, `> NOTE(author/workstream): Chunk of [<root>](<root>.md); see its Chunks table for siblings.`; then a standalone BLUF.
+
 ## Handoff devlogs
 
 Some work prepped from the initial planner or an earlier implementer with context and references to earlier docs.
