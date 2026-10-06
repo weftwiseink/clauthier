@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/chat-record-devlog-management
 type: devlog
 state: live
-status: wip
+status: done
 tags: [chat-record, hooks, devlog, orchestration, iterate]
 ---
 
@@ -71,4 +71,4 @@ Finished rows moved: 2026-10-05T14:08 to [-phase1b-fixes](2026-10-05-chat-record
 ### Open Todos
 
 - Maintainer 1b checklist: CI after push (ubuntu + macos), interactive checks (a)-(d), a 20-turn opus session after `/cdocs:init` in this repo, 16/20 usefulness sample.
-- This devlog exceeds the split trigger; split it at closed-concern boundaries (first real use of the Phase 2 rule).
+- Split done (`6827f09`); splitter friction notes feed the rules-context decomposition (p2).

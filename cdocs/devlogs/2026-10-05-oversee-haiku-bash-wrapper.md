@@ -94,4 +94,11 @@ Finished rows moved to their concern's chunk: [-p0-haiku-r1-r5](2026-10-05-overs
 ### Open Todos
 
 - p2: `/cdocs:full-send cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md`, once the simplification review lands; delete non-Claude-Code blocks; file the reintroduction RFP.
-- This devlog and the iterate devlog both exceed the ~1,500-word split trigger.
+
+### Steering (2026-10-06, maintainer, on the simplification review `8c52477`)
+
+- `oversee-arc.md`: move its guidance into the skill side, loaded when needed by `/oversee` and the other oversight skills (full-send, iterate, propose-revise) that rely on it, not always-loaded.
+- Thinness signal (`inline_work`, `overseer_thinness`, `signal_missing`): delete.
+- Claim registry: delete. Steering Log: free text plus "a message arriving mid-dispatch is queued, never injected".
+- Compression lands inside the p2 rules-context decomposition: compress first, then decide layout.
+
