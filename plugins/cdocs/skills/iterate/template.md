@@ -1,6 +1,6 @@
 # Iterate Skill: Devlog Section Templates
 
-Copy the five H2 sections below into the loop's devlog on Turn 0 (skip `## Scratchpoint` if the devlog already has one), then keep the Scratchpoint current and add rows as the loop progresses.
+These are the workstream's top-level devlog sections, which the overseer owns: copy each one the devlog lacks on Turn 0, then keep the Scratchpoint current and add rows as the loop progresses.
 
 ## Scratchpoint
 
@@ -9,6 +9,11 @@ Copy the five H2 sections below into the loop's devlog on Turn 0 (skip `## Scrat
 - next:
 - open:
 - files:
+
+## Workstream Devlogs
+
+| devlog | concern | status | read this when |
+|---|---|---|---|
 
 ## Iteration Log
 

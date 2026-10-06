@@ -72,12 +72,15 @@ Flag off = no helper call at all.
 
 Read the proposal and any handoff devlog once.
 State scope and verification floor explicitly.
-Create or append to a devlog, copying from `./template.md` the `## Scratchpoint` (unless the devlog already has one) and the four log sections: the Iteration Log, the (empty) Judge Log, the Dispatch/Return Events table, and the (empty) Steering Log.
-Prefer appending to the most recent devlog whose `task_list` matches the proposal's; otherwise create a new one and record the choice.
+Continue the workstream's top-level devlog, which you own: the most recent devlog whose `task_list` matches the proposal's, that cites the proposal, and that has no `part_of` (a propose-revise or an earlier iterate may have started it).
+Otherwise create one (`YYYY-MM-DD-<slug>-iterate.md`, citing the proposal in its Brief) and record the choice.
+Copy from `./template.md` the sections it lacks: `## Scratchpoint`, `## Workstream Devlogs`, and the four log sections (Iteration Log, Judge Log, Dispatch/Return Events, Steering Log).
 
 ### Turn N.a (Implement)
 
 Dispatch the implementer via Task with `subagent_type: "cdocs:implementer"` and a prompt that follows `/cdocs:implement --dispatched` conventions, including the proposal path and goals for this iterate session (scope, verification floor, prior review path if any).
+Name the sub-devlog it writes, per the devlog skill's "Continuing in a new devlog": the open concern's to continue it, or a new one for a new concern, with the top-level path for its `part_of`.
+Add a `## Workstream Devlogs` row for each new sub-devlog, including any successor the implementer reports.
 
 `--dispatched` mode suppresses subagent dispatch and routes investigation requests back to the overseer via `## Investigation Requested` blocks; see `/cdocs:implement` Invocation Modes for the schema.
 
@@ -86,7 +89,7 @@ These rows are what on-resume reconciliation reads, so the write is not optional
 
 ### Turn N.b (Review)
 
-Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "cdocs:reviewer"`.
+Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "cdocs:reviewer"`, pointing it at the proposal and the sub-devlog the implementer wrote.
 The reviewer inspects the live system rather than only the diff and produces a review document with a verdict.
 For verification floors that require empirical evidence (browser, dev server, integration, end-to-end, live behavior), the reviewer empirically re-runs the floor and cites at least one artifact path in the review, inlining excerpts for ephemeral artifacts.
 This citation is what makes a `confirmed` row admissible.
@@ -110,7 +113,8 @@ Append a Judge Log row, then run the Checkpoint (below).
 
 ### Checkpoint (handoff)
 
-At each judge assessment (Turn N.d) and on Accept, write the handoff per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state"; keep the Scratchpoint current between handoffs (the dispatched implementer keeps none).
+At each judge assessment (Turn N.d) and on Accept, write the handoff per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state"; keep your Scratchpoint current between handoffs.
+When a finished concern's writer did not mark its sub-devlog `done` (the next concern went to another implementer), mark it.
 
 ## Termination
 
@@ -120,15 +124,15 @@ No retry-count cap on Accept-bound progress: a patient overseer is bounded by re
 ## Steering
 
 A human message that arrives while a subagent is in flight is queued, never injected: fold it into the next dispatch.
-Note each directive in the devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it, so a resumed overseer can pick up any not yet applied.
+Note each directive in your devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it, so a resumed overseer can pick up any not yet applied.
 
 ## On-Resume Reconciliation
 
-Follow [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", reading the Dispatch/Return Events rows, and re-queue any Steering Log directive not yet applied.
+Follow [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", reading your devlog's Dispatch/Return Events rows, and re-queue any Steering Log directive not yet applied.
 
 ## Iteration Log and Judge Log
 
-Four log sections live in the devlog body; copy them from `./template.md` on Turn 0 (column examples are at the bottom of that file).
+Four log sections live in the top-level devlog's body; copy them from `./template.md` on Turn 0 (column examples are at the bottom of that file).
 
 The Iteration Log's `review_proof` takes one value per row:
 
