@@ -21,7 +21,7 @@ tags: [fresh_agent, implementation_review, phase_1a, consistency_read, orchestra
   The commits in between (`4b24749`, `d46540c`) touch no `plugins/` file.
   `HEAD` (`d52c5fb`) has no plugin change after `757028b`.
 - Spec: proposal "Phase 1a: compaction-instruction removal and the Scratchpoint (text only)" and its "Scratchpoint" section.
-- Implementer notes: final section of `cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md`.
+- Implementer notes: final section of `cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate-phase1a.md`.
 - Per dispatch instruction, the target's `last_reviewed` frontmatter is **not** updated here: the overseer owns the proposal and devlog.
 
 ## Summary Assessment

@@ -20,7 +20,7 @@ Make a lead model reliably execute Pillar 2's `### Resumption` step 3 after a `/
 
 ## Context
 
-Phase 1b's `rules_check` scenario (`cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md`, "Implementation Notes (impl-2, Phase 1b)") found step 3 unreliable across tiers:
+Phase 1b's `rules_check` scenario (`cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate-phase1b.md`, "Implementation Notes (impl-2, Phase 1b)") found step 3 unreliable across tiers:
 
 | model | first post-compaction calls | step 3 |
 |---|---|---|

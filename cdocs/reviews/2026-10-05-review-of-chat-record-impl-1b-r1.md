@@ -19,7 +19,7 @@ tags: [fresh_agent, implementation_review, phase_1b, runtime_validated, hooks, p
 
 ## Scope and method
 
-- Implementation: `git diff e3ea115..42e0b93 -- plugins .github` (`f3b4806`..`42e0b93`, 17 commits), the proposal, and the "Implementation Notes (impl-2, Phase 1b)" section of `cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md`.
+- Implementation: `git diff e3ea115..42e0b93 -- plugins .github` (`f3b4806`..`42e0b93`, 17 commits), the proposal, and the "Implementation Notes (impl-2, Phase 1b)" section of `cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate-phase1b.md`.
 - Every run used sandboxes under this session's scratchpad (the suite's own `claude_run`/`drive` method, `env -i`, copied credentials, `--plugin-dir` at this worktree), Claude Code 2.1.289.
   Every credential copy was deleted afterwards, including the two stale `r7canary`/`r8canary` `.claude.json` copies the implementer flagged.
 - Rules-check A/B arms ran against scratch copies of the plugin; no file in this worktree was edited.
