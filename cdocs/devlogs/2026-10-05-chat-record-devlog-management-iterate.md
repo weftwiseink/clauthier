@@ -27,6 +27,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | 1 (1a) | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1a-r1.md | no | Phase 1a accepted; greps re-run by reviewer; 6 non-blocking wording nits batched into Phase 1b; overseer default: iterate/template.md gains `## Scratchpoint` in 1b |
 | 2 (1b) | impl-2 (cdocs:implementer) | rev-2 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md | no | blocking: macOS sed `\r` in escape_body; rules check fails post-compaction (reviewer A/B: 3-line CLAUDE.md block beside import line 2/3 haiku); 7 non-blocking; maintainer interactive checks listed |
 | 3 (1b) | impl-3 (cdocs:implementer) | rev-3 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | no | 94/94 unit (incl. bash 3.2, BSD-sed sim), 25/25 non-optional headless; rules_check deferred to RFP; maintainer checklist (CI push, interactive a-d, 20-turn opus session, 16/20 sample) pending; minors: speaker regex gap, proposal sync lines |
+| 4 (2) | impl-4 (cdocs:implementer) | rev-4 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md | no | major: triage step 6.1 skips chunks when locating the iterate devlog, so a split loop devlog (table in a chunk) loses loop state and can regress `implementation_accepted`; minor: RFP A/B pass bar contradicts its Test protocol/Acceptance bar; nits: hook-output byte budgets kept (platform cap), dry-run copy dangling ref (uncommitted), lone small closed concern stays in root |
 
 ## Judge Log
 
@@ -56,6 +57,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | dryrun-1 (general-purpose, sonnet, fresh) | n/a (read-only, scratchpad dryrun/) | 2026-10-06T09:13 | split dry-run; answer key in impl-4 notes |
 | return | dryrun-1 | n/a | 2026-10-06T09:15 | PASS: 6/6 answers match key; Reads = 2 roots + 4 chunks (one per question for A1,A2,B1,B2); A3,B3 root only |
 | dispatch | rev-4 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md | 2026-10-06T09:16 | Phase 2 review |
+| return | rev-4 (cdocs:reviewer) | same | 2026-10-06T09:21 | `89991d9` revise (1 major: triage chunk skip in 6.1) |
+| dispatch | impl-5 (cdocs:implementer, fresh) | plugins/cdocs/agents/triage.md, cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md, this devlog (notes) | 2026-10-06T09:22 | Phase 2 fixes (rev-4 major + minor) |
 
 ## Steering Log
 
