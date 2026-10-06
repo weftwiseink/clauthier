@@ -21,7 +21,7 @@ After any interruption, re-derive what is in flight from the devlog's dispatch/r
 
 Never dispatch a writer against a path another live agent is writing; wait or re-scope.
 Before running writers in parallel, predict the files each will touch; when unsure whether the sets overlap, serialize.
-Every agent commits its own work early and often; agents share worktrees and commit concurrently, so stage by explicit path, never `git add -A` or `commit -a`.
+Every agent commits its own work early and often; agents share worktrees and commit concurrently, so stage by explicit file path (no directories), never `git add -A` or `commit -a`.
 
 ## Verification and stuck loops
 
