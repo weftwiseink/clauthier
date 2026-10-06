@@ -2,7 +2,7 @@
 first_authored:
   by: "@claude-opus-5-5"
   at: 2026-10-05T12:17:00-07:00
-task_list: cdocs/chat-record-devlog-management
+task_list: meta/chat-record-devlog-management
 type: devlog
 state: live
 status: done
