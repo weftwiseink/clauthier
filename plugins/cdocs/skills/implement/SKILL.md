@@ -52,6 +52,8 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
 3. **Create a devlog**: invoke `/cdocs:devlog` for the implementation session.
    - Set `task_list` to match the proposal's `task_list`.
    - Reference the proposal path in the devlog's Objective section.
+   - Dispatched: write the sub-devlog the overseer names instead, creating it with `part_of` the top-level devlog if absent, else continuing from its Scratchpoint and latest handoff.
+     The top-level devlog and its tables are the overseer's.
 4. **Create a task list**: break the proposal's implementation phases into trackable tasks.
 5. **Execute implementation phases** following the proposal's plan:
    - Work through phases sequentially (or in parallel per `rules/workflow-patterns.md` when applicable).
@@ -82,7 +84,8 @@ The implementor should follow these conventions throughout:
 - The devlog is important for future understanding for the implementation session.
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
-- Keep a Scratchpoint current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state": the devlog's `## Scratchpoint` in top-level mode; a dispatched implementer keeps one at the top of its own notes section, and writes a handoff beside it when the overseer asks for a restart.
+- Keep the `## Scratchpoint` of the devlog you are writing current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state", and write a handoff beside it when the overseer asks for a restart.
+- At each return or handoff, look for a seam per the devlog skill's "Continuing in a new devlog"; dispatched, report any successor sub-devlog you start.
 
 ### Use cdocs skills as appropriate (top-level mode)
 - `/cdocs:review` when implementation is complete and ready for evaluation.
