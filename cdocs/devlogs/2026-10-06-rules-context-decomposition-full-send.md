@@ -55,3 +55,4 @@ Address only with minimal wording, if at all:
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 | 2026-10-06T09:45 | steer-implementer | prop-1 | Maintainer answers on the simplification review (see Brief scope 1). | 1 |
+| 2026-10-06T09:58 | steer-implementer | prop-1 | Maintainer: oversee-arc split by tacit use, not references. Generic lessons (verification floor depth, isolate fault before costly full-cycle retries, serialize when overlap unsure) compress into the always-loaded orchestration rule; arc-only material goes skill-side on demand. | 1 |
