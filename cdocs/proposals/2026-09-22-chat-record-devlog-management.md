@@ -62,7 +62,7 @@ Keep devlogs skimmable by splitting them where the work has seams, so a resuming
 - Compaction awareness in the record: no compaction hook, no session start, end, or compaction lines.
 - Agent-side compaction management: no cdocs text asks the user to compact, schedules or times compaction, or has an agent estimate its own context usage; Phase 1a removes the existing instructions that did, and the rules act only after a compaction has happened.
 - Recording harness envelopes (task notifications, system reminders).
-- Chat records for dispatched subagents (Phase 3 pointer only).
+- Chat records for dispatched subagents (a separate scope: [`2026-10-05-tiered-chat-records-rfp.md`](2026-10-05-tiered-chat-records-rfp.md)).
 - Hook-authored scratchpoints: a hook can nudge, never author.
 - Permission or settings edits by `/cdocs:init`.
 - Redaction or secret scanning, scoped in [`2026-09-23-chat-record-redaction-scanning-rfp.md`](2026-09-23-chat-record-redaction-scanning-rfp.md).
@@ -283,7 +283,7 @@ Pillar 2 gains three steps:
 Compaction, `--resume`, and `--continue` keep the session id, so the session keeps its record.
 `/clear` and `--fork-session` start a new session with a new id and a new record; nothing carries over, which is what starting fresh means, so they are not resumption and no step applies to them.
 
-The steps make compaction a trimming event whose summary quality no longer decides resumption quality; for durable specialists, Phase 3's cap-and-reseed avoids compaction entirely.
+The steps make compaction a trimming event whose summary quality no longer decides resumption quality; for warm subagents, Phase 3's context cap avoids compaction entirely.
 
 ### Scratchpoint
 
@@ -528,7 +528,7 @@ Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `
 
 Depends on Phase 1b: the root keeps the `chat_record:` list and the handoff step it extends.
 
-> NOTE(opus-5-5/chat-record-devlog-management): The resumption A/B that gates Phase 3 lives in [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md), which owns step 3's post-compaction reliability (maintainer, 2026-10-06).
+> NOTE(opus-5-5/chat-record-devlog-management): The resumption A/B lives in [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md), which owns step 3's post-compaction reliability (maintainer, 2026-10-06).
 
 1. Devlog `SKILL.md`: "Splitting a devlog" with the trigger, closure test, cut and merge rules, naming, Chunks table, chunk frontmatter and backlink; Pillar 2's handoff step adds the size check.
 2. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` group by it.
@@ -537,9 +537,9 @@ Depends on Phase 1b: the root keeps the `chat_record:` list and the handoff step
 Success criteria: the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
 Constraints: no directory-per-workstream layout.
 
-### Phase 3 (gated on the resumption A/B in [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md))
+### Phase 3: context-capped warm subagents
 
-1. **Cap-and-reseed durable specialists:** at a cutoff on the specialist's harness-reported usage (tentatively ~0.4-0.6M tokens), the overseer has the specialist write a final handoff (and Scratchpoint, if it owns a devlog), then dispatches a fresh leg seeded from them; dispatch-level, needing no compaction.
-2. **Per-workstream record:** scoped in [`2026-10-05-tiered-chat-records-rfp.md`](2026-10-05-tiered-chat-records-rfp.md).
+A warm subagent resumed with `SendMessage` keeps a Scratchpoint at the top of its own section; once its reported context passes ~250K after a turn, the overseer has it write a handoff beside that Scratchpoint, commits both, and continues with a fresh subagent seeded from them (`orchestration-discipline.md` "Stay thin" and "Durable state").
+The committed Scratchpoint/handoff pairs allow a later analysis of how much the handoff adds; if little, the Scratchpoint alone seeds the fresh leg.
 
-Success criteria: a reseeded specialist continues without re-reading its predecessor's files.
+Success criteria: a fresh subagent continues without re-reading its predecessor's files.

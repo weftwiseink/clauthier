@@ -12,7 +12,7 @@ tags: [meta, tooling, context_persistence, hooks, chat-record, orchestration]
 # Tiered / Per-Workstream Chat Records
 
 > BLUF(sonnet-5/chat-record-devlog-management): The accepted chat-record proposal is top-level only (rule text, with a scoped `PreToolUse` fallback); this RFP scopes whether and how dispatched agents' activity — and optionally attributed subagent notes (e.g. `@sonnet-5 (reviewer)`) — should be recorded in, or linked from, the top-level record.
-> Motivated By: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` (Phase 3 pointer, "Top-level only" section), `cdocs/reports/2026-09-22-chat-record-scratchpoint-design.md` (Question 1), `cdocs/reports/2026-10-05-chat-record-design-history.md` (rejected per-workstream directory layout).
+> Motivated By: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` ("Top-level only" section), `cdocs/reports/2026-09-22-chat-record-scratchpoint-design.md` (Question 1), `cdocs/reports/2026-10-05-chat-record-design-history.md` (rejected per-workstream directory layout).
 
 ## Objective
 
@@ -33,5 +33,5 @@ Suggest gathering usage evidence from the accepted proposal's Phase 1-2 rollout 
 ## Open Questions
 
 - Is `SubagentStart`/`SubagentStop` reliable enough to build on, given it was verified-not-relied-on in the current design (design-history report)?
-- Does this need its own canary/proposal cycle independent of chat-record's Phase 3, or does it belong inside that same gated phase?
+- Does this need its own canary/proposal cycle? (It is a separate scope from chat-record.)
 - If attributed notes are adopted, what is the minimal curation step that doesn't violate single-writer/append-only (a separate curated file? a compaction-time fold-in? no curation, pointer-only)?
