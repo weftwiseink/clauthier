@@ -40,7 +40,7 @@ How the design reached this shape, the approaches it rejected, and the runtime e
 ## Objective
 
 Make the compaction summary's quality irrelevant to resumption: at any moment, durable state exists that is at most one turn stale, and a post-compaction window (or, in Phase 3, a reseeded specialist) is seeded from that state rather than from a summary.
-Keep devlogs skimmable by splitting them where the work has seams, so a resuming agent reads one relevant chunk rather than a 40KB chronology.
+Keep devlogs skimmable by splitting them where the work has seams, so a resuming agent reads one relevant chunk rather than a 5,000-word chronology.
 
 ## Background
 
@@ -315,9 +315,9 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
 
 ### Devlog splitting at closed-concern boundaries
 
-- **Trigger.** At every handoff, past ~12KB or ~5 loop rounds, the author looks for a boundary; size prompts the look, never chooses the cut.
+- **Trigger.** At every handoff, past ~1,500 words (`wc -w`) or ~5 loop rounds, the author looks for a boundary; size prompts the look, never chooses the cut.
 - **Closed concern.** A completed phase, finished sub-loop, resolved investigation, or landed verification campaign that (i) has its own H2 or H3, (ii) has no open todo in the latest handoff (done or moved into the root's handoff), and (iii) feeds no live table in the root.
-- **Cut.** Move every closed concern, one chunk each, with everything belonging to it (notes, debugging, its Changes Made and Verification rows, finished Iteration Log rows); merge a concern under ~3KB into an adjacent chunk; rows shared by two concerns, open concerns, and live tables stay in the root.
+- **Cut.** Move every closed concern, one chunk each, with everything belonging to it (notes, debugging, its Changes Made and Verification rows, finished Iteration Log rows); merge a concern under ~400 words into an adjacent chunk; rows shared by two concerns, open concerns, and live tables stay in the root.
   No closed concern means no split.
 - **Naming.** Flat siblings `cdocs/devlogs/YYYY-MM-DD-<root-slug>-<concern-slug>.md` with the root's date prefix and a concern-named slug (`-canary`, `-phase2-hooks`, `-iterate-r1-r5`).
 - **Root as index.** The root keeps frontmatter (including `chat_record:`), Objective, `## Scratchpoint`, current handoff, live tables, and gains:
@@ -375,7 +375,7 @@ Raw evidence (settings, commands, log lines) goes in the devlog's existing `## V
   After `EnterWorktree` that is the worktree's copy of the record (committed from main) or a same-named new file; the union merge attribute reconciles the two when the branch merges or rebases.
   A `cd` into another directory with its own `cdocs/_chat/` moves the turn's note and sign-off there and leaves the original `@user` unsigned; accepted.
 - **Double hooks.** Plugin hooks are not deduplicated, so a developer running `--plugin-dir` beside the enabled `cdocs@clauthier` gets doubled `@user` blocks and sign-offs; the README says to disable one.
-- **Devlog at 20KB with no closed concern:** do not split; tighten prose and split landed verification evidence as its own chunk.
+- **Devlog past ~2,500 words with no closed concern:** do not split; tighten prose and split landed verification evidence as its own chunk.
 - **Chunk needed while a sub-loop's table is live:** only finished rows move; the live table stays with a pointer to the chunk.
 - **OpenCode and other targets** (`.opencode/rules/`, `AGENTS.md` readers): hooks and `bin/` are Claude-Code-only and not ported, so these targets keep no chat record.
   The per-turn paragraph reaches them through `/cdocs:init` and is inert by its scope sentence; resumption there reads the devlog's Scratchpoint and latest handoff.
