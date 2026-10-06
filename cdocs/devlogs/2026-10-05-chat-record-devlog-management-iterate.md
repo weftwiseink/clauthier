@@ -29,6 +29,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | 3 (1b) | impl-3 (cdocs:implementer) | rev-3 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r2.md | no | 94/94 unit (incl. bash 3.2, BSD-sed sim), 25/25 non-optional headless; rules_check deferred to RFP; maintainer checklist (CI push, interactive a-d, 20-turn opus session, 16/20 sample) pending; minors: speaker regex gap, proposal sync lines |
 | 4 (2) | impl-4 (cdocs:implementer) | rev-4 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md | no | major: triage step 6.1 skips chunks when locating the iterate devlog, so a split loop devlog (table in a chunk) loses loop state and can regress `implementation_accepted`; minor: RFP A/B pass bar contradicts its Test protocol/Acceptance bar; nits: hook-output byte budgets kept (platform cap), dry-run copy dangling ref (uncommitted), lone small closed concern stays in root |
 | 5 (2) | impl-5 (cdocs:implementer) + overseer inline | rev-5 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r2.md | yes | blocking: triage chunk rule named steps 2-4/6 only, so step 6.5 still read an empty root table (mid-loop guard lost); overseer applied rev-5's exact one-sentence wording inline (`8db23fa`, steps 2-6, latest row across chunks) and answered its question by default: moved-rows pointer is a line below the live table, not a row (`650e936`) |
+| 6 (2) | overseer inline (`8db23fa`, `650e936`) | rev-6 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r3.md | no | Phase 2 accepted: three triage scenarios walked (finished loop in chunk, mid-loop empty root, unsplit); build OK. Loop terminal: Phases 1a-2 `implementation_accepted` |
 
 ## Judge Log
 
@@ -64,6 +65,7 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | rev-5 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r2.md | 2026-10-06T09:25 | verify Phase 2 fixes |
 | return | rev-5 (cdocs:reviewer) | same | 2026-10-06T09:30 | `0f0a691` revise (step 6.5 gap); inline fix `8db23fa`, `650e936` |
 | dispatch | rev-6 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r3.md | 2026-10-06T09:32 | verify inline fix |
+| return | rev-6 (cdocs:reviewer) | same | 2026-10-06T09:35 | `9562179` accept |
 
 ## Steering Log
 
@@ -417,3 +419,22 @@ Fixes for `cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md` action i
 ### Verification
 
 `npm run build:cdocs` exit 0, "Agents converted: 7". No script changes, so the unit suite was not re-run.
+
+## Handoff (loop close, 2026-10-06)
+
+### Completed
+
+- Phases 1a, 1b, 2 accepted (rows 1-6); proposal `status: implementation_accepted` for that scope. Phase 3 stays gated on the resumption A/B in [the post-compaction RFP](../proposals/2026-10-05-post-compaction-resumption-rfp.md).
+- files: `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/hooks.json`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `.github/workflows/cdocs-hooks.yml`, `plugins/cdocs/rules/{orchestration-discipline,frontmatter-spec}.md`, `plugins/cdocs/skills/devlog/SKILL.md`, `plugins/cdocs/agents/triage.md`, `plugins/cdocs/skills/status/SKILL.md`.
+
+### Decisions Made
+
+- No agent-side compaction cadence or context self-estimates; `/clear` is a new session with nothing to hand off.
+- Split thresholds in words (~1,500 trigger, ~400 merge); a split devlog's root and chunks read as one for triage; a moved-rows pointer is a line below the live table.
+- Post-compaction rules check deferred to the RFP (to be re-tested with realistic lead models after the rules cleanup).
+
+### Open Todos
+
+- Maintainer 1b checklist: CI after push (ubuntu + macos), interactive checks (a)-(d), a 20-turn opus session after `/cdocs:init` in this repo, 16/20 usefulness sample.
+- This devlog exceeds the split trigger; split it at closed-concern boundaries (first real use of the Phase 2 rule).
+
