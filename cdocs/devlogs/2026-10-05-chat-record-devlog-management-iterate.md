@@ -52,6 +52,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | impl-3 (warm, SendMessage) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/tests/chat-record.test.sh, proposal (sync lines) | 2026-10-05T15:03 | 1b minors (speaker regex, proposal sync) |
 | return | impl-3 | same | 2026-10-05T15:10 | `8707a4f` speaker regex, `418326c` proposal sync; 95/95 unit. Phase 1b done pending maintainer checklist; Phase 2 awaiting maintainer scope decision (A/B -> post-compaction RFP?) |
 | dispatch | impl-4 (cdocs:implementer, fresh) | plugins/cdocs/skills/devlog/**, plugins/cdocs/rules/frontmatter-spec.md, plugins/cdocs/rules/orchestration-discipline.md (Pillar 2 handoff size check only), plugins/cdocs/skills/{triage,status}/**, plugins/cdocs/agents/triage.md, scripts/plugin hooks validate-frontmatter (if needed), proposal + post-compaction RFP (A/B move, line/word thresholds), this devlog (notes) | 2026-10-06T09:01 | Phase 2 (splitting, part_of, dry-run) |
+| return | impl-4 | same | 2026-10-06T09:12 | Phase 2: `cc7b808`..`6b63aaf`; A/B moved to RFP; thresholds ~1,500/~400 words (7.86 B/word over 101 devlogs); dry-run split on scratch copies; validator/build/unit/greps OK |
+| dispatch | dryrun-1 (general-purpose, sonnet, fresh) | n/a (read-only, scratchpad dryrun/) | 2026-10-06T09:13 | split dry-run; answer key in impl-4 notes |
 
 ## Steering Log
 
