@@ -34,7 +34,7 @@ Mint `arc_id` as `YYYY-MM-DD` plus a dash-cased slug of the topic (or of the fir
 ## Composition
 
 Decide per proposal at its turn, since an earlier proposal may change a later one's readiness.
-The arc overseer runs each composed loop as itself; it is the only overseer in the arc.
+The arc overseer runs each composed loop as itself, so it is the only overseer in the arc and owns each proposal's top-level devlog.
 
 | Per-proposal condition | Composition |
 |---|---|
@@ -49,8 +49,9 @@ Up: the proposal's frontmatter status, its loop's final handoff, and the arc fil
 
 ## Arc state
 
-Keep `.claude/oversee/<arc-id>.json` current at each proposal start, end, and escalation (shape in [`./template.md`](./template.md)): per proposal its path, frontmatter status, arc_state (pending / in_progress / blocked / done), devlog, footprint globs, and verification floor; plus `position` and `afk`.
-Add whatever fields a cold resume needs (scope, gates, notes), and keep the narrative in an arc devlog beside it with a handoff at each proposal boundary.
+Keep `.claude/oversee/<arc-id>.json` current at each proposal start, end, and escalation (shape in [`./template.md`](./template.md)): per proposal its path, frontmatter status, arc_state (pending / in_progress / blocked / done), devlog (the proposal's top-level devlog), footprint globs, and verification floor; plus `position` and `afk`.
+Add whatever fields a cold resume needs (scope, gates, notes).
+Keep an arc devlog beside it for the arc narrative and links to each proposal's top-level devlog, with a handoff at each proposal boundary; loop tables stay in the top-levels.
 
 ## Concurrency
 

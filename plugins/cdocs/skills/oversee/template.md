@@ -13,7 +13,7 @@ Add whatever fields a cold resume needs (scope, gates, notes).
       "path": "cdocs/proposals/2026-08-10-a.md",
       "status": "implementation_ready",
       "arc_state": "pending",
-      "devlog": null,
+      "devlog": null, // the proposal's top-level devlog, once its loop starts
       "footprint": ["plugins/cdocs/**"],
       "verification_floor": "the artifact starts and does its job; failure: it exits non-zero"
     }
@@ -26,4 +26,5 @@ Add whatever fields a cold resume needs (scope, gates, notes).
 
 ## Arc Devlog
 
-Keep a normal cdocs devlog beside the JSON for the narrative, with a Completed / Decisions Made / Open Todos handoff at each proposal boundary.
+Keep a normal cdocs devlog beside the JSON for the arc narrative and links to each proposal's top-level devlog, with a Completed / Decisions Made / Open Todos handoff at each proposal boundary.
+Each proposal's loop tables and Workstream Devlogs index live in its top-level, not here.
