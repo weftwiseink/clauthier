@@ -54,6 +54,8 @@ Address only with minimal wording, if at all:
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | 2026-10-06T10:11 | proposal review r1 |
 | return | rev-1 | same | 2026-10-06T10:20 | `bb26381` revise |
 | dispatch | prop-1 (warm) | cdocs/proposals/2026-10-05-rules-context-decomposition-rfp.md | 2026-10-06T10:21 | revision r1 + maintainer answers |
+| return | prop-1 | same | 2026-10-06T10:24 | `3f60b53` review_ready; all r1 items addressed; phases 4-6 merged (5 phases) |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r2.md | 2026-10-06T10:25 | proposal review r2 |
 
 ## Steering Log
 
