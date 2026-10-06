@@ -56,7 +56,7 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
   "Minor UI tweaking" stays in the existing implement/review loop.
   Locator-repair-only wrapping of Playwright's Healer is a named future item (Implementation Phases, Phase 5), gated on primary-verifying its `claude` integration claim.
 - **No A2A surface.**
-  Session reuse across lead turns uses the durable-specialist pattern (`orchestration-discipline.md` Pillar 3), not a second protocol.
+  Session reuse across lead turns uses the durable-specialist pattern (`orchestration-discipline.md` "Stay thin"), not a second protocol.
   A2A is named as a documented future escalation for genuine cross-harness/cross-org delegation, not built here.
 - **No change to a consumer's server-side test parallelization.**
   weftwise's `workers: 1` / shared-dev-server serialization is a server-state problem, not a browser problem, out of scope, acknowledged, not designed against.
@@ -78,7 +78,7 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
 - `plugins/cdocs/agents/reviewer.md`: the reviewer-never-edits-source constraint that motivates keeping this plugin's delegate (drives, captures) structurally separate from any future fixer (patches).
 - `plugins/cdocs/rules/model-tiering.md`: the search/explore tier (sonnet default) this plugin's delegate occupies.
   Judgment (the verdict) stays opus-class per the existing `reviewer`/`judge` agents.
-- `plugins/cdocs/rules/orchestration-discipline.md` Pillar 3 (Durable Specialists): the resume-by-name pattern this plugin uses for session reuse instead of A2A.
+- `plugins/cdocs/rules/orchestration-discipline.md` "Stay thin" (durable specialists): the resume-by-name pattern this plugin uses for session reuse instead of A2A.
 - weftwise `scripts/playwright-mcp-launch.sh` / `.mcp.json`: the concrete baseline this proposal avoids depending on for the delegate's default path.
   It pins `@playwright/mcp@0.0.78` to one `chromium_headless_shell` binary, in lockstep with `.devcontainer/Dockerfile`, with a single global browser context and no `--isolated`/`--user-data-dir` flag.
 - `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`: the sibling proposal this one mirrors structurally (stateless-tool-first, cross-target degradation reasoning, phased-with-a-conditional-later-phase, a discriminator-style spike gate before default claims harden).
@@ -158,7 +158,7 @@ This plugin adds no new code path on the verdict side.
 It only gets pixels into the reviewer's hands more cheaply than the lead capturing them inline.
 
 **Session reuse across turns.** Because `@playwright/cli` sessions are named and persist independently of whichever process addresses them, a fresh delegate dispatch and a durable-specialist dispatch can both resume the *same underlying browser session* by name.
-A durable specialist (Pillar 3, resume-by-name via `SendMessage`) is still worth using for a long, multi-step interactive flow (e.g., a 10-step onboarding walkthrough spanning several lead turns), because it retains the delegate *agent's* own task context ("I am on step 6 of 10"), which the named browser session alone does not carry.
+A durable specialist ("Stay thin", resume-by-name via `SendMessage`) is still worth using for a long, multi-step interactive flow (e.g., a 10-step onboarding walkthrough spanning several lead turns), because it retains the delegate *agent's* own task context ("I am on step 6 of 10"), which the named browser session alone does not carry.
 For a one-shot capture, a fresh delegate dispatch is sufficient and cheaper.
 
 ### Multi-client sync-test coordination
@@ -226,7 +226,7 @@ Phase 5 names the primary-verification step as the unblocking prerequisite, not 
 ### D4: A2A named as future escalation, durable-specialist pattern used now
 
 A2A's actual selling point (cross-process, cross-org task lifecycle) does not describe this plugin's problem: every delegate dispatch here is inside one Claude Code (or OpenCode) session/org.
-`orchestration-discipline.md` Pillar 3 already gives "a browser agent the lead converses with across many turns" without a second protocol.
+`orchestration-discipline.md` "Stay thin" already gives "a browser agent the lead converses with across many turns" without a second protocol.
 A2A becomes relevant only if a future consumer wants to hand browser work to a non-Claude-Code agent or a vendor's hosted browser-agent service.
 That is named as a documented escalation path in `toolset-selection.md`, not designed against here.
 
@@ -247,13 +247,13 @@ A reviewer or looker consuming that report has nothing to over-trust, because th
 - **`@playwright/cli` shares the SIGTRAP/channel-pin risk.** Gated by the Phase 1 spike (D2).
   If confirmed, the plugin still ships (subagent-inheritance wins independently), with the shared risk documented and pinned the same way weftwise pins `@playwright/mcp` today.
 - **A named session is killed or expires mid-flow.** The delegate re-opens the named session rather than silently falling back to an unnamed default, and logs the re-open as an event in the devlog's session registry, so a later reader can see the session was not continuous.
-- **Two dispatches race on the same session name.** A session name is claimed by one in-flight delegate dispatch at a time (mirroring Pillar 1b's single-writer-file convention, applied to a session instead of a file).
+- **Two dispatches race on the same session name.** A session name is claimed by one in-flight delegate dispatch at a time (mirroring "One writer per file"'s single-writer-file convention, applied to a session instead of a file).
   A second dispatch against a claimed name either serializes behind it or is given a suffixed name, never silently shares the in-flight session.
 - **CRDT convergence never completes.** Bounded timeout, reported as divergence with each side's last-seen state, never silently reported as success (Verification Methodology, below).
 - **The target environment has no Node/`@playwright/cli` available at all.** Documented degradation: the lead falls back to driving `@playwright/mcp` or `chrome-devtools-mcp` itself, explicitly re-incurring the per-step context cost this plugin exists to avoid.
   This is a WARN-level fallback, not a silent one.
   > WARN(claude-sonnet-5/browser-delegation): This fallback defeats the plugin's own value proposition. It exists so the plugin degrades gracefully rather than hard-failing, not as a tolerated steady state.
-- **OpenCode or another non-Claude-Code target.** `@playwright/cli` is a plain CLI with no MCP-tool-inheritance concept to cross, so this plugin's core mechanism degrades cleanly cross-target, unlike a design that depended on `SendMessage`/subagent primitives for the driving leg itself (only the optional durable-specialist session-reuse convenience needs those, and it degrades per Pillar 3's existing cross-target fallback: a fresh session from the handoff doc).
+- **OpenCode or another non-Claude-Code target.** `@playwright/cli` is a plain CLI with no MCP-tool-inheritance concept to cross, so this plugin's core mechanism degrades cleanly cross-target, unlike a design that depended on `SendMessage`/subagent primitives for the driving leg itself (only the optional durable-specialist session-reuse convenience needs those, and it degrades per "Stay thin"'s existing cross-target fallback: a fresh session from the handoff doc).
 - **A consumer without cdocs installed wants a verdict.** The delegate's report is still useful (artifact paths, mechanical facts).
   The plugin documents a minimal inline fallback (the lead performs its own fresh, unconditioned look using the R1-R6 shape) rather than requiring cdocs as a hard dependency.
 

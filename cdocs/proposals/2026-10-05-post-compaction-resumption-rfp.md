@@ -11,12 +11,12 @@ tags: [rules, resumption, compaction, chat_record, testing, future_work, blocked
 
 # Post-Compaction Resumption Reliability
 
-> BLUF(@claude-sonnet-5/cdocs/post-compaction-resumption-reliability): Lead models don't reliably follow chat-record Pillar 2's post-compaction resumption step 3 (re-read the record tail and the devlog's Scratchpoint/handoff before acting). Re-test with realistic opus-class lead models, deferred until the base rules context is decomposed and decluttered.
+> BLUF(@claude-sonnet-5/cdocs/post-compaction-resumption-reliability): Lead models don't reliably follow `orchestration-discipline.md`'s "Chat record" post-compaction resumption step (re-read the record tail and the devlog's Scratchpoint/handoff before acting). Re-test with realistic opus-class lead models, deferred until the base rules context is decomposed and decluttered.
 > Motivated By: `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`, `cdocs/reviews/2026-10-05-review-of-chat-record-impl-1b-r1.md`, and the rules-decomposition follow-up.
 
 ## Objective
 
-Make a lead model reliably execute Pillar 2's `### Resumption` step 3 after a `/compact` boundary: re-read the chat record's tail and the current devlog's `## Scratchpoint`/latest handoff before resuming work, even when the harness's own compaction summary says to "resume directly... as if the break never happened."
+Make a lead model reliably execute `orchestration-discipline.md`'s "Chat record" section's **After a compaction:** step after a `/compact` boundary: re-read the chat record's tail and the current devlog's `## Scratchpoint`/latest handoff before resuming work, even when the harness's own compaction summary says to "resume directly... as if the break never happened."
 
 ## Context
 
