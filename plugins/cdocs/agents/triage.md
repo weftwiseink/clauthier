@@ -49,7 +49,7 @@ For each file:
 5. **Analyze status** (check completeness signals):
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence.
-     A closed sub-devlog (`part_of` set, with a successor named in its `next:` or handoff, or a finished loop) skips this check and should be `status: done`: recommend `done` if it is not.
+     A closed sub-devlog (`part_of` set, with a successor named in its `next:` or handoff, or a finished loop) is a normal devlog: run this same check, and recommend `status: done` if it is not already `done`.
    - Reports: BLUF present, key findings and analysis sections filled.
    - Reviews: all sections filled, verdict present.
    - If document appears complete and status is `wip`, recommend `review_ready`.
