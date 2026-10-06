@@ -12,8 +12,8 @@ oversee a `/cdocs:propose-revise` loop on it, then oversee a `/cdocs:iterate` lo
 
 Both composed loop skills run in *overseer mode*, defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
 Inline floor: honor each composed loop's own dispatch-by-default carve-out; write durable state at task-unit boundaries; use fresh reviewers and a fresh judge.
-The overseer keeps the `## Scratchpoint` of each devlog it owns current per `orchestration-discipline.md` Pillar 2 "Scratchpoint".
-On resume, reconstruct child-dispatch liveness from the Iteration Log's dispatch/return event rows before acting on either composed loop: if you believe a child is in flight but the harness has returned control (no live children remain), that child has terminated, so inspect its on-disk artifacts and proceed from the actual state rather than waiting (see `orchestration-discipline.md` Pillar 1b).
+The overseer keeps the `## Scratchpoint` of each devlog it owns current per `orchestration-discipline.md` "Durable state".
+On resume, follow `orchestration-discipline.md` "Resume from disk, not memory" before acting on either composed loop.
 
 The first loop should be entered with a `/propose` if it's an RFP, but review-first if already authored.
 If `--first-round` is specified in the latter case, the expensive expert model should also be used for the first revision.

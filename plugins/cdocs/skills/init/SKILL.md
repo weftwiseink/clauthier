@@ -23,7 +23,7 @@ Scaffold the CDocs documentation structure in the current project.
    - A reference to the full skill: "See `/cdocs:<type>` for complete authoring guidelines."
 
 3. Create or update `.claude/rules/cdocs.md` with the content of every `${CLAUDE_PLUGIN_ROOT}/rules/*.md` file, frontmatter stripped, in the section order of the AGENTS.md block in step 6.
-   This is the file Claude Code loads and re-injects after every compaction, so it must carry `orchestration-discipline.md` in full, including Pillar 2 (handoff, Scratchpoint, chat record, resumption).
+   This is the file Claude Code loads and re-injects after every compaction, so it must carry every rule file in full.
    If `.claude/rules/` doesn't exist, create it.
    If the project has a CLAUDE.md, add a reference line: `@.claude/rules/cdocs.md`
 

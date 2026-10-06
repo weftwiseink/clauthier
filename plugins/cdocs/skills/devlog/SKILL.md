@@ -28,7 +28,7 @@ Fill in:
 - `task_list` with the relevant workstream path.
 - `type: devlog`, `state: live`, `status: wip`.
 - Tags relevant to the work.
-- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Resumption" describes; an agent writing into another agent's devlog leaves it alone.
+- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Chat record" describes; an agent writing into another agent's devlog leaves it alone.
 
 Quote a chat record only inside a code fence: its column-0 `@` header and `--` sign-off lines are not cdocs markdown.
 
@@ -39,7 +39,7 @@ Most devlogs should include the other sections as well, but use your judgement (
 You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
-- **Scratchpoint:** Current state, replaced in place by the devlog's owner on every state-changing turn; fields, size, and writers are in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Scratchpoint".
+- **Scratchpoint:** Short current state (`as_of`, `now`, `next`, `open`, `files`), replaced in place by the devlog's owner between handoffs; see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state".
   An agent writing into another agent's devlog keeps none.
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.

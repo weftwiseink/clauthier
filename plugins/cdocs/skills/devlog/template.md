@@ -7,7 +7,7 @@ type: devlog
 state: live
 status: wip
 tags: []
-# chat_record: optional list of cdocs/_chat/ record paths; see orchestration-discipline.md Pillar 2 "Resumption"
+# chat_record: optional list of cdocs/_chat/ record paths; see orchestration-discipline.md "Chat record"
 ---
 
 # TITLE: Devlog
@@ -18,9 +18,8 @@ tags: []
 
 - as_of:
 - now:
-- since_handoff:
-- open:
 - next:
+- open:
 - files:
 
 ## Plan

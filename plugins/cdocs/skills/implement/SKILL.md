@@ -16,7 +16,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 `/cdocs:implement` runs in one of two modes:
 
 - **Top-level** (default): invoked directly by the user. Free to dispatch `/cdocs:review` and `/cdocs:report` as supporting subagents.
-  When dispatching, a top-level session is a thin lead: follow the overseer thinness and durable-specialist pattern in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) (dispatch-by-default; carry per-workstream context in a named specialist, not the lead window), so the discipline is not `iterate`-only.
+  When dispatching, a top-level session is a thin lead per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Stay thin", so the discipline is not `iterate`-only.
 - **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt. The platform forbids subagent-from-subagent dispatch (`Task` is `not available inside subagents`), so dispatched mode self-investigates inline and surfaces investigation requests to its caller via a fenced block:
 
   ```
@@ -27,7 +27,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 
   The caller decides whether to dispatch `/cdocs:report` itself, roll the request into the next iteration's brief, or treat it as deferred follow-up.
 
-  A DISPATCHED implementer works in isolation (its own worktree, no cross-worktree writes) so it cannot clobber a sibling workstream. Isolation is a property of the dispatched agent, not of the top-level invocation, which is never isolation-bound (see the "Isolation is a dispatched-agent property" section of [`orchestration-discipline.md`](../../rules/orchestration-discipline.md), symmetric with [`reviewer.md`](../../agents/reviewer.md)).
+  A DISPATCHED implementer works in isolation (its own worktree, no cross-worktree writes) so it cannot clobber a sibling workstream; a top-level invocation is never isolation-bound.
 
 ## Invocation
 
@@ -82,7 +82,7 @@ The implementor should follow these conventions throughout:
 - The devlog is important for future understanding for the implementation session.
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
-- Top-level mode: keep the devlog's `## Scratchpoint` current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) Pillar 2 "Scratchpoint"; a dispatched implementer writes into the overseer's devlog and keeps none.
+- Top-level mode: keep the devlog's `## Scratchpoint` current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state"; a dispatched implementer writes into the overseer's devlog and keeps none.
 
 ### Use cdocs skills as appropriate (top-level mode)
 - `/cdocs:review` when implementation is complete and ready for evaluation.

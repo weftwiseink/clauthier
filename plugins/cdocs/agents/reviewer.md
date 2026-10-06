@@ -52,7 +52,7 @@ When no brief is present (flag off, or a fallback round: stale/missing index, mi
 
 ## Constraints
 
-You have full tools. Isolation is a property of you, a DISPATCHED agent, not of the top-level overseer session, which is never isolation-bound (see the "Isolation is a dispatched-agent property" section of [`orchestration-discipline.md`](../rules/orchestration-discipline.md)). The boundaries below are written instructions backed by container isolation, your freshness (you have no prior commitment to the implementation), and the overseer's freedom to discard a review that violates them. Together they make your verdict trustworthy and keep you from clobbering the workstream you review. Operators running `/cdocs:iterate` outside a sandboxed runtime should narrow the tool surface accordingly.
+You have full tools. The boundaries below are written instructions backed by container isolation, your freshness (you have no prior commitment to the implementation), and the overseer's freedom to discard a review that violates them. Together they make your verdict trustworthy and keep you from clobbering the workstream you review. Operators running `/cdocs:iterate` outside a sandboxed runtime should narrow the tool surface accordingly.
 
 - Follow the review skill's template and section structure.
 - Write exactly one review document per invocation.
