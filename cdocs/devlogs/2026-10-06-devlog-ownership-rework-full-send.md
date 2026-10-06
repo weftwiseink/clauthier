@@ -45,3 +45,9 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T11:41 | author proposal |
 | return | prop-1 | same | 2026-10-06T11:50 | `67e497a` review_ready; recommends maintainer's alternative (top-level = lead's devlog + index + tables; per-implementer sub-devlogs; forward continuation replaces retroactive split); 4 open questions |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | 2026-10-06T11:51 | proposal review r1 (weigh both designs) |
+
+## Steering Log
+
+| at | target | content | applied |
+|---|---|---|---|
+| 2026-10-06T11:55 | next revision | Maintainer: sub-devlog boundaries are soft and content-driven, not coupled to implementer identity, turns, restarts or context. Short phases can share one devlog; a large testing phase done in a single turn by one implementer can get its own. (Queued: rev-1 in flight.) | pending |
