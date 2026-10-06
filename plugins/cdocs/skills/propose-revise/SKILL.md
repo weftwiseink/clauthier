@@ -16,7 +16,7 @@ terminates on accept-or-escalate, and should AskUserQuestion if the proposal has
 
 The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
 Inline floor: dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule default); write durable state at task-unit boundaries; use a fresh reviewer each round.
-The loop devlog is the workstream's top-level devlog: the overseer owns it, a later `/cdocs:iterate` on the proposal continues it, and every dispatch and return is logged there per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", with its `## Scratchpoint` current per "Durable state".
+The loop devlog is the workstream's top-level devlog: the overseer owns it, a later `/cdocs:iterate` on the proposal continues it, and every dispatch and return is logged there per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", with its `## Scratchpoint` current per "Durable state". When logging a review round to the devlog's Iteration Log (shared with a later `/cdocs:iterate`, per its `template.md`), an accepted round is `review_verdict: proposal_accepted`, not `accept` — `accept` is reserved for an implementation-review Accept, so a reader (including `/cdocs:triage`) never mistakes a proposal accept for an implementation accept.
 The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
