@@ -43,7 +43,7 @@ The full proposal should explore:
 - **Placement.** Where should the resumption cue live: a short block in the project `CLAUDE.md` beside the `@.claude/rules/cdocs.md` import line (the reviewer's A/B gave a directional gain here), the top of the rules file itself, a reworded step 3 in place, or some combination?
 - **Dependency on rules decomposition.** How much of the salience problem is placement/wording versus sheer file size? Does decomposing `orchestration-discipline.md` and/or un-inlining init's six-file concatenation change the result independent of any resumption-specific fix?
 - **Test protocol.** What's the right evaluation: realistic lead models (opus-class) only, minimum 3 runs per arm, majority-rate (not pass/fail) as the criterion, and a check that requires an actual devlog read (`Read`/`cat`/`sed`/`head` on the path) rather than a `grep -l` lookup counting as a read.
-- **Relationship to the chat-record proposal's Phase 2 A/B.** Does Phase 2's planned A/B already subsume this question, or does it need a dedicated re-test once rules decomposition lands?
+- **Resumption A/B (gates the chat-record proposal's Phase 3).** On three real workstreams with a `/compact` forced between handoffs, arm 1 resumes with step 3 removed from the rules and arm 2 with step 3 present; a fresh reviewer scores each resumption on correct next action, no re-litigated decision, and no redundant re-read. Pass: arm 2 wins or ties arm 1 on all three.
 - **Acceptance bar.** What counts as "good enough" for step 3 reliability — a majority rate across runs, or something stricter given this governs correctness of resumed work?
 
 ## Open Questions

@@ -440,8 +440,6 @@ Each scenario is setup, then assertion on the record and the `--include-hook-eve
 
 **Phase 2.**
 
-- Resumption A/B (gate for Phase 3), on three real workstreams with a `/compact` forced between handoffs: arm 1 resumes with step 3 of the resumption guidance removed from the rules, arm 2 with step 3 present; a fresh reviewer scores correct next action, no re-litigated decision, no redundant re-read.
-  Pass: arm 2 wins or ties arm 1 on all three; step 3's post-compaction reliability itself is deferred to [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md).
 - Split dry-run on `2026-09-22-agent-dispatch-labeling.md` and `2026-05-12-rule-delivery-regression-test.md`: a fresh agent given only the root answers three task questions opening at most one chunk each.
 - `/cdocs:triage` and `/cdocs:status` group chunks by `part_of`.
 
@@ -455,7 +453,7 @@ cd "$SANDBOX/proj" && CLAUDE_CONFIG_DIR="$SANDBOX/cfg" claude -p "<prompt>" --mo
   --output-format stream-json --verbose --include-hook-events > out.jsonl
 ```
 
-The stream (`hook_response` decisions, `num_turns`, `permission_denials`) and the record file are independent evidence channels; the A/B and dry-run are scored by a fresh agent, never the author.
+The stream (`hook_response` decisions, `num_turns`, `permission_denials`) and the record file are independent evidence channels; the dry-run is scored by a fresh agent, never the author.
 
 ## Implementation Phases
 
@@ -526,18 +524,20 @@ If the top-level-only scenario shows a subagent or fork entry, the `PreToolUse` 
 
 Constraints: do not touch `inject-rules.ts`, `validate-cdocs-edit-path.sh`, or `cdocs-validate-frontmatter.sh`; do not add `_chat/` to either path regex; add no hook entries beyond `UserPromptSubmit` and `Stop` (and the named fallback, if triggered); no runtime-directory files; the only `decision: block` is the `Stop` one-shot; `/cdocs:init` writes no settings file; `plugins/cdocs/agents/*.md`, skills, and templates gain no `chat-record` command text (only Pillar 2 carries it, behind its scope sentence).
 
-### Phase 2: semantic splitting and the resumption A/B
+### Phase 2: semantic splitting
 
-Depends on Phase 1b (the A/B measures its resumption steps).
+Depends on Phase 1b: the root keeps the `chat_record:` list and the handoff step it extends.
+
+> NOTE(opus-5-5/chat-record-devlog-management): The resumption A/B that gates Phase 3 lives in [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md), which owns step 3's post-compaction reliability (maintainer, 2026-10-06).
 
 1. Devlog `SKILL.md`: "Splitting a devlog" with the trigger, closure test, cut and merge rules, naming, Chunks table, chunk frontmatter and backlink; Pillar 2's handoff step adds the size check.
 2. `frontmatter-spec.md`: optional `part_of`; `triage` and `status` group by it.
-3. The A/B and split dry-run, results in the devlog.
+3. The split dry-run, results in the devlog.
 
-Success criteria: the A/B pass bar; the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
+Success criteria: the dry-run's one-chunk bar; `cdocs-validate-frontmatter.sh` accepts chunks unchanged.
 Constraints: no directory-per-workstream layout.
 
-### Phase 3 (gated on the Phase-2 A/B)
+### Phase 3 (gated on the resumption A/B in [`2026-10-05-post-compaction-resumption-rfp.md`](2026-10-05-post-compaction-resumption-rfp.md))
 
 1. **Cap-and-reseed durable specialists:** at a cutoff on the specialist's harness-reported usage (tentatively ~0.4-0.6M tokens), the overseer has the specialist write a final handoff (and Scratchpoint, if it owns a devlog), then dispatches a fresh leg seeded from them; dispatch-level, needing no compaction.
 2. **Per-workstream record:** scoped in [`2026-10-05-tiered-chat-records-rfp.md`](2026-10-05-tiered-chat-records-rfp.md).
