@@ -88,10 +88,6 @@ Scaffold the CDocs documentation structure in the current project.
 
      [Full content of model-tiering.md, frontmatter stripped]
 
-     ## CDocs Overseer Arc
-
-     [Full content of oversee-arc.md, frontmatter stripped]
-
      ## CDocs Frontmatter Specification
 
      [Full content of frontmatter-spec.md, frontmatter stripped]

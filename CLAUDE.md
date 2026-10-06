@@ -44,9 +44,8 @@ Plugin internals (rules, skills, agents, hooks) are documented in their respecti
 
 - **Writing conventions**: `@plugins/cdocs/rules/writing-conventions.md`
 - **Workflow patterns** (parallel agents, subagent dev, checklists): `@plugins/cdocs/rules/workflow-patterns.md`
-- **Orchestration discipline** (thin overseer, liveness reconciliation, single-writer ownership): `@plugins/cdocs/rules/orchestration-discipline.md`
+- **Orchestration discipline** (stay thin, resume from disk, one writer per file, verification floor, durable state, chat record): `@plugins/cdocs/rules/orchestration-discipline.md`
 - **Model tiering** (advisory tiers: opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins): `@plugins/cdocs/rules/model-tiering.md`
-- **Overseer arc** (arc-state schema, claim registry, footprint heuristic, verification-depth ladder for `/oversee`): `@plugins/cdocs/rules/oversee-arc.md`
 - **Frontmatter spec**: `@plugins/cdocs/rules/frontmatter-spec.md`
 - **Skills**: `plugins/cdocs/skills/{devlog,propose,review,report,status,init,triage,implement,iterate,oversee}/SKILL.md`
 
