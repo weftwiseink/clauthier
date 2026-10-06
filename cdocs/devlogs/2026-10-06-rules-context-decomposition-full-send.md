@@ -45,6 +45,7 @@ Address only with minimal wording, if at all:
 |---|---|---|---|---|---|---|---|
 | 1 (propose) | prop-1 (cdocs:proposer) | rev-1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r1.md | no | 4 blocking: Phase 2 gate ambiguity (moot: maintainer approved), split-check clause dropped silently, smoke doesn't prove explicit-path staging, Phase 1 check vs init Pillar 2 line; 7 non-blocking; overseer defaults: keep split clause, merge Phases 4-6 |
 | 2 (propose) | prop-1 (warm) | rev-2 (cdocs:reviewer) | accept | n/a | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-r2.md | no | proposal accepted; 3 nits folded into implementation (README Pillar 2 line in Phase 1, judge NOTE once in Phase 3, Scratchpoint `as_of`) |
+| 3 (iterate) | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-impl-r1.md | no | accepted; reviewer re-ran build/unit/validator/grep and inspected smoke transcripts (scratchpad loop_smoke/, loop_smoke_base/); nits dispatched: iterate `subagent_type: "reviewer"` bug, stale Pillar pointers in post-compaction RFP, devlog misattributions, propose-revise devlog wording, reviewer.md commit-on-request |
 
 ## Dispatch/Return Events
 
@@ -61,6 +62,8 @@ Address only with minimal wording, if at all:
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/scripts/postinstall.js, plugins/cdocs/README.md, plugins/cdocs/AGENTS.md, CLAUDE.md (approved edit only), new follow-up RFP, this devlog (notes) | 2026-10-06T10:30 | iterate: Phases 1-5 |
 | return | impl-1 | same | 2026-10-06T10:46 | `209ec08..a57c78e` + notes `0de1747`; always-loaded 797/8,054 -> 297/2,145; static checks pass; loop smoke pass (baseline also passes); rules_check 3/5 fail on old and new trees (RFP-tracked); reviewer committed despite reviewer.md (pre-existing) |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-rules-context-decomposition-impl-r1.md | 2026-10-06T10:47 | implementation review r1 |
+| return | rev-1 | same | 2026-10-06T10:53 | `37ec531` accept |
+| dispatch | impl-2 (cdocs:implementer, sonnet) | plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/skills/propose-revise/SKILL.md, plugins/cdocs/agents/reviewer.md, cdocs/proposals/2026-10-05-post-compaction-resumption-rfp.md, cdocs/proposals/2026-09-17-browser-delegation-plugin.md, this devlog (notes) | 2026-10-06T10:54 | accept nits |
 
 ## Steering Log
 
