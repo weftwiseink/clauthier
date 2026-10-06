@@ -27,6 +27,7 @@ last_reviewed?:                                    # not on reviews themselves
   round: 1
 chat_record?:                                      # devlogs only
   - cdocs/_chat/YYYY-MM-DD-<session_id>.md
+part_of?: cdocs/devlogs/YYYY-MM-DD-root.md         # devlog chunks only
 tags: [architecture, future_work, ...]
 ---
 ```
@@ -81,6 +82,12 @@ Tracks review history. Reviews themselves do not have this field.
 ### `chat_record` (optional, devlogs only)
 List of repo-root paths (`review_of` path semantics) to the chat records of every Claude Code session that worked on the devlog, one entry appended per session.
 How it is filled is in `orchestration-discipline.md` Pillar 2 "Resumption".
+
+### `part_of` (optional, devlog chunks only)
+Repo-root path (`review_of` path semantics) to the root devlog a chunk was split from.
+A chunk carries no `chat_record:`; the root keeps it.
+`/cdocs:status` and `/cdocs:triage` group chunks under their root.
+Splitting is in the devlog skill's "Splitting a devlog".
 
 ### `tags` (required)
 Limited freeform set of the most relevant topics.
