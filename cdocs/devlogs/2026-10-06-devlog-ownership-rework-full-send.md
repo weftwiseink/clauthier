@@ -35,6 +35,12 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 - next: implementation review
 - files: this devlog, the proposal
 
+## Workstream Devlogs
+
+| devlog | concern | status | read this when |
+|---|---|---|---|
+| [-implementation](2026-10-06-devlog-ownership-rework-full-send-implementation.md) | implementation, all phases, verification | review_ready | you need commits, per-phase checks, smoke evidence, or judgment calls |
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
@@ -55,6 +61,8 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r2.md | 2026-10-06T12:14 | proposal review r2 |
 | return | rev-2 | same | 2026-10-06T12:20 | `3e0f4e7` accept |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/README.md, CLAUDE.md, this workstream's sub-devlog | 2026-10-06T12:26 | iterate: all phases |
+| return | impl-1 | same | 2026-10-06T12:38 | `9ee284d..320117e`; all checks pass; smokes 1-2 single-writer per devlog; rules 2,217 -> 2,199 words, devlog skill 1,108 -> 1,069 |
+| dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-impl-r1.md | 2026-10-06T12:39 | implementation review r1 |
 
 ## Steering Log
 
