@@ -8,12 +8,12 @@ Delegate anything beyond a trivial few-liner (bulk reads, sweeps, builds, tests,
 Trust returned summaries: re-reading a subagent's files to double-check it is the pattern this rule exists to prevent.
 Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to a `fork`.
 Stay aware of a warm subagent's context: its reported tokens (`subagent_tokens` in the task notification) track its current context.
-Once that passes ~400K after a turn, have it write a handoff beside its Scratchpoint and commit both, then continue with a fresh subagent seeded from them.
+Once that passes ~400K after a turn, have it write a handoff beside its Scratchpoint and commit both, then have a fresh subagent continue that devlog from them.
 Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
 
 ## Resume from disk, not memory
 
-Log each dispatch and return (agent, target files) in the devlog as it happens.
+Log each dispatch and return (agent, target files) in your devlog as it happens.
 The harness notifies you only when *no* children remain live.
 After any interruption, re-derive what is in flight from the devlog's dispatch/return rows and on-disk artifacts: if you believe a child is running but control has returned, it has ended, so read what it left and proceed.
 
@@ -30,8 +30,8 @@ When a loop is stuck debugging, isolate the fault (minimal repro, bisect, a focu
 
 ## Durable state
 
-At each task-unit boundary write a devlog handoff (Completed / Decisions Made / Open Todos) a cold reader can act on, and check the devlog against the devlog skill's split trigger; compaction summaries are lossy.
-Between handoffs keep a short Scratchpoint (as_of, now, next, open, files touched) current after each substantial turn, in what you own: `## Scratchpoint` in your own devlog, or the top of your own section (such as a dispatched implementer's notes) in another agent's devlog.
+Compaction summaries are lossy, so at each task-unit boundary write a devlog handoff (Completed / Decisions Made / Open Todos) a cold reader can act on, and look for a seam to continue in a new devlog per the devlog skill.
+Between handoffs keep your `## Scratchpoint` (as_of, now, next, open, files touched) current after each substantial turn: one per workstream, in the devlog you are writing.
 
 ## Chat record
 
