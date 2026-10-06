@@ -86,7 +86,7 @@ These rows are what on-resume reconciliation reads, so the write is not optional
 
 ### Turn N.b (Review)
 
-Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "reviewer"`.
+Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "cdocs:reviewer"`.
 The reviewer inspects the live system rather than only the diff and produces a review document with a verdict.
 For verification floors that require empirical evidence (browser, dev server, integration, end-to-end, live behavior), the reviewer empirically re-runs the floor and cites at least one artifact path in the review, inlining excerpts for ephemeral artifacts.
 This citation is what makes a `confirmed` row admissible.
