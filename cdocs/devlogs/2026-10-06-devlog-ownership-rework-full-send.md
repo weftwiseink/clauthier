@@ -47,6 +47,7 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 |---|---|---|---|---|---|---|
 | 1 (propose) | prop-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | A (lead top-level + forward sub-devlogs at content seams, one writer at a time) chosen; blocking: adopt soft-boundary steer, size check at every return/handoff, one live Scratchpoint per writer per workstream; open questions answered |
 | 2 (propose) | prop-1 (warm) | rev-2 | accept | n/a | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r2.md | proposal accepted; fixture 4 root cause fixed at source (`a8e3fc9`, chat-record iterate devlogs had the wrong task_list); propose-vs-implement row ambiguity filed as RFP (`b9ab8e0`); other nits folded into impl brief |
+| 3 (iterate) | impl-1 | rev-3 | accept | confirmed | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-impl-r1.md | accepted; reviewer re-ran gates and grepped smoke transcripts (scratchpad rev3/, devown/); nits dispatched (implementation_wip in spec, loosen sub-devlog naming, explicit file path staging, Who-bullet dedupe, oversee template comment, triage step 5 skip, haiku last_reviewed); gap: no smoke of a fresh implementer continuing an open sub-devlog |
 
 ## Dispatch/Return Events
 
@@ -63,6 +64,8 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/README.md, CLAUDE.md, this workstream's sub-devlog | 2026-10-06T12:26 | iterate: all phases |
 | return | impl-1 | same | 2026-10-06T12:38 | `9ee284d..320117e`; all checks pass; smokes 1-2 single-writer per devlog; rules 2,217 -> 2,199 words, devlog skill 1,108 -> 1,069 |
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-impl-r1.md | 2026-10-06T12:39 | implementation review r1 |
+| return | rev-3 | same | 2026-10-06T12:45 | `50bd175` accept |
+| dispatch | impl-2 (cdocs:implementer, sonnet) | rules/frontmatter-spec.md, rules/orchestration-discipline.md, skills/devlog/SKILL.md, skills/oversee/template.md, agents/triage.md, cdocs/proposals/2026-09-22-haiku-bash-wrapper.md, the -implementation sub-devlog | 2026-10-06T12:46 | accept nits |
 
 ## Steering Log
 
