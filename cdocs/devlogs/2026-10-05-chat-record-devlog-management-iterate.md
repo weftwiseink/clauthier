@@ -390,3 +390,25 @@ If `/tmp/claude-1000/-var-home-mjr-code-weft-clauthier-main/e3afd4a9-4352-482d-a
 A fresh `general-purpose` sonnet agent ran the impl-4 prompt (Read-only, scratchpad `dryrun/` copies) on 2026-10-06.
 All six answers match the answer key; its Read calls were the two roots, then one chunk each for A1 (`-implementation`), A2 (`-loops`), B1 (`-runs`), B2 (`-analysis`); A3 and B3 were answered from the root alone, as intended.
 The proposal's one-chunk bar passes.
+
+## Implementation Notes (impl-5, Phase 2 fixes)
+
+Fixes for `cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md` action items 1 and 2; items 3 and 4 stay as-is per the brief.
+
+### Commits
+
+| sha | change |
+|---|---|
+| `6d54540` | `fix(triage)`: step 6.1 treats a chunk as part of its root instead of skipping it; an empty root table reads its last row from the newest chunk that has one. Step 5's chunk skip is unchanged. |
+| `b4c519b` | `docs(rfp)`: the resumption A/B pass bar is a starting point, scored as majority rates under "Test protocol" and open to "Acceptance bar". |
+
+### Judgment calls
+
+- The chunk fallback covers any table step 6 reads, not just the Iteration Log: a finished `## Judge Log` moves into the same chunk, and step 6.6 reads both tables.
+- "Steps 2-4 match the root together with its chunks" covers a root that has lost its `## Iteration Log` heading (dry-run root A), which step 6.2's heading filter would otherwise drop; it also makes step 6.4's tie-break apply to distinct roots only.
+- `skills/triage/SKILL.md` and `skills/status/SKILL.md` say nothing about chunk skipping in step 6, so neither changed.
+  The impl-4 Verification bullet above ("step 6 reads the root's live tables") is a historical record and is left as written.
+
+### Verification
+
+`npm run build:cdocs` exit 0, "Agents converted: 7". No script changes, so the unit suite was not re-run.
