@@ -30,9 +30,9 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 ## Scratchpoint
 
 - as_of: 2026-10-06T11:40
-- now: review round 2
+- now: iterate impl-1
 - open: none
-- next: revise or accept
+- next: implementation review
 - files: this devlog, the proposal
 
 ## Iteration Log
@@ -40,6 +40,7 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | 1 (propose) | prop-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r1.md | A (lead top-level + forward sub-devlogs at content seams, one writer at a time) chosen; blocking: adopt soft-boundary steer, size check at every return/handoff, one live Scratchpoint per writer per workstream; open questions answered |
+| 2 (propose) | prop-1 (warm) | rev-2 | accept | n/a | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r2.md | proposal accepted; fixture 4 root cause fixed at source (`a8e3fc9`, chat-record iterate devlogs had the wrong task_list); propose-vs-implement row ambiguity filed as RFP (`b9ab8e0`); other nits folded into impl brief |
 
 ## Dispatch/Return Events
 
@@ -52,6 +53,8 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | dispatch | prop-1 (warm) | cdocs/proposals/2026-10-06-devlog-ownership-rework.md | 2026-10-06T12:02 | revision r1 + steer |
 | return | prop-1 | same | 2026-10-06T12:12 | `e1a2a7a` review_ready; steer + all r1 items applied; overseer renamed index heading inline |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-devlog-ownership-rework-r2.md | 2026-10-06T12:14 | proposal review r2 |
+| return | rev-2 | same | 2026-10-06T12:20 | `3e0f4e7` accept |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/rules/**, plugins/cdocs/skills/**, plugins/cdocs/agents/**, plugins/cdocs/README.md, CLAUDE.md, this workstream's sub-devlog | 2026-10-06T12:26 | iterate: all phases |
 
 ## Steering Log
 
