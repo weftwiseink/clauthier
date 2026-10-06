@@ -191,7 +191,7 @@ A compaction, a resumed session, and a continued session keep the session id and
 A cleared or forked session starts a new id and a new record; nothing carries over, which is what starting fresh means, so no step below applies to it.
 
 1. **First turn a session works on a devlog:** run `chat-record path` and append the result to the devlog's `chat_record:` frontmatter list if absent.
-2. **At each handoff:** refresh the Scratchpoint, and commit the devlog and the record by explicit path (see "Commit protocol").
+2. **At each handoff:** refresh the Scratchpoint, check the devlog against the split trigger in the devlog skill's "Splitting a devlog", and commit the devlog and the record by explicit path (see "Commit protocol").
 3. **After a compaction:** run `chat-record path`; read the `## Scratchpoint` and latest handoff of each devlog that lists that path (`grep -l '<path>' cdocs/devlogs/*.md`), newest Scratchpoint `as_of` first, then the record's last 80 lines (`tail -n 80`, widened with an offset read if one long paste fills them); do not re-derive state from the summary.
    If no devlog lists the path, the session kept none and the record tail is its whole durable state.
    Without a record (a dispatched agent, or a project without `cdocs/_chat/`), read your devlog's `## Scratchpoint` and latest handoff alone.
