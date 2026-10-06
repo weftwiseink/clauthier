@@ -8,7 +8,7 @@ Delegate anything beyond a trivial few-liner (bulk reads, sweeps, builds, tests,
 Trust returned summaries: re-reading a subagent's files to double-check it is the pattern this rule exists to prevent.
 Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to a `fork`.
 Stay aware of a warm subagent's context: its reported tokens (`subagent_tokens` in the task notification) track its current context.
-Once that passes ~250K after a turn, have it write a handoff beside its Scratchpoint and commit both, then continue with a fresh subagent seeded from them.
+Once that passes ~400K after a turn, have it write a handoff beside its Scratchpoint and commit both, then continue with a fresh subagent seeded from them.
 Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
 
 ## Resume from disk, not memory
@@ -21,7 +21,7 @@ After any interruption, re-derive what is in flight from the devlog's dispatch/r
 
 Never dispatch a writer against a path another live agent is writing; wait or re-scope.
 Before running writers in parallel, predict the files each will touch; when unsure whether the sets overlap, serialize.
-Agents share worktrees and commit concurrently: stage by explicit path, never `git add -A` or `commit -a`.
+Every agent commits its own work early and often; agents share worktrees and commit concurrently, so stage by explicit path, never `git add -A` or `commit -a`.
 
 ## Verification and stuck loops
 

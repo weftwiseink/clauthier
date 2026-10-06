@@ -539,7 +539,7 @@ Constraints: no directory-per-workstream layout.
 
 ### Phase 3: context-capped warm subagents
 
-A warm subagent resumed with `SendMessage` keeps a Scratchpoint at the top of its own section; once its reported context passes ~250K after a turn, the overseer has it write a handoff beside that Scratchpoint, commits both, and continues with a fresh subagent seeded from them (`orchestration-discipline.md` "Stay thin" and "Durable state").
+A warm subagent resumed with `SendMessage` keeps a Scratchpoint at the top of its own section; once its reported context passes ~400K after a turn, the overseer has it write a handoff beside that Scratchpoint, commits both, and continues with a fresh subagent seeded from them (`orchestration-discipline.md` "Stay thin" and "Durable state").
 The committed Scratchpoint/handoff pairs allow a later analysis of how much the handoff adds; if little, the Scratchpoint alone seeds the fresh leg.
 
 Success criteria: a fresh subagent continues without re-reading its predecessor's files.
