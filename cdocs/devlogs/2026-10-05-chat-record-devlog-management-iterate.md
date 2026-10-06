@@ -54,6 +54,8 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | dispatch | impl-4 (cdocs:implementer, fresh) | plugins/cdocs/skills/devlog/**, plugins/cdocs/rules/frontmatter-spec.md, plugins/cdocs/rules/orchestration-discipline.md (Pillar 2 handoff size check only), plugins/cdocs/skills/{triage,status}/**, plugins/cdocs/agents/triage.md, scripts/plugin hooks validate-frontmatter (if needed), proposal + post-compaction RFP (A/B move, line/word thresholds), this devlog (notes) | 2026-10-06T09:01 | Phase 2 (splitting, part_of, dry-run) |
 | return | impl-4 | same | 2026-10-06T09:12 | Phase 2: `cc7b808`..`6b63aaf`; A/B moved to RFP; thresholds ~1,500/~400 words (7.86 B/word over 101 devlogs); dry-run split on scratch copies; validator/build/unit/greps OK |
 | dispatch | dryrun-1 (general-purpose, sonnet, fresh) | n/a (read-only, scratchpad dryrun/) | 2026-10-06T09:13 | split dry-run; answer key in impl-4 notes |
+| return | dryrun-1 | n/a | 2026-10-06T09:15 | PASS: 6/6 answers match key; Reads = 2 roots + 4 chunks (one per question for A1,A2,B1,B2); A3,B3 root only |
+| dispatch | rev-4 (cdocs:reviewer) | cdocs/reviews/2026-10-06-review-of-chat-record-impl-2-r1.md | 2026-10-06T09:16 | Phase 2 review |
 
 ## Steering Log
 
@@ -379,3 +381,9 @@ If `/tmp/claude-1000/-var-home-mjr-code-weft-clauthier-main/e3afd4a9-4352-482d-a
 
 - The dry-run's fresh-agent run (above) is the overseer's; its result decides the one-chunk success criterion.
 - The `Agent` tool was callable in this dispatched session (used only for two `cdocs:bash-runner` runs); the dry-run was left to the overseer per the brief, since its scorer must not be the author.
+
+## Split Dry-Run Result (overseer)
+
+A fresh `general-purpose` sonnet agent ran the impl-4 prompt (Read-only, scratchpad `dryrun/` copies) on 2026-10-06.
+All six answers match the answer key; its Read calls were the two roots, then one chunk each for A1 (`-implementation`), A2 (`-loops`), B1 (`-runs`), B2 (`-analysis`); A3 and B3 were answered from the root alone, as intended.
+The proposal's one-chunk bar passes.
