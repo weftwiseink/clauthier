@@ -40,6 +40,7 @@ For each file:
    - Required: `first_authored` (by, at), `task_list`, `type`, `state`, `status`, `tags`
    - Reviews also require: `review_of`
    - Non-reviews may have: `last_reviewed` (status, by, at, round)
+   - Devlog chunks carry `part_of` (repo-root path to their root devlog) and no `chat_record`; report a `part_of` naming no existing devlog, but do not edit it.
 3. **Apply mechanical fixes directly via Edit:**
    - Add missing required fields with sensible defaults where deterministic (e.g., `state: live`, `status: wip`).
    - Fix malformed timestamps to ISO 8601 with timezone.
@@ -49,12 +50,13 @@ For each file:
 5. **Analyze status** (check completeness signals):
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence.
+     A devlog chunk (`part_of` set) is `status: done` by construction and skips this check; recommend `done` if it is not.
    - Reports: BLUF present, key findings and analysis sections filled.
    - Reviews: all sections filled, verdict present.
    - If document appears complete and status is `wip`, recommend `review_ready`.
    - If unsure, do NOT recommend a status change.
 6. **Locate the iterate devlog and read its logs** (`type: proposal` only; skip for other types). Run this analysis BEFORE "Check workflow state". When a matching devlog is found, its log-state mapping (below) takes precedence over the blind workflow-state heuristics in step 7.
-   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`.
+   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`, skipping chunks (`part_of` set): a chunk holds only finished rows, and the root keeps the live tables.
    2. **Filter to iterate devlogs**: keep only devlogs containing a `## Iteration Log` heading (produced by `/cdocs:iterate` Turn 0).
    3. **Filter to this proposal**: `task_list` match is necessary but not sufficient — a workstream can span multiple proposals — so further keep only devlogs whose body cites this proposal's path explicitly (the Turn 0 Brief cites the proposal path).
    4. **Pick one**: if multiple devlogs remain, take the most recently dated one (filename date, tie-broken by `first_authored.at`; if that also ties, flag the ambiguity in the report and recommend `[NONE]` rather than guessing).
@@ -115,6 +117,7 @@ WORKFLOW RECOMMENDATIONS:
 ```
 
 Use repo-root-relative paths. Do not editorialize.
+Group devlog chunks under their root: in each section, list a chunk directly after its root's entry when both are triaged, and otherwise append `(part_of <root>)` to its path.
 Omit the `ITERATE LOOP STATE:` entry for a document when no matching iterate devlog was found (per Analysis step 6); include it whenever a devlog matched, even when the resulting recommendation is `[NONE]`, so the report stays auditable.
 
 ## Constraints
