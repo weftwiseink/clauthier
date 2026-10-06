@@ -56,3 +56,4 @@ Verification floor: build, frontmatter validator and `chat-record.test.sh --unit
 | at | target | content | applied |
 |---|---|---|---|
 | 2026-10-06T11:55 | prop-1 r1 revision | Maintainer: sub-devlog boundaries are soft and content-driven, not coupled to implementer identity, turns, restarts or context. Short phases can share one devlog; a large testing phase done in a single turn by one implementer can get its own. (Queued: rev-1 in flight.) | 1 |
+| 2026-10-06T12:05 | after prop-1 r1 revision | Maintainer confirms open-question answers: loop tables stay top-level; no reviewer devlogs; sub-devlog seams as proposed. Index heading is `## Workstream Devlogs` (not `## Devlogs`). (Queued: prop-1 in flight.) | pending |
