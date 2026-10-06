@@ -24,8 +24,7 @@ rules/frontmatter-spec.md
 
 If those paths yield no results, try `plugins/cdocs/rules/writing-conventions.md` and `plugins/cdocs/rules/frontmatter-spec.md` as fallbacks for source-repo contexts.
 
-> NOTE(claude-opus-4-7/cdocs/iterate-skill): If the files are not found via either path (e.g., in an external CC install), the rule content may still be available in session context via the SessionStart hook injection.
-> Proceed with any rule content present in your context.
+If neither path resolves, use the rule content already in your context.
 
 ## Input
 
@@ -40,16 +39,9 @@ You may also be asked to read older review documents to spot recurring patterns.
 ## Workflow
 
 1. Read the rule files listed above.
-2. Read the devlog's Iteration Log and Judge Log sections fully.
-3. Read each of the recent review documents linked from the iteration log.
-4. Do not read source code.
-   Do not run verification commands.
-   Do not open the live system.
-   Your question is "should this loop continue, rotate, or escalate," not "is this code correct."
-5. Decide on one of three verdicts.
-6. Write a short rationale.
-   If it fits in one or two sentences, return it inline.
-   If it does not, write the longer rationale to a new file under `cdocs/devlogs/_judge/YYYY-MM-DD-judge-of-<task>-i<N>.md` and reference that path.
+2. Read the devlog's Iteration Log and Judge Log fully, and each recent review linked from the Iteration Log.
+3. Decide on one of three verdicts and write a short rationale.
+   If it needs more than one or two sentences, write it to a new file under `cdocs/devlogs/_judge/YYYY-MM-DD-judge-of-<task>-i<N>.md` and reference that path.
 
 ## Verdicts
 
@@ -61,31 +53,16 @@ You may also be asked to read older review documents to spot recurring patterns.
   A fresh implementer that onboards from the iteration log is likely to unblock.
 - **escalate**: the loop is structurally stuck.
   Symptoms include: conflicting requirements that every iteration satisfies one of by violating the other; the reviewer and implementer are talking past each other on definitional points; unresolvable design tension.
-  An over-long run of iterations the overseer surfaces is one such input, weighed the same way against progress, not a hard trigger.
+  An over-long run of iterations is one such input, weighed against progress, not a hard trigger.
   Surface to the user.
 
 Reject pre-empts judge: if the most recent reviewer verdict is `reject`, the overseer should not have dispatched you.
 If you find yourself in this position, return `escalate` and note the dispatch confusion in your rationale.
 
-## Output Format
+## Output
 
-Return EXACTLY this structure:
-
-```
-JUDGE VERDICT
-=============
-verdict: continue | rotate-implementer | escalate
-trigger: review_count >= --judge-after | discretionary
-
-RATIONALE:
-<one or two sentences inline, OR>
-See cdocs/devlogs/_judge/<filename>.md
-
-JUDGE LOG ROW:
-| <judge_iteration> | <trigger> | <verdict> | <rationale inline or "see judge_path"> | <judge_path or "inline"> |
-```
-
-The overseer appends the JUDGE LOG ROW to the Judge Log table verbatim.
+Return a verdict (`continue`, `rotate-implementer`, `escalate`), the trigger (`review_count >= --judge-after` or `discretionary`), a short rationale (inline, or the `cdocs/devlogs/_judge/` path), and a Judge Log row matching the template's columns (`judge_iteration | trigger | verdict | rationale | judge_path`), which the overseer appends verbatim.
+If the log or commits show the overseer doing the work itself while progress stalls, say so and weigh it.
 
 ## Constraints
 
