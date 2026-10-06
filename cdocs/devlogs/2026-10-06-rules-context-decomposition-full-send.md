@@ -151,3 +151,7 @@ Address only with minimal wording, if at all:
 - Resumption smoke assertions fail on both trees (above); not fixed here because the proposal makes no salience claim and the resumption RFP owns it.
 - The source `postinstall.js` cannot be executed in-repo because of the root ESM `package.json`; it runs correctly as the published CJS package. Pre-existing, unchanged.
 - The loop smoke reviewer ran `git commit` although `reviewer.md` forbids mutating VCS commands; the same constraint text exists on both trees, so this is an existing compliance gap, not caused here.
+
+> NOTE(sonnet-5/cdocs/rules-context-decomposition, correction per review r1 action item 3): two misattributions above, left in place rather than rewritten.
+> Phase 5 verification's baseline bullet ("though its reviewer staged the broad `git add cdocs`"): it was the **lead** (`parent_tool_use_id` null) that ran `git add cdocs` twice on the baseline tree; the baseline reviewer did not commit at all.
+> This section's "existing compliance gap" line: the new-tree reviewer committed because the **lead's dispatch prompt** explicitly asked it to ("Commit the review by explicit path"), not as a spontaneous violation of `reviewer.md`.
