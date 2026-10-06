@@ -125,7 +125,7 @@ A long devlog splits where its work has seams, so a reader opens one relevant ch
 - **Closed concern.** A completed phase, finished sub-loop, resolved investigation, or landed verification campaign that has its own H2 or H3, has no open todo in the latest handoff (done, or moved into the root's handoff), and feeds no live table in the root.
 - **Cut.** Move each closed concern into its own chunk with everything belonging to it: notes, debugging, its Changes Made and Verification rows, finished Iteration Log rows.
   Merge a concern under ~400 words into an adjacent chunk.
-  Rows shared by two concerns, open concerns, and live tables stay in the root; a live table whose finished rows moved points to their chunk.
+  Rows shared by two concerns, open concerns, and live tables stay in the root; a live table whose finished rows moved gets a line below it (not a row) pointing to their chunk.
   No closed concern means no split: tighten prose instead.
 - **Naming.** Flat siblings `cdocs/devlogs/YYYY-MM-DD-<root-slug>-<concern-slug>.md`, with the root's date and a concern-named slug (`-canary`, `-phase2-hooks`, `-iterate-r1-r5`).
 - **Root as index.** The root keeps its frontmatter (including `chat_record:`), Objective, `## Scratchpoint`, current handoff, and live tables, and gains a `## Chunks` table:
