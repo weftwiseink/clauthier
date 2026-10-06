@@ -51,12 +51,14 @@ tags: [chat-record, hooks, devlog, orchestration, iterate]
 | return | rev-3 (cdocs:reviewer) | same | 2026-10-05T15:02 | `fac1568` accept |
 | dispatch | impl-3 (warm, SendMessage) | plugins/cdocs/bin/chat-record, plugins/cdocs/hooks/tests/chat-record.test.sh, proposal (sync lines) | 2026-10-05T15:03 | 1b minors (speaker regex, proposal sync) |
 | return | impl-3 | same | 2026-10-05T15:10 | `8707a4f` speaker regex, `418326c` proposal sync; 95/95 unit. Phase 1b done pending maintainer checklist; Phase 2 awaiting maintainer scope decision (A/B -> post-compaction RFP?) |
+| dispatch | impl-4 (cdocs:implementer, fresh) | plugins/cdocs/skills/devlog/**, plugins/cdocs/rules/frontmatter-spec.md, plugins/cdocs/rules/orchestration-discipline.md (Pillar 2 handoff size check only), plugins/cdocs/skills/{triage,status}/**, plugins/cdocs/agents/triage.md, scripts/plugin hooks validate-frontmatter (if needed), proposal + post-compaction RFP (A/B move, line/word thresholds), this devlog (notes) | 2026-10-06T09:01 | Phase 2 (splitting, part_of, dry-run) |
 
 ## Steering Log
 
 | at | kind | target | content | applied_at_iteration |
 |---|---|---|---|---|
 | 2026-10-05T14:08 | steer-implementer | impl-3 | Maintainer: post-compaction rules check deferred to RFP (haiku results unrealistic; re-test with realistic lead models after base rules cleanup); no placement change, no SessionStart hook. After chat-record wraps, decompose the bloated rules file. | 3 |
+| 2026-10-06T09:00 | steer-implementer | impl-4 | Maintainer: do Phase 2 splitting + part_of now (flesh out in current paradigm, reorganize later); resumption A/B moves to the post-compaction RFP; use line and/or word counts rather than data sizes (KB) for thresholds. | 4 |
 
 ## Implementation Notes (impl-1, Phase 1a)
 
