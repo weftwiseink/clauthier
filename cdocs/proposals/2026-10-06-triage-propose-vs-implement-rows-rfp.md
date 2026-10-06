@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/triage-loop-lookup
 type: proposal
 state: live
-status: request_for_proposal
+status: implementation_accepted
 tags: [triage, iterate, full_send, devlog]
 ---
 
@@ -28,3 +28,7 @@ A full-send logs its proposal-review rounds and its implementation rounds in the
 ## Open Questions
 
 - Is this observed in practice, or only possible? Check triage runs on existing full-send devlogs.
+
+## Resolution
+
+> NOTE(sonnet-5/cdocs/triage-loop-lookup): Resolved directly, per maintainer steer (quick fix: make the verdict self-describing rather than add a new row marker or table). A proposal-review Accept now logs `review_verdict: proposal_accepted` (terminal status `implementation_ready`); an implementation-review Accept keeps `review_verdict: accept` unchanged, so existing devlogs still read correctly. See `646fe38` (triage mapping) and `749de81` (propose-revise logging convention).
