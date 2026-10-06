@@ -116,28 +116,30 @@ When dispatching parallel agents for multi-failure debugging, document in "Issue
 - Make the devlog the single source of truth for the work session.
 - Ensure the devlog contains enough context for another agent to resume the work.
 
-## Splitting a devlog
+## Continuing in a new devlog
 
-A long devlog splits where its work has seams, so a reader opens one relevant chunk instead of the whole chronology.
+Devlogs grow forward: at a seam, start a new devlog instead of moving written text.
 
-- **Trigger.** At each handoff, past ~1,500 words (`wc -w`) or ~5 loop rounds, look for a closed concern; size prompts the look, never chooses the cut.
-- **Closed concern.** A completed phase, finished sub-loop, resolved investigation, or landed verification campaign that has its own H2 or H3, has no open todo in the latest handoff (done, or moved into the root's handoff), and feeds no live table in the root.
-- **Cut.** Move each closed concern into its own chunk with everything belonging to it: notes, debugging, its Changes Made and Verification rows, finished Iteration Log rows.
-  Merge a concern under ~400 words into an adjacent chunk; split a single oversized concern at a natural round or phase boundary.
-  Rows shared by two concerns, open concerns, and live tables stay in the root; a live table whose finished rows moved gets a line below it (not a row) pointing to their chunk, plus a one-line summary (such as the verdict sequence) when every row moved.
-  No closed concern means no split: tighten prose instead.
-- **Naming.** Flat siblings `cdocs/devlogs/YYYY-MM-DD-<root-slug>-<concern-slug>.md`, with the root's date and a concern-named slug (`-canary`, `-phase2-hooks`, `-iterate-r1-r5`).
-- **Root as index.** The root keeps its frontmatter (including `chat_record:`), Objective, `## Scratchpoint`, current handoff, and live tables, and gains a `## Chunks` table:
+- **When.** Look at each return or handoff: a new concern big enough to stand alone (a phase, a fix round, a verification campaign), or a devlog past ~1,500 words (`wc -w`) reaching a natural seam.
+  Size prompts the look, and the content chooses the cut.
+  A restart, rotation, new turn, or full context is not a seam: continue the open concern's devlog from its Scratchpoint and latest handoff, replacing the Scratchpoint.
+- **Who.** Whoever is writing at the seam closes the devlog it leaves (handoff, `status: done`, `next:` naming the successor) and starts the next.
+  A dispatched agent writes the sub-devlog its lead names and reports any successor it starts.
+  When the next concern goes to another writer, the leaving writer marks the finished devlog `done`, else the lead does.
+- **Top-level.** The lead's devlog (no `part_of`) holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and an index the lead keeps:
 
   ```markdown
-  ## Chunks
+  ## Workstream Devlogs
 
-  | chunk | concern | status | read this when |
+  | devlog | concern | status | read this when |
   |---|---|---|---|
-  | [-canary](2026-09-22-x-canary.md) | Phase-0 hook canary | done | you need a hook's exact payload fields |
+  | [-canary](2026-09-22-x-iterate-canary.md) | hook canary | done | you need a hook's payload fields |
   ```
-- **Chunks stand alone.** Frontmatter copied from the root, with `status: done`, `part_of: cdocs/devlogs/<root>.md`, and no `chat_record:`; a backlink as the first line under the title, `> NOTE(author/workstream): Chunk of [<root>](<root>.md); see its Chunks table for siblings.`; then a standalone BLUF.
-  Reword relative phrases ("this devlog", "the table above") in moved text.
+- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<top-level-slug>-<concern>.md` (the top-level's date), with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md); see its Workstream Devlogs table for siblings.`
+  Each is a normal devlog with its own Scratchpoint, and short concerns share one.
+- **Tables.** Loop tables stay in the top-level, and their rows do not count toward its size.
+  Continuing them forward is a judgment call at a loop or phase boundary: the continuation holds only the tables (no Scratchpoint), and a line under each top-level table points to it.
+  Iteration numbers keep increasing across the workstream.
 
 ## Handoff devlogs
 
