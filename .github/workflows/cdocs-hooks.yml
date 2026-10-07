@@ -1,8 +1,10 @@
 # CI for the cdocs Claude Code hooks and bin/ scripts.
-# Runs the chat-record --unit suite and the validate-cdocs-edit-path unit suite
-# (bash, jq, git; no claude, no credentials). The headless scenarios need
-# credentials and stay a manual gate. macOS runs it too: BSD sed, awk, and tr,
-# so GNU-only behavior in bin/ or the suites fails there.
+# Runs the chat-record --unit suite, the validate-cdocs-edit-path unit suite,
+# and the graphify-scope unit suite against a graphify stub (bash, jq, git; no
+# claude, no credentials). The headless scenarios need credentials and stay a
+# manual gate. macOS runs it too, except the Linux-only graphify-scope suite
+# (bash 4+, for the graphify devcontainer): BSD sed, awk, and tr, so GNU-only
+# behavior in bin/ or the suites fails there.
 
 name: CDocs Hooks
 
@@ -37,3 +39,7 @@ jobs:
 
       - name: validate-cdocs-edit-path unit suite
         run: bash plugins/cdocs/hooks/tests/validate-cdocs-edit-path.test.sh
+
+      - name: graphify-scope unit suite
+        if: runner.os == 'Linux'
+        run: bash plugins/cdocs/hooks/tests/graphify-scope.test.sh
