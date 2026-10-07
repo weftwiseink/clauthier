@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: round 4 accepting-round nits.
-- next: branch on verdict; then /cdocs:iterate, then atlas update.
+- now: propose-revise closed (f8cf9f1, implementation_ready); starting /cdocs:iterate in this devlog.
+- next: iterate loop, then atlas update.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -86,3 +86,4 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T18:41 | dispatch | reviewer r4 (cdocs:reviewer, opus) | review r4, proposal last_reviewed | round 4 review |
 | 2026-10-06T18:50 | return | reviewer r4 | review r4 + proposal last_reviewed (3233519) | accept with 6 nits |
 | 2026-10-06T18:51 | dispatch | nested-proposer (warm, SendMessage) | proposal | accepting-round nits, set implementation_ready |
+| 2026-10-06T18:55 | return | nested-proposer | proposal (f8cf9f1) | implementation_ready, 1,674 words; propose-revise loop closed |
