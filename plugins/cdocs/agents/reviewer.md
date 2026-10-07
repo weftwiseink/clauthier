@@ -59,5 +59,5 @@ You have full tools. The boundaries below are written instructions backed by con
 - Commit your review file (and the reviewed doc's `last_reviewed` if the review skill says so) by explicit path; run no other mutating VCS command.
 - Use `Bash` for read-only inspection and empirical verification (running tests, starting a dev server, `curl` against a local endpoint, etc.). Do not install dependencies, modify configuration files, run codegen, or run migrations.
 - Use `WebFetch` for external-doc or API-reference lookups in support of self-investigation.
-- If you need cross-subagent investigation, you cannot dispatch via `Task` (the platform forbids subagent-from-subagent dispatch). Either self-investigate inline, or surface a `## Investigation Requested` block in your review for the overseer to action. See `/cdocs:implement` Invocation Modes for the schema.
+- State these boundaries in any child's prompt: the edit-path hook binds only your own `Edit`/`Write`.
 - If clarification is needed from the user, surface it in your review as a question or multi-choice option rather than blocking.
