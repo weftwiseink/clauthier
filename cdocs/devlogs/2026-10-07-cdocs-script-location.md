@@ -71,6 +71,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md, proposal frontmatter | 2026-10-07T12:11 | proposal review round 1 |
 | return | rev-1 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md | 2026-10-07T12:15 | f626a6d; revise (B1: stale-path grep cannot fail) |
 | dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:16 | revision round 1 |
+| return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:22 | bd14c2b; B1 + N1-N7 addressed |
+| dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md, proposal frontmatter | 2026-10-07T12:23 | proposal review round 2 |
 
 ## Steering Log
 
