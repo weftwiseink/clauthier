@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/script-location
 type: devlog
 state: live
-status: wip
+status: done
 tags: [plugin-architecture, graphify, full_send]
 ---
 
@@ -43,17 +43,20 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 
 ## Scratchpoint
 
-- as_of: 2026-10-07 iterate round 1 (proposal accepted r2, fbc7ed8)
-- next_steps: await rev-3 verdict
+- as_of: 2026-10-07 terminated (Accept, iterate round 1)
+- next_steps: none; loop terminated on Accept, proposal implementation_accepted
 - important_files: plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/bin/README.md, plugins/cdocs/skills/iterate/SKILL.md, scripts/build-opencode.ts
 - callouts:
+  - todo: `graphify-scope brief` silently accepts unknown flags (pre-existing behavior, left unchanged).
+  - todo: new Linux CI step not yet run in GitHub Actions; PATH resolution not yet checked in a marketplace-installed consumer project.
+  - todo: if the rules work renames `overseers.md`, update links in `plugins/cdocs/bin/README.md` and `plugins/cdocs/README.md`.
   - decision: concurrent agent `rules-fixup` edits punctuation in plugins/cdocs/rules/*.md and the devlog skill; do not touch those files' punctuation.
 
 ## Workstream Devlogs
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| cdocs/devlogs/2026-10-07-cdocs-script-location-impl.md | move graphify-scope into bin/, update references, README section | wip | checking what moved and the verification evidence |
+| cdocs/devlogs/2026-10-07-cdocs-script-location-impl.md | move graphify-scope into bin/, update references, README section | done | checking what moved and the verification evidence |
 
 ## Iteration Log
 
@@ -87,7 +90,12 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md, impl sub-devlog frontmatter | 2026-10-07T12:46 | implementation review round 1 |
 | return | rev-3 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md | 2026-10-07T12:55 | a70659b; accept, 3 non-blocking nits |
 | dispatch | impl-1 (resumed) | .github/workflows/cdocs-hooks.yml, plugins/cdocs/bin/README.md, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/README.md, impl sub-devlog | 2026-10-07T12:56 | accept-round nits |
+| return | impl-1 | (as dispatched) | 2026-10-07T13:05 | d7ed5b7, c4b5b00, f37183d, 4e3725e, 031608c; 51/51, stale grep empty |
 
 ## Steering Log
 
 ## Verification
+
+Overseer re-check after the final commit: the stale-path `git grep -n -e 'scripts/graphify-scope' -e 'graphify-scope\.sh' -e 'test-graphify-scope' -- . ':!cdocs/'` prints nothing (exit 1); `plugins/cdocs/bin/` holds `chat-record`, `graphify-scope`, `README.md`; `plugins/cdocs/scripts/` holds only `postinstall.js`.
+Reviewer rev-3 reproduced the full floor (build exit 0; graphify-scope 51/51, chat-record --unit 95/95, validate-cdocs-edit-path 17/17; PATH resolution; README samples byte-match): see `cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md`.
+impl-1 re-ran graphify-scope 51/51 after the nit commits.
