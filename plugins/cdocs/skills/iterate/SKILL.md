@@ -42,17 +42,17 @@ Code and cdocs should be committed early and often.
 When `--graphify-scope` is passed, the overseer primes a compact graph-resolved dependent-set brief into the reviewer's dispatch prompt up front, so the reviewer starts from the change's true MULTI-FILE dependent set instead of a speculative read sweep.
 This is deliberately minimal: prime a brief + point the reviewer at the graphify CLI. It is currently wired for the REVIEWER role only (the RFP's original consumer); implementer and judge are out of scope for this increment.
 
-At **Turn N.b (Review)**, before dispatching the reviewer, and ONLY when the flag is on, the overseer runs the helper against the round's changed files:
+At **Turn N.b (Review)**, before dispatching the reviewer, and ONLY when the flag is on, the overseer runs the helper (on `PATH` from the plugin's `bin/`) against the round's changed files:
 
 ```
-plugins/cdocs/scripts/graphify-scope.sh brief --enable --diff-base <base-ref>
+graphify-scope brief --enable --diff-base <base-ref>
 ```
 
 The default pipeline derives symbols from the changed files (`explain` a file to get its `[contains]` symbols, then `affected` each symbol for its dependent set). Pass `--symbols "<label> <label>"` to bypass the `explain` step and run `affected` directly on known symbol labels instead.
 When a changed file's `explain` output is truncated at graphify's connection cap, the brief carries a `SCOPE-TRUNCATED: <file> ...` marker (its dependents may be under-listed): the reviewer should widen on that file's symbols rather than trust the set as broad.
 
 - If the first line is `SCOPE-STATUS: scoped`, the overseer pastes the brief VERBATIM into the reviewer's dispatch prompt under a "Graphify scoped-context brief" heading, and the reviewer treats it per [`reviewer.md`](../../agents/reviewer.md) (an AID, never a completeness guarantee).
-- If the first line is `SCOPE-STATUS: skip-scope` or `disabled` (missing/stale index, missing graphify binary, engine error, or an empty/near-empty set), the round is a fallback round: the overseer primes NO brief and the reviewer runs today's unscoped sweep. Note the labeled status in the Iteration Log `notes` (e.g. `[graphify: skip-scope missing-index]`) so instrumentation can tell scoped rounds from fallback rounds.
+- If the first line is `SCOPE-STATUS: skip-scope` or `disabled` (missing/stale index, missing graphify binary, engine error, or an empty/near-empty set), or the `graphify-scope` command itself is missing (OpenCode, or a non-CLI install without `bin/`; log it as `[graphify: skip-scope no-command]`), the round is a fallback round: the overseer primes NO brief and the reviewer runs today's unscoped sweep. Note the labeled status in the Iteration Log `notes` (e.g. `[graphify: skip-scope missing-index]`) so instrumentation can tell scoped rounds from fallback rounds.
 
 The helper is ADDITIVE ONLY: it can only ever ADD context to a round, never narrow it, so its absence or any fallback never lowers recall below the current baseline.
 The overseer never blocks a round on scoping.

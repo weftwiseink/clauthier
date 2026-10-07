@@ -35,7 +35,7 @@ The full proposal should explore, at the umbrella level:
 
 ### Section: graphify scoping efficacy (downstream adoption + validation) — SEED
 
-The first concrete improvement to verify. Shipped as `implementation_accepted` (Phase 2, lean track): the CLI-backed scoping surface (`plugins/cdocs/scripts/graphify-scope.sh` + flag-gated reviewer wiring), functionally live-verified against real graphify 0.9.61, but its **efficacy A/B was explicitly deferred** — this section is where a downstream repo closes that gap.
+The first concrete improvement to verify. Shipped as `implementation_accepted` (Phase 2, lean track): the CLI-backed scoping surface (`plugins/cdocs/bin/graphify-scope` + flag-gated reviewer wiring), functionally live-verified against real graphify 0.9.61, but its **efficacy A/B was explicitly deferred** — this section is where a downstream repo closes that gap.
 
 - **Adoption (downstream repo).** Install the graphify devcontainer feature (`ghcr.io/weftwiseink/devcontainer-features/graphify`); provision an index (`graphify update <tree> --no-cluster`, LLM-free); turn on `--graphify-scope` (default OFF) in the iterate/review loop. Confirm the helper's graph-path resolution finds the index in the consumer's environment (default cache is `/var/cache/graphify/graph.json`).
 - **Efficacy claim (falsifiable).** On MULTI-FILE dependent-set / blast-radius tasks, priming a graphify scoping brief cuts the reviewer's (then implementer/judge's) context-gathering burn while holding recall. Failure-picture: no positive context-gap on multi-file tasks, OR any recall regression versus the unscoped baseline.
