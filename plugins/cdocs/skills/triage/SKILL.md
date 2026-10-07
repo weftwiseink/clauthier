@@ -68,7 +68,7 @@ When acting on a `[REVIEW]` recommendation:
 1. Invoke the reviewer agent via Task tool with `subagent_type: "cdocs:reviewer"`.
 2. Pass the document path in the prompt. The reviewer agent has the review skill preloaded via its `skills` frontmatter field and reads rules at runtime: no inlining needed.
 3. The reviewer agent writes the review to `cdocs/reviews/` and updates the target document's `last_reviewed` frontmatter.
-4. After the reviewer agent completes, re-run triage on the review document to validate its frontmatter (the main agent dispatches this since agents cannot spawn subagents).
+4. After the reviewer agent completes, re-run triage on the review document to validate its frontmatter.
 5. Report the review verdict to the user.
 
 ### Revision Dispatch Details
