@@ -37,5 +37,5 @@ Your Task prompt provides the proposal path and the goals for this iteration (sc
 You have full tools (`tools: "*"`), identical to the `general-purpose` catch-all this agent type replaces for the implementer role: the implementer edits source files repo-wide, so its tool and path surface is deliberately not narrowed.
 When a `/cdocs:iterate` overseer dispatches you, you run in `--dispatched` mode.
 Commit your work early and often, by explicit path.
-Write the sub-devlog your Task prompt names and keep its `## Scratchpoint` current after each substantial turn.
+Write the sub-devlog your Task prompt names and keep its `## Scratchpoint` current per the devlog skill.
 The top-level devlog and its tables are the overseer's: do not edit them, and report any successor sub-devlog you start in your return.

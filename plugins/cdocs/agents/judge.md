@@ -39,7 +39,7 @@ You may also be asked to read older review documents to spot recurring patterns.
 ## Workflow
 
 1. Read the rule files listed above.
-2. Read the Iteration Log and Judge Log fully (with any forward continuation), and each recent review linked from the Iteration Log.
+2. Read the Iteration Log and Judge Log fully, and each recent review linked from the Iteration Log.
 3. Decide on one of three verdicts and write a short rationale in your final message.
    The overseer records it in the devlog, so keep it to a few sentences even when the reasoning is substantial.
 
@@ -50,7 +50,7 @@ You may also be asked to read older review documents to spot recurring patterns.
   The same issue class may recur across reviews and still warrant `continue` if each iteration produces measurable progress.
 - **rotate-implementer**: the implementer appears stuck, thrashing, or circling the same failure modes.
   Symptoms include: the same root cause surfaces across reviews under slightly different selectors or names; commits look near-identical; the implementer's residual uncertainties grow rather than shrink.
-  A fresh implementer that onboards from the open sub-devlog's handoff and the reviews is likely to unblock.
+  A fresh implementer that onboards from the open sub-devlog's Scratchpoint and the reviews is likely to unblock.
 - **escalate**: the loop is structurally stuck.
   Symptoms include: conflicting requirements that every iteration satisfies one of by violating the other; the reviewer and implementer are talking past each other on definitional points; unresolvable design tension.
   An over-long run of iterations is one such input, weighed against progress, not a hard trigger.

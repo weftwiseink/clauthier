@@ -49,18 +49,18 @@ For each file:
 5. **Analyze status** (check completeness signals):
    - Proposals: all template sections filled, BLUF present and consistent with content.
    - Devlogs: verification section non-empty with concrete evidence.
-     A closed sub-devlog (`part_of` set, with a successor named in its `next:` or handoff, or a finished loop) is a normal devlog: run this same check, and recommend `status: done` if it is not already `done`.
+     A closed sub-devlog (`part_of` set, with a successor named in its Scratchpoint `next_steps:` or handoff, or a finished loop) is a normal devlog: run this same check, and recommend `status: done` if it is not already `done`.
    - Reports: BLUF present, key findings and analysis sections filled.
    - Reviews: all sections filled, verdict present.
    - If document appears complete and status is `wip`, recommend `review_ready`.
    - If unsure, do NOT recommend a status change.
 6. **Locate the iterate devlog and read its logs** (`type: proposal` only; skip for other types). Run this analysis BEFORE "Check workflow state". When a matching devlog is found, its log-state mapping (below) takes precedence over the blind workflow-state heuristics in step 7.
-   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`. A sub-devlog (`part_of` set) stands for its top-level: steps 2-6 read the family as one devlog, and each table's last row is its row with the highest iteration number across the family.
+   1. **Glob** `cdocs/devlogs/*.md` for devlogs whose frontmatter `task_list` matches this proposal's `task_list`. A sub-devlog (`part_of` set) stands for its top-level, which holds the loop tables.
    2. **Filter to iterate devlogs**: keep only devlogs containing a `## Iteration Log` heading (produced by `/cdocs:iterate` Turn 0).
    3. **Filter to this proposal**: `task_list` match is necessary but not sufficient — a workstream can span multiple proposals — so further keep only devlogs whose body cites this proposal's path explicitly (the Turn 0 Brief cites the proposal path).
    4. **Pick one**: if multiple devlogs remain, take the most recently dated one (filename date, tie-broken by `first_authored.at`; if that also ties, flag the ambiguity in the report and recommend `[NONE]` rather than guessing).
    5. **Graceful fallback**: if none remain — or the matched devlog's Iteration Log is empty (Turn 0 only, loop never actually started) — fall back to the blind `last_reviewed`-based heuristics in step 7, unchanged. For proposals with no iterate history this refinement is purely additive.
-   6. **Read the last row of each table**: read the matched devlog's `## Iteration Log` and `## Judge Log` tables and take the **last row of each** (per step 1, the highest iteration number across the family). Key every field off its column *header name*, NEVER a fixed column position. The Iteration Log schema drifts across devlog vintages: the 2026-05-13 devlog has six columns and no `review_proof`; the 2026-05-18 devlog adds `review_proof`; the current `template.md` carries seven, and some older devlogs carry an extra context-estimate column. Positional indexing would misread the older logs. The mapping needs only the Iteration Log's `review_verdict` and the Judge Log's `verdict`.
+   6. **Read the last row of each table**: read the matched devlog's `## Iteration Log` and `## Judge Log` tables and take the **last row of each**. Key every field off its column *header name*, NEVER a fixed column position. The Iteration Log schema drifts across devlog vintages: the 2026-05-13 devlog has six columns and no `review_proof`; the 2026-05-18 devlog adds `review_proof`; the current `template.md` carries seven, and some older devlogs carry an extra context-estimate column. Positional indexing would misread the older logs. The mapping needs only the Iteration Log's `review_verdict` and the Judge Log's `verdict`.
 
    **Log-state -> recommendation mapping.** These rules are checked before the "Check workflow state" table in step 7 and, when a matching devlog exists, take precedence over it:
 
