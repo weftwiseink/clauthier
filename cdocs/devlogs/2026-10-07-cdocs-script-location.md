@@ -59,6 +59,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
+| dispatch | proposer-1 (cdocs:proposer, a84ad7a7) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:05 | propose round 1 |
 
 ## Steering Log
 
