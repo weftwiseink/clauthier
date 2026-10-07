@@ -6,6 +6,11 @@ task_list: cdocs/script-location
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-10-07T12:55:47-07:00
+  round: 1
 tags: [claude_skills, architecture]
 ---
 
