@@ -22,7 +22,7 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: iterate iteration 1, rev-1 reviewing.
+- now: iteration 1 accepted; accept-round fixes with nest-impl-1.
 - next: fresh reviewer; then atlas update after accept.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
@@ -56,6 +56,7 @@ tags: [orchestration, subagents, propose_revise]
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| 1 | nest-impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r5.md | reviewer re-ran floor in sandbox (excerpts inlined); /tmp escape traced to bash-runner.md:28 hardcoded mktemp path; accept-round fixes to warm nest-impl-1 |
 
 ## Judge Log
 
@@ -112,3 +113,5 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T19:00 | dispatch | nest-impl-1 (cdocs:implementer, opus) | plugins/cdocs/{skills/implement,skills/propose,skills/iterate,skills/triage,skills/ablate,skills/oversee,agents/implementer,agents/reviewer,agents/proposer}/*, new OC tools RFP, cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | iteration 1 |
 | 2026-10-06T19:10 | return | nest-impl-1 | fc01594..a45d647, OC wildcard-tools RFP (791138d) | review_ready; live check passed (depth-2 bash-runner, foreground, no denials); grep clean; build + 95/95 + 17/17; deviation: depth-2 child wrote to /tmp outside sandbox (env -i drops TMPDIR) |
 | 2026-10-06T19:11 | dispatch | rev-1 (cdocs:reviewer, opus) | review file, proposal last_reviewed | iteration 1 review, re-run floor with TMPDIR passed |
+| 2026-10-06T19:25 | return | rev-1 | review r5 + proposal last_reviewed (85c5873) | accept, 5 non-blocking |
+| 2026-10-06T19:26 | dispatch | nest-impl-1 (warm, SendMessage) | sub-devlog, plugins/cdocs/agents/bash-runner.md, OC wildcard RFP, ablate + implement skills, proposal status | accept-round fixes |
