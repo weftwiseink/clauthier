@@ -2,9 +2,9 @@
 # Runs the chat-record --unit suite, the validate-cdocs-edit-path unit suite,
 # and the graphify-scope unit suite against a graphify stub (bash, jq, git; no
 # claude, no credentials). The headless scenarios need credentials and stay a
-# manual gate. macOS runs it too, except the Linux-only graphify-scope suite
-# (bash 4+, for the graphify devcontainer): BSD sed, awk, and tr, so GNU-only
-# behavior in bin/ or the suites fails there.
+# manual gate. macOS runs it too, so GNU-only behavior in bin/ or the suites
+# fails on BSD sed, awk, and tr there; the graphify-scope suite is Linux-only
+# (bash 4+, for the graphify devcontainer).
 
 name: CDocs Hooks
 
