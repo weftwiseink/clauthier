@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nested-subagent-workflows
 type: devlog
 state: live
-status: wip
+status: done
 tags: [orchestration, subagents, propose_revise]
 ---
 
@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: accepting-round nits (warm nested-proposer).
-- next: close loop; ask maintainer about /iterate.
+- now: loop closed, proposal implementation_ready.
+- next: /cdocs:iterate on maintainer go-ahead.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -59,3 +59,22 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T18:06 | dispatch | reviewer r3 (cdocs:reviewer, opus) | review r3, proposal last_reviewed | round 3 review |
 | 2026-10-06T18:15 | return | reviewer r3 | review r3 + proposal last_reviewed (3458c72) | accept with nits |
 | 2026-10-06T18:16 | dispatch | nested-proposer (warm, SendMessage) | proposal | accepting-round nits, set implementation_ready |
+| 2026-10-06T18:22 | return | nested-proposer | proposal (435e519) | implementation_ready, 2,614 words |
+
+## Handoff
+
+### Completed
+
+- Proposal `cdocs/proposals/2026-10-06-nested-subagent-workflows.md` accepted in round 3 and set `implementation_ready` (435e519) after accepting-round nits.
+
+### Decisions Made
+
+- No generic nesting guidance; only cdocs invariants ship. An overseer without `Agent` fails loudly; under `/oversee` that is a hard gate (`blocked`).
+- Loop skills are nest-safe; the top-level session is the chat layer; inline vs nested is its call; `/oversee` dispatches one sub-overseer per proposal; `chat_record` passes down in the brief.
+- Phase 3 live check runs in the `chat-record.test.sh` sandbox with `init_rules` and `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
+
+### Open Todos
+
+- `/cdocs:iterate` the proposal (awaiting maintainer).
+- OC build maps `tools: "*"` to all-false: RFP is the proposal's Phase 1.
+- Follow-up RFP for further `/oversee` cuts (arc devlog, `position`).
