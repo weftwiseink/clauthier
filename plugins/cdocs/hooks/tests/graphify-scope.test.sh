@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Unit tests for graphify-scope.sh -- the deterministic scoping mechanics I can exercise WITHOUT a
+# Unit tests for plugins/cdocs/bin/graphify-scope -- the deterministic scoping mechanics I can exercise WITHOUT a
 # real graphify binary (it is NOT installed on this host). A `graphify` STUB on PATH emits recorded
 # fixture output / error codes so the present-binary path is exercised deterministically. The stub
 # also records every invocation (a sentinel file) so the flag-off = zero-graphify-calls invariant is
@@ -14,7 +14,8 @@
 #   - Flag off -> NO graphify invocation (sentinel proof).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SH="$HERE/graphify-scope.sh"
+PLUGIN="$(cd "$HERE/../.." && pwd)"
+SH="$PLUGIN/bin/graphify-scope"
 SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/gscope-test.XXXXXX")"
 trap 'rm -rf "$SCRATCH"' EXIT
 PASS=0; FAIL=0

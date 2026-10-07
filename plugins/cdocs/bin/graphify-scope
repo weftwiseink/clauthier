@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# graphify-scope.sh - thin, CLI-backed graph-scoping helper for cdocs loops (proposal Phase 2).
+# graphify-scope - thin, CLI-backed graph-scoping helper for cdocs loops (proposal Phase 2).
 #
 # Turns a round's changed files/symbols into a compact SCOPED-CONTEXT BRIEF by shelling out to
 # graphify's QUERY SUBCOMMANDS (`explain` for a file's symbols, then `affected` for each symbol's
@@ -26,7 +26,7 @@
 # onto the engine-agnostic adapter or the MCP transport is a surface change, not a rewrite (D4).
 #
 # graphify is NOT installed on the authoring host; this script is exercised host-side by
-# test-graphify-scope.sh against a `graphify` STUB on PATH (fixtures + error codes). The LIVE
+# hooks/tests/graphify-scope.test.sh against a `graphify` STUB on PATH (fixtures + error codes). The LIVE
 # real-graphify ablate spot-check is the overseer's job, not this script's.
 #
 # jq 1.6-compatible; container-safe bash. Never touches the git stash stack.
@@ -354,7 +354,7 @@ cmd_brief() {
 }
 
 # --- dispatch --------------------------------------------------------------------------------
-[ $# -ge 1 ] || die "usage: graphify-scope.sh brief [--enable] [--files \"...\"] [--diff-base <ref>] [--symbols \"...\"] [--graph <path> | --index <path>] [--near-empty-threshold <n>]"
+[ $# -ge 1 ] || die "usage: graphify-scope brief [--enable] [--files \"...\"] [--diff-base <ref>] [--symbols \"...\"] [--graph <path> | --index <path>] [--near-empty-threshold <n>]"
 sub="$1"; shift
 case "$sub" in
   brief) cmd_brief "$@" ;;
