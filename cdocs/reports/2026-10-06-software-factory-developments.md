@@ -1,0 +1,87 @@
+---
+first_authored:
+  by: "@claude-sonnet-5"
+  at: 2026-10-06T17:30:54-07:00
+task_list: meta/software-factory-landscape
+type: report
+state: live
+status: wip
+tags: [landscape, orchestration, spec_driven_development, agent_memory, evaluation, architecture]
+---
+
+# Software Factory Landscape: Developments Since Late 2025
+
+> BLUF: The last ~6-12 months shipped two platform-native features that directly overlap cdocs mechanisms: Claude Code's dynamic-workflow `Workflow` tool (scripted, near-zero-token multi-agent orchestration) competes with `iterate`/`oversee`'s hand-rolled, token-paying overseer loop, and Anthropic's multi-agent `Code Review` productizes the fresh-reviewer-per-round pattern cdocs already runs for documents.
+> Spec-driven tools (AWS Kiro, GitHub Spec Kit) converged on the same spec→plan→tasks→implement shape as `propose`→`implement`, confirming the shape rather than offering a new idea to adopt.
+> Durable-memory work (Claude Auto Memory, Anthropic's "Dreaming" consolidation, Letta's move to git-backed memory files) validates cdocs' bet on git-committed markdown as the memory substrate, and nothing seen subsumes the devlog/triage pattern.
+> Net recommendation: watch the `Workflow` tool closely as a candidate to mechanize the bookkeeping half of `iterate`/`oversee` (the documented token-spend pain point) while keeping judgment calls in prose; no other finding argues for new cdocs mechanism today.
+
+## Landscape
+
+### Vendor coding agents: background/cloud sessions are now table stakes
+
+Every major vendor shipped an async, laptop-closeable execution mode in this window:
+
+- **Anthropic Claude Code**: Cloud Sessions moved out of research preview to GA on September 23, 2026, running on Anthropic-hosted VMs, reachable from `claude.ai/code`, the mobile app, or `claude --cloud` ([Anthropic launches cloud sessions](https://alphasignal.ai/news/anthropic-ships-claude-code-cloud-sessions-so-developers-can-code-without-a-laptop)). "Projects" layers parallel threads on top, each thread a full cloud session on its own branch and repo copy ([MarkTechPost, 2026-09-17](https://www.marktechpost.com/2026/09/17/anthropic-launches-claude-code-projects-in-beta-parallel-cloud-sessions-that-keep-running-after-you-close-your-laptop/)).
+- **OpenAI Codex**: cloud environments (prepare a workspace once, dispatch tasks from any device) landed at DevDay, September 29, 2026 ([OpenAI, "Introducing the Codex app"](https://openai.com/index/introducing-the-codex-app/)); parallel cloud sandboxes queue 3-5 tasks concurrently with separate git state.
+- **GitHub Copilot**: Agent Mode (synchronous, in-IDE) reached GA across VS Code/JetBrains in March 2026; the separately-async Coding Agent turns an assigned issue into a PR via GitHub Actions; Copilot Workspace now orchestrates specialized implementation/testing/documentation agents over shared context.
+- **Google Jules**: shifted from reactive to proactive in 2026 - MCP server support (Feb 2, 2026), a "CI Fixer" beta that auto-repairs failing checks on its own PRs, and a Render integration that inspects failed deploys unprompted ([testingcatalog.com](https://www.testingcatalog.com/google-prepares-jules-to-become-always-on-ai-swe-agent/)). A ground-up "Jules V2" (goal-directed, not task-directed) is in early access.
+- **Cursor 2.0** (Oct 29, 2025): a purpose-built "Composer" model plus a multi-agent interface running up to 8 parallel agents in separate worktrees/remote machines; Background Agents renamed Cloud Agents ([cursor.com/changelog/2-0](https://cursor.com/changelog/2-0)).
+- **Devin (Cognition)**: self-scheduling recurring sessions, and "a team of managed Devins" that decompose a large task and run each piece in its own VM in parallel; "Devin Review" (Jan 2026) automates PR review comment generation.
+- **Factory.ai Droids** and **Sourcegraph's Amp** (spun out independently Dec 2025) both frame themselves around *specialized subagents*: Amp's main thread can invoke `Oracle` (a GPT-5.4-high second opinion), `Librarian` (cross-repo research), and `Painter` (image generation) autonomously.
+
+**Could not fully verify:** exact Kiro GA date is corroborated across an AWS "May 2026" roundup source and third-party trackers as May 7, 2026, but no single AWS first-party blog post stating that exact date was found in this pass; Factory.ai's claimed valuation/scale figures are from secondary sources only.
+
+### Orchestration frameworks on Claude Code itself
+
+Three Claude Code features shipped in this window that are squarely "agent orchestration framework," not vendor-landscape noise:
+
+- **Dynamic Workflows / the `Workflow` tool** (shipped v2.1.154, May 28, 2026; primary source [code.claude.com/docs/en/workflows](https://code.claude.com/docs/en/workflows)): a workflow is a JavaScript file that orchestrates subagents via `agent()`, `parallel()`, `pipeline()`, and `phase()`. The script itself runs free; token cost is only the `agent()` calls. `pipeline()` runs each item through every stage independently (no cross-item barrier); `parallel()` barriers and nulls a throwing thunk rather than rejecting. Ceilings: 16 concurrent agents, 1,000 per run, 4,096 items per `parallel()`/`pipeline()` call. `agent()` accepts a JSON-Schema `opts.schema` to force structured output with auto-retry on shape mismatch.
+- **Claude Mods** (v2.1.287/288, October 1-2, 2026): plugins can now hook deeper runtime events (`agent.spawn`, `tool.call`, `prompt.submit`, `turn.step`, `config.set`, `ui.render`, …) in TypeScript rather than the older shell-script hook surface. A built-in mod, "You should know," runs a side-agent that watches the main session and flags things the user or Claude might miss.
+- **Agent teams / "teammates"** (Sept-Oct 2026 changelog entries): a named, resumable, idle/waiting-stateful agent concept distinct from a one-shot subagent dispatch, plus `/advisor` pairing (e.g., Sonnet 5.5 can advise Opus 4.7/4.8) for a second-model opinion mid-turn.
+
+### Agent-to-agent review
+
+- **Anthropic Code Review** (announced March 9, 2026, [claude.com/blog/code-review](https://claude.com/blog/code-review)): dispatches a team of specialized agents per PR (logic errors, boundary conditions, API misuse, auth flaws, project conventions), with an aggregator agent ranking findings by severity. Internal numbers: substantive-comment rate rose from 16% to 54%; engineers marked <1% of findings incorrect. Research preview for Team/Enterprise, $15-25 and ~20 minutes per review.
+- **CodeRabbit**: "agentic architecture" moving past linear static-analysis pipelines; most-installed GitHub Marketplace app under code review as of March 2026 (>200K installs).
+- **Greptile v3** (late 2025): rebuilt on the Claude Agent SDK for multi-hop autonomous investigation - following call chains and git history to confirm or dismiss a flagged issue before surfacing it.
+- **Qodo (CodiumAI)**: moved to a multi-agent review architecture in 2026 with separate bug/quality/security/test-coverage agents.
+- An arXiv paper, "Is Agentic Code Review Helpful? Mining Developers' Feedback to CodeRabbit Reviews in the Wild" ([arxiv 2607.03316](https://arxiv.org/pdf/2607.03316)), is a direct empirical study of this pattern in production; not independently re-verified beyond the abstract/listing here.
+
+### Spec-driven development
+
+- **AWS Kiro**: reached GA May 7, 2026 as the official successor to Amazon Q Developer (which sunsets April 30, 2027). Workflow: requirements spec → design doc → agent implements and tests against them. Pricing is credit-based, $0-$200/user/month across five tiers; a "full spec-driven feature build" runs ~15-25 credits. "Kiro Web" reached GA September 1, 2026; "Kiro workflows" (multi-agent, less-supervised task completion) appear in AWS's October 5, 2026 weekly roundup.
+- **GitHub Spec Kit**: MIT-licensed, open source (`github/spec-kit`), shipped v1.0.0 August 21, 2026, now at v1.0.13 (Sept 29, 2026) with 139K+ GitHub stars. Workflow: Specify (what/why) → Plan (how: architecture, libraries, data model) → Tasks (agent decomposes into reviewable units) → Implement (agent executes against the spec). A June 2026 `/speckit.converge` command explicitly closes the loop between a spec and the code that implements it; a role-based "bundle" subsystem composes extensions/presets/workflows. Microsoft's Developer Blog gave it first-party coverage in June 2026; one enterprise reported 2-4x velocity gains (secondary-sourced, not independently verified here).
+
+### Durable memory / state for agents
+
+- **Claude Auto Memory**: a per-project `memory/` directory (visible in this very session's own `MEMORY.md`) where the first ~200 lines of a primary file auto-load every conversation and topic-specific files load on demand.
+- **Anthropic "Dreaming"** (research preview, May 6, 2026, Managed Agents API): a scheduled consolidation pass that reads a memory store plus up to 100 prior sessions and writes back a reorganized store (merged duplicates, stale entries replaced), triggered after 5 accumulated conversations or 24 hours.
+- **Letta (formerly MemGPT)**: rearchitected its agent loop "incorporating lessons from ReAct and Claude Code" in 2026, and on March 16, 2026 began sunsetting server-side memory tools/templates/identities/MCP integrations in favor of **git-backed memory files** and client-side orchestration - a notable convergence toward exactly the git-committed-markdown substrate cdocs already uses.
+
+### Evaluation of agentic dev workflows
+
+- **SWE-bench Pro** ([arxiv 2609.08149](https://arxiv.org/pdf/2609.08149)): 1,865 problems across 41 actively-maintained repos (public/held-out/commercial splits), aimed at longer-horizon, more enterprise-like tasks than classic SWE-bench. A 2026 OpenAI audit flagged dataset-quality issues (~30% with broken or overly strict tests) - a concrete, citable caution about benchmark trust.
+- **Terminal-Bench**: 2.1 saturated (9 models at 87-92%); the community moved to Terminal-Bench 4.0 where the current leader is 58.2%, re-opening headroom.
+- **METR time-horizon**: the 50%-reliability autonomous-task-length metric's doubling period compressed from ~7 months (2019-2024) to ~105 days per METR's own February 2026 fit ([metr.org/blog/2026-1-29-time-horizon-1-1](https://metr.org/blog/2026-1-29-time-horizon-1-1/)); a cited (unverified beyond secondary source) data point has "Claude Mythos Preview" at a 16-hour horizon in March 2026.
+- **"The Scaffold Effect in Coding Agents"** ([arxiv 2607.22585](https://arxiv.org/pdf/2607.22585)) argues harness/scaffold choice is itself a hidden variable in coding-agent evaluation - i.e., the orchestration layer around a model materially changes measured capability, not just the model.
+- **"Position: Coding Benchmarks Are Misaligned with Agentic Software Engineering"** ([arxiv 2606.17799](https://arxiv.org/pdf/2606.17799)) is a direct critique of single-patch benchmarks as proxies for multi-step, multi-agent SWE work.
+
+## Relevance to cdocs
+
+| Idea | Touches | Take | Why |
+|---|---|---|---|
+| **Workflow tool** (scripted `agent`/`parallel`/`pipeline`) | `iterate`, `oversee`, `full-send`, `orchestration-discipline.md` | **Watch, borrow idea** | This is the one platform feature that could genuinely let cdocs delete something: the overseer currently *is* the orchestrator, paying full context on every dispatch/judge/re-dispatch turn - the exact cost `cdocs/reports/2026-09-20-token-spend-by-role.md` measured (a warm implementer hit 966K tokens). A near-zero-token script could own the mechanical fan-out (dispatch implementer, dispatch fresh reviewer, loop until N reviews, hand to judge) while the devlog stays the audit trail the script writes to. It is *not* a drop-in replacement: the maintainer's "trust agent intuition over formalism" preference cuts against a fully deterministic pipeline, since the valuable part of `iterate` is the judge's qualitative "is this loop stuck" call, not the dispatch bookkeeping. Adopt only the bookkeeping half if this is pursued; keep judgment in prose.
+| **Claude Mods** (deeper plugin hooks, incl. `agent.spawn`) | `plugins/cdocs/hooks/*.sh`, path-restriction hook, README "When CC #14200 Lands" | **Watch** | cdocs' hooks are currently bash matching on tool-call shape (`validate-cdocs-edit-path.sh`). An `agent.spawn` hook could scope a dispatched subagent's file access *at spawn time* instead of the current PreToolUse string-matching after the fact - closer to "file ownership by construction" already aspired to for durable specialists. Not urgent; current hooks work and a rewrite buys robustness, not new capability.
+| **Anthropic Code Review** (multi-agent PR review product) | `review` skill, `reviewer`/`judge` agents, "fresh reviewer every iteration" | **Note: cdocs already does the variant that matters here** | cdocs' fresh-reviewer-per-round pattern is the same shape, applied to proposals/devlogs/code diffs uniformly, for free (dispatched subagent, not a $15-25 metered product) and already composed with a judge for loop meta-health, which the vendor tool has no equivalent of. If the `iterate` verification floor ever needs deep code-diff review at a depth a cdocs reviewer subagent can't reach cheaply, this is a plausible tool to lean on for the code-only portion - but it duplicates cdocs' own mechanism rather than adding one.
+| **Spec Kit / Kiro** (spec→plan→tasks→implement) | `propose`, `propose-revise`, `implement` | **Note: cdocs already does the thing** | Structurally identical to proposal-with-phases → `implement`/`iterate`. The maintainer-relevant detail is `/speckit.converge` (closing the spec-vs-code loop) - cdocs solved its own version of this exact problem days before this report (`646fe38 fix(triage): disambiguate proposal-accept from implementation-accept rows`, `414c3ff docs(proposals): resolve propose-vs-implement rows RFP directly`). No new idea to take; useful external confirmation that the problem class is real industry-wide, not cdocs-specific overengineering.
+| **Dreaming** (memory-store consolidation) | `/cdocs:triage`, devlog Scratchpoint/handoff | **Ignore (cdocs' version is better-fit)** | Dreaming consolidates an opaque memory store; triage consolidates git-diffable markdown frontmatter and state. cdocs' substrate is strictly more auditable (every consolidation is a commit, not a black-box rewrite) - this is a case where a platform feature validates the *need* but not the *mechanism*.
+| **Letta's move to git-backed memory files** | Same | **Watch (soft validation)** | A dedicated memory-agent company converging on "git-backed files" as the durable-state substrate is an independent data point for cdocs' founding bet (devlogs/proposals/reviews/reports as committed markdown, not a database or vector store). No action needed.
+| **Agent teams / "teammates," `/advisor` pairing** | Durable-specialist pattern in `orchestration-discipline.md` | **Watch** | Platform-native resumable/idle-stateful agents and a built-in cross-model advisory pairing are converging on patterns cdocs' rules already encode by convention (`SendMessage`-resumed specialist; `-f/--first-round` expensive-model flag; model-tiering's opus-for-judgment). If "teammates" stabilizes as a first-class object with its own lifecycle, the durable-specialist clause in "Stay thin" could eventually point at it directly instead of describing the convention from scratch - but it is not there yet (changelog entries are still bugfix-level, not a settled primitive).
+| **Evaluation literature** (Scaffold Effect, benchmark-misalignment position paper, SWE-bench Pro data-quality audit) | `--verification-floor` requirement in `iterate`, `model-tiering.md` | **Watch (informational)** | External validation, not a mechanism to adopt: the Scaffold Effect paper's thesis (harness choice is a hidden variable in measured agent capability) is literally the premise cdocs is built on, and the benchmark-misalignment critique is a reason to keep trusting a concrete, per-task verification floor with a failure picture over a generic numeric score. No rule change implied, just a citation worth keeping in mind if the maintainer ever argues cdocs' process overhead "doesn't show up in the benchmarks."
+| **Vendor-wide subagent specialization** (Amp's Oracle/Librarian/Painter, Devin's managed-Devin teams, Jules' CI Fixer) | `agents/*.md` (bash-runner, judge, triage, proposer, reviewer, implementer) | **Watch** | Directionally confirms cdocs' narrow-scoped-agent design is industry-convergent, not idiosyncratic. No specific idea to port; the closest analog (Amp's `Oracle` second-opinion subagent) is already covered by cdocs' first-round expensive-model flag.
+
+## What's missing / could not verify
+
+No primary-source confirmation was found for: Factory.ai's exact scale/valuation claims, the precise Kiro GA date from an AWS first-party post (only secondary roundups), and the "Claude Mythos Preview 16-hour METR horizon" figure (sourced from a single social-media post, not METR's own blog). Treat these as directionally correct but not load-bearing.
+No evidence surfaced of a competing *document-driven* process plugin (proposals/devlogs/reviews/reports as a cohesive, git-committed lifecycle) from any vendor; the overlap found is all at the orchestration-primitive layer (Workflow tool) or the point-solution layer (Code Review, Spec Kit), not the "whole development process as documents" layer cdocs occupies.
