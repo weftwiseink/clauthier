@@ -23,6 +23,7 @@ OC consumers therefore get an implementer that cannot edit or run commands, the 
 
 ## Scope
 
+- Quote stripping: the warning prints `""*""`, so the YAML quotes survive frontmatter parsing and the fix must strip them before matching `*`.
 - The OC equivalent of "all tools": omit the `tools:` block, enable every known key, or an OC wildcard form if one exists.
 - What `permission` an all-tools agent should carry (today `Edit`/`Write` map to `ask`), consistent with the CC definitions' "deliberately not narrowed" intent.
 - Whether `task` (OC subagent dispatch) belongs in the mapping, given CC `tools: "*"` includes `Agent` and cdocs relies on nested dispatch (see the motivating proposal's OpenCode section).
