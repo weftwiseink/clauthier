@@ -817,7 +817,7 @@ init_real() {
   [ -s "$P/cdocs/_chat/README.md" ] && ok "_chat/README.md written" || bad "_chat/README.md missing"
   has "rules file carries the scope sentence" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" \
     'Top-level agents must use the `chat-record` command'
-  has "rules file carries the resumption step" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" '\*\*After a compaction\*\* or when picking up a session, run `chat-record path`'
+  has "rules file carries the resumption step" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" '\*\*After a compaction.* run `chat-record path`'
   has "CLAUDE.md imports the rules" "$(cat "$P/CLAUDE.md")" '^@\.claude/rules/cdocs\.md'
   check "init turn: no record, no Stop decision" "$(nrec "$P"):$(stop_blocks "$J")" "0:0"
   P="$(hproj init_minimal nochat)"
