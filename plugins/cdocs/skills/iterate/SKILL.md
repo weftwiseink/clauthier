@@ -82,8 +82,6 @@ Dispatch the implementer via Task with `subagent_type: "cdocs:implementer"` and 
 Name the sub-devlog it writes, per the devlog skill's "Continuing in a new devlog": the open concern's to continue it, or a new one for a new concern, with the top-level path for its `part_of`.
 Add a `## Workstream Devlogs` row for each new sub-devlog, including any successor the implementer reports.
 
-`--dispatched` mode suppresses subagent dispatch and routes investigation requests back to the overseer via `## Investigation Requested` blocks; see `/cdocs:implement` Invocation Modes for the schema.
-
 Append a `dispatch` row to the Dispatch/Return Events table when a child (implementer, reviewer, judge, or fork) is dispatched, naming the files it may claim, and a matching `return` row when it reports done.
 These rows are what on-resume reconciliation reads, so the write is not optional.
 
