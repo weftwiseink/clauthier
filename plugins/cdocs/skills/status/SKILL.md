@@ -67,7 +67,7 @@ Update a specific document's frontmatter field.
 |--------|--------|
 | `--type` | `devlog`, `proposal`, `review`, `report` |
 | `--state` | `live`, `deferred`, `archived` |
-| `--status` | `request_for_proposal`, `wip`, `review_ready`, `implementation_ready`, `evolved`, `implementation_accepted`, `done` |
+| `--status` | `request_for_proposal`, `wip`, `review_ready`, `implementation_ready`, `implementation_wip`, `evolved`, `implementation_accepted`, `done` |
 | `--tag` | Any tag value (partial match) |
 
 ## Scaling Note
