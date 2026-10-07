@@ -85,3 +85,28 @@ grep -rnE 'orchestration-discipline|model-tiering|Resume from disk|Durable state
 
 `init_real` (headless, needs live `claude`) was not run; its assertions were checked by hand against `overseers.md`.
 Remaining "Stay thin" and "Chat record" references point at sections that exist in `overseers.md`.
+
+## Verification pass
+
+Independent sweep of `plugins/cdocs` (skills, templates, agents, hooks, injected text, READMEs), `CLAUDE.md`, and `scripts/` for broken references and stale paraphrases.
+Every `rules/*.md` link and quoted section name resolves, except the fixes below.
+
+| Finding | Fix |
+|---|---|
+| `chat-record.test.sh:820` `init_real` asserted "**After a compaction** or when picking up a session", which `overseers.md` no longer says (the Implementation Notes line above is wrong on this) | `d9aedec`: pattern anchored on `**After a compaction.* run \`chat-record path\`` |
+| `agents/judge.md:33` expected loop tables to continue in a forward sub-devlog; top-level devlogs are never split | `2a0e316`: parenthetical dropped |
+| `skills/iterate/SKILL.md:72` read "any handoff devlog"; handoffs are Scratchpoint subsections | `2a0e316`: read the top-level's Scratchpoint and any handoff |
+| `skills/devlog/SKILL.md:118` pointed at a nonexistent "Issues Encountered and Solved" section (predates the simplification) | `9c06da8`: points at Debugging Process |
+
+> WARN(@claude-opus-5-5/meta/rules-simplification): `816c387` changed more of `overseers.md:27` than the NOTE above records: it also dropped "or when picking up a session" and "before trusting the summary" (now "to get up to speed").
+> Left as is for the maintainer to confirm or revert.
+
+Not changed: `propose-revise/SKILL.md:26` "prior one's context is at 50%" is a reviser-freshness heuristic, not the ~400K handoff cap; `oversee` SKILL and template both describe the arc devlog (pre-existing duplication).
+
+```
+npm run build:cdocs                  exit=0
+chat-record.test.sh --unit           95 passed, 0 failed
+validate-cdocs-edit-path.test.sh     17 passed, 0 failed
+```
+
+`init_real` and `rules_check` (headless, live `claude`) not run.
