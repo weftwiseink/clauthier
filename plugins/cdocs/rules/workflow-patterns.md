@@ -1,5 +1,12 @@
 # CDocs Workflow Patterns
 
+# Model Tiering
+
+Fallback default baselines for subagent models unless overridden:
+- `opus` for leads, overseers, judges, orchestration, implementers, reviews.
+- `sonnet` for search, explore, research aggregation, `bash-runner`s.
+- `haiku` for simple mechanical fan-out work such as `nit-fix` or fuzzy find/replace
+
 ## Parallel investigation
 
 When several failures look independent (different subsystems, no shared state, no shared files), investigate them with parallel agents; when they may share a root cause, debug one first.
