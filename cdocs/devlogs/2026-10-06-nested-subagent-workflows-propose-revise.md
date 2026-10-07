@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nested-subagent-workflows
 type: devlog
 state: live
-status: wip
+status: done
 tags: [orchestration, subagents, propose_revise]
 ---
 
@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: iteration 1 accepted; accept-round fixes with nest-impl-1.
-- next: fresh reviewer; then atlas update after accept.
+- now: iterate loop closed; proposal implementation_accepted.
+- next: republish atlas.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -50,7 +50,7 @@ tags: [orchestration, subagents, propose_revise]
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | Phase 1 edits + Phase 2 live check | wip | you need implementation detail or live-check evidence |
+| cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | Phase 1 edits + Phase 2 live check | done | you need implementation detail or live-check evidence |
 
 ## Iteration Log
 
@@ -115,3 +115,22 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T19:11 | dispatch | rev-1 (cdocs:reviewer, opus) | review file, proposal last_reviewed | iteration 1 review, re-run floor with TMPDIR passed |
 | 2026-10-06T19:25 | return | rev-1 | review r5 + proposal last_reviewed (85c5873) | accept, 5 non-blocking |
 | 2026-10-06T19:26 | dispatch | nest-impl-1 (warm, SendMessage) | sub-devlog, plugins/cdocs/agents/bash-runner.md, OC wildcard RFP, ablate + implement skills, proposal status | accept-round fixes |
+| 2026-10-06T19:35 | return | nest-impl-1 | e197470, 7be4e44, abf26ff, 63334e0, 2f4a7c5, 575052e | accept-round fixes done; proposal implementation_accepted; loop closed |
+
+## Iterate Handoff
+
+### Completed
+
+- `cdocs/proposals/2026-10-06-nested-subagent-workflows.md` implemented and accepted in one iteration (rev-1, `confirmed`): Investigation Requested and non-overseer "cannot dispatch" text removed across 9 plugin files (-268 words); /oversee reason corrected; bash-runner scratch path honors `TMPDIR`.
+- Live check passed twice (implementer, then reviewer): depth-1 `cdocs:implementer` dispatched a depth-2 `cdocs:bash-runner`, foreground, no denials. Build, 95/95 and 17/17 pass.
+
+### Decisions Made
+
+- Nested overseers deferred to `cdocs/proposals/2026-10-06-nest-overseers-rfp.md` (maintainer: agents do not decide on nesting overseers).
+- Proposal set `implementation_accepted` on the loop's accept, consistent with this session's other loops; the implement skill reserves that for the human, so revert 575052e if the maintainer disagrees.
+
+### Open Todos
+
+- Not live-exercised: depth-3 nesting, the spawn-depth setting, children working in an implementer's worktree.
+- OC wildcard tools mapping RFP (`2026-10-06-opencode-wildcard-tools-mapping-rfp.md`).
+- Atlas artifact update in progress (scratchpad HTML, republish to the same URL).
