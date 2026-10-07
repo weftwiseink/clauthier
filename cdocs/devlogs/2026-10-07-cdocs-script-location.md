@@ -35,6 +35,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 - New CI test step runs on Linux only (helper needs bash 4+).
 - Test moves to `plugins/cdocs/hooks/tests/` (anything in `bin/` lands on PATH).
 - `bin/README.md` gains a folder heading; chat-record content moves under its own section unchanged.
+- Review r1 questions: keep the CI step for the graphify-scope test; update the live reference in `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md`.
 - Chat record: not run (nested overseer is a subagent; `overseers.md` reserves `chat-record` for top-level agents, and this checkout has no `cdocs/_chat/`).
 
 ## Scratchpoint
@@ -54,6 +55,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| p1 | proposer-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md | proposal round; B1 grep exclude-dir hid plugins/cdocs |
 
 ## Judge Log
 
@@ -67,6 +69,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | proposer-1 (cdocs:proposer, a84ad7a7) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:05 | propose round 1 |
 | return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:10 | bb60c94; decision: move to bin/graphify-scope |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md, proposal frontmatter | 2026-10-07T12:11 | proposal review round 1 |
+| return | rev-1 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md | 2026-10-07T12:15 | f626a6d; revise (B1: stale-path grep cannot fail) |
+| dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:16 | revision round 1 |
 
 ## Steering Log
 
