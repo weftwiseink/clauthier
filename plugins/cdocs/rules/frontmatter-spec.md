@@ -82,7 +82,7 @@ Tracks review history. Reviews themselves do not have this field.
 
 ### `chat_record` (optional, devlogs only)
 List of repo-root paths (`review_of` path semantics) to the chat records of every Claude Code session that worked on the devlog, one entry appended per session.
-How it is filled is in `orchestration-discipline.md` "Chat record".
+How it is filled is in `overseers.md` "Chat record".
 
 ### `part_of` (optional, sub-devlogs only)
 Repo-root path (`review_of` path semantics) to the workstream's top-level devlog, which has no `part_of` itself (one level deep).

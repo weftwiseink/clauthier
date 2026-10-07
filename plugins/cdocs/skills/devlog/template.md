@@ -7,7 +7,7 @@ type: devlog
 state: live
 status: wip
 tags: []
-# chat_record: optional list of cdocs/_chat/ record paths; see orchestration-discipline.md "Chat record"
+# chat_record: optional list of cdocs/_chat/ record paths; see overseers.md "Chat record"
 ---
 
 # TITLE: Devlog

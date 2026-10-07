@@ -1,6 +1,6 @@
 # CDocs Workflow Patterns
 
-# Model Tiering
+## Model Tiering
 
 Fallback default baselines for subagent models unless overridden:
 - `opus` for leads, overseers, judges, orchestration, implementers, reviews.
@@ -15,7 +15,7 @@ Synthesize the agents' findings into the devlog.
 ## Loops and multi-phase plans
 
 For work whose verification depends on real-world state (UI, integration, end-to-end behavior), run `/cdocs:iterate`.
-For a plan with several independent, well-specified phases, dispatch per phase and keep each workstream's context in one named subagent (see `orchestration-discipline.md`).
+For a plan with several independent, well-specified phases, dispatch per phase and keep each workstream's context in one named subagent (see `overseers.md`).
 
 ## Before review
 

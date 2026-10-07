@@ -24,6 +24,6 @@ EOF
 
 The first turn you work on a devlog, add the output of `chat-record path` to its `chat_record:` frontmatter list.
 
-**After a compaction** or when picking up a session, run `chat-record path`, read the `## Scratchpoint` and latest handoff of the devlogs that list it, then `tail -n 80` of the record, before trusting the summary.
+**After a compaction:** run `chat-record path`, read the `## Scratchpoint` and any handoff of the devlogs that list it, then `tail -n 80` of the record to get up to speed.
 
 Commit the record by explicit path with its devlog; never edit files under `cdocs/_chat/`.

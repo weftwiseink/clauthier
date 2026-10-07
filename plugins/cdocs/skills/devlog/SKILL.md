@@ -28,7 +28,7 @@ Fill in:
 - `task_list` with the relevant workstream path.
 - `type: devlog`, `state: live`, `status: wip`.
 - Tags relevant to the work.
-- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Chat record" describes.
+- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as [`overseers.md`](../../rules/overseers.md) "Chat record" describes.
 
 Quote a chat record only inside a code fence: its column-0 `@` header and `--` sign-off lines are not cdocs markdown.
 
@@ -67,7 +67,7 @@ They should include specifics (Completed / Decisions Made / Open Todos) a cold r
 
 Handoff subsections should be written when:
 1. A major phase of a proposal is completed.
-2. The implementer is exiting a turn with above 300K token context.
+2. The implementer is exiting a turn with above ~400K token context.
 
 If a handoff section is present when picking up a workstream, delete it before beginning new work.
 
@@ -142,7 +142,7 @@ Often a context handoff coincides with such points, but not always.
 
 Top-level overseer devlogs should never be split.
 
-## Devlog Heirarchies
+## Devlog Hierarchies
 
 Chunked devlogs are enabled by `part_of` references in frontmatter, with the main devlog maintained by an overseer agent.
 The lead agent's devlog (no `part_of`) holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and an index the lead keeps:
