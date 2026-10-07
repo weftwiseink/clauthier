@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nested-subagent-workflows
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-06-nested-subagent-workflows-propose-revise.md
 tags: [orchestration, subagents, implementation]
 ---
@@ -17,7 +17,8 @@ tags: [orchestration, subagents, implementation]
 > BLUF(opus-5-5/cdocs/nested-subagent-workflows): Both phases are done.
 > Phase 1 deletes every "subagents cannot dispatch" workaround in `plugins/cdocs` (static grep clean, -268 words, OC build differs in body prose only, unit tests pass) and files the OC `tools: "*"` rfp.
 > Phase 2's sandboxed live check passes every check: a depth-1 `cdocs:implementer` dispatched a depth-2 `cdocs:bash-runner` (both `foreground`), with no permission denials, no tool errors, and no `## Investigation Requested`.
-> One confinement gap: the bash-runner wrote its raw-output file to `/tmp/claude-1000/`, outside the sandbox dir, because `env -i` unsets `TMPDIR`.
+> One confinement gap: the bash-runner wrote its raw-output file to `/tmp/claude-1000/`, outside the sandbox dir, because `agents/bash-runner.md` hardcoded `/tmp`; it now honors `TMPDIR`.
+> Review r5 accepted; its non-blocking findings are resolved below.
 
 ## Objective
 
@@ -26,9 +27,9 @@ Implement [`cdocs/proposals/2026-10-06-nested-subagent-workflows.md`](../proposa
 ## Scratchpoint
 
 - as_of: 2026-10-06T19:50-07:00
-- now: Phases 1 and 2 done; devlog `review_ready`.
-- next: the loop's reviewer.
-- open: the bash-runner scratch-file path escapes a sandbox that sets no `TMPDIR` (see Phase 2).
+- now: done; r5 accepted and its findings resolved.
+- next: none (overseer closes the loop).
+- open: none.
 - files touched: this devlog; plugins/cdocs skills implement, propose, iterate, triage, oversee, ablate; agents implementer, proposer, reviewer; cdocs/proposals/2026-10-06-opencode-wildcard-tools-mapping-rfp.md.
 
 ## Plan
@@ -126,10 +127,10 @@ Failure pictures, each checked:
 | The static grep matches | Not observed: no matches (see Testing). |
 
 > WARN(opus-5-5/cdocs/nested-subagent-workflows): The bash-runner wrote its raw-output file to `/tmp/claude-1000/bash-runner.KGUbex`, outside the sandbox directory.
-> The agent's `mktemp` falls back to `/tmp/claude-$(id -u)` because `env -i` leaves `TMPDIR` unset.
+> Root cause: `plugins/cdocs/agents/bash-runner.md` step 1 hardcoded `mktemp "/tmp/claude-$(id -u)/..."`, so it escapes any sandbox regardless of `TMPDIR` (the r5 reviewer's run passed `TMPDIR` and still escaped).
 > The file held only fixture noise and was moved into the sandbox dir after the run.
 > No credentials left the sandbox.
-> A future harness should pass `TMPDIR=$SB/tmp` through `env -i`.
+> Fixed in `7be4e44`: the path is `${TMPDIR:-/tmp}/claude-$(id -u)`, created with `mkdir -p`; a harness should also pass `TMPDIR` through `env -i`.
 
 > NOTE(opus-5-5/cdocs/nested-subagent-workflows): Evidence limits.
 > The check is one run at one depth pair (1->2) with `--model opus`.
@@ -142,3 +143,17 @@ Failure pictures, each checked:
 - Proposal status was left at `implementation_ready` as the overseer directed, not moved to `implementation_wip`.
 - Nothing in the proposal's Constraints was touched: no overseer mechanics, hooks, `scripts/build-opencode.ts`, devlog skill, `rules/`, or `tools:` lists, and no historical cdocs.
 - The three wording choices in the Phase 1 NOTE above.
+
+## Review r5 resolutions
+
+[r5](../reviews/2026-10-06-review-of-nested-subagent-workflows-r5.md) (`85c5873`) accepted; its non-blocking findings are resolved in the accepting round:
+
+| Finding | Resolution |
+|---|---|
+| Wrong `/tmp`-escape root cause | Corrected in the Phase 2 WARN above. |
+| bash-runner hardcodes `/tmp` | `7be4e44`: `d="${TMPDIR:-/tmp}/claude-$(id -u)"; mkdir -p "$d"; out=$(mktemp "$d/bash-runner.XXXXXX")`. Snippet checked with `TMPDIR` set (file landed under it). `npm run build:cdocs` exit 0; the OC `bash-runner.md` carries the new line. This edits a leaf's body, not its `tools:` list. |
+| rfp should note the `""*""` quotes | `abf26ff`: Scope line on stripping YAML quotes before matching `*`. |
+| ablate top-level vs two-layer wording | `63334e0`: lead is a top-level session or a depth-1 agent under the default limit; the deferred e2e test runs from top level. |
+| implement "inherit your isolation" reads as a platform guarantee | `2f4a7c5`: "Pass your worktree path to children you dispatch, so they work inside your isolation too." |
+
+Static grep re-run after these commits: no matches.
