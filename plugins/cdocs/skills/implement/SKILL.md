@@ -15,19 +15,13 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 
 `/cdocs:implement` runs in one of two modes:
 
-- **Top-level** (default): invoked directly by the user. Free to dispatch `/cdocs:review` and `/cdocs:report` as supporting subagents.
+- **Top-level** (default): invoked directly by the user.
   When dispatching, a top-level session is a thin lead per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Stay thin", so the discipline is not `iterate`-only.
-- **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt. The platform forbids subagent-from-subagent dispatch (`Task` is `not available inside subagents`), so dispatched mode self-investigates inline and surfaces investigation requests to its caller via a fenced block:
-
-  ```
-  ## Investigation Requested
-  Question: <one sentence>
-  Context this would unblock: <one sentence>
-  ```
-
-  The caller decides whether to dispatch `/cdocs:report` itself, roll the request into the next iteration's brief, or treat it as deferred follow-up.
+- **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt.
+  Questions for the user go in your return.
 
   A DISPATCHED implementer works in isolation (its own worktree, no cross-worktree writes) so it cannot clobber a sibling workstream; a top-level invocation is never isolation-bound.
+  Give children you dispatch your worktree path: they inherit your isolation.
 
 ## Invocation
 
@@ -61,7 +55,7 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
    - Update the devlog as work proceeds (decisions, complications, deviations from the plan).
    - Follow verification and troubleshooting methodology to ensure results are as expected.
    - Top-level mode: dispatch `/cdocs:review` after each phase, and `/cdocs:report` for research topics not covered by the proposal.
-     Dispatched mode: self-investigate inline; surface anything that needs a separate fresh context via the `## Investigation Requested` block from Invocation Modes above.
+     Dispatched mode: the loop's reviewer reviews.
 6. **On completion**: update the devlog with verification results, mark it `status: review_ready`.
 7. **After completion** (top-level mode only):
   - Have a final subagent `/cdocs:review` the entire body of work and integrate the feedback.
@@ -90,8 +84,6 @@ The implementor should follow these conventions throughout:
 ### Use cdocs skills as appropriate (top-level mode)
 - `/cdocs:review` when implementation is complete and ready for evaluation.
 - `/cdocs:report` if the implementation reveals findings worth documenting separately.
-
-Dispatched mode: see Invocation Modes above; surface the request to the caller via `## Investigation Requested` instead of dispatching.
 
 ### Note deviations from the proposal
 - If the implementation diverges from the proposal's design, document why in the devlog.
