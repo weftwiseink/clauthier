@@ -16,11 +16,14 @@ tags: []
 
 ## Scratchpoint
 
-- as_of:
-- now:
-- next:
-- open:
-- files:
+- next_steps:
+- graphify_query:
+- important_files:
+- callouts:
+  - deferred:
+  - todo:
+  - decision:
+  - blocker:
 
 ## Plan
 

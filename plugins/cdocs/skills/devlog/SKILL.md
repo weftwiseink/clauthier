@@ -39,7 +39,7 @@ Most devlogs should include the other sections as well, but use your judgement (
 You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
-- **Scratchpoint:** Short current state (`as_of`, `now`, `next`, `open`, `files`), replaced in place between handoffs by whoever is writing the devlog, one live per writer per workstream (see [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state").
+- **Scratchpoint:** Short current state, updated at the end of each turn, including an optional handoff subsection
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.
   - Skipping test-first for prototyping? Acknowledge it: "Rapid prototyping without test-first, will add coverage after."
@@ -52,6 +52,24 @@ You should also include novel sections as is appropriate/useful for your work.
 - **Documentation Updated:** Checklist of docs changed.
 - **Verification:** Fresh evidence of completion. No completion claims without pasted evidence.
   This is the home for raw evidence (settings, commands, log lines), not the Scratchpoint.
+
+### The Scratchpoint Section
+This both orients the next turn of work and communicates to other actors how the workstream is evolving.
+
+The callouts list should include any important notes still relevant to this specific workstream, i.e. if a decision was made as a result of debugging, an env issue is preventing certain testing or tool use, or a bug/issue needs to be revisited after a subsequent stage.
+Each item in the callouts list should be type-prefixed, and types are an open set (add more beyond deferred/todo/decision/blocker as needed).
+
+The scratchpoint can include content for orienting the next turn beyond the structured schema, but should remain forward-looking (they are not append only logs.)
+
+### Handoffs
+Optional scratchpoint subsection with expanded context/files, with context and references to earlier docs, as well as ongoing or unresolved concerns.
+They should include specifics (Completed / Decisions Made / Open Todos) a cold reader can act on.
+
+Handoff subsections should be written when:
+1. A major phase of a proposal is completed.
+2. The implementer is exiting a turn with above 300K token context.
+
+If a handoff section is present when picking up a workstream, delete it before beginning new work.
 
 ## Debugging Process (Bug Fixes)
 
@@ -118,31 +136,23 @@ When dispatching parallel agents for multi-failure debugging, document in "Issue
 
 ## Continuing in a new devlog
 
-Devlogs grow forward: at a seam, start a new devlog instead of moving written text.
+Larger workstreams often warrant chunked devlogs to manage context bloat, keep current work focused, and ease more fine-grained retrieval of detailed info in the future.
+Consider creating a new devlog when a new large phase is begun or the current devlog is over 1500 words long and reaches a natural breakpoint.
+Often a context handoff coincides with such points, but not always.
 
-- **When.** Look at each return or handoff: a new concern big enough to stand alone (a phase, a fix round, a verification campaign), or a devlog past ~1,500 words (`wc -w`) reaching a natural seam.
-  Size prompts the look, and the content chooses the cut.
-  A restart, rotation, new turn, or full context is not a seam: continue the open concern's devlog from its Scratchpoint and latest handoff, replacing the Scratchpoint.
-- **Who.** Whoever is writing at the seam closes the devlog it leaves (handoff, `status: done`, `next:` naming the successor) and starts the next.
-  A dispatched agent writes the sub-devlog its lead names and reports any successor it starts.
-  If the next concern goes to another writer and the finished devlog is still open, the lead marks it `done`.
-- **Top-level.** The lead's devlog (no `part_of`) holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and an index the lead keeps:
+Top-level overseer devlogs should never be split.
 
-  ```markdown
-  ## Workstream Devlogs
+## Devlog Heirarchies
 
-  | devlog | concern | status | read this when |
-  |---|---|---|---|
-  | [-canary](2026-09-22-x-iterate-canary.md) | hook canary | done | you need a hook's payload fields |
-  ```
-- **Sub-devlogs.** `cdocs/devlogs/YYYY-MM-DD-<concern-slug>.md`, using the top-level's date, with `part_of: <top-level path>` (one level deep) and a first line under the title, `> NOTE(author/workstream): Sub-devlog of [<top-level>](<top-level>.md), indexed in its Workstream Devlogs table.`
-  Lookup goes through `part_of`, not the filename, so the slug has no fixed shape.
-  Each is a normal devlog with its own Scratchpoint, and short concerns share one.
-- **Tables.** Loop tables stay in the top-level, and their rows do not count toward its size.
-  Continuing them forward is a judgment call at a loop or phase boundary: the continuation holds only the tables (no Scratchpoint), and a line under each top-level table points to it.
-  Iteration numbers keep increasing across the workstream.
+Chunked devlogs are enabled by `part_of` references in frontmatter, with the main devlog maintained by an overseer agent.
+The lead agent's devlog (no `part_of`) holds the Brief, the lead's Scratchpoint, the loop tables, handoffs, and an index the lead keeps:
+```md
+## Workstream Devlogs
 
-## Handoff devlogs
+| devlog | concern | status | read this when |
+|---|---|---|---|
+| [-canary](2026-09-22-x-iterate-canary.md) | hook canary | done | you need a hook's payload fields |
+```
 
-Some work prepped from the initial planner or an earlier implementer with context and references to earlier docs.
-When these are written and read, it should be kept in mind that they should _not_ try to cover every point themselves, but _should_ provide enough context and references to do so as needed.
+**Sub-devlogs** follow the convention `cdocs/devlogs/YYYY-MM-DD-<top-level-slug>-<concern-slug>.md` using the top-level's date, with `part_of: <top-level path>` in frontmatter.
+Each is a normal devlog with its own Scratchpoint, and short concerns share one.
