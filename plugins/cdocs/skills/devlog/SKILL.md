@@ -115,7 +115,7 @@ Remember:
 
 ## Parallel Agent Documentation
 
-When dispatching parallel agents for multi-failure debugging, document in "Issues Encountered and Solved":
+When dispatching parallel agents for multi-failure debugging, document in the Debugging Process section:
 
 ```markdown
 ### Multi-subsystem failures after [CHANGE]
