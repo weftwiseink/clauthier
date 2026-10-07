@@ -42,7 +42,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 ## Scratchpoint
 
 - as_of: 2026-10-07 iterate round 1 (proposal accepted r2, fbc7ed8)
-- next_steps: await impl-1, then dispatch fresh implementation reviewer
+- next_steps: await rev-3 verdict
 - important_files: plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/bin/README.md, plugins/cdocs/skills/iterate/SKILL.md, scripts/build-opencode.ts
 - callouts:
   - decision: concurrent agent `rules-fixup` edits punctuation in plugins/cdocs/rules/*.md and the devlog skill; do not touch those files' punctuation.
@@ -80,6 +80,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:31 | accept-round nits, set implementation_ready |
 | return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:35 | fbc7ed8; implementation_ready |
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/bin/*, plugins/cdocs/hooks/tests/graphify-scope.test.sh, plugins/cdocs/skills/iterate/SKILL.md, .github/workflows/cdocs-hooks.yml, cdocs/proposals/2026-09-27-clauthier-improvement-verification.md, proposal frontmatter, impl sub-devlog | 2026-10-07T12:36 | iterate round 1 |
+| return | impl-1 | (as dispatched) | 2026-10-07T12:45 | ae88ea0..b8269d3; floor passes; no deviations |
+| dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md, impl sub-devlog frontmatter | 2026-10-07T12:46 | implementation review round 1 |
 
 ## Steering Log
 
