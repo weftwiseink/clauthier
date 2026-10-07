@@ -60,7 +60,7 @@ Applied the section 1 table and the section 2 `/oversee` reason, one commit per 
 | `038eec9` | `skills/ablate/SKILL.md` | NOTE, preconditions line, WARN, final WARN, and Deferred lead-in reframed as "not yet run/validated/confirmed live"; deferred items kept; graphify container named only on the dogfood item. |
 | `791138d` | `cdocs/proposals/2026-10-06-opencode-wildcard-tools-mapping-rfp.md` | rfp for the OC `tools: "*"` mapping. |
 
-> NOTE(opus-5-5/cdocs/nested-subagent-workflows): Two placement choices the table leaves open.
+> NOTE(opus-5-5/cdocs/nested-subagent-workflows): Three choices the table leaves open.
 > In `implement`, "Give children you dispatch your worktree path: they inherit your isolation." sits after the isolation sentence rather than beside "Questions for the user go in your return.", since it reads as a consequence of isolation.
 > The table says the Dispatched bullet "keeps ... the named sub-devlog", but that bullet never named it (step 3 does, unchanged), so nothing was added there.
 > In `ablate`, the NOTE's second line ("invoked by a top-level (overseer) session, or driven as a top-level e2e test") was dropped with the rest of the NOTE, since "becomes" replaces the whole callout.
