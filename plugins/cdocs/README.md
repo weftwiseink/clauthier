@@ -34,11 +34,18 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:init` | Scaffold `cdocs/` directory structure in a project |
 | `/cdocs:devlog` | Create a development log |
 | `/cdocs:propose` | Author a design proposal with structured sections |
+| `/cdocs:propose-revise` | Author a proposal via `/cdocs:propose`, then run a review/revise loop as the overseer |
+| `/cdocs:rfp` | Scaffold a lightweight request-for-proposal stub |
 | `/cdocs:review` | Review a document with findings and verdict |
+| `/cdocs:nit_fix` | Enforce writing conventions on cdocs documents |
+| `/cdocs:triage` | Triage cdocs documents for frontmatter maintenance and workflow recommendations |
 | `/cdocs:report` | Generate a report (status, investigation, incident, audit, retrospective) |
 | `/cdocs:status` | Query and manage document metadata |
+| `/cdocs:implement` | Implement an accepted proposal with structured execution, devlog tracking, and frequent commits |
 | `/cdocs:iterate` | Run an implement-review loop on a proposal with periodic judge meta-assessment |
+| `/cdocs:full-send` | Author a proposal via `/cdocs:propose-revise`, then run it to completion via `/cdocs:iterate` |
 | `/cdocs:oversee` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and AFK continuation |
+| `/cdocs:ablate` | Prove whether an MCP tool helps a cdocs task via a metered, honesty-gated A/B scorecard |
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.
 Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
@@ -185,7 +192,7 @@ Users who prefer to deploy CC plugins directly to their OC config directory (`~/
 
 | Feature | OC Support | Notes |
 |---------|-----------|-------|
-| Skills | Full | All 11 skills work as-is via `.opencode/skills/` or `.claude/skills/` |
+| Skills | Full | All skills work as-is via `.opencode/skills/` or `.claude/skills/` |
 | Rules | Full | Loaded via `.claude/rules/` (OC reads this natively) |
 | Agents | Full | 7 agents converted to OC frontmatter format |
 | Hooks (frontmatter validation) | Full | Ported as `tool.execute.after` handler in TypeScript |
