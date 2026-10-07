@@ -1,7 +1,8 @@
 # CI for the cdocs Claude Code hooks and bin/ scripts.
-# Runs the chat-record --unit suite (bash, jq, git; no claude, no credentials).
-# The headless scenarios need credentials and stay a manual gate. macOS runs it too:
-# BSD sed, awk, and tr, so GNU-only behavior in bin/ or the suite fails there.
+# Runs the chat-record --unit suite and the validate-cdocs-edit-path unit suite
+# (bash, jq, git; no claude, no credentials). The headless scenarios need
+# credentials and stay a manual gate. macOS runs it too: BSD sed, awk, and tr,
+# so GNU-only behavior in bin/ or the suites fails there.
 
 name: CDocs Hooks
 
@@ -33,3 +34,6 @@ jobs:
 
       - name: chat-record unit suite
         run: bash plugins/cdocs/hooks/tests/chat-record.test.sh --unit
+
+      - name: validate-cdocs-edit-path unit suite
+        run: bash plugins/cdocs/hooks/tests/validate-cdocs-edit-path.test.sh

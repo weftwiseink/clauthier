@@ -6,12 +6,18 @@
 # The main session (no agent_type) is never restricted.
 #
 # IMPORTANT: When adding new cdocs agents to plugins/cdocs/agents/,
-# also add their name to the CDOCS_AGENTS allowlist below.
+# also add their bare name to the CDOCS_AGENTS allowlist below.
 set -euo pipefail
 INPUT=$(cat)
 
 # --- agent_type guard ---
 # Only restrict known cdocs subagents. Main session has no agent_type field.
+# For a plugin-registered agent, Claude Code reports agent_type as the
+# plugin-scoped name (e.g. "cdocs:triage"), not the bare agent name
+# (confirmed empirically: a dispatched cdocs:triage subagent's PreToolUse
+# payload carries agent_type="cdocs:triage"). Match both forms so the guard
+# works whether the agent was dispatched as a cdocs plugin agent or under a
+# bare name (e.g. a non-plugin or locally-registered agent of the same name).
 AGENT_TYPE=$(echo "$INPUT" | jq -r '.agent_type // empty')
 CDOCS_AGENTS="triage nit-fix reviewer"
 
@@ -20,10 +26,11 @@ if [ -z "$AGENT_TYPE" ]; then
   exit 0
 fi
 
-# Check if agent_type is a known cdocs subagent
+# Check if agent_type is a known cdocs subagent, bare or "cdocs:"-prefixed.
+BARE_AGENT_TYPE="${AGENT_TYPE#cdocs:}"
 IS_CDOCS_AGENT=false
 for agent in $CDOCS_AGENTS; do
-  if [ "$AGENT_TYPE" = "$agent" ]; then
+  if [ "$BARE_AGENT_TYPE" = "$agent" ]; then
     IS_CDOCS_AGENT=true
     break
   fi
