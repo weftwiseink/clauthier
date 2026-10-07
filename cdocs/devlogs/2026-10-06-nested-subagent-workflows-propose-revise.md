@@ -22,7 +22,7 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: reviewer r4.
+- now: round 4 accepting-round nits.
 - next: branch on verdict; then /cdocs:iterate, then atlas update.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
@@ -38,6 +38,7 @@ tags: [orchestration, subagents, propose_revise]
 | 3 | nested-proposer (warm) | revise | proposal de57b47 | review_ready | steering applied (no Nesting section; fail-loud; nest-safe loops, chat layer, /oversee dispatches sub-overseers); isolated harness; 2,555 words |
 | 3 | reviewer r3 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r3.md (3458c72) | proposal_accepted | should-fix: init_rules in harness; sub-overseer missing-`Agent` as /oversee hard gate; optional cuts incl. chat_record pass-down via brief |
 | 4 | nested-proposer (warm) | revise | proposal + nest-overseers RFP (5b96a5e) | review_ready | re-scoped to unbounded non-overseer nesting, 1,486 words; nested-overseer design moved to deferred RFP (727 words) |
+| 4 | reviewer r4 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r4.md (3233519) | proposal_accepted | re-scope faithful, 17 deletion sites complete; nits: state boundaries/worktree to children, ablate reason, /oversee reason, live-check failure pictures |
 
 ## Steering Log
 
@@ -83,3 +84,5 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T18:31 | dispatch | nested-proposer (warm, SendMessage) | proposal, cdocs/proposals/2026-10-06-nest-overseers-rfp.md | round 4: split RFP, re-scope |
 | 2026-10-06T18:40 | return | nested-proposer | proposal, RFP (5b96a5e) | review_ready |
 | 2026-10-06T18:41 | dispatch | reviewer r4 (cdocs:reviewer, opus) | review r4, proposal last_reviewed | round 4 review |
+| 2026-10-06T18:50 | return | reviewer r4 | review r4 + proposal last_reviewed (3233519) | accept with 6 nits |
+| 2026-10-06T18:51 | dispatch | nested-proposer (warm, SendMessage) | proposal | accepting-round nits, set implementation_ready |
