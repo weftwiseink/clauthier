@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: holding for maintainer go-ahead on the Steering Log redirection.
-- next: round 3 revision (r2 harness blocker + steering), then fresh reviewer r3.
+- now: round 3 revision (warm nested-proposer).
+- next: fresh reviewer r3.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -38,7 +38,7 @@ tags: [orchestration, subagents, propose_revise]
 
 ## Steering Log
 
-- 2026-10-06T17:40 (maintainer, pending go-ahead): drop generic nesting guidance (models have sane defaults; keep only cdocs invariants); a loop lead without `Agent` fails loudly; consider an always-present chat layer (top-level, 1:1 with chat-record) dispatching one nested sub-overseer per workstream, collapsing `/oversee` into it.
+- 2026-10-06T17:40 (maintainer; applied round 3 at 17:55, chat-layer model softened to judgment-based nesting rather than a mandated layer): drop generic nesting guidance (models have sane defaults; keep only cdocs invariants); a loop lead without `Agent` fails loudly; consider an always-present chat layer (top-level, 1:1 with chat-record) dispatching one nested sub-overseer per workstream, collapsing `/oversee` into it.
 
 ## Dispatch/Return Events
 
@@ -52,3 +52,4 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T17:30 | return | nested-proposer | proposal (a0a96ec) | review_ready |
 | 2026-10-06T17:31 | dispatch | reviewer r2 (cdocs:reviewer, opus) | review r2, proposal last_reviewed | round 2 review |
 | 2026-10-06T17:45 | return | reviewer r2 | review r2 + proposal last_reviewed (eb3fd36) | revise, 1 blocker |
+| 2026-10-06T17:55 | dispatch | nested-proposer (warm, SendMessage) | proposal | round 3: r2 harness blocker + steering |
