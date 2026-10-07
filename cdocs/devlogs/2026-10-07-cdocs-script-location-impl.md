@@ -25,9 +25,9 @@ Implement the accepted proposal `cdocs/proposals/2026-10-07-cdocs-script-locatio
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T13:04:00-07:00
-- now: all four proposal commits landed; verification floor passes (evidence below); devlog `review_ready`.
-- next: the loop's reviewer reviews; the overseer owns acceptance and the proposal's final status (left at `implementation_wip`).
+- as_of: 2026-10-07T13:08:00-07:00
+- now: implementation review accepted (`cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md`); its nits are resolved (see Review Follow-ups); devlog `done`.
+- next: none here; the overseer owns the proposal's final status (left at `implementation_wip`).
 - open:
   - observation: `brief` accepts unknown `--flags` silently (only a stray positional argument or a bad subcommand exits 1); out of scope ("do not change the helper's behavior"), and the README's "Exits 1 on a usage error" stays true for those cases.
   - observation: the `chat-record` section's link to `../rules/overseers.md` is carried over unchanged; if the concurrent rules work renames that file (the repo `CLAUDE.md` already names `orchestration-discipline.md`), that link and `plugins/cdocs/README.md` line 140 need the new name.
@@ -82,6 +82,17 @@ Commits:
 - `784bac6` fix(iterate): call graphify-scope from PATH
 - `369f3cd` ci(cdocs): run the graphify-scope suite on Linux
 - `d4f49b7` docs(bin): document graphify-scope
+
+## Review Follow-ups
+
+The accepted implementation review's non-blocking nits, resolved per the overseer:
+
+- `d7ed5b7` ci(cdocs): the CI header's BSD `sed`/`awk`/`tr` clause now attaches to "macOS runs it too", with the Linux-only graphify-scope suite as its own clause.
+- `c4b5b00` docs(bin): `bin/README.md` lists the three `graphify-scope brief` forms (no-flag default = uncommitted changes against `HEAD`, `--diff-base`, `--files`) and labels the remaining flags as options, still four bullets.
+- `f37183d` fix(iterate): a missing OR failing `graphify-scope` (e.g. bash 3.2 on macOS) is `skip-scope`, logged `[graphify: skip-scope no-command]` or `[graphify: skip-scope helper-error]`.
+- `4e3725e` docs(cdocs): `plugins/cdocs/README.md` gains one line after the Skills table pointing at `bin/README.md` for the bundled `chat-record` and `graphify-scope` (the reviewer's open question; overseer default).
+
+Re-run after the follow-ups: `graphify-scope.test.sh` gives `RESULTS: 51 passed, 0 failed` (exit 0), and the stale-path `git grep` (outside `cdocs/`) prints nothing.
 
 ## Verification
 
