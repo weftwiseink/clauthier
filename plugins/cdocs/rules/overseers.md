@@ -6,7 +6,7 @@ A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `over
 
 Delegate anything beyond trivial few-liners to subagents; you hold the plan and the decisions.
 Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to `fork`s.
-Stay aware of a warm subagent's context size:
+Stay aware of a warm subagent's context size.
 Once that passes ~400K after a turn, have it write and commit a handoff beside its Scratchpoint, then have a fresh subagent of the same type pick up where they left off.
 
 Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.

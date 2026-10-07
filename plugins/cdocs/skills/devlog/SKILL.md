@@ -39,7 +39,7 @@ Most devlogs should include the other sections as well, but use your judgement (
 You should also include novel sections as is appropriate/useful for your work.
 
 - **Objective:** What needs to be accomplished and why.
-- **Scratchpoint:** Short current state, updated at the end of each turn, including an optional handoff subsection
+- **Scratchpoint:** Short current state, updated at the end of each turn, including an optional handoff subsection.
 - **Plan:** Step-by-step approach.
 - **Testing Approach:** TDD? Integration tests? Manual verification? State it upfront.
   - Skipping test-first for prototyping? Acknowledge it: "Rapid prototyping without test-first, will add coverage after."
@@ -59,7 +59,7 @@ This both orients the next turn of work and communicates to other actors how the
 The callouts list should include any important notes still relevant to this specific workstream, i.e. if a decision was made as a result of debugging, an env issue is preventing certain testing or tool use, or a bug/issue needs to be revisited after a subsequent stage.
 Each item in the callouts list should be type-prefixed, and types are an open set (add more beyond deferred/todo/decision/blocker as needed).
 
-The scratchpoint can include content for orienting the next turn beyond the structured schema, but should remain forward-looking (they are not append only logs.)
+The scratchpoint can include content for orienting the next turn beyond the structured schema, but should remain forward-looking (they are not append only logs).
 
 ### Handoffs
 Optional scratchpoint subsection with expanded context/files, with context and references to earlier docs, as well as ongoing or unresolved concerns.
@@ -110,7 +110,7 @@ No completion claims without pasted evidence.
 - For UI changes: before/after screenshots.
 
 Remember:
-- A task is not complete until its been fully tested and the test output has been verified.
+- A task is not complete until it's been fully tested and the test output has been verified.
 - Incomplete or deferred work, while best avoided, _must at least_ be surfaced at a high-level so it isn't buried or forgotten about. 
 
 ## Parallel Agent Documentation

@@ -5,7 +5,7 @@
 Fallback default baselines for subagent models unless overridden:
 - `opus` for leads, overseers, judges, orchestration, implementers, reviews.
 - `sonnet` for search, explore, research aggregation, `bash-runner`s.
-- `haiku` for simple mechanical fan-out work such as `nit-fix` or fuzzy find/replace
+- `haiku` for simple mechanical fan-out work such as `nit-fix` or fuzzy find/replace.
 
 ## Parallel investigation
 
