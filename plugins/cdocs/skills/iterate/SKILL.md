@@ -108,8 +108,8 @@ The overseer may invoke the judge earlier on suspicion of trouble (high uncertai
 ### Turn N.d (Judge)
 
 Dispatch a fresh judge with the iteration log and the recent review paths.
-The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale (inline for one or two sentences; longer rationales go to `cdocs/devlogs/_judge/` with the path in `judge_path`).
-Append a Judge Log row, then run the Checkpoint (below).
+The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale in its final message.
+Append a Judge Log row, and when the reasoning matters (typically `rotate-implementer` or `escalate`) add a short note beneath the row, then run the Checkpoint (below).
 
 ### Checkpoint (handoff)
 

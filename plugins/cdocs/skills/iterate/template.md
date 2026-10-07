@@ -22,8 +22,8 @@ These are the workstream's top-level devlog sections, which the overseer owns: c
 
 ## Judge Log
 
-| judge_iteration | trigger | verdict | rationale | judge_path |
-|---|---|---|---|---|
+| judge_iteration | trigger | verdict | rationale |
+|---|---|---|---|
 
 ## Dispatch/Return Events
 
@@ -40,9 +40,11 @@ Example rows (do not copy into a devlog):
 |---|---|---|---|---|---|---|
 | 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-05-13-...-r1.md | cards not rendering; Playwright excerpt inlined in review |
 
-| judge_iteration | trigger | verdict | rationale | judge_path |
-|---|---|---|---|---|
-| 4 | review_count >= --judge-after | rotate-implementer | same selector bug across three reviews | inline |
+| judge_iteration | trigger | verdict | rationale |
+|---|---|---|---|
+| 4 | review_count >= --judge-after | rotate-implementer | same selector bug across three reviews |
+
+- 2026-05-13T10:05: same root cause (stale selector) recurs under a new name each review; implementer's residual uncertainty is growing, not shrinking.
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|

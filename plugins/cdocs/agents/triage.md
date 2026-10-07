@@ -71,7 +71,7 @@ For each file:
    | Iteration Log last row `review_verdict: proposal_accepted`, proposal earlier than `implementation_ready` | `[STATUS] implementation_ready`. A `/cdocs:propose-revise` Accept is a *design-review* Accept, not an implementation Accept; its terminal status is `implementation_ready`. |
    | Iteration Log last row `review_verdict: proposal_accepted`, proposal already at or past `implementation_ready` | `[NONE]` — no transition; a later implementation loop (if any) owns subsequent rows. |
    | Iteration Log last row `review_verdict: reject` | `[ESCALATE]`, mirroring the loop's own "Reject pre-empts judge" rule; do NOT wait for `round >= 3`. |
-   | Judge Log last row `verdict: escalate` (and no later Iteration Log row superseding it) | `[ESCALATE]`, regardless of round count; surface the judge's rationale (inline text or `judge_path`) verbatim in the triage report. |
+   | Judge Log last row `verdict: escalate` (and no later Iteration Log row superseding it) | `[ESCALATE]`, regardless of round count; surface the judge's rationale (the row, plus any note beneath it) verbatim in the triage report. |
    | Judge Log last row `verdict: rotate-implementer`, or Iteration Log last row `review_verdict: revise` with no Judge Log row yet | `[NONE]` — the loop is still open and owns this document; note "in-flight iterate loop, devlog: `<path>`" in the report so a human understands why no action was recommended. |
    | No matching devlog found | Fall back to the blind heuristics (step 7), unchanged. |
 
