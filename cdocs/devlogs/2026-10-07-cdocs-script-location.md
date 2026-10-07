@@ -36,6 +36,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 - Test moves to `plugins/cdocs/hooks/tests/` (anything in `bin/` lands on PATH).
 - `bin/README.md` gains a folder heading; chat-record content moves under its own section unchanged.
 - Review r1 questions: keep the CI step for the graphify-scope test; update the live reference in `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md`.
+- Review r2 N5: keep `npm run build:cdocs` in verification as a regression guard (maintainer asked for it), noting it cannot detect a bad move.
 - Chat record: not run (nested overseer is a subagent; `overseers.md` reserves `chat-record` for top-level agents, and this checkout has no `cdocs/_chat/`).
 
 ## Scratchpoint
@@ -56,6 +57,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | p1 | proposer-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md | proposal round; B1 grep exclude-dir hid plugins/cdocs |
+| p2 | proposer-1 | rev-2 | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md | nits N1-N4 folded into proposal before iterate |
 
 ## Judge Log
 
@@ -73,6 +75,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:16 | revision round 1 |
 | return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:22 | bd14c2b; B1 + N1-N7 addressed |
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md, proposal frontmatter | 2026-10-07T12:23 | proposal review round 2 |
+| return | rev-2 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md | 2026-10-07T12:30 | 8004e2d; accept with nits N1-N5 |
+| dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:31 | accept-round nits, set implementation_ready |
 
 ## Steering Log
 
