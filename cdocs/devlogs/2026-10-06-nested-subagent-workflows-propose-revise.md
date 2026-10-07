@@ -22,12 +22,12 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: propose-revise closed (f8cf9f1, implementation_ready); starting /cdocs:iterate in this devlog.
-- next: iterate loop, then atlas update.
+- now: iterate iteration 1, nest-impl-1 implementing.
+- next: fresh reviewer; then atlas update after accept.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
-## Iteration Log
+## Propose-Revise Log
 
 | round | agent | role | output | verdict | notes |
 |---|---|---|---|---|---|
@@ -39,6 +39,28 @@ tags: [orchestration, subagents, propose_revise]
 | 3 | reviewer r3 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r3.md (3458c72) | proposal_accepted | should-fix: init_rules in harness; sub-overseer missing-`Agent` as /oversee hard gate; optional cuts incl. chat_record pass-down via brief |
 | 4 | nested-proposer (warm) | revise | proposal + nest-overseers RFP (5b96a5e) | review_ready | re-scoped to unbounded non-overseer nesting, 1,486 words; nested-overseer design moved to deferred RFP (727 words) |
 | 4 | reviewer r4 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r4.md (3233519) | proposal_accepted | re-scope faithful, 17 deletion sites complete; nits: state boundaries/worktree to children, ablate reason, /oversee reason, live-check failure pictures |
+
+## Iterate Brief
+
+- Scope: full proposal (Phase 1 deletions and corrections plus OC `tools: "*"` RFP; Phase 2 live check), at f8cf9f1.
+- Verification floor: in the `chat-record.test.sh`-style sandbox, a dispatched `cdocs:implementer` dispatches a depth-2 `cdocs:bash-runner` (foreground, no permission denials), and the proposal's static grep over plugins/cdocs is clean. Failure: no depth-2 bash-runner (refusal, Investigation Requested block, or silent inline run), denied Bash calls, a `background` requestShape, or any grep match.
+- Constraints: no overseer-mechanics, hooks, build script, devlog skill, rules, or leaf `tools:` changes.
+
+## Workstream Devlogs
+
+| devlog | concern | status | read this when |
+|---|---|---|---|
+| cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | Phase 1 edits + Phase 2 live check | wip | you need implementation detail or live-check evidence |
+
+## Iteration Log
+
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
+
+## Judge Log
+
+| judge_iteration | trigger | verdict | rationale |
+|---|---|---|---|
 
 ## Steering Log
 
@@ -87,3 +109,4 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T18:50 | return | reviewer r4 | review r4 + proposal last_reviewed (3233519) | accept with 6 nits |
 | 2026-10-06T18:51 | dispatch | nested-proposer (warm, SendMessage) | proposal | accepting-round nits, set implementation_ready |
 | 2026-10-06T18:55 | return | nested-proposer | proposal (f8cf9f1) | implementation_ready, 1,674 words; propose-revise loop closed |
+| 2026-10-06T19:00 | dispatch | nest-impl-1 (cdocs:implementer, opus) | plugins/cdocs/{skills/implement,skills/propose,skills/iterate,skills/triage,skills/ablate,skills/oversee,agents/implementer,agents/reviewer,agents/proposer}/*, new OC tools RFP, cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | iteration 1 |
