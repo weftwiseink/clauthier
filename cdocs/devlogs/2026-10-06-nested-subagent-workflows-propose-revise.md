@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: round 1 reviewer.
-- next: branch on verdict; revise with warm nested-proposer.
+- now: round 2 revision (warm nested-proposer).
+- next: fresh reviewer r2.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -32,6 +32,7 @@ tags: [orchestration, subagents, propose_revise]
 | round | agent | role | output | verdict | notes |
 |---|---|---|---|---|---|
 | 1 | nested-proposer (opus) | author | proposal 74a4aca | review_ready | nesting verified: depth 3 default, `Agent` in `tools:` gates it, no AskUserQuestion below top level; deletes Investigation Requested; /oversee dispatches sub-overseers |
+| 1 | reviewer r1 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows.md (84b4e54) | revise | capability claims re-verified (docs + probe); blockers: no-`Agent` loop-lead fallback, Stay-thin scope, concrete Phase 3 harness |
 
 ## Dispatch/Return Events
 
@@ -40,3 +41,5 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T17:00 | dispatch | nested-proposer (cdocs:proposer, opus) | cdocs/proposals/2026-10-06-nested-subagent-workflows.md | round 1 author + capability verification |
 | 2026-10-06T17:10 | return | nested-proposer | proposal (74a4aca) | review_ready; flagged OC build maps `tools: "*"` to all-false (out of scope) |
 | 2026-10-06T17:11 | dispatch | reviewer r1 (cdocs:reviewer, opus) | cdocs/reviews/*nested-subagent-workflows*, proposal `last_reviewed` | round 1 review |
+| 2026-10-06T17:20 | return | reviewer r1 | review + proposal last_reviewed (84b4e54) | revise, 3 blockers |
+| 2026-10-06T17:21 | dispatch | nested-proposer (warm, SendMessage) | proposal | round 2 revision |
