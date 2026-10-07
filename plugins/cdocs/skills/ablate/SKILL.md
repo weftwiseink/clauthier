@@ -25,7 +25,8 @@ The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestr
   Judgment (the task itself, and the context-gap verdict) lives ONLY in the dispatched subagents.
 - Write durable run state (the tool-set diff, the pinned base, per-arm meters) to the run directory at task-unit boundaries.
 
-> NOTE(claude-opus-4-8/cdocs/mcp-ablation): This skill dispatches subagents (the two arms and the evaluator), so run it from a lead with two dispatch layers below it.
+> NOTE(claude-opus-4-8/cdocs/mcp-ablation): This skill dispatches subagents (the two arms and the evaluator), so run it from a lead with two dispatch layers below it: a top-level session, or a depth-1 agent under the default depth limit.
+> Its deferred e2e test runs from a top-level session.
 
 ## Invocation
 
