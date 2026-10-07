@@ -69,10 +69,11 @@ Flag off = no helper call at all.
 
 ### Turn 0 (Brief)
 
-Read the proposal and any handoff devlog once.
+Read the proposal once.
 State scope and verification floor explicitly.
 Continue the workstream's top-level devlog, which you own: the most recent devlog whose `task_list` matches the proposal's, that cites the proposal, and that has no `part_of` (a propose-revise or an earlier iterate may have started it).
 Otherwise create one (`YYYY-MM-DD-<slug>-iterate.md`, citing the proposal in its Brief) and record the choice.
+When continuing, orient from its Scratchpoint and any handoff, per the devlog skill's "Handoffs".
 Copy from `./template.md` the sections it lacks: `## Scratchpoint`, `## Workstream Devlogs`, and the four log sections (Iteration Log, Judge Log, Dispatch/Return Events, Steering Log).
 
 ### Turn N.a (Implement)

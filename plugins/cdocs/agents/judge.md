@@ -30,7 +30,7 @@ If neither path resolves, use the rule content already in your context.
 
 Your Task prompt provides:
 
-- The path to the loop's top-level devlog, which holds the Iteration Log and Judge Log tables (they may continue in a forward sub-devlog, named by a line under each table).
+- The path to the loop's top-level devlog, which holds the Iteration Log and Judge Log tables.
 - The paths to the recent review documents (typically the last 3 reviews when `--judge-after=3`).
 - Any inline trigger context from the overseer (e.g., "review_count >= --judge-after fired" or "discretionary: implementer returned high uncertainty").
 
