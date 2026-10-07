@@ -25,8 +25,7 @@ The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestr
   Judgment (the task itself, and the context-gap verdict) lives ONLY in the dispatched subagents.
 - Write durable run state (the tool-set diff, the pinned base, per-arm meters) to the run directory at task-unit boundaries.
 
-> NOTE(claude-opus-4-8/cdocs/mcp-ablation): This skill CANNOT run from inside a subagent: it dispatches subagents (the two arms and the evaluator), and the platform forbids subagent-from-subagent dispatch (`Task` is unavailable inside subagents).
-> It is invoked by a top-level (overseer) session, or driven as a top-level e2e test.
+> NOTE(claude-opus-4-8/cdocs/mcp-ablation): This skill dispatches subagents (the two arms and the evaluator), so run it from a lead with two dispatch layers below it.
 
 ## Invocation
 
@@ -162,7 +161,7 @@ Teardown touches no shared mutable state: no stash, no shared branch.
 
 ## Capability spike findings (Phase 1 preconditions)
 
-Two load-bearing preconditions, validated as far as is possible from inside a subagent.
+Two load-bearing preconditions, not yet validated live.
 
 ### (a) Per-arm single-tool gating (D4)
 
@@ -175,9 +174,9 @@ The overseer constructs the two arms so their tool sets differ by EXACTLY the on
 
 Building both allowlists explicitly (rather than granting `"*"` and trying to subtract) is the primary mechanism, not a fallback: it makes the one-entry diff exact and auditable, which is what Step 0 records.
 
-> WARN(claude-opus-4-8/cdocs/mcp-ablation): PARTIALLY CONFIRMED from inside a subagent.
+> WARN(claude-opus-4-8/cdocs/mcp-ablation): PARTIALLY CONFIRMED.
 > Per-agent tool restriction via `tools:` frontmatter is confirmed present in this repo's agents.
-> What a subagent CANNOT confirm is the exact per-DISPATCH grant expression (whether the dispatcher can hand a per-call tool allowlist, or must reference a pre-registered agent definition, and whether a single MCP tool can be named at that granularity vs. a whole MCP server).
+> The exact per-DISPATCH grant expression (whether the dispatcher can hand a per-call tool allowlist, or must reference a pre-registered agent definition, and whether a single MCP tool can be named at that granularity vs. a whole MCP server) is not yet confirmed live.
 > This is a precondition the overseer's top-level e2e test MUST confirm. Fallback if a single-tool withhold is not cleanly expressible: route the unassisted arm through a profile/agent definition that omits the tool (or the whole server), keeping every other tool identical.
 
 ### (b) Per-tool-call transcript visibility (the VOID gate)
@@ -272,16 +271,16 @@ Expected, on a coherent run:
 The graphify proposal ([`cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`](../../../../cdocs/proposals/2026-09-17-graphify-cdocs-integration.md)) can CONSUME this `scorecard.json` for its own token/recall gates, checking `gate_admissible` first; this skill does not re-spec graphify's internals.
 
 > WARN(claude-opus-4-8/cdocs/mcp-ablation): This Phase-4 wiring is DOCUMENTED, not yet run live.
-> The live graphify dogfood (a VALID scorecard end to end plus the VOID honesty path) is the overseer's top-level e2e test in a lace devcontainer with real graphify, because the full three-subagent dispatch cannot run from inside a subagent.
+> The live graphify dogfood (a VALID scorecard end to end plus the VOID honesty path) is the overseer's top-level e2e test in a lace devcontainer with real graphify.
 
 ## Deferred to the top-level e2e test
 
-The multi-subagent dispatch is out of reach from inside a subagent (no `Task`), so these are deferred to a top-level overseer run:
+These are not yet run live, and are deferred to a top-level overseer run:
 
 - The live three-subagent dispatch (two arms + evaluator) on a real target tool.
 - Confirming precondition (a)'s exact per-dispatch single-tool grant expression, with the profile/omission fallback if a single-tool withhold is not cleanly expressible.
 - Confirming the live result-payload nesting reaches the dispatcher as `toolUseResult.totalTokens`/`totalDurationMs`.
-- The graphify dogfood: VALID scorecard end to end, and the present-but-unused VOID honesty path, in a container with real (CLI-first) graphify.
+- The graphify dogfood, blocked on its container: VALID scorecard end to end, and the present-but-unused VOID honesty path, in a container with real (CLI-first) graphify.
 
 ## Links
 
