@@ -28,14 +28,14 @@ Scan `cdocs/**/*.md` for all cdocs documents and run nit-fix on all of them (bat
 ## Behavior
 
 1. **Collect file paths**: from `$ARGUMENTS` or by globbing `cdocs/**/*.md` (excluding README files).
-2. **Invoke the nit-fix agent**: use the Task tool with `subagent_type: "nit-fix"`, passing the list of absolute file paths in the prompt.
+2. **Invoke the nit-fix agent**: use the Task tool with `subagent_type: "cdocs:nit-fix"`, passing the list of absolute file paths in the prompt.
 3. **Receive nit-fix report**: the agent returns a report with mechanical fixes already applied, plus judgment-required violations.
 4. **Present results**: show the report to the caller. Highlight judgment-required violations that need manual attention.
 
 ## Dispatching the Nit-Fix Agent
 
 Use the Task tool:
-- `subagent_type`: `"nit-fix"`
+- `subagent_type`: `"cdocs:nit-fix"`
 - `prompt`: Include the absolute file paths to process, one per line. Example:
 
 ```

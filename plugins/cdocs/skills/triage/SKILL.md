@@ -28,7 +28,7 @@ Scan for cdocs files modified in the current turn (based on recent Write/Edit op
 ## Behavior
 
 1. **Collect file paths**: from `$ARGUMENTS` or from recent cdocs modifications in the current turn.
-2. **Invoke the triage agent**: use the Task tool with `subagent_type: "triage"`, passing the list of absolute file paths in the prompt.
+2. **Invoke the triage agent**: use the Task tool with `subagent_type: "cdocs:triage"`, passing the list of absolute file paths in the prompt.
 3. **Receive triage report**: the agent returns a report with mechanical fixes already applied, plus status and workflow recommendations.
 4. **Verify changes**: after the triage agent completes, re-read the modified files to confirm only expected files were changed and edits are correct.
 5. **Apply status recommendations**: evaluate each status transition recommendation. Apply sensible ones via Edit. Defer or ask the user if unsure.
@@ -39,7 +39,7 @@ For `type: proposal` documents, the triage agent runs an iterate-devlog analysis
 ## Dispatching the Triage Agent
 
 Use the Task tool:
-- `subagent_type`: `"triage"`
+- `subagent_type`: `"cdocs:triage"`
 - `prompt`: Include the absolute file paths to triage, one per line. Example:
 
 ```
