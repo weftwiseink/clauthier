@@ -49,6 +49,7 @@ claude plugin install cdocs@clauthier --scope project
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.
 Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
+The plugin also bundles two commands, `chat-record` and `graphify-scope`, which Claude Code puts on `PATH` from `bin/`: see [`bin/README.md`](bin/README.md).
 
 ## Rules
 
