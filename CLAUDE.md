@@ -44,9 +44,9 @@ Plugin internals (rules, skills, agents, hooks) are documented in their respecti
 The rules below are real `@`-imports (no code span), so sessions in this repo load the source rules directly; consuming projects get them through `/cdocs:init`.
 
 - **Writing conventions** (BLUF, sentence-per-line, callouts, history-agnostic framing): @plugins/cdocs/rules/writing-conventions.md
-- **Workflow patterns** (parallel investigation, loops and multi-phase plans, before review, completeness): @plugins/cdocs/rules/workflow-patterns.md
-- **Orchestration discipline** (stay thin, resume from disk, one writer per file, verification and stuck loops, durable state, chat record, Bash output): @plugins/cdocs/rules/orchestration-discipline.md
-- **Model tiering** (advisory: opus lead/judgment, sonnet search/explore, haiku mechanical; consumer policy wins): @plugins/cdocs/rules/model-tiering.md
+- **Workflow patterns** (model tiering, parallel investigation, loops and multi-phase plans, before review, completeness): @plugins/cdocs/rules/workflow-patterns.md
+- **Overseers** (stay thin, chat record): @plugins/cdocs/rules/overseers.md
+- **Tool use safeguards** (one writer per file, Bash output): @plugins/cdocs/rules/tool-use-safeguards.md
 - **Frontmatter spec**: @plugins/cdocs/rules/frontmatter-spec.md
 - **Skills**: `plugins/cdocs/skills/<name>/SKILL.md` (ablate, devlog, full-send, implement, init, iterate, nit_fix, oversee, propose, propose-revise, report, review, rfp, status, triage)
 

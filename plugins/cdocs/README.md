@@ -55,9 +55,9 @@ Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typi
 Rule files ship with the plugin and are delivered to consuming projects via `/cdocs:init`:
 
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
-- **`workflow-patterns.md`:** Parallel investigation, loops and multi-phase plans, the pre-review pipeline, completeness.
-- **`orchestration-discipline.md`:** Overseer discipline (stay thin, resume from disk, one writer per file, verification floor, durable state, chat record) and bash output hygiene.
-- **`model-tiering.md`:** Advisory model tiers (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins).
+- **`workflow-patterns.md`:** Model tiering, parallel investigation, loops and multi-phase plans, the pre-review pipeline, completeness.
+- **`overseers.md`:** Overseer rules (stay thin, chat record).
+- **`tool-use-safeguards.md`:** One writer per file and bash output hygiene.
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
 
 ### Rules Integration
@@ -137,7 +137,7 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 ### Chat record
 
 `UserPromptSubmit` appends each human prompt verbatim as an `@user` block (harness envelopes such as background-agent notifications are skipped).
-The top-level agent appends its gist bullets with `chat-record note`, per `orchestration-discipline.md` "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
+The top-level agent appends its gist bullets with `chat-record note`, per `overseers.md` "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
 `Stop` then appends a `-- <session> at <time>` sign-off, or, when a human-initiated turn has no entry, blocks once with the record path and the note command; a second `Stop` (`stop_hook_active`) never blocks, and plan mode never blocks, so a turn costs at most one extra short turn.
 Subagent payloads (`agent_id`) are ignored.
 

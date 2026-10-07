@@ -10,13 +10,13 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/workflow-patterns.md
 
-## Orchestration Discipline
+## Overseers
 
-@rules/orchestration-discipline.md
+@rules/overseers.md
 
-## Model Tiering
+## Tool Use Safeguards
 
-@rules/model-tiering.md
+@rules/tool-use-safeguards.md
 
 ## Frontmatter Specification
 
@@ -40,4 +40,4 @@ Formal agents in `plugins/cdocs/agents/` with explicit tool allowlists:
 - `judge`: meta-assessment of `/cdocs:iterate` loop health (opus; no Edit, Bash, or Task).
 - `triage`: frontmatter analysis, mechanical fixes, and iterate-devlog log-state mapping (sonnet).
 - `nit-fix`: writing-convention enforcement (haiku).
-- `bash-runner`: runs one expected-verbose command, captures its output to a file, and returns a fixed-format report (sonnet; Bash only). See "Bash: Avoid context bloat from careless bash commands" in `rules/orchestration-discipline.md`.
+- `bash-runner`: runs one expected-verbose command, captures its output to a file, and returns a fixed-format report (sonnet; Bash only). See "Bash: Avoid context bloat from careless bash commands" in `rules/tool-use-safeguards.md`.
