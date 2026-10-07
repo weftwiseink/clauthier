@@ -41,8 +41,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 
 ## Scratchpoint
 
-- as_of: 2026-10-07 Turn 0
-- next_steps: dispatch proposer
+- as_of: 2026-10-07 iterate round 1 (proposal accepted r2, fbc7ed8)
+- next_steps: await impl-1, then dispatch fresh implementation reviewer
 - important_files: plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/bin/README.md, plugins/cdocs/skills/iterate/SKILL.md, scripts/build-opencode.ts
 - callouts:
   - decision: concurrent agent `rules-fixup` edits punctuation in plugins/cdocs/rules/*.md and the devlog skill; do not touch those files' punctuation.
@@ -51,6 +51,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+| cdocs/devlogs/2026-10-07-cdocs-script-location-impl.md | move graphify-scope into bin/, update references, README section | wip | checking what moved and the verification evidence |
 
 ## Iteration Log
 
@@ -77,6 +78,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | rev-2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md, proposal frontmatter | 2026-10-07T12:23 | proposal review round 2 |
 | return | rev-2 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md | 2026-10-07T12:30 | 8004e2d; accept with nits N1-N5 |
 | dispatch | proposer-1 (resumed) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:31 | accept-round nits, set implementation_ready |
+| return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:35 | fbc7ed8; implementation_ready |
+| dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/bin/*, plugins/cdocs/hooks/tests/graphify-scope.test.sh, plugins/cdocs/skills/iterate/SKILL.md, .github/workflows/cdocs-hooks.yml, cdocs/proposals/2026-09-27-clauthier-improvement-verification.md, proposal frontmatter, impl sub-devlog | 2026-10-07T12:36 | iterate round 1 |
 
 ## Steering Log
 
