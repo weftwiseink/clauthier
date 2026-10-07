@@ -21,7 +21,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
   Questions for the user go in your return.
 
   A DISPATCHED implementer works in isolation (its own worktree, no cross-worktree writes) so it cannot clobber a sibling workstream; a top-level invocation is never isolation-bound.
-  Give children you dispatch your worktree path: they inherit your isolation.
+  Pass your worktree path to children you dispatch, so they work inside your isolation too.
 
 ## Invocation
 
