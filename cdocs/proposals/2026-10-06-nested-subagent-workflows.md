@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nested-subagent-workflows
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -76,7 +76,7 @@ Every dispatched role is also written as a leaf: seven sentences across skills a
 Add to the opening paragraph, which defines the overseer:
 
 ```markdown
-The overseer may be the top-level session or a sub-overseer it dispatched; the loop skills read the same either way.
+The overseer may be the top-level session or a sub-overseer it dispatched, and the loop skills read the same either way.
 Without the `Agent` tool, stop at once with an explicit error and do no work: an overseer never plays its own implementer or reviewer.
 ```
 
@@ -84,13 +84,13 @@ Replace the first line of "Chat record" with:
 
 ```markdown
 The top-level Claude Code session is the chat layer: only it reaches the human (`AskUserQuestion`, `chat-record`), so never run `chat-record` if the `Agent` tool dispatched you.
-A sub-overseer escalates by returning its question; answers and steering reach it by `SendMessage`.
-Running a loop inline or as a sub-overseer is the chat layer's call: inline when the human is steering it, dispatched for long or autonomous loops or several at once.
+A sub-overseer escalates by returning its question. Answers and steering reach it by `SendMessage`.
+Running a loop inline or as a sub-overseer is the chat layer's call.
+The chat layer passes its `chat-record path` in a sub-overseer's brief, and the overseer that owns the workstream's top-level devlog adds it to `chat_record`.
 ```
 
-In the chat-record paragraph, "the first turn you work on a devlog" becomes "each workstream top-level devlog you drive, inline or through a sub-overseer".
-The chat layer adds its `chat-record path` to that devlog's `chat_record` list when it dispatches or receives a return, never while the sub-overseer is live, so that it remains one writer per file.
-After compaction, the existing "read the devlogs that list it" step then finds every workstream the chat layer drives.
+That devlog's `chat_record` then lists the chat layer's record whether the loop ran inline or nested, so the existing post-compaction step ("read the devlogs that list it") finds every workstream the chat layer drives.
+The sub-overseer writes a given string and runs nothing, so "never run `chat-record`" holds.
 
 Nothing else in the rule file changes.
 "Stay thin", "Resume from disk", and the ~400K warm-child handoff already address whoever leads the loop, and `subagent_tokens` reaches subagent parents too.
@@ -111,7 +111,7 @@ Nothing else in the rule file changes.
 
 ### 3. Nest-safe loop skills
 
-`iterate`, `propose-revise`, and `full-send` change in two ways:
+`iterate` and `propose-revise` change in two ways (`full-send` has neither a role line nor an `AskUserQuestion`, so it needs no edit):
 - The "Overseer: top-level agent" role line becomes "Overseer: the agent running the loop, top-level or dispatched (see `orchestration-discipline.md`)".
 - Each "AskUserQuestion" instruction becomes "ask the user", and section 1 says how a sub-overseer does that.
 
@@ -122,11 +122,11 @@ No other loop text assumes the top level.
 
 The arc overseer dispatches one fresh `general-purpose` sub-overseer per proposal, at the lead tier, to run `/cdocs:full-send` or `/cdocs:iterate`.
 The Composition contract becomes the dispatch prompt and its return:
-- Down: path, floor, model flags, and AFK line.
+- Down: path, floor, model flags, AFK line, and the chat layer's `chat-record path`.
 - Up: frontmatter status, final handoff, and the arc file.
 
-The sub-overseer owns the proposal's top-level devlog.
-The arc overseer owns the arc file and the arc devlog, and as chat layer it adds its `chat_record` per section 1.
+The sub-overseer owns the proposal's top-level devlog and adds the passed record path to its `chat_record`.
+The arc overseer owns the arc file and the arc devlog.
 Disjoint proposals run as parallel sub-overseers.
 A proposal's `arc_state: in_progress` is the sub-overseer's dispatch row.
 The default depth budget fits exactly: arc overseer, then sub-overseer (layer 1), then implementer, reviewer, or judge (layer 2), then a helper (layer 3, a leaf by the limit).
@@ -135,7 +135,7 @@ Edits to `skills/oversee/SKILL.md`:
 - Delete the TOP-LEVEL ONLY note. Section 1's loud-failure rule covers an `/oversee` without `Agent`.
 - Replace "runs each composed loop as itself, so it is the only overseer..." with the dispatch sentence.
 - Concurrency's "may run in parallel under this one overseer" becomes "as parallel sub-overseers".
-- Hard gates: a sub-overseer's escalation arrives as its return. The arc overseer marks the proposal `blocked`, surfaces the escalation, and resumes the sub-overseer by `SendMessage` with the answer, or dispatches a fresh one from the proposal devlog if the last `subagent_tokens` was past ~400K.
+- Hard gates: add "a sub-overseer's missing-`Agent` error", so the arc never retries or runs that loop inline. A sub-overseer's escalation arrives as its return. The arc overseer marks the proposal `blocked`, surfaces the escalation, and resumes the sub-overseer by `SendMessage` with the answer.
 
 > NOTE(opus-5-5/cdocs/nested-subagent-workflows): Candidate `/oversee` deletions are left out of scope because they are not directly simplified by nesting: the arc devlog duplicates the arc file's narrative and handoff role, and `position` is derivable from per-proposal `arc_state`.
 > They are worth a follow-up rfp once sub-overseers have run.
@@ -161,14 +161,14 @@ An OC subagent without `task` behaves like any agent without `Agent`: a leaf wor
 - **Fail loudly, with no fallback.** An overseer that implements and reviews in one context would void the fresh-reviewer invariant and still record a clean accept. A parent-runs-it-instead fallback adds a path no default configuration exercises.
 - **No replacement for `## Investigation Requested`.** An agent that can dispatch investigates itself. One that cannot names the open question in its return in plain text.
 - **Leaves by `tools:`, not prose.** The docs name `tools:` as the per-agent switch, and the hook payloads confirm it holds at depth.
-- **Chat layer adds `chat_record` to the devlogs it drives.** Every human prompt lands at the top. Linking the record from each workstream top-level devlog keeps post-compaction recovery unchanged whether the loop ran inline or nested.
+- **The chat layer passes its record path down, and the devlog's owner writes it.** Every human prompt lands at the top. Linking the record from each workstream top-level devlog keeps post-compaction recovery unchanged whether the loop ran inline or nested. Having the owner write the path keeps one writer per file, and it works for devlogs created after dispatch.
 - **Keep `--dispatched`.** It is an explicit signal for sub-devlog, isolation, and loop-owned review. Inferring these from the prompt would be weaker.
 
 ## Edge Cases / Challenging Scenarios
 
 - **Headless and SDK leads do not wait for background children.** cdocs loops run interactively. The Phase 3 harness forces foreground with `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
 - **Dispatched `/oversee`.** At layer 1, its sub-overseers sit at layer 2 and their implementers at layer 3 as leaves. This works, with no helper layer.
-- **Concurrent writers across subtrees.** Arc footprints already serialize overlapping proposals. The chat layer's `chat_record` write is timed to avoid a live sub-overseer.
+- **Concurrent writers across subtrees.** Arc footprints already serialize overlapping proposals.
 - **Permission prompts at depth.** [#83421](https://github.com/anthropics/claude-code/issues/83421) reports `bypassPermissions` not reaching Agent-tool children. This is unverified here: the probes ran without prompts. An AFK arc stalled at layer 2 is the symptom.
 - **Depth variable off-by-one.** Reported in [#84974](https://github.com/anthropics/claude-code/issues/84974); unverified here.
 
@@ -185,7 +185,7 @@ grep -rniE 'Investigation Requested|subagent-from-subagent|cannot dispatch|canno
 - `npm run build:cdocs` succeeds, and the OC agents differ from the previous build only in body prose.
 
 Live check (Phase 3) uses the `claude_run` setup from `hooks/tests/chat-record.test.sh`:
-- a `git init` fixture project outside any repo, with no remote;
+- a `git init` fixture project outside any repo, with no remote, prepared by `init_rules` so that the rules, the `CLAUDE.md` import, and the `_chat` scaffold load;
 - a sandboxed `CLAUDE_CONFIG_DIR` holding only copied credentials, deleted afterwards;
 - `env -i`;
 - `--plugin-dir` at the repo's `plugins/cdocs`;
@@ -200,23 +200,25 @@ Run `claude -p --permission-mode bypassPermissions "/cdocs:oversee chain <fixtur
 jq -r '[.spawnDepth, .agentType, (.parentAgentId // "-"), .requestShape] | @tsv' "$CFG"/projects/*/*/subagents/*.meta.json
 ```
 
-1. There is exactly one depth-1 `general-purpose` sub-overseer, and no depth-1 `cdocs:implementer`, `cdocs:reviewer`, or `cdocs:judge`.
-2. The depth-2 agents include `cdocs:implementer` and `cdocs:reviewer`.
-3. A depth-3 `cdocs:bash-runner` or `Explore` is present.
-4. Every `requestShape` is `foreground`. The fixture devlog has the loop's implementer and reviewer rows, its `chat_record` lists the run's record, and the arc file ends `done`.
-5. Re-run with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`. The sub-overseer returns an explicit missing-`Agent` error, there are no depth-2 agents, and the fixture has no commits beyond its baseline.
+1. The depth-2 `cdocs:implementer` and `cdocs:reviewer` share one `parentAgentId`, and that agent is a depth-1 `general-purpose` sub-overseer. No depth-1 `cdocs:implementer`, `cdocs:reviewer`, or `cdocs:judge` exists.
+2. Every `requestShape` is `foreground`.
+3. The fixture devlog has the loop's implementer and reviewer rows, its `chat_record` lists the run's record, and the arc file ends `done`.
+4. Re-run with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`. The sub-overseer returns an explicit missing-`Agent` error, there are no depth-2 agents, the arc file marks the proposal `blocked`, and the fixture has no commits beyond its baseline.
+
+Log as an observation, not a floor item: whether a depth-3 `cdocs:bash-runner` or `Explore` appears.
+Inline `cmd > file; tail` is an equally valid choice for the implementer.
 
 Escalation, `SendMessage` resume, and steering cannot occur in an `--afk` headless run.
 They belong to an optional interactive (tmux) follow-up and are not covered by this floor.
 
 ## Verification Methodology
 
-The floor: `/oversee` completes a one-proposal arc in the confined harness through a sub-overseer whose implementer delegates at layer 3, and with nesting disabled the loop errors without doing work.
+The floor: `/oversee` completes a one-proposal arc in the confined harness through a sub-overseer, and with nesting disabled the loop errors without doing work and the arc blocks.
 
 Failure looks like any of these:
 - A depth-1 implementer, reviewer, or judge appears: the arc overseer ran the loop itself.
 - An implementer's return contains `## Investigation Requested` or says it cannot dispatch: stale text survived.
-- At depth `1`, the fixture has new commits or review output: an overseer played its own children.
+- At depth `1`, the fixture has new commits or review output: an overseer played its own children, or the arc ran the loop inline instead of blocking.
 - A `background` `requestShape` appears: the run was not confined to foreground, and its results are unreliable.
 
 Defer Phase 3 (`deferred-to-followup`) only for a stated blocker, such as missing credentials, and file an rfp when doing so.
