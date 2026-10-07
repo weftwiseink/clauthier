@@ -40,16 +40,13 @@ Give every agent-invoked cdocs command one home that resolves in consumer projec
 
 ## Background
 
-- **Why the split exists.** `graphify-scope.sh` landed on 2026-09-23 (`07af3d4`), before `bin/` existed (`chat-record`, `f3b4806`, 2026-10-05).
-  `scripts/` was then the plugin's only script folder (it held `postinstall.js` since the 2026-03-18 build reorganization).
-  The graphify overseer dispatched the helper as `plugins/cdocs/lib/graphify-scope*`; the implementer placed it in `scripts/` with no recorded rationale ([full-send devlog](../devlogs/2026-09-23-graphify-cdocs-integration-full-send.md), dispatch rows 85-86).
-  Nothing in the [graphify integration proposal](2026-09-17-graphify-cdocs-integration.md) or its reviews constrains the location.
+- **Why the split exists.** `graphify-scope.sh` predates `bin/`, and nothing in the [graphify integration proposal](2026-09-17-graphify-cdocs-integration.md) constrains its location.
 - **How `bin/` resolves.** Claude Code adds an enabled plugin's `bin/` to the Bash tool's `PATH` (this session: `command -v chat-record` resolves to `plugins/cdocs/bin/chat-record`).
   The plugin README already relies on this for `chat-record note` ("Chat record" section).
 - **How `scripts/` resolves.** It does not, at runtime: nothing puts it on `PATH`, and `iterate/SKILL.md` line 48 runs `plugins/cdocs/scripts/graphify-scope.sh`, a path relative to this source repo's root.
   In a consumer project the plugin lives under `~/.claude/plugins/...`, so the call fails with "No such file or directory" (not a labeled `SCOPE-STATUS`).
   The flag is default-off and has only been exercised in this repo, which is why the bug is latent.
-- **OpenCode.** `scripts/build-opencode.ts` copies `skills/`, `rules/`, `hooks/cdocs-hooks.ts`, and `scripts/postinstall.js` only; neither `bin/` nor `graphify-scope.sh` reaches `build/cdocs/opencode/`.
+- **OpenCode.** `scripts/build-opencode.ts` copies `skills/`, `rules/`, `hooks/cdocs-hooks.ts`, and `scripts/postinstall.js`, and writes transformed `agents/`; neither `bin/` nor `graphify-scope.sh` reaches `build/cdocs/opencode/`.
   OpenCode has no plugin-`bin/` `PATH` mechanism, and the README already states OpenCode keeps no chat record.
   The ported `iterate` skill therefore cannot run the helper on OpenCode today, before or after this move.
 - **Tests and CI.** `hooks/tests/` already tests a `bin/` script (`chat-record.test.sh` resolves `$PLUGIN/bin/chat-record` from its own directory).
@@ -58,20 +55,21 @@ Give every agent-invoked cdocs command one home that resolves in consumer projec
 
 ## Proposed Solution
 
-1. `git mv plugins/cdocs/scripts/graphify-scope.sh plugins/cdocs/bin/graphify-scope` (drop `.sh`, matching `chat-record`; the executable bit carries over).
+1. `git mv plugins/cdocs/scripts/graphify-scope.sh plugins/cdocs/bin/graphify-scope` (drop `.sh` to match `chat-record`, keeping the executable bit).
 2. `git mv plugins/cdocs/scripts/test-graphify-scope.sh plugins/cdocs/hooks/tests/graphify-scope.test.sh`.
-3. Update references (complete list; historical `cdocs/` records are left as-is):
+3. Update references (complete list, with historical `cdocs/` records keeping their original paths):
 
 | Path | Change |
 |---|---|
-| `plugins/cdocs/skills/iterate/SKILL.md` (line 48) | `graphify-scope brief --enable --diff-base <base-ref>` (bare name, on `PATH`). In the fallback bullet, count a missing command (OpenCode, plugin disabled) as `skip-scope`. |
+| `plugins/cdocs/skills/iterate/SKILL.md` (line 48) | `graphify-scope brief --enable --diff-base <base-ref>` (bare name, on `PATH`). In the fallback bullet, count a missing command (OpenCode, or a non-CLI install without `bin/`) as `skip-scope`, logged as `[graphify: skip-scope no-command]`. |
 | `plugins/cdocs/bin/graphify-scope` | Header line 2 and line 29 comment (`test-graphify-scope.sh` -> `hooks/tests/graphify-scope.test.sh`); usage string (line 357) `graphify-scope.sh brief` -> `graphify-scope brief`. |
 | `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | Line 2 comment; line 17 becomes `PLUGIN="$(cd "$HERE/../.." && pwd)"` and `SH="$PLUGIN/bin/graphify-scope"`, mirroring `chat-record.test.sh`. |
 | `.github/workflows/cdocs-hooks.yml` | Add a `graphify-scope unit suite` step, `if: runner.os == 'Linux'` (see Design Decisions); mention it in the header comment. |
 | `plugins/cdocs/bin/README.md` | Restructure and add the section below. |
+| `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md` (line 38) | `plugins/cdocs/scripts/graphify-scope.sh` -> `plugins/cdocs/bin/graphify-scope`: a live RFP written for adopters, not a historical record. |
 
 4. `bin/README.md` becomes a two-command reference.
-   The H1 becomes `` # `bin/` ``, with a one-line BLUF ("Runtime commands Claude Code puts on the Bash tool's `PATH` while the plugin is enabled; OpenCode ports neither.").
+   The H1 becomes `` # `bin/` ``, with a one-line BLUF ("Runtime commands Claude Code puts on the Bash tool's `PATH` while the plugin is enabled. OpenCode ships neither.").
    The existing content moves under `## chat-record` unchanged (its `##` subsections demote to `###`).
    A new `## graphify-scope` section follows, in the same terse style:
 
@@ -84,7 +82,8 @@ Give every agent-invoked cdocs command one home that resolves in consumer projec
 ### What it does
 
 - `explain`s each changed file for its `[contains]` symbols, then `affected`s each symbol for its dependents, via the `graphify` CLI.
-- Prints `SCOPE-STATUS: scoped` plus the brief, or `skip-scope` (with a `SCOPE-REASON`) or `disabled`, exiting 0; a usage error or missing `jq` exits 1.
+- Prints `SCOPE-STATUS: scoped` plus the brief, or `skip-scope` (with a `SCOPE-REASON`) or `disabled`, and exits 0.
+- Exits 1 on a usage error or a missing `jq`.
 - Co-surfaces `.observe`/`.subscribe` sites in the touched files, which the graph cannot see.
 - Needs `jq`, and `graphify` with a built index for a scoped result.
 
@@ -140,7 +139,10 @@ Loop wiring: [`../skills/iterate/SKILL.md`](../skills/iterate/SKILL.md) "Graphif
 Tests: `bash plugins/cdocs/hooks/tests/graphify-scope.test.sh`.
 ````
 
-The three samples above were captured by running the current script on 2026-10-07; the implementer re-captures them from `bin/graphify-scope` and replaces any line that differs.
+The `disabled` and `no-binary` samples come from running the current script, and the implementer re-runs them against `bin/graphify-scope`.
+The scoped sample was captured against the `graphify` stub that `graphify-scope.test.sh` writes to its temporary directory.
+To re-capture it, copy the stub heredoc out of the test into a directory on `PATH`, then run the command in a workspace holding the test's `src/widget.ts` fixture and an empty-object `graph.json`.
+Every line shown is a literal `echo` in the helper or a stub fixture path, so the suite's assertions also cover it.
 
 ## Important Design Decisions
 
@@ -161,9 +163,8 @@ The three samples above were captured by running the current script on 2026-10-0
 
 - **Name collision.** Another `graphify-scope` earlier on `PATH` would shadow the plugin's.
   The `graphify` package ships only `graphify` and `graphify-mcp`, so the risk is low; rename to `cdocs-graphify-scope` only if a collision is reported.
-- **Permission prompts.** In default permission mode an unallowlisted `graphify-scope` call prompts, as `chat-record` does; this is unchanged from calling the old path.
+- **Permission prompts.** In default permission mode an unallowlisted `graphify-scope` call prompts, as `chat-record` does, unless `Bash(graphify-scope:*)` is allowed. This is unchanged from calling the old path.
 - **Plugin installed outside the CLI.** Per the README, a plugin with `bin/` does not install through claude.ai or Cowork; there the command is missing and the skill falls back to `skip-scope`.
-- **Untracked copies in sibling worktrees.** `git mv` lands in history; a sibling worktree sees the move only after merge.
 
 ## Test Plan
 
@@ -182,10 +183,10 @@ bash plugins/cdocs/hooks/tests/chat-record.test.sh --unit   # want: all pass
 bash plugins/cdocs/hooks/tests/validate-cdocs-edit-path.test.sh  # want: all pass
 test -x plugins/cdocs/bin/graphify-scope && ls plugins/cdocs/scripts   # want: executable; scripts/ lists only postinstall.js
 BIN="$PWD/plugins/cdocs/bin"; (cd "$(mktemp -d)" && git init -q && PATH="$BIN:$PATH" graphify-scope brief | head -1)
-# want: SCOPE-STATUS: disabled (resolves on PATH outside the source repo)
-grep -rn -e 'scripts/graphify-scope' -e 'graphify-scope\.sh' -e 'test-graphify-scope' \
-  --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=build --exclude-dir=cdocs .
-# want: no output (historical cdocs/ records keep their original paths by design)
+# want: SCOPE-STATUS: disabled (runs outside the source repo; the live command -v check below proves Claude Code's PATH)
+git grep -n -e 'scripts/graphify-scope' -e 'graphify-scope\.sh' -e 'test-graphify-scope' -- . ':!cdocs/'
+# want: no output (before the move this lists six hits)
+git grep -n 'scripts/graphify-scope' -- cdocs/proposals/2026-09-27-clauthier-improvement-verification.md   # want: no output
 ```
 
 In a live Claude Code session with the plugin enabled, `command -v graphify-scope` resolves to the plugin's `bin/`.
@@ -195,7 +196,7 @@ In a live Claude Code session with the plugin enabled, `command -v graphify-scop
 One phase; each numbered item is its own conventional commit, staged by explicit path.
 
 1. `refactor(cdocs): move graphify-scope to bin/ and its test to hooks/tests` - both `git mv`s plus the in-file path, header, and usage edits, so the tree is green at this commit.
-2. `fix(iterate): call graphify-scope from PATH` - `iterate/SKILL.md` invocation and missing-command fallback.
+2. `fix(iterate): call graphify-scope from PATH` - `iterate/SKILL.md` invocation and missing-command fallback, plus the live RFP's path (line 38).
 3. `ci(cdocs): run the graphify-scope suite on Linux` - workflow step and header comment.
 4. `docs(bin): document graphify-scope` - `bin/README.md` restructure and section, with re-captured samples.
 
