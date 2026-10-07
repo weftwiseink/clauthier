@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: round 3 revision (warm nested-proposer).
-- next: fresh reviewer r3.
+- now: reviewer r3.
+- next: branch on verdict.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -35,6 +35,7 @@ tags: [orchestration, subagents, propose_revise]
 | 1 | reviewer r1 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows.md (84b4e54) | revise | capability claims re-verified (docs + probe); blockers: no-`Agent` loop-lead fallback, Stay-thin scope, concrete Phase 3 harness |
 | 2 | nested-proposer (warm) | revise | proposal a0a96ec | review_ready | 3 blockers addressed; Resolved Questions section; grew to ~3,560 words (Phase 3 harness text) |
 | 2 | reviewer r2 (opus) | review | cdocs/reviews/2026-10-06-review-of-nested-subagent-workflows-r2.md (eb3fd36) | revise | design accept-ready; blocker: Phase 3 harness not isolated (use chat-record.test.sh pattern + CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1, verified 3-level foreground); trim ~700 words |
+| 3 | nested-proposer (warm) | revise | proposal de57b47 | review_ready | steering applied (no Nesting section; fail-loud; nest-safe loops, chat layer, /oversee dispatches sub-overseers); isolated harness; 2,555 words |
 
 ## Steering Log
 
@@ -53,3 +54,5 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T17:31 | dispatch | reviewer r2 (cdocs:reviewer, opus) | review r2, proposal last_reviewed | round 2 review |
 | 2026-10-06T17:45 | return | reviewer r2 | review r2 + proposal last_reviewed (eb3fd36) | revise, 1 blocker |
 | 2026-10-06T17:55 | dispatch | nested-proposer (warm, SendMessage) | proposal | round 3: r2 harness blocker + steering |
+| 2026-10-06T18:05 | return | nested-proposer | proposal (de57b47) | review_ready |
+| 2026-10-06T18:06 | dispatch | reviewer r3 (cdocs:reviewer, opus) | review r3, proposal last_reviewed | round 3 review |
