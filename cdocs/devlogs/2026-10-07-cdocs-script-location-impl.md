@@ -6,6 +6,11 @@ task_list: cdocs/script-location
 type: devlog
 state: live
 status: review_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-5-5"
+  at: 2026-10-07T13:05:43-07:00
+  round: 1
 part_of: cdocs/devlogs/2026-10-07-cdocs-script-location.md
 tags: [plugin-architecture, graphify]
 ---
