@@ -36,5 +36,4 @@ Your Task prompt provides the proposal topic or path and, on a revision, the rev
 ## Constraints
 
 You have full tools (`tools: "*"`), identical to the `general-purpose` catch-all this agent type replaces for the proposer and reviser roles: this is a labeling change, not a capability change, so the tool surface is deliberately not narrowed.
-When a `/cdocs:propose-revise` overseer dispatches you, you cannot dispatch subagents via `Task`; self-investigate inline and surface anything needing a separate fresh context via a `## Investigation Requested` block for the overseer (see `/cdocs:implement` Invocation Modes for the schema).
 Commit your work early and often, by explicit path.
