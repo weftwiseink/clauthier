@@ -79,10 +79,10 @@ Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat rec
 
 ### Commands
 
-- `graphify-scope brief --enable --diff-base <ref>`: brief for files changed since `<ref>` (default: uncommitted changes against `HEAD`).
+- `graphify-scope brief --enable`: brief for uncommitted changes against `HEAD`.
+- `graphify-scope brief --enable --diff-base <ref>`: brief for files changed since `<ref>`.
 - `graphify-scope brief --enable --files "<path> ..."`: brief for named files.
-- `--symbols "<label> ..."`: skip `explain`, run `affected` on known symbols.
-- `--index <path>` / `--graph <path>`, `--near-empty-threshold <n>`: index location and the near-empty skip threshold.
+- Options: `--symbols "<label> ..."` skips `explain` and runs `affected` on known symbols; `--index <path>` (or `--graph`) sets the index; `--near-empty-threshold <n>` sets the near-empty skip threshold.
 
 ### Examples
 
