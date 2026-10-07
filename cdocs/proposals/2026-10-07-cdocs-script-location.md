@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/script-location
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -64,7 +64,7 @@ Give every agent-invoked cdocs command one home that resolves in consumer projec
 | `plugins/cdocs/skills/iterate/SKILL.md` (line 48) | `graphify-scope brief --enable --diff-base <base-ref>` (bare name, on `PATH`). In the fallback bullet, count a missing command (OpenCode, or a non-CLI install without `bin/`) as `skip-scope`, logged as `[graphify: skip-scope no-command]`. |
 | `plugins/cdocs/bin/graphify-scope` | Header line 2 and line 29 comment (`test-graphify-scope.sh` -> `hooks/tests/graphify-scope.test.sh`); usage string (line 357) `graphify-scope.sh brief` -> `graphify-scope brief`. |
 | `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | Line 2 comment; line 17 becomes `PLUGIN="$(cd "$HERE/../.." && pwd)"` and `SH="$PLUGIN/bin/graphify-scope"`, mirroring `chat-record.test.sh`. |
-| `.github/workflows/cdocs-hooks.yml` | Add a `graphify-scope unit suite` step, `if: runner.os == 'Linux'` (see Design Decisions); mention it in the header comment. |
+| `.github/workflows/cdocs-hooks.yml` | Add a `graphify-scope unit suite` step, `if: runner.os == 'Linux'` (see Design Decisions); mention it in the header comment, and qualify its "macOS runs it too" sentence with "except the Linux-only graphify-scope suite". |
 | `plugins/cdocs/bin/README.md` | Restructure and add the section below. |
 | `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md` (line 38) | `plugins/cdocs/scripts/graphify-scope.sh` -> `plugins/cdocs/bin/graphify-scope`: a live RFP written for adopters, not a historical record. |
 
@@ -122,7 +122,7 @@ A scoped brief, head only (run against the test suite's `graphify` stub):
 $ graphify-scope brief --enable --files src/widget.ts --index graph.json
 SCOPE-STATUS: scoped
 SCOPE-DEP-COUNT: 3
-SCOPE-OBSERVE-COUNT: 1
+SCOPE-OBSERVE-COUNT: 2
 
 SCOPED-CONTEXT BRIEF (graphify-resolved; an AID, never a completeness guarantee)
 ...
@@ -142,7 +142,8 @@ Tests: `bash plugins/cdocs/hooks/tests/graphify-scope.test.sh`.
 The `disabled` and `no-binary` samples come from running the current script, and the implementer re-runs them against `bin/graphify-scope`.
 The scoped sample was captured against the `graphify` stub that `graphify-scope.test.sh` writes to its temporary directory.
 To re-capture it, copy the stub heredoc out of the test into a directory on `PATH`, then run the command in a workspace holding the test's `src/widget.ts` fixture and an empty-object `graph.json`.
-Every line shown is a literal `echo` in the helper or a stub fixture path, so the suite's assertions also cover it.
+Write `graph.json` after the fixture: an index older than a changed file yields `skip-scope` / `stale-index` instead of `scoped`.
+Paste the real output, since the suite asserts the counts only loosely (`SCOPE-OBSERVE-COUNT: [1-9]`).
 
 ## Important Design Decisions
 
@@ -163,7 +164,8 @@ Every line shown is a literal `echo` in the helper or a stub fixture path, so th
 
 - **Name collision.** Another `graphify-scope` earlier on `PATH` would shadow the plugin's.
   The `graphify` package ships only `graphify` and `graphify-mcp`, so the risk is low; rename to `cdocs-graphify-scope` only if a collision is reported.
-- **Permission prompts.** In default permission mode an unallowlisted `graphify-scope` call prompts, as `chat-record` does, unless `Bash(graphify-scope:*)` is allowed. This is unchanged from calling the old path.
+- **Permission prompts.** In default permission mode an unallowlisted `graphify-scope` call prompts, as `chat-record` does, unless `Bash(graphify-scope:*)` is allowed.
+  This is unchanged from calling the old path.
 - **Plugin installed outside the CLI.** Per the README, a plugin with `bin/` does not install through claude.ai or Cowork; there the command is missing and the skill falls back to `skip-scope`.
 
 ## Test Plan
@@ -177,7 +179,7 @@ Every line shown is a literal `echo` in the helper or a stub fixture path, so th
 Run from the repo root; each command's failure picture is stated.
 
 ```sh
-npm run build:cdocs                       # fails: build error; check: build/cdocs/opencode/scripts/ holds only postinstall.js
+npm run build:cdocs                       # regression guard only (the build copies postinstall.js by name, so it passes before and after the move); want: exit 0
 bash plugins/cdocs/hooks/tests/graphify-scope.test.sh       # want: RESULTS: 51 passed, 0 failed
 bash plugins/cdocs/hooks/tests/chat-record.test.sh --unit   # want: all pass
 bash plugins/cdocs/hooks/tests/validate-cdocs-edit-path.test.sh  # want: all pass
