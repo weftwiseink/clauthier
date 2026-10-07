@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/nested-subagent-workflows
 type: devlog
 state: live
-status: done
+status: wip
 tags: [orchestration, subagents, propose_revise]
 ---
 
@@ -22,8 +22,8 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: loop closed, proposal implementation_ready.
-- next: /cdocs:iterate on maintainer go-ahead.
+- now: round 4 re-scope (warm nested-proposer); loop reopened per Steering Log.
+- next: fresh reviewer r4, then /cdocs:iterate, then atlas update.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
 
@@ -41,6 +41,7 @@ tags: [orchestration, subagents, propose_revise]
 ## Steering Log
 
 - 2026-10-06T17:40 (maintainer; applied round 3 at 17:55, chat-layer model softened to judgment-based nesting rather than a mandated layer): drop generic nesting guidance (models have sane defaults; keep only cdocs invariants); a loop lead without `Agent` fails loudly; consider an always-present chat layer (top-level, 1:1 with chat-record) dispatching one nested sub-overseer per workstream, collapsing `/oversee` into it.
+- 2026-10-06T18:30 (maintainer; applied round 4): agents do not decide on nesting overseers. Split nested overseers into an RFP for a user-invoked `/nest-overseers` skill (other ideas may negate it); re-scope the proposal to unbounded subagent nesting without touching overseer mechanics; re-run propose-revise, then `/cdocs:iterate`, then update the cdocs Atlas artifact.
 
 ## Dispatch/Return Events
 
@@ -78,3 +79,4 @@ tags: [orchestration, subagents, propose_revise]
 - `/cdocs:iterate` the proposal (awaiting maintainer).
 - OC build maps `tools: "*"` to all-false: RFP is the proposal's Phase 1.
 - Follow-up RFP for further `/oversee` cuts (arc devlog, `position`).
+| 2026-10-06T18:31 | dispatch | nested-proposer (warm, SendMessage) | proposal, cdocs/proposals/2026-10-06-nest-overseers-rfp.md | round 4: split RFP, re-scope |
