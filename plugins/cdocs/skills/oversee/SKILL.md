@@ -13,7 +13,7 @@ The arc overseer runs in *overseer mode* per [`orchestration-discipline.md`](../
 Inline floor: dispatch by default (each composed loop keeps its own carve-out); write the arc file and an arc devlog handoff at each proposal boundary; read each loop's durable results, never its raw turns.
 The human user is the supervisor: they invoke the skill and receive escalations.
 
-> NOTE: `/oversee` is TOP-LEVEL ONLY. Subagents cannot dispatch, so a dispatched `/oversee` declines or runs advisory only, and says so.
+> NOTE: `/oversee` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/oversee` declines or runs advisory only, and says so.
 
 ## Invocation
 
