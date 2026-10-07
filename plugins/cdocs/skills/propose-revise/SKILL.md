@@ -14,9 +14,9 @@ Any minor issues or nits that come along with the accepting round should still b
 The invoking session agent enters *overseer mode* and restricts itself to orchestration: it dispatches subagents in alternation,
 terminates on accept-or-escalate, and should AskUserQuestion if the proposal hasn't been accepted after 6 rounds.
 
-The overseer discipline (thin lead, dispatch-by-default, single-writer file ownership) is defined canonically in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
-Inline floor: dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule default); write durable state at task-unit boundaries; use a fresh reviewer each round.
-The loop devlog is the workstream's top-level devlog: the overseer owns it, a later `/cdocs:iterate` on the proposal continues it, and every dispatch and return is logged there per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", with its `## Scratchpoint` current per "Durable state". When logging a review round to the devlog's Iteration Log (shared with a later `/cdocs:iterate`, per its `template.md`), an accepted round is `review_verdict: proposal_accepted`, not `accept` — `accept` is reserved for an implementation-review Accept, so a reader (including `/cdocs:triage`) never mistakes a proposal accept for an implementation accept.
+The overseer discipline is defined canonically in [`overseers.md`](../../rules/overseers.md); this skill references it rather than restating it.
+Dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule's trivial-task carve-out).
+The loop devlog is the workstream's top-level devlog: the overseer owns it and a later `/cdocs:iterate` on the proposal continues it. When logging a review round to the devlog's Iteration Log (shared with a later `/cdocs:iterate`, per its `template.md`), an accepted round is `review_verdict: proposal_accepted`, not `accept` — `accept` is reserved for an implementation-review Accept, so a reader (including `/cdocs:triage`) never mistakes a proposal accept for an implementation accept.
 The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
@@ -39,7 +39,7 @@ Unless stated explicitly by the user, cdocs docs should be committed early and o
 - `-f | --first-round ["<model_description"]`: Use a different model config for the first round prroposal and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
-  For default tier guidance (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins), see [`model-tiering.md`](../../rules/model-tiering.md).
+  For default tiers, see [`workflow-patterns.md`](../../rules/workflow-patterns.md) "Model Tiering".
 
 ## Roles
 

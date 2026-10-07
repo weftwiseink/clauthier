@@ -10,8 +10,7 @@ Run an iterative implement-review loop scoped to a proposal, a phase, or any uni
 The invoking session agent enters *overseer mode* and restricts itself to orchestration:
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
-The overseer discipline is defined in [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); this skill references it rather than restating it.
-Inline floor: dispatch by default for all tasks beyond trivial few-liners (single-line edits, one-off checks); write durable state to the Iteration Log and a Completed/Decisions Made/Open Todos handoff at task-unit boundaries; use a fresh reviewer every iteration and a fresh judge every invocation.
+The overseer discipline is defined in [`overseers.md`](../../rules/overseers.md); this skill references it rather than restating it.
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
@@ -34,7 +33,7 @@ Code and cdocs should be committed early and often.
 - `-f | --first-round ["<model_description"]`: Use a different model config for the first round implementation and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
-  For default tier guidance (opus lead/judgment, sonnet search/explore, haiku mechanical; consumer floor wins), see [`model-tiering.md`](../../rules/model-tiering.md).
+  For default tiers, see [`workflow-patterns.md`](../../rules/workflow-patterns.md) "Model Tiering".
 - `--graphify-scope`: opt into priming a graphify-resolved dependent-set brief into the reviewer's dispatch (see "Graphify scoping" below).
   DEFAULT OFF: with the flag absent the loop behaves exactly as today and makes zero graphify calls.
 
@@ -83,7 +82,6 @@ Name the sub-devlog it writes, per the devlog skill's "Continuing in a new devlo
 Add a `## Workstream Devlogs` row for each new sub-devlog, including any successor the implementer reports.
 
 Append a `dispatch` row to the Dispatch/Return Events table when a child (implementer, reviewer, judge, or fork) is dispatched, naming the files it may claim, and a matching `return` row when it reports done.
-These rows are what on-resume reconciliation reads, so the write is not optional.
 
 ### Turn N.b (Review)
 
@@ -111,7 +109,7 @@ Append a Judge Log row, and when the reasoning matters (typically `rotate-implem
 
 ### Checkpoint (handoff)
 
-At each judge assessment (Turn N.d) and on Accept, write the handoff per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state"; keep your Scratchpoint current between handoffs.
+Keep your Scratchpoint current and write handoffs per the devlog skill's "The Scratchpoint Section" and "Handoffs".
 When a finished concern's writer did not mark its sub-devlog `done` (the next concern went to another implementer), mark it.
 
 ## Termination
@@ -123,10 +121,6 @@ No retry-count cap on Accept-bound progress: a patient overseer is bounded by re
 
 A human message that arrives while a subagent is in flight is queued, never injected: fold it into the next dispatch.
 Note each directive in your devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it, so a resumed overseer can pick up any not yet applied.
-
-## On-Resume Reconciliation
-
-Follow [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Resume from disk, not memory", reading your devlog's Dispatch/Return Events rows, and re-queue any Steering Log directive not yet applied.
 
 ## Iteration Log and Judge Log
 

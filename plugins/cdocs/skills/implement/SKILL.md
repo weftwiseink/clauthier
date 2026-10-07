@@ -16,7 +16,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 `/cdocs:implement` runs in one of two modes:
 
 - **Top-level** (default): invoked directly by the user.
-  When dispatching, a top-level session is a thin lead per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Stay thin", so the discipline is not `iterate`-only.
+  When dispatching, a top-level session is a thin lead per [`overseers.md`](../../rules/overseers.md) "Stay thin", so the discipline is not `iterate`-only.
 - **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt.
   Questions for the user go in your return.
 
@@ -46,7 +46,7 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
 3. **Create a devlog**: invoke `/cdocs:devlog` for the implementation session.
    - Set `task_list` to match the proposal's `task_list`.
    - Reference the proposal path in the devlog's Objective section.
-   - Dispatched: write the sub-devlog the overseer names instead, creating it with `part_of` the top-level devlog if absent, else continuing from its Scratchpoint and latest handoff.
+   - Dispatched: write the sub-devlog the overseer names instead, creating it with `part_of` the top-level devlog if absent, else continuing from its Scratchpoint and any handoff (per the devlog skill's "Handoffs").
      The top-level devlog and its tables are the overseer's.
 4. **Create a task list**: break the proposal's implementation phases into trackable tasks.
 5. **Execute implementation phases** following the proposal's plan:
@@ -78,7 +78,7 @@ The implementor should follow these conventions throughout:
 - The devlog is important for future understanding for the implementation session.
 - Update it as you go, not just retroactively.
 - Document: what was done, why decisions were made, what deviated from the plan, what didn't work.
-- Keep the `## Scratchpoint` of the devlog you are writing current per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md) "Durable state", and write a handoff beside it when the overseer asks for a restart.
+- Keep the `## Scratchpoint` of the devlog you are writing current per the devlog skill, and write a handoff beside it when the overseer asks for a restart.
 - At each return or handoff, look for a seam per the devlog skill's "Continuing in a new devlog", and report any successor sub-devlog you start to your overseer.
 
 ### Use cdocs skills as appropriate (top-level mode)

@@ -17,7 +17,7 @@ Read the proposal for the full rationale; this skill is the operational protocol
 ## Overseer discipline (this skill dispatches; it never does an arm's work inline)
 
 The invoking session runs in *overseer mode*: a thin router that pins the base and prompt, DISPATCHES the two arms and the evaluator as subagents, and assembles the scorecard from their returned results.
-The canonical discipline is [`orchestration-discipline.md`](../../rules/orchestration-discipline.md); the inline floor:
+The canonical discipline is [`overseers.md`](../../rules/overseers.md); the inline floor:
 
 - Dispatch by default; the overseer never performs an arm's task itself.
   Doing an arm's work inline would both violate overseer thinness AND contaminate the ablation with the overseer's own tokens, destroying the measurement.
@@ -287,6 +287,5 @@ These are not yet run live, and are deferred to a top-level overseer run:
 
 - Proposal: [`cdocs/proposals/2026-09-17-mcp-tool-effectiveness-ablation.md`](../../../../cdocs/proposals/2026-09-17-mcp-tool-effectiveness-ablation.md).
 - Helper script: [`ablate.sh`](./ablate.sh). Unit tests: [`test-ablate.sh`](./test-ablate.sh).
-- Orchestration discipline: [`orchestration-discipline.md`](../../rules/orchestration-discipline.md).
-- Model tiering: [`model-tiering.md`](../../rules/model-tiering.md).
+- Overseer rules: [`overseers.md`](../../rules/overseers.md).
 - Workflow patterns: [`workflow-patterns.md`](../../rules/workflow-patterns.md).

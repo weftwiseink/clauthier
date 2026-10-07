@@ -9,8 +9,7 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m
 `/oversee` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by composing the existing loop skills per proposal, never reimplementing a loop.
 Its unit of work is a proposal: it advances to the next one only when the current one reaches a terminal accepted state.
 
-The arc overseer runs in *overseer mode* per [`orchestration-discipline.md`](../../rules/orchestration-discipline.md).
-Inline floor: dispatch by default (each composed loop keeps its own carve-out); write the arc file and an arc devlog handoff at each proposal boundary; read each loop's durable results, never its raw turns.
+The arc overseer runs in *overseer mode* per [`overseers.md`](../../rules/overseers.md).
 The human user is the supervisor: they invoke the skill and receive escalations.
 
 > NOTE: `/oversee` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/oversee` declines or runs advisory only, and says so.
@@ -27,7 +26,7 @@ The human user is the supervisor: they invoke the skill and receive escalations.
 - `full <topic>`: dispatch `/cdocs:propose` to scope the arc's proposal set, then treat the result as a `chain`.
 - `resume`: see Resume.
 - `--afk`: the user is away. Soft gates ("continue to the next proposal?", "which of two acceptable defaults?") take the logged default and proceed; hard gates still stop. Record it as `afk` in the arc file so a resumed arc knows.
-- `-m | --model` and `-f | --first-round`: passed unchanged to each composed loop, per [`model-tiering.md`](../../rules/model-tiering.md).
+- `-m | --model` and `-f | --first-round`: passed unchanged to each composed loop.
 
 Mint `arc_id` as `YYYY-MM-DD` plus a dash-cased slug of the topic (or of the first proposal's basename), state it in the Turn-0 brief, and reuse it on resume.
 
@@ -45,7 +44,7 @@ The arc overseer runs each composed loop as itself, so it is the only overseer i
 ## Composition contract
 
 Down: the proposal path, a `--verification-floor` drawn from the proposal's own Verification Methodology (for a freshly authored `full` proposal, default to "the artifact starts and does its job"), model flags unchanged, and under AFK a brief line saying to run to accept-or-escalate without pausing.
-Up: the proposal's frontmatter status, its loop's final handoff, and the arc file; never the loop's raw turns.
+Up: the proposal's frontmatter status, its top-level devlog's Scratchpoint, and the arc file; never the loop's raw turns.
 
 ## Arc state
 
@@ -65,7 +64,7 @@ At a hard gate, mark the proposal `blocked`, record the escalation in the arc fi
 
 ## Resume
 
-Trust disk over memory: each proposal's frontmatter status, its loop's last handoff, and the arc file.
+Trust disk over memory: each proposal's frontmatter status, its top-level devlog's Scratchpoint (and handoff, if present), and the arc file.
 Accepted but marked in_progress: mark done and advance. Ambiguous: re-run the loop (iterate re-reviews done work cheaply). Never re-run a done proposal.
 With no arc-id, resume the single non-terminal arc file, or ask (under AFK, take the most recently written one and log the choice).
 

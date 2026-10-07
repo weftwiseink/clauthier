@@ -26,5 +26,5 @@ Add whatever fields a cold resume needs (scope, gates, notes).
 
 ## Arc Devlog
 
-Keep a normal cdocs devlog beside the JSON for the arc narrative and links to each proposal's top-level devlog, with a Completed / Decisions Made / Open Todos handoff at each proposal boundary.
+Keep a normal cdocs devlog beside the JSON for the arc narrative and links to each proposal's top-level devlog, with a handoff at each proposal boundary.
 Each proposal's loop tables and Workstream Devlogs index live in its top-level, not here.
