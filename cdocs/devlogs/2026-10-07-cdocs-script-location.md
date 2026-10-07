@@ -37,6 +37,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 - `bin/README.md` gains a folder heading; chat-record content moves under its own section unchanged.
 - Review r1 questions: keep the CI step for the graphify-scope test; update the live reference in `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md`.
 - Review r2 N5: keep `npm run build:cdocs` in verification as a regression guard (maintainer asked for it), noting it cannot detect a bad move.
+- Impl review question: add a one-line pointer from `plugins/cdocs/README.md` to `bin/README.md`.
+- Impl review nits (CI comment order, README default wording, iterate fallback covers a failing helper) resolved rather than deferred.
 - Chat record: not run (nested overseer is a subagent; `overseers.md` reserves `chat-record` for top-level agents, and this checkout has no `cdocs/_chat/`).
 
 ## Scratchpoint
@@ -59,6 +61,7 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 |---|---|---|---|---|---|---|
 | p1 | proposer-1 | rev-1 | revise | n/a | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md | proposal round; B1 grep exclude-dir hid plugins/cdocs |
 | p2 | proposer-1 | rev-2 | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-r2.md | nits N1-N4 folded into proposal before iterate |
+| 1 | impl-1 | rev-3 | accept | confirmed | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md | reviewer re-ran build, 3 suites, PATH and samples; artifacts in session scratchpad; nits folded in by impl-1 |
 
 ## Judge Log
 
@@ -82,6 +85,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | dispatch | impl-1 (cdocs:implementer) | plugins/cdocs/scripts/graphify-scope.sh, plugins/cdocs/scripts/test-graphify-scope.sh, plugins/cdocs/bin/*, plugins/cdocs/hooks/tests/graphify-scope.test.sh, plugins/cdocs/skills/iterate/SKILL.md, .github/workflows/cdocs-hooks.yml, cdocs/proposals/2026-09-27-clauthier-improvement-verification.md, proposal frontmatter, impl sub-devlog | 2026-10-07T12:36 | iterate round 1 |
 | return | impl-1 | (as dispatched) | 2026-10-07T12:45 | ae88ea0..b8269d3; floor passes; no deviations |
 | dispatch | rev-3 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md, impl sub-devlog frontmatter | 2026-10-07T12:46 | implementation review round 1 |
+| return | rev-3 | cdocs/reviews/2026-10-07-review-of-cdocs-script-location-impl.md | 2026-10-07T12:55 | a70659b; accept, 3 non-blocking nits |
+| dispatch | impl-1 (resumed) | .github/workflows/cdocs-hooks.yml, plugins/cdocs/bin/README.md, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/README.md, impl sub-devlog | 2026-10-07T12:56 | accept-round nits |
 
 ## Steering Log
 
