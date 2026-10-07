@@ -22,7 +22,7 @@ tags: [orchestration, subagents, propose_revise]
 ## Scratchpoint
 
 - as_of: 2026-10-06T17:00-07:00
-- now: iterate iteration 1, nest-impl-1 implementing.
+- now: iterate iteration 1, rev-1 reviewing.
 - next: fresh reviewer; then atlas update after accept.
 - open: OC build `tools: "*"` bug needs an RFP or fix (out of scope here).
 - files touched: this devlog.
@@ -110,3 +110,5 @@ tags: [orchestration, subagents, propose_revise]
 | 2026-10-06T18:51 | dispatch | nested-proposer (warm, SendMessage) | proposal | accepting-round nits, set implementation_ready |
 | 2026-10-06T18:55 | return | nested-proposer | proposal (f8cf9f1) | implementation_ready, 1,674 words; propose-revise loop closed |
 | 2026-10-06T19:00 | dispatch | nest-impl-1 (cdocs:implementer, opus) | plugins/cdocs/{skills/implement,skills/propose,skills/iterate,skills/triage,skills/ablate,skills/oversee,agents/implementer,agents/reviewer,agents/proposer}/*, new OC tools RFP, cdocs/devlogs/2026-10-06-nested-subagent-workflows-implementation.md | iteration 1 |
+| 2026-10-06T19:10 | return | nest-impl-1 | fc01594..a45d647, OC wildcard-tools RFP (791138d) | review_ready; live check passed (depth-2 bash-runner, foreground, no denials); grep clean; build + 95/95 + 17/17; deviation: depth-2 child wrote to /tmp outside sandbox (env -i drops TMPDIR) |
+| 2026-10-06T19:11 | dispatch | rev-1 (cdocs:reviewer, opus) | review file, proposal last_reviewed | iteration 1 review, re-run floor with TMPDIR passed |
