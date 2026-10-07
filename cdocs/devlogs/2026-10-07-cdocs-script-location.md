@@ -30,6 +30,11 @@ Verification floor: `npm run build:cdocs` succeeds, `plugins/cdocs/hooks/tests/c
 
 Nested overseer dispatched by the maintainer's top-level session, without `AskUserQuestion`: each place the skills say to ask the user is decided here and listed below.
 
+- Command name stays `graphify-scope` (no `cdocs-` prefix); rename only on a reported clash.
+- OpenCode: no port of the helper; the skill treats a missing command as `skip-scope`.
+- New CI test step runs on Linux only (helper needs bash 4+).
+- Test moves to `plugins/cdocs/hooks/tests/` (anything in `bin/` lands on PATH).
+- `bin/README.md` gains a folder heading; chat-record content moves under its own section unchanged.
 - Chat record: not run (nested overseer is a subagent; `overseers.md` reserves `chat-record` for top-level agents, and this checkout has no `cdocs/_chat/`).
 
 ## Scratchpoint
@@ -60,6 +65,8 @@ Nested overseer dispatched by the maintainer's top-level session, without `AskUs
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | proposer-1 (cdocs:proposer, a84ad7a7) | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:05 | propose round 1 |
+| return | proposer-1 | cdocs/proposals/2026-10-07-cdocs-script-location.md | 2026-10-07T12:10 | bb60c94; decision: move to bin/graphify-scope |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-cdocs-script-location.md, proposal frontmatter | 2026-10-07T12:11 | proposal review round 1 |
 
 ## Steering Log
 
