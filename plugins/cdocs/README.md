@@ -63,12 +63,13 @@ Rule files ship with the plugin and are delivered to consuming projects via `/cd
 
 ### Rules Integration
 
-Rule delivery is `/cdocs:init`-driven: the skill materializes rule content into the consuming project and standard `@`-imports load it on session start.
+Rule delivery is `/cdocs:init`-driven: the skill materializes rule content into the consuming project, where Claude Code auto-loads it on session start.
 
 1. **`/cdocs:init` materialization** (primary path).
    `/cdocs:init` writes the rule content into the consuming project at three locations: `.claude/rules/cdocs.md` for Claude Code, `.opencode/rules/cdocs/*.md` for OpenCode, and an inlined section delimited by `<!-- cdocs-rules-start -->` / `<!-- cdocs-rules-end -->` in `AGENTS.md` for cross-tool fallback (Codex, Cursor, Copilot, Aider, and others).
    Each materialized file carries a marker comment naming the plugin version and a sha256 hash of the source rule content: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init ... -->`.
-   The project's `CLAUDE.md` loads `.claude/rules/cdocs.md` via a standard `@`-import.
+   Claude Code auto-loads `.claude/rules/cdocs.md` with no `@`-import: it loads every unscoped `.md` under `.claude/rules/` at launch, gives it to non-fork subagents, and re-injects it from disk after compaction.
+   `/cdocs:init` adds no import to `CLAUDE.md`, and removes an exact `@.claude/rules/cdocs.md` line if one exists.
    This path uses canonical CC mechanics: no caps, no hook payload, no model-must-Read-an-injected-file dynamics.
 
 2. **SessionStart freshness check** (freshness mechanism, not a content channel).
@@ -80,7 +81,7 @@ Rule delivery is `/cdocs:init`-driven: the skill materializes rule content into 
 
 3. **Read-after-write directive** (closes the in-session staleness window).
    When the agent runs `/cdocs:init`, the skill emits a final-line directive instructing the agent to `Read .claude/rules/cdocs.md` next.
-   The `Read` tool result populates the session's context with the current rule content; the agent treats the read content as authoritative over the `@`-imported version baked into the system prompt at session start.
+   The `Read` tool result populates the session's context with the current rule content; the agent treats the read content as authoritative over the version loaded into the system prompt at session start.
 
 Hash-based comparison (rather than version-based) avoids spurious refresh nudges on version-only bumps where the rule content did not change.
 
@@ -92,13 +93,13 @@ The loop skills (`iterate`, `propose-revise`, `full-send`) each keep a 2-3 line 
 The delivery path makes two empirical assumptions that future CC behavior could disturb:
 
 - **Directive obedience.** The freshness hook's effect depends on the agent honoring an injected `<system-reminder>`-framed instruction to run `/cdocs:init` and then `Read` the rewritten file. Compliance is high in practice (verified end-to-end in [cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md](../../cdocs/devlogs/2026-05-12-rule-delivery-materialization-implementation.md)) but not guaranteed. If the agent ignores the directive, materialized rules remain stale and the user must run `/cdocs:init` manually.
-- **Read-result authority.** Group C of the proposal's Test Plan validates that when the agent has both a stale `@`-imported copy and a freshly-`Read` copy of the rules in context, it answers rule questions from the freshly-`Read` content. This is empirically observed but is a model-attention property, not a framework guarantee.
+- **Read-result authority.** Group C of the proposal's Test Plan validates that when the agent has both a stale session-start copy and a freshly-`Read` copy of the rules in context, it answers rule questions from the freshly-`Read` content. This is empirically observed but is a model-attention property, not a framework guarantee.
 
 Additional notes:
 
 - **`/cdocs:init` is opt-in per project.** Projects that never run it get no rules at all; the freshness hook silently skips them. This is intentional: cdocs is workflow tooling, not a global default.
 - **Migration trigger.** The "When CC #14200 Lands" subsection below sketches the path from this freshness-hook design to a plugin-native `rules` declaration in `plugin.json`. The freshness hook is a workaround for the current lack of always-on plugin context, not a permanent fixture.
-- **First-time `/cdocs:init` Read overhead.** The Read-after-write directive fires on first-time init too. Harmless (no prior `@`-import to supersede) but costs one tool call.
+- **First-time `/cdocs:init` Read overhead.** The Read-after-write directive fires on first-time init too. Harmless (no prior rules to supersede) but costs one tool call.
 
 ### Cross-tool delivery
 
