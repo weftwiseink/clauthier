@@ -94,15 +94,6 @@ $ cdocs-graphify query "anything"
 cdocs-graphify: graphify not installed; skipping
 ```
 
-A coupling section (run against the test suite's stub):
-
-```
-NODE a [src=src/a.ts loc=L1]
-
-RUNTIME COUPLING (not in the graph):
-src/a.ts:1:a.observe(cb)
-```
-
 ### More
 
 Design: [`cdocs/proposals/2026-10-08-graphify-overhaul.md`](../../../cdocs/proposals/2026-10-08-graphify-overhaul.md).
