@@ -211,7 +211,7 @@ npm run build:cdocs
 ```
 
 The build script (`scripts/build-opencode.ts`):
-- Converts CC agent frontmatter to OC format (model mapping, tool expansion, permission generation)
+- Converts CC agent frontmatter to OC format (tool expansion, permission generation); `model:` is dropped so OC agents inherit the caller's model
 - Copies skills and rules into the build output for npm packaging
 - Copies hand-written OC files (`plugins/cdocs/hooks/cdocs-hooks.ts`, `plugins/cdocs/scripts/postinstall.js`)
 - Syncs the version from `.claude-plugin/plugin.json` to the output `package.json`
