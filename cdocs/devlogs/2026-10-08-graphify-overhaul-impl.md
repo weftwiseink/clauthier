@@ -1,18 +1,20 @@
 ---
 first_authored:
   by: "@claude-opus-5-5"
-  at: 2026-10-08T13:10:00-07:00
+  at: 2026-10-08T10:16:00-07:00
 task_list: cdocs/graphify-overhaul
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-graphify-overhaul.md
 tags: [graphify, claude_skills]
 ---
 
 # Graphify Overhaul Implementation: Devlog
 
-> BLUF: Iterate round 1 implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md), Phases 1-5, in worktree `graphify-overhaul`.
+> BLUF: Iterate round 1 implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md) in worktree `graphify-overhaul`: Phases 1-4 done and the host stub run passes every check; the weftwise ablation is not run (its container lacks graphify).
+> Deviations: the ignore line is `/cdocs/` (an unanchored `cdocs/` drops `plugins/cdocs/`), and the stub run used a headless branch-plugin dispatcher instead of a subagent one.
+> `update` costs about 11 s per call at weftwise scale, so the no-stamp default needs a maintainer decision.
 
 ## Objective
 
@@ -20,11 +22,14 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: Phase 5 host stub run (headless sandbox); weftwise ablation waits on its container.
-- graphify_base_query:
-- important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh`, `.github/workflows/cdocs-hooks.yml`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`
+- next_steps: Phase 5 weftwise ablation, once `podman exec -u node weftwise graphify --version` succeeds and `$GRAPHIFY_OUT/graph.json` exists there (both failed at 10:30); then the overseer's post-accept devcontainer live run and exclusion check.
+- graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index, run graphify update, and pass query explain path affected through to graphify"
+- important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`, `plugins/cdocs/skills/graphify/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/SKILL.md` "Base query", `.graphifyignore`
 - callouts:
   - decision: dispatched mode; the overseer owns the top-level devlog.
+  - decision: ignore line is `/cdocs/` (root-anchored), not `cdocs/`; see Phase 2.
+  - todo: maintainer decision on an update stamp (about 11 s per call at weftwise scale); see Phase 1.
+  - blocker: weftwise ablation prerequisites unmet.
 
 ## Plan
 
@@ -89,9 +94,84 @@ Both items confirmed; scratch dirs removed afterwards.
 - `2026-09-17-graphify-lace-devcontainer-enablement.md`: NOTE after D3 (agents never write the shared index).
 - `cdocs:triage` on both: 0 frontmatter issues, 0 fixes, no status recommendations.
 
+### Phase 5: verification
+
+**Host stub run** (headless, after Phases 1-4 at `f392af7`; script and sandbox in the session scratchpad, removed afterwards).
+
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Deviation from the Verification Methodology's mechanics, same checks.
+> The dispatcher is a headless `claude -p --plugin-dir <branch>/plugins/cdocs` top-level session (opus, sandboxed `CLAUDE_CONFIG_DIR` with credential copies, `CDOCS_CHAT_RECORD=off`, `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`) in a detached worktree of this branch, acting as overseer, rather than a subagent of this session.
+> That puts the branch's rules, skill, and plugin in the agents' context; this session's own plugin is the main checkout's.
+> The stub and the `cdocs-graphify` symlink sit in a sandbox `bin/` prepended to that session's `PATH` (the main checkout's plugin `bin/` dropped), not in `~/.local/bin`, so nothing leaks to concurrent sessions; the stub still self-expired at 30 minutes.
+> The fixture main graph is `GRAPHIFY_OUT=<sandbox>/maingraph` (the container's shape) rather than `main/graphify-out/`, so this dispatched implementer writes nothing into the `main` checkout.
+
+The dispatcher sent a foreground `cdocs:reviewer` with `isolation: "worktree"` the prompt "Review cdocs/devlogs/2026-10-08-graphify-overhaul-impl.md ... focusing on its Phase 2 section" plus `graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index and pass queries through to graphify"`.
+
+| Check | Result |
+|---|---|
+| Primary: stub log | pass: exactly 2 lines, `<update></…/.bare/.claude/worktrees/agent-aa4c…>` with `OUT=<that worktree>/graphify-out`, then `<query><base query><--graph><that worktree>/graphify-out/graph.json>` |
+| Secondary: `detect-usage --tool 'cli:cdocs-graphify (query\|explain\|path)'` on the reviewer transcript | `used` |
+| Positive control: dispatcher transcript | the `Agent` `tool_use` (`isolation: worktree`, prompt carries the base query) has a `tool_result` holding the reviewer's report |
+| Overseer clean: `grep -c GFY-MARKER` on the dispatcher transcript | `0` (reviewer transcript: 2) |
+| Overseer clean: `detect-usage --tool 'cli:^(cdocs-)?graphify '` on the dispatcher transcript | `unused` |
+| Fixture main graph | `cksum` unchanged |
+| No-op run (stub and fixture removed, wrapper still on `PATH`) | reviewer completed (verdict returned); no install, pip, pipx, or build command; ran `command -v graphify` once and never called the wrapper; its review mentions graphify's absence in 0 lines |
+
+No failure picture appeared: the base query ran, no marker reached the dispatcher, the shared fixture was not written, and the no-op run made no install attempt.
+
+> WARN(claude-opus-5-5/cdocs/graphify-overhaul): Confounds, so read the primary pass as "an agent handed the line runs it", not "at startup, cleanly".
+> - The harness based both reviewer isolation worktrees on `ec948c4` (an older `main`), not on this branch, under `.bare/.claude/worktrees/`; the target devlog was absent there, so each reviewer read it via `git show f392af7:` and the sandbox path.
+> - The primary reviewer spent 4 commands orienting, including `head -20` of the stub's own source (which holds the marker), before running the base query as its 5th command; it never loaded `/cdocs:graphify` via the Skill tool.
+> - One trial each (n=1).
+
+Both stub-run reviewers (independently, `f392af7`) returned Revise with wrapper findings, all applied: an unanchored `cdocs/` line drew no hint; a lost rename race nested the temp dir and a partial `graphify-out/` skipped forever without naming the fix; dated backup dirs were copied (`93cfc5f`); passthrough inherited the container's `GRAPHIFY_OUT` (`bcd1491`).
+Not applied, reported to the overseer: the `main` branch name is fixed (repos on `master` need `GRAPHIFY_OUT`, per the proposal), and the 30-hit coupling cap has no truncation marker.
+Their review files lived only in the throwaway worktrees and were deleted with them; they are test artifacts, not loop reviews.
+
+Final wrapper re-smoked against real graphify 0.9.61 in the container: query 0.8 s, `explain` by the ambiguous name's id works, `/var/cache/graphify/graph.json` mtime unchanged, the copied dated backup dropped, 0 root `cdocs/` nodes, `graphify-out/` removed afterwards.
+
+**Weftwise ablation: not run.** Prerequisite check at 10:30: `podman exec -u node weftwise graphify --version` fails (`command not found`), `GRAPHIFY_OUT` is unset, the container is 5 weeks old (not yet rebuilt by the separate workstream).
+Per the overseer's instruction, reported back rather than skipped or moved.
+
+**Routed to the overseer (post-accept):** the clauthier devcontainer live run and the exclusion check.
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper (49 lines) |
+| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 21-check suite against a graphify stub, bare-repo fixture |
+| `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | deleted |
+| `.github/workflows/cdocs-hooks.yml` | cdocs-graphify step on Linux and macOS; header comments |
+| `plugins/cdocs/bin/README.md` | `## cdocs-graphify` section replaces `## graphify-scope` |
+| `plugins/cdocs/README.md` | commands line; skills table gains `/cdocs:graphify` |
+| `plugins/cdocs/skills/graphify/SKILL.md` | new skill (proposal draft plus one ambiguity line) |
+| `plugins/cdocs/rules/tool-use-safeguards.md` | `/graphify` bullet replaced by the `/cdocs:graphify` rule line |
+| `plugins/cdocs/skills/iterate/SKILL.md` | flag and "Graphify scoping" replaced by "Base query" |
+| `plugins/cdocs/agents/reviewer.md` | brief section dropped |
+| `plugins/cdocs/skills/devlog/SKILL.md` | defines `graphify_base_query` |
+| `plugins/cdocs/skills/devlog/template.md`, `plugins/cdocs/skills/iterate/template.md` | `graphify_query:` renamed `graphify_base_query:` |
+| `plugins/cdocs/skills/init/SKILL.md` | step 7: `/cdocs/` in `.graphifyignore` |
+| `CLAUDE.md` | skills list gains `graphify` |
+| `.gitignore`, `.graphifyignore` | `graphify-out/`; `/cdocs/` |
+| `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md` | `evolved`/`archived`, supersede NOTE |
+| `cdocs/proposals/2026-09-17-graphify-lace-devcontainer-enablement.md` | D3 NOTE |
+| `cdocs/proposals/2026-10-08-graphify-overhaul.md` | `implementation_wip` |
 
 ## Verification
+
+Final floor at `bcd1491`:
+
+```
+cdocs-graphify.test.sh exit=0 21 passed, 0 failed
+chat-record.test.sh --unit exit=0 chat-record tests: 97 passed, 0 failed
+validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
+removal grep hits: 0
+graphify_query hits: 0
+test:rules exit=0 tests 11 pass 11 fail 0
+test:opencode exit=0 tests 8 pass 8 fail 0   (build/cdocs/opencode/skills/graphify/SKILL.md exists)
+.graphifyignore: 1 line: /cdocs/
+cdocs-graphify 49 lines, test 82 lines, shellcheck clean
+```
+
+Host stub run: primary, secondary, positive control, overseer-clean, and no-op all pass (Phase 5 table).
+Unverified: macOS/BSD and bash 3.2 (CI covers on push; no macOS host here), the clauthier devcontainer live run and exclusion check (post-accept), and the weftwise ablation (prerequisites unmet).
