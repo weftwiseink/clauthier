@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: rev-1 reviewing `6a0b09d`; the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: prop-1 revising (chat-record skill, top-level-only line incl. oversee-workstream, fork guard, no hook); then fresh rev-2; the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -33,6 +33,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | reviewed against mid-review maintainer direction; fork leak blocking |
 
 ## Dispatch/Return Events
 
@@ -43,6 +44,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` | 2026-10-08T14:17 | full-send proposal phase on the report's adapted design; departures from the literal request as open questions |
 | return | prop-1 | `6a0b09d` | 2026-10-08T14:35 | `review_ready`. `oversee` to `oversee-many` (`.claude/oversee/` kept); `oversee-workstream` skill = intro + "Stay thin", one-line Skill-tool invocation in iterate/propose-revise/full-send/oversee-many/ablate and implement/propose top-level modes; `overseers.md` deleted, "Chat record" moves to Tool Use Guidance, Workflow Patterns gains a re-invoke line; `chat-record` PreToolUse deny mode (one `hooks.json` entry with `if`, ~10 lines); `test:rules` skill/agent reference resolution, deny unit cases, headless subagent-deny check; OpenCode postinstall removes stale cdocs `oversee/`. Kept ablate's inline floor (departs from report). Open: chat record stays rule; deny hook; pointer line; postinstall vs README |
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | 2026-10-08T14:36 | round 1; recommendation per open question; verify `agent_id` and `if` filter on 2.1.293 |
+| return | rev-1 | `75c6ca4` | 2026-10-08T14:55 | revise, against maintainer direction. Blocking: forks inherit loaded skill text (define top-level as not Agent-dispatched and not a fork; skill's first line stops dispatched agents/forks; extend `top_level_only` headless scenario); Stop block reason names `/cdocs:chat-record`; Phase 2 red until `overseers.md:6` edited; verification grep `/oversee\b` matches `-many`; restructure (chat-record skill, delete `overseers.md`, one rule bullet). OQ3: fold oversee-workstream pointer into the top-level-only line; OQ4: README note over postinstall prune. Probe on 2.1.294: PreToolUse carries `agent_id` in subagents and forks; `if: Bash(chat-record:*)` valid |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T14:57 | r1 revision with maintainer direction |
 
 ## Steering Log
 
