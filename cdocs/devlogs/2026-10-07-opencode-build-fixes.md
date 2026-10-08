@@ -5,7 +5,7 @@ first_authored:
 task_list: build/opencode-build-fixes
 type: devlog
 state: live
-status: review_ready
+status: done
 tags: [build, opencode, multi-target]
 ---
 
