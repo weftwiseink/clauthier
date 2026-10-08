@@ -220,6 +220,10 @@ Passing it in prompts and never running queries come from the rule line.
 - **What the wrapper does:** nothing beyond a one-line stderr hint when `cdocs/` exists and the line is missing; it passes no exclusion arguments and filters no output.
 - **Verified eviction (0.9.61, r2 review):** `update` graphs markdown headings without an LLM, so without the line `cdocs/` is 6637 of clauthier's 7375 nodes; with the line, the next plain `update` evicts those nodes (no `--force`), whether in a worktree copy or the main graph.
 
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): The line is `/cdocs/`, anchored to the repository root.
+> In gitignore syntax an unanchored `cdocs/` matches a `cdocs` directory at any depth, so it also drops `plugins/cdocs/` (0.9.61, clauthier: 248 nodes and none under `plugins/cdocs/`, against 736 nodes and 488 there with `/cdocs/`; root `cdocs/` is 0 either way).
+> The wrapper's hint and init's guard both require the anchored form (`/cdocs/?`); `cdocs/` elsewhere in this section names the directory, not the line.
+
 ### Graph refresh ownership
 
 Refreshing the main graph is left to the consumer for now (operator, lace lifecycle command, or git hook); no cdocs skill refreshes it, and `cdocs-graphify` only updates the caller's own worktree index.
@@ -352,7 +356,7 @@ graphify is absent on the host, so verification uses a stub there and the real b
    - **Primary:** the stub log contains `query <q>` with `GRAPHIFY_OUT` under the reviewer's worktree, preceded by one `update`.
    - **Secondary:** `bash plugins/cdocs/skills/ablate/ablate.sh detect-usage --transcript <reviewer transcript> --tool 'cli:cdocs-graphify (query|explain|path)'` reports `used`.
    - **Positive control:** the dispatching agent's own transcript (the newest `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl` whose `Agent` `tool_use` prompt contains the base query) contains the reviewer's returned report as that call's `tool_result`.
-   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:^(cdocs-)?graphify '` on it reports `unused`.
+   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:(^|[ /])(cdocs-)?graphify (query|explain|path|affected|update) '` on it reports `unused`.
 5. Remove the stub and fixture and dispatch again: the reviewer completes normally, makes no install or build attempt, and mentions the absence in at most one line.
 
 **Devcontainer live run (post-accept, routed to the overseer or user):** a one-round `/cdocs:iterate` on a small real proposal in a `lace up` container with graphify 0.9.61.
@@ -365,7 +369,11 @@ Check that the implementer's and reviewer's worktrees each gain `graphify-out/`,
 **Ablation run (weftwise container):** reuse the setup of the earlier `/cdocs:ablate` graphify run ([Probe A](../devlogs/2026-09-18-ablate-e2e-probeA-inject-rules.md), summarized in the [mcp-ablation devlog](../devlogs/2026-09-17-mcp-ablation-iterate.md)), changing only the signature, the treatment line, and the task.
 
 - **What transfers unchanged:** single-shot (`trials=1`, indicative); two detached worktrees at one pinned base; sonnet arms and an opus evaluator; the CLI withhold expressed in the unassisted arm's prompt and confirmed by `detect-usage` on its transcript reporting `unused`; answers written to `ANSWER.md`.
-- **Signature:** `cli:^(cdocs-)?graphify ` (Probe A used `cli:graphify `, before `detect-usage` matched per command segment).
+- **Signature:** `cli:(^|[ /])(cdocs-)?graphify (query|explain|path|affected|update) ` (Probe A used `cli:graphify `, before `detect-usage` matched per command segment).
+
+  > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): A segment-anchored `cli:^(cdocs-)?graphify ` reports `unused` on a prefixed call such as `timeout 60 cdocs-graphify query ...` (seen in the implementation round's stub run), which would pass a leaky unassisted arm as VALID.
+  > This signature matches `timeout 60 cdocs-graphify query`, `/p/bin/cdocs-graphify path`, and `cd /w && graphify explain`, and not `grep -rn "graphify " plugins/`, `grep -rn cdocs-graphify plugins/`, or `command -v graphify`.
+
 - **Treatment:** the assisted arm's prompt adds `graphify_base_query: "<q>"` and "run it via `/cdocs:graphify` first"; the unassisted arm's adds "do not run graphify or cdocs-graphify".
   Step 0 records these two prompt lines as the arm difference instead of a tool-allowlist entry, since a CLI on the shared `PATH` cannot be withheld by allowlist.
 - **Task: does not transfer.** Probe A explained one small file (`inject-rules.ts`), and the evaluator scored `context_gap 0` because reading that file answered it.
@@ -374,14 +382,14 @@ Check that the implementer's and reviewer's worktrees each gain `graphify-out/`,
 
 ```
 /cdocs:ablate \
-  --tool 'cli:^(cdocs-)?graphify ' \
+  --tool 'cli:(^|[ /])(cdocs-)?graphify (query|explain|path|affected|update) ' \
   --task "A change alters the value type of the most-imported atom exported by packages/weft/src/lib/mounts/atoms.ts. In ANSWER.md, list every file and symbol that must change or be re-verified (direct importers, consumers reached through hooks and re-exports, tests, and runtime subscribers), one line of reason each." \
   --base <pinned weftwise commit>
 ```
 
   `mounts/atoms.ts` has 33 direct importers across about ten directories; the graph's advantage, if any, is the transitive consumers that no single literal greps to.
   The base query: `how do mount atoms flow through hooks and tabs, palette, and editor settings consumers`.
-- **Environment:** the `weftwise` devcontainer, once a separate workstream lands the `graphify:1` lace feature and a root `.graphifyignore` with `cdocs/` there and rebuilds the container.
+- **Environment:** the `weftwise` devcontainer, once a separate workstream lands the `graphify:1` lace feature and a root `.graphifyignore` with the anchored `/cdocs/` line there and rebuilds the container.
   Prerequisite, checked by the implementer before the run: `podman exec -u node weftwise graphify --version` succeeds, a built main graph exists at the container's `$GRAPHIFY_OUT/graph.json`, and the cdocs plugin from this change is on `PATH`.
   If any check fails, the implementer reports back to the overseer instead of skipping the run or moving it to clauthier.
 - **What would change the design:**
