@@ -3,7 +3,7 @@
 ## Tools and Skills
 - `/cdocs:bash-runner` for any supported command whose output is not guaranteed to be trivially small.
 - `/cdocs:report` for external research or sweeping investigations.
-- Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record` with the Skill tool, and again after a compaction when its text is not in context.
+- Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record` with the Skill tool whenever its text is not in context.
 - `/cdocs:graphify` when graphify is installed: agents that read code run the workstream's `graphify_base_query` at startup and `explain` code entities, preferring it when practical over `grep` and full-file reads.
   Overseers write `graphify_base_query`, pass it in prompts to agents that read code, and never run graph queries themselves.
 
