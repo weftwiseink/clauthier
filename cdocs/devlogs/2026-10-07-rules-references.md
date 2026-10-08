@@ -37,6 +37,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 | r1 | proposer (opus) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references.md` | blocking: per-file delivery not worth migration (drop `@`-import instead); drop simulated init from check |
 | r2 | proposer (opus, warm) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r2.md` | blocking: phase 3 `rules_check` gate can never pass (fails 3/5 with import); use canary compaction probe |
 | r3 | proposer (opus, warm) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r3.md` | blocking (empirical, 2/2 runs): compaction summary carries canary; fix = swap canary A->B on disk after turn 1, pass only on B |
+| r4 | proposer (opus, warm) | reviewer (opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r4.md` | swap probe re-run passed; no-compact control returned A, so re-injection is compaction-triggered and reads disk; 3 nits |
 
 ## Judge Log
 
@@ -58,6 +59,8 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T22:43 dispatch: warm proposer for r3 revision.
 - 2026-10-07T22:50 return: r3 revision `7bd91b1`: heliotrope->marzipan on-disk swap after turn 1, temporary `--only canary_check` scenario, match all post-`compact_boundary` assistant blocks, with-import `rules_check` baseline before editing `init_rules`, release = one `plugin.json` bump and one push.
 - 2026-10-07T22:51 dispatch: fresh opus `cdocs:reviewer`, round 4.
+- 2026-10-07T22:58 return: r4 accept (`c6fd58d`), proposal `implementation_ready`.
+- 2026-10-07T22:59 dispatch: warm proposer for r4 accept-round nits (nit 3 resolved as: re-run once on mismatch, only a repeated difference counts).
 
 ## Steering Log
 
