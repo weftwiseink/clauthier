@@ -155,7 +155,7 @@ hook_stop() {
     '@user:'*)
       if [ "$active" != "true" ] && [ "$pmode" != "plan" ]; then
         rel="${file#"$TOP"/}"
-        reason="$(printf 'No chat-record entry for this turn (record: %s). Run, then finish:\n%s\n%s\n%s' \
+        reason="$(printf 'No chat-record entry for this turn (record: %s). See /cdocs:chat-record. Run, then finish:\n%s\n%s\n%s' \
           "$rel" "chat-record note --as <your model id> <<'EOF'" \
           "- <the most important thing you are telling the user>" "EOF")"
         jq -cn --arg r "$reason" '{decision: "block", reason: $r}'

@@ -212,6 +212,7 @@ unit_suite() {
   has "block reason carries the heredoc note command" "$(printf '%s' "$OUT" | jq -r .reason)" \
     "chat-record note --as <your model id> <<'EOF'"
   r="$(printf '%s' "$OUT" | jq -r .reason)"
+  has "block reason names the /cdocs:chat-record skill" "$r" '\(record: [^)]*\)\. See /cdocs:chat-record\. '
   has "block reason carries the free-form note template" "$r" '^- <the most important thing you are telling the user>$'
   hasnt "block reason carries no note type" "$r" '(gist|query|read|follow-up):'
   [ "${#r}" -lt 300 ] && ok "block reason under 300 bytes (${#r})" || bad "block reason ${#r} bytes"
