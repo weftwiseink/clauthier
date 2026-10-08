@@ -792,7 +792,8 @@ Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
 init_rule_order() { sed -n 's/.*\[Full content of \([a-z-]*\.md\), frontmatter stripped\].*/\1/p' "$PLUGIN/skills/init/SKILL.md"; }
 
 # init_rules <proj>: materialize the cdocs rules the way /cdocs:init does (marker plus every
-# rule body, in init's order) and the CLAUDE.md import line, plus the _chat scaffold.
+# rule body, in init's order; no CLAUDE.md import, since Claude Code auto-loads .claude/rules/),
+# plus the _chat scaffold.
 init_rules() {
   local p="$1" hash f
   mkdir -p "$p/.claude/rules"
@@ -801,7 +802,7 @@ init_rules() {
     echo "<!-- cdocs rules v$(jq -r .version "$PLUGIN/.claude-plugin/plugin.json") hash=$hash - regenerate with /cdocs:init (use version from plugin.json) -->"
     for f in $(init_rule_order); do f="$PLUGIN/rules/$f"; echo; awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {fm=0; next} !fm' "$f"; done
   } > "$p/.claude/rules/cdocs.md"
-  printf '# Project\n\n@.claude/rules/cdocs.md\n' > "$p/CLAUDE.md"
+  printf '# Project\n' > "$p/CLAUDE.md"
   mkdir -p "$p/cdocs/devlogs" "$p/cdocs/proposals" "$p/cdocs/reviews" "$p/cdocs/reports" "$p/cdocs/_chat"
   printf '*.md merge=union\n' > "$p/cdocs/_chat/.gitattributes"
 }
