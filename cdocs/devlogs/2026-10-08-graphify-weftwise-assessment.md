@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 revising Phase 4 per r3; then fresh rev-4,, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: rev-4 reviewing Phase 4; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -101,6 +101,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | 2026-10-08T22:54 | Phase 4 design: best-case seeking vs grep bias, manufactured-win risk, capability claims, ceremony |
 | return | rev-3 | `af68641` | 2026-10-08T23:05 | revise. Blocking: graph arm can silently become a grep arm (host has wrapper, no graphify: "not installed; skipping" exit 0; wrapper only `query|explain|path|affected`); in-worktree leaks (`git show HEAD:cdocs/...`, `git log` subjects, fix comments/test names echo task wording, helps grep only); grep arm weaker than a real non-graph agent (no scripts/tsc while graph arm may script). Capability claims verified; missed: built-in Import Cycles (14), Knowledge Gaps (2,488 isolated), hub-file community labels (no LLM labelling), `tree`/`callflow-html` HTML-only, MCP needs uninstalled `mcp`. Collateral: reviewer probe rewrote main graph `cache/last_query_stamp` (raw calls write next to `--graph`, not `GRAPHIFY_OUT`); `graph.json` untouched. ~38 dispatches, one session. 3 maintainer questions |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:07 | r3 revisions + overseer calls on 3 questions; `--graph` scratch-copy rule |
+| return | prop-1 | `6f6a4df` | 2026-10-08T23:15 | all r3 items: one container command on card, pilot on held-out Q5/Q7, rerun graph arm with no graphify call; no git, no subagents, no writes/devlogs for arms; distinctive-phrase leak check, leaked tasks on pre-fix commit; grep arm everything but graphify incl. `main/node_modules/.bin` by absolute path; `--graph` scratch rule (report floor already compliant, NOTE); classes reshaped (cycles 1 synthetic lookup, 2 each for transitive/tests/cross-package, synthetic outside tally); answers capped 15, normalised `file:entity`; reach vs efficiency wins; jq transcript checks. Proposal 604 lines |
+| dispatch | rev-4 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r4.md` | 2026-10-08T23:17 | round 4; r3 resolution, fairness both ways, ceremony cut, mechanics probes |
 
 ## Steering Log
 
