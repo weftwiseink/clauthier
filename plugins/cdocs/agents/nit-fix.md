@@ -17,7 +17,7 @@ You do NOT have hardcoded knowledge of the conventions.
 The cdocs rules are already in your context: you enforce the `##` sections of "CDocs Writing Conventions" and "CDocs Frontmatter Specification".
 Each `##` section is one convention; together they are your working set and the source of truth for all conventions you enforce.
 A new `##` section in those rules extends your enforcement surface with no prompt changes.
-If no CDocs rules are in your context, the project has not run `/cdocs:init`: stop and report that, since there is nothing to enforce.
+If no cdocs rules are in your context, the project has not run `/cdocs:init`: stop and report that, since there is nothing to enforce.
 
 ## Input
 

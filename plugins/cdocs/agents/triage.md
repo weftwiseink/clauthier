@@ -15,7 +15,7 @@ You report status transitions and workflow recommendations to your invoker.
 
 The cdocs rules are already in your context: follow "CDocs Frontmatter Specification".
 It is the source of truth for required fields, valid values, and field formats.
-If no CDocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
+If no cdocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
 
 ## Input
 

@@ -169,7 +169,7 @@ Substitute the plugin version for `X.Y.Z`. The directive primes the next tool ca
 
 Idempotency: emit the directive only when the rule file content actually changed during the run. On a no-op re-run (file already matches plugin source), suppress it.
 
-First-time init note: when there is no prior `.claude/rules/cdocs.md` to supersede (initial scaffolding), the directive is technically harmless — no cdocs rules were loaded at session start — but it is still emitted on the assumption that the freshly written rules are not yet in working context. The Read costs one tool call.
+First-time init note: when there is no prior `.claude/rules/cdocs.md` to supersede (initial scaffolding), the directive is technically harmless (no cdocs rules were loaded at session start), but it is still emitted on the assumption that the freshly written rules are not yet in working context. The Read costs one tool call.
 
 ## Notes
 

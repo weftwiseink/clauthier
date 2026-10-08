@@ -2,7 +2,7 @@
 name: propose-revise
 description: >
   Have the proposal written using the /propose skill, then have a /review / revise loop run as the overseer.
-argument-hint: "[topic | path] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]]"
+argument-hint: "[topic | path] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]]"
 ---
 
 # CDocs Propose/Revise Loop
@@ -11,10 +11,10 @@ Have a proposal written by a subagent using `/cdocs:propose`,
 then run an iterative propose-review loop on that proposal until the reviewer accepts it.
 Any minor issues or nits that come along with the accepting round should still be resolved.
 
-The invoking session agent enters *overseer mode* documented in the cdocs rules, restricting itself to orchestration:
-it dispatches subagents in alternation, terminates on accept-or-escalate, and should AskUserQuestion as appropriate or if the proposal hasn't been accepted after 6 rounds.
+The invoking session agent enters *overseer mode* documented in "CDocs Overseer Rules", restricting itself to orchestration:
+it dispatches subagents in alternation, terminates on accept-or-escalate, and should AskUserQuestion if the proposal hasn't been accepted after 6 rounds.
 
-Overseers should follow rules laid out in the cdocs rules, and should dispatch subagents for all tasks aside from top-level devlog edits.
+The overseer dispatches subagents for all tasks aside from top-level devlog edits.
 
 Propose-revise loop state should be tracked in the workstream's top-level devlog by the overseer; proposers, revisers, and reviewers write no devlog.
 Add its log sections from [`../iterate/template.md`](../iterate/template.md); a later `/cdocs:iterate` on the proposal continues the same devlog.
@@ -37,9 +37,9 @@ Unless stated explicitly by the user, cdocs docs should be committed early and o
 ```
 
 - `topic | path` is required: Passed through to first `/cdocs:propose` invocation (resulting path is used thereafter)
-- `-m | --model "<model_description"`: Which model & config to have the proposal and review rounds done with.
+- `-m | --model "<model_description>"`: Which model & config to have the proposal and review rounds done with.
   Defaults to preferred model in CLAUDE.md or elsewhere, or the current session's config if none is specified.
-- `-f | --first-round ["<model_description"]`: Use a different model config for the first round prroposal and review.
+- `-f | --first-round ["<model_description>"]`: Use a different model config for the first round proposal and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
   For default tiers, see "CDocs Workflow Patterns › Model Tiering".

@@ -1,7 +1,7 @@
 ---
 name: iterate
 description: Run an implement-review loop on a proposal as the overseer, dispatching fresh implementer, reviewer, and judge subagents until accept-or-escalate
-argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]] [--graphify-scope]"
+argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]] [--graphify-scope]"
 ---
 
 # CDocs Iterate Loop
@@ -26,9 +26,9 @@ Code and cdocs should be committed early and often.
   If omitted and the proposal lacks a concrete `## Verification Methodology`, `AskUserQuestion` blocks the loop until provided.
   AFK fallback: write a placeholder floor and tag affected rows `[placeholder-floor]`, with a `> WARN` callout on the final summary.
 - `--judge-after N` defaults to 3; the judge runs from the Nth Revise verdict onward, and the overseer may invoke earlier at its discretion.
-- `-m | --model "<model_description"`: Which model & config to have implementation and review rounds done with.
+- `-m | --model "<model_description>"`: Which model & config to have implementation and review rounds done with.
   Defaults to preferred model in CLAUDE.md or elsewhere, or the current session's config if none is specified.
-- `-f | --first-round ["<model_description"]`: Use a different model config for the first round implementation and review.
+- `-f | --first-round ["<model_description>"]`: Use a different model config for the first round implementation and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
   For default tiers, see "CDocs Workflow Patterns › Model Tiering".

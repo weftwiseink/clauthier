@@ -2,7 +2,7 @@
 name: full-send
 description: >
   Have the given or described proposal written or fleshed out using /propose-revise, then have it /iterate'd to completion.
-argument-hint: "[topic | path] [-m | --model \"<model_description\"] [-f | --first-round [\"<model_description>\"]]"
+argument-hint: "[topic | path] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]]"
 ---
 
 # CDocs Full Send

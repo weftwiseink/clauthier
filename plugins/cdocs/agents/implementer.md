@@ -18,7 +18,7 @@ Your implementation methodology is provided by the preloaded `cdocs:implement` s
 ## Rules
 
 The cdocs rules are already in your context: follow "CDocs Writing Conventions" and "CDocs Frontmatter Specification".
-If no CDocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
+If no cdocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
 
 ## Input
 
