@@ -109,11 +109,22 @@ Additional notes:
 
 The `opencode-rules` plugin is not required: rules fall back to `.claude/rules/` (which OC reads natively) or AGENTS.md.
 
-### Agent path resolution
+### Agents and rules
 
-Agents (`nit-fix`, `triage`, `reviewer`, `judge`, `implementer`, `proposer`) try relative paths first (`rules/*.md` from the agent's directory), falling back to `plugins/cdocs/rules/*.md` for source-repo contexts.
-This is experimental belt-and-suspenders alongside the `/cdocs:init` materialization path.
-`bash-runner` reads no rule files: its capture-then-extract contract is inlined in its prompt.
+The cdocs rules reach every agent with the CLAUDE.md hierarchy: Claude Code gives non-fork subagents the project rules, so agents read no rule files.
+Each agent's Rules section names the rules it follows by heading (`nit-fix`, `reviewer`, `judge`, `implementer`, `proposer`: "CDocs Writing Conventions" and "CDocs Frontmatter Specification"; `triage`: the latter).
+When no cdocs rules are in context, the project has not run `/cdocs:init`: agents say so and proceed, and `nit-fix` stops, having nothing to enforce.
+No cdocs agent sets `omitClaudeMd`, which would drop the rules.
+`bash-runner` follows no rules: its capture-then-extract contract is inlined in its prompt.
+
+### Referencing rules
+
+Shipped content (rules, skills, skill templates, agents) refers to a rule by its heading, never its filename: `"CDocs Overseer Rules"` for a whole rule, `"CDocs Overseer Rules › Chat record"` for a section (` > ` also works as the separator).
+Rule filenames name nothing downstream: `/cdocs:init` concatenates the rules into `.claude/rules/cdocs.md` and inlines them into `AGENTS.md`, and only the H1 survives every form.
+This README and `bin/README.md` describe the source tree and may use paths.
+
+`npm run test:rules` ([`scripts/check-rule-refs.ts`](../../scripts/check-rule-refs.ts)) resolves every quoted `"CDocs ..."` string in `plugins/cdocs/{rules,skills,agents}` against the rule headings and rejects rule-filename references; CI runs it as a blocking job.
+`npx tsx scripts/check-rule-refs.ts --materialized <project>` resolves the same references against a project's `.claude/rules/cdocs.md` and `AGENTS.md` block.
 
 ### When CC #14200 Lands
 
