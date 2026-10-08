@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/delete-ablate
 type: devlog
 state: live
-status: wip
+status: done
 tags: [ablate, oversight]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -22,7 +22,7 @@ On `detect-usage`: "Lets keep it around as a script for internal use. With that 
 
 ## Scratchpoint
 
-- next_steps: branch ready at `2e7cf07`; maintainer acceptance, then land.
+- next_steps: none; landed.
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/ablate/`, `scripts/`, `CLAUDE.md`, `plugins/cdocs/README.md`, `plugins/cdocs/skills/oversee-workstream/SKILL.md` (after landing), `cdocs/proposals/2026-10-08-graphify-overhaul.md` (detect-usage references)
 - callouts:
@@ -53,7 +53,10 @@ Failure picture: `detect-usage` behavior drift, stale `/cdocs:ablate` reference,
 | return | rev-impl-1 | `8e7b708` (branch) | 2026-10-08T18:40 | accept, `review_proof: confirmed`: floor re-run green; real transcripts: Probe A `cd ... && graphify explain` reports `used`, a mention-only transcript `unused`, 24/24 parity with the old `ablate.sh detect-usage`. Non-blocking: F1 drop `2>/dev/null` on jq (silent invalid-regex/truncated/`-`-path failures, inherited); F2/F3 text cuts. Noted: `cli:` also matches text quoted inside a Bash command (unchanged behavior) |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T18:41 | accept-round F1-F3 (overseer call: all remove code/text) |
 | return | impl-1 | `8e7b708..2e7cf07` | 2026-10-08T18:45 | F1-F3 applied; detect-usage 11/11, rules 18/18; sub-devlog `done`. known_edge: an invalid regex whose triggering line is not the transcript's last line still yields `unused`/exit 0 (stderr now shows jq's error; inherited) |
+| land | overseer | main | 2026-10-08T18:50 | maintainer accepted; proposal `implementation_accepted`, rebased, ff-merged at `92723bd`; on main detect-usage 11, rules 18, build + opencode 9, chat-record unit 98, cdocs-graphify 27; `git grep -i ablat` outside `cdocs/` empty; 17 skills; worktree and branch removed |
 
 ## Steering Log
+
+- 2026-10-08T18:48: maintainer: "accept".
 
 - 2026-10-08T17:58: maintainer: "Lets keep it around as a script for internal use. With that have the ablate deletion /iterate'd."
