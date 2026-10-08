@@ -811,7 +811,8 @@ init_rules() {
 init_real() {
   section "headless: init_real - /cdocs:init scaffolds cdocs/_chat and rules; --minimal does not"
   local P J HTIMEOUT=900 # init writes every rule file twice (rules file, AGENTS.md)
-  P="$(hproj init_real nochat)"; printf '# Project\n' > "$P/CLAUDE.md"
+  # CLAUDE.md is seeded with the legacy import line, which init must remove.
+  P="$(hproj init_real nochat)"; printf '# Project\n\n@.claude/rules/cdocs.md\n' > "$P/CLAUDE.md"
   claude_run init_real "$P" -- -p '/cdocs:init' --permission-mode bypassPermissions
   J="$SB/init_real.jsonl"
   check ".gitattributes is the union rule" "$(cat "$P/cdocs/_chat/.gitattributes" 2>/dev/null)" "*.md merge=union"
@@ -819,7 +820,14 @@ init_real() {
   has "rules file carries the scope sentence" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" \
     'Top-level agents must use the `chat-record` command'
   has "rules file carries the resumption step" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" '\*\*After a compaction.* run `chat-record path`'
-  has "CLAUDE.md imports the rules" "$(cat "$P/CLAUDE.md")" '^@\.claude/rules/cdocs\.md'
+  hasnt "CLAUDE.md rules import line is gone" "$(cat "$P/CLAUDE.md")" '^@\.claude/rules/cdocs\.md'
+  # Every rule reference in shipped content resolves against what init actually wrote.
+  local mat
+  if mat="$(cd "$PLUGIN/../.." && npx --no-install tsx scripts/check-rule-refs.ts --materialized "$P" 2>&1)"; then
+    ok "check-rule-refs --materialized passes"
+  else
+    bad "check-rule-refs --materialized: $(printf '%s' "$mat" | grep -v -i deprecat | tail -n 5)"
+  fi
   check "init turn: no record, no Stop decision" "$(nrec "$P"):$(stop_blocks "$J")" "0:0"
   P="$(hproj init_minimal nochat)"
   claude_run init_minimal "$P" -- -p '/cdocs:init --minimal' --permission-mode bypassPermissions
