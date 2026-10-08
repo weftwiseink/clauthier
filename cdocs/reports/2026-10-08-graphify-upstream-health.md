@@ -11,11 +11,79 @@ tags: [graphify, upstream, maintenance]
 
 # Graphify Upstream Health
 
-> BLUF: graphify is a fast-moving, single-gatekeeper project (one committer, a release roughly every 1.4 days) with broad but shallow test coverage, and it is not close to an efficient, consistent TypeScript update path.
-> The pieces exist only as unreviewed community PRs: two duplicate `#3326` splits, a Python-only fact cache, and a conflicting incremental-resolution widening.
-> No maintainer has engaged on the TS caching or incremental-parity issues.
+> BLUF: graphify is not close to an efficient, consistent TypeScript `update` path, but incremental correctness and perf are a known, actively worked area rather than a blind spot.
+> The maintainer ships perf and incremental fixes within hours of a good report (#4150 in about 10 h, #4194 in about 5 h, both as cherry-picks of the reporter's PR) and has fixed the core cross-file edge-loss bug class (0.9.68).
+> The specific gap that matters, a no-op `update` that rebuilds everything and JS/TS skipping the cache, has had no maintainer response, and its PRs (`#3327`, `#3537`, the Python-only `#3649`) sit unreviewed.
+> TS is not an outlier: on 0.9.61 a no-op `update` costs 8-13 ms per Python file versus 6 ms per TS file, so the slowness is a general full-rebuild cost that TS makes somewhat worse.
 > Recommendation: stay pinned with the wrapper stamp, treat graph output as a hint rather than ground truth, and do not fork.
-> At most, file one focused upstream issue for the manifest gate in `update` (the audit's fix 1), the smallest and highest-value change.
+> File one focused upstream issue for the manifest gate in `update` (the audit's fix 1): it is language-agnostic, small, and the kind of report this maintainer acts on quickly.
+
+## Maintainer responsiveness and TypeScript (follow-up)
+
+Labels as below, except **[source]** here means the installed 0.9.61 in container `clauthier`.
+Raw outputs (`gh` dumps, release notes, timings, profiles) are in the session scratchpad under `followup/`.
+
+### 1. Do the maintainers care, and have they acknowledged it?
+
+- **The named issues: almost no maintainer comments** [verified].
+  Of the 17 issues and PRs listed in the fork RFP, `safishamsi` commented on two: [#2230](https://github.com/Graphify-Labs/graphify/issues/2230) ("Go for it Aman", assigning it to the author of #3589) and #4150 (closing it as shipped).
+  #3326, #3327, #3537, #3570, #2406, #3328, #3589, #3649, #819, #3643, #2988, #3029, #2459, #4194, and #4236 have none.
+- **The wider area: heavy engagement** [verified, GitHub search on titles].
+  The maintainer commented on 29 of 45 issues titled "incremental", 34 of 64 titled "cache", and 12 of 20 titled "typescript".
+- **Fixes shipped for the same concerns** [verified, release notes]:
+  - [v0.9.68](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.68): "incremental updates ... now preserve a cross-file `imports`/`calls`/`uses` edge whose target symbol lives in an unchanged file" (#3812, closing [#3776](https://github.com/Graphify-Labs/graphify/issues/3776)).
+    This is the #2230/#2406/#3328 bug class, yet those issues stay open, so the tracker understates what is fixed [inferred].
+    Our pin 0.9.61 predates it, and the audit still saw a TS incremental-versus-full difference on 0.9.80, so the fix is partial [verified via the audit].
+  - [v0.9.47](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.47): `save_manifest` "no longer rewrites `manifest.json` timestamps on a no-op run" (#2838); #2988 and #3643 were filed after it, so the churn persists in some path [inferred].
+  - [v0.9.49](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.49): tsconfig alias and `baseUrl` caches are cleared per run (#2917).
+  - [v0.9.59](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.59): "Python symbol resolution is roughly 47% faster" (#3500-#3502); no JS/TS counterpart shipped [verified, notes scan].
+- **#4150 and #4194: shipped fast, but not written by the maintainer** [verified].
+  Both were filed by `rohit-jsfreaky` with a fix PR attached, and the maintainer cherry-picked the PR with authorship preserved.
+  - #4150: filed 2026-10-06 10:25Z, fix [#4151](https://github.com/Graphify-Labs/graphify/pull/4151) shipped in [v0.9.78](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.78) at 20:08Z (about 10 h), with the reconcile on graphify's own repo going "from 10.2s to 2.7s".
+  - #4194: filed 2026-10-07 11:45Z, fix [#4195](https://github.com/Graphify-Labs/graphify/pull/4195) shipped in [v0.9.80](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.80) at 17:04Z (about 5 h); the issue and PR are still open.
+
+### 2. Are they regularly making meaningful improvements?
+
+Yes [verified]. Since 2026-08-09 there are 43 releases and 812 commits on `v8`.
+
+- **Release-note bullets (431):** 334 Fix, 59 Feature, 7 Perf, 6 Security, 4 Docs, 4 Chore, 2 Test, 15 unlabeled.
+  43 bullets concern incremental `update`, `watch`, or caches, and 23 concern determinism.
+- **Commit subjects:** 425 `fix`, 62 `test`, 61 `docs`, 31 `release`, 28 `feat`, 21 `chore`, 11 `perf`, 158 unprefixed.
+  149 `fix`/`feat`/`perf` commits are language-scoped (23 of them JS/TS); 47 `fix` commits name incremental, update, watch, cache, manifest, or determinism.
+- **Examples of meaningful perf and correctness work:**
+  - [`fedf15d`](https://github.com/Graphify-Labs/graphify/commit/fedf15d) and [`1d38e84`](https://github.com/Graphify-Labs/graphify/commit/1d38e84): the #4194 and #4150 path-identity fixes above.
+  - [`cd8d99b`](https://github.com/Graphify-Labs/graphify/commit/cd8d99b), [`f077217`](https://github.com/Graphify-Labs/graphify/commit/f077217): memoized `Path.resolve()`, and one parse per Python file across both resolution passes.
+  - [`51c05e7`](https://github.com/Graphify-Labs/graphify/commit/51c05e7): incremental rebuilds keep placeholder nodes, so unchanged referrers' edges are not dropped (#4161).
+  - [`304d715`](https://github.com/Graphify-Labs/graphify/commit/304d715): an AST cache hit whose import target is gone is treated as a miss.
+  - [`ef58341`](https://github.com/Graphify-Labs/graphify/commit/ef58341): tsconfig `references` are followed, so solution-file path aliases resolve (#3745).
+
+### 3. Is TypeScript performance an anomaly?
+
+No [verified]. No-op `graphify update` on 0.9.61, 20 cores, scratch copies and scratch `GRAPHIFY_OUT` (deleted afterwards), median of 3 after a cold run:
+
+| Corpus | Files | Lines | Nodes | Cold | No-op | ms/file | ms/kLOC | ms/node |
+|---|---|---|---|---|---|---|---|---|
+| Python: `networkx` | 580 | 192K | 11,265 | 6.5 s | 4.8 s | 8.3 | 25 | 0.43 |
+| TS: weftwise `packages/` minus `weft/src/lib` | 538 | 86K | 3,929 | 3.6 s | 3.2 s | 5.9 | 37 | 0.81 |
+| Python: graphify's whole `site-packages` | 1,216 | 529K | 31,502 | 23.7 s | 15.6 s | 12.8 | 29 | 0.49 |
+| TS: weftwise `packages/` | 1,225 | 213K | 8,798 | 8.9 s | 7.4 s | 6.0 | 35 | 0.84 |
+
+- **Only JS-family suffixes bypass the cache** [source].
+  `_JS_CACHE_BYPASS_SUFFIXES` (`extractors/models.py:11`) is `.js .jsx .mjs .cjs .ts .tsx .mts .cts .vue .svelte`, used at `extract.py:6131`, `6320`, `6454` and `resolution.py:1894`; no other bypass set exists.
+- **But Python is re-parsed every run too** [source + verified by cProfile].
+  `_augment_symbol_resolution_edges` runs `_collect_python_symbol_resolution_facts`, which parses every `.py` file; it took 2.2 s of a profiled 11.8 s Python no-op, against 3.4 s of 7.7 s for `_collect_js_symbol_resolution_facts` on TS.
+  The rest of both runs is cache replay, `_reconcile_existing_graph`, and `build_from_json`, which scale with node count.
+- **Verdict** [inferred from the above]: the slowness is a general full-rebuild cost, not a TS defect.
+  TS adds an uncached, parallel extraction parse (about 10% of the profile) and a heavier resolution walk per line, so per node it costs about twice Python; per file it is cheaper.
+  A manifest gate in `update` would help both languages; a JS fact cache alone would not fix Python.
+
+### 4. Bottom line
+
+TS perf and incremental consistency sit inside a known, actively worked area: the maintainer fixes incremental edge loss and lands perf PRs within hours when they come with a reproducer and a patch [verified].
+The specific design gap, `update` ignoring its own manifest plus the JS cache bypass, is not acknowledged: its issues have no maintainer reply and its PRs no review [verified].
+That looks like a priority gap filled by contributor patches, not a blind spot about performance as such [inferred].
+TS is not singled out, since Python pays a similar full-rebuild cost [verified].
+A small, language-agnostic, reproducible patch for the manifest gate is the change most likely to land [inferred].
 
 Claim labels: **[verified]** observed via `gh` or the cloned source; **[source]** read from code at `v8` HEAD `6478eb7` (0.9.80); **[inferred]** reasoned, not measured.
 
