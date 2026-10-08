@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 tags: [architecture, browser, delegation, mcp, model_tiering, testing]
 last_reviewed:
   status: accepted
@@ -121,7 +121,7 @@ description: |
   - Route(s) per session
   - Actions (navigate, click, type, wait-for, screenshot, snapshot, poll-until)
   - Optional: one baseline image and the screenshot to diff against it; convergence condition and timeout
-  - Optional: fresh sessions (close any live session of that name, then open), required for independent verification such as an iterate review
+  - Optional: fresh sessions (close any live session of that name, then open), required for independent verification; an iterate reviewer uses it with `<branch>-review-<role>` names
   Responds with artifact paths and mechanical facts only. Prefer it over driving a browser MCP yourself.
 tools: Bash, Read
 maxTurns: 40
@@ -135,7 +135,7 @@ The body holds everything the agent needs, and reads no rules files:
   If a baseline was given, also check ImageMagick `compare` (if absent: `Status: WARNINGS` with the fact, and no diff).
   Use a stable scratch root and a per-dispatch output dir: `d="${TMPDIR:-/tmp}/claude-$(id -u)/browser-delegate"; mkdir -p "$d"; out=$(mktemp -d "$d/run.XXXXXX")`.
   Run every CLI command from `cd "$d"`, so the CLI's auto-snapshots (`.playwright-cli/`) and config lookup stay out of the dispatcher's worktree, and pass `--filename=$out/<name>` to every screenshot and snapshot.
-  Open or reuse each named session (for fresh sessions, close any live one of that name first), run the actions, and, if a baseline was given, run `compare -metric AE` on that one baseline/candidate pair (a size mismatch is reported as a fact, not diffed, and `compare` exiting 1 means the images differ, not a failure).
+  Take liveness at dispatch start from `playwright-cli list`, then open or reuse each named session (for fresh sessions, close any live one of that name first), run the actions, and, if a baseline was given, run `compare -metric AE` on that one baseline/candidate pair (a size mismatch is reported as a fact, not diffed, and `compare` exiting 1 means the images differ, not a failure).
   Leave artifacts in place: they are what the dispatcher cites.
 - **Session naming.**
   Default name: current branch, with characters outside `[A-Za-z0-9_-]` replaced by `-` (`feature/foo` becomes `feature-foo`), suffixed `-<role>`.
@@ -144,7 +144,7 @@ The body holds everything the agent needs, and reads no rules files:
 - **Convergence.**
   For a `poll-until` condition across sessions, poll shared/awareness state at a fixed interval until every session agrees or the timeout elapses (mirroring weftwise's `e2e/livesharing/convergence.spec.ts`).
   The poll runs inside one Bash invocation, a shell loop over `playwright-cli -s=<name> eval ...` per session bounded by the timeout, printing only the final states, so it costs one turn and little context.
-  That Bash call sets its tool `timeout` above the convergence timeout (the default is 120s, the maximum 600000 ms).
+  That Bash call sets its tool `timeout` above the convergence timeout (120s default, 600s maximum), so the convergence timeout is capped below 600s, and a larger requested timeout is reported as a fact naming the cap.
   A timeout is reported as divergence with each session's last-seen state, never as success.
 - **No judgment.**
   Report what happened (loaded, selector found, text present, AE score), never whether the render looks right.
@@ -180,13 +180,13 @@ When a `/cdocs:iterate` verification floor needs browser evidence, the round's r
 Artifacts from a delegate the reviewer dispatched this round count as reviewer-produced for a `confirmed` row, and artifacts from an implementer's or earlier round's delegate do not.
 Phase 3 adds that clause to the `confirmed` row in `plugins/cdocs/skills/iterate/SKILL.md`, where iterate defines admissibility (Turn N.b already points there), so the rule reads unambiguously without this plugin's context.
 
-The reviewer always dispatches with the fresh-sessions option, so the delegate closes any live session of each name and opens it new.
-The implementer has reported done before Turn N.b, so closing its session disturbs nothing.
+The reviewer always names its sessions `<branch>-review-<role>` and dispatches with the fresh-sessions option.
+The suffix keeps implementer and reviewer from sharing a session in either direction: the reviewer never lands in the implementer's browser, and the implementer's next round never lands in the reviewer's.
+The fresh-sessions option closes any review-suffixed session left live by a previous round's review and opens it new, and it never touches the implementer's sessions.
 Its report must list each session as `opened`, and a `reused` session never backs a `confirmed` row.
-Without the option, default branch-derived names land the reviewer in the implementer's live browser, and even a reviewer-specific name can still be live from the previous round's review.
 The reviewer learns this from the option's line in the agent description, which is in its Agent tool listing, so the rule reaches it at runtime without the README.
 
-Scratch artifacts are ephemeral, so the reviewer follows iterate's existing rule for them: it cites the scratch path and inlines the report's `Facts` and `AE score` lines plus its own description of what the artifact shows.
+Scratch artifacts are ephemeral, so the reviewer follows iterate's existing rule for them: it cites the scratch path and inlines the report's `Sessions`, `Facts`, and `AE score` lines (so the `opened` requirement stays auditable) plus its own description of what the artifact shows.
 `reviewer.md` needs no change.
 
 Depth: under a top-level overseer the reviewer is layer 1 and the delegate layer 2, and a nested overseer ([nest-overseers RFP](2026-10-06-nest-overseers-rfp.md)) puts the delegate at layer 3, the default limit, which is fine for a leaf.
@@ -218,9 +218,9 @@ This is additive to weftwise's existing patterns:
 
 ### Session reuse across turns
 
-`@playwright/cli` sessions outlive the process addressing them, so a fresh delegate dispatch resumes the same browser by name while the session lives.
+`@playwright/cli` sessions outlive the process addressing them, so a new delegate dispatch resumes the same browser by name while the session lives.
 For a long multi-step flow, the dispatcher may keep one named delegate and resume it with `SendMessage` (`overseers.md` "Stay thin"), which retains the agent's step context.
-Past that rule's ~400K context threshold, the dispatcher dispatches a fresh delegate on the same session names with the remaining steps in its prompt: the browser state carries over, so no handoff file is needed.
+Past that rule's ~400K context threshold, the dispatcher dispatches a new delegate on the same session names with the remaining steps in its prompt: the browser state carries over, so no handoff file is needed.
 Profiles are in-memory by default and a headless session shuts down after an hour idle, so a dispatch past that window finds no live session and reports `opened` with empty cookies and storage, which the dispatcher reads as lost state.
 Long flows pass `--idle-timeout=<ms>` at open, and `--persistent` stays out of the default because on-disk profiles would weaken isolation.
 
@@ -231,7 +231,7 @@ Long flows pass `--idle-timeout=<ms>` at open, and `--persistent` stays out of t
 | `.claude-plugin/marketplace.json` | Add a `browser-delegate` entry (`source: ./plugins/browser-delegate`). |
 | `plugins/browser-delegate/.claude-plugin/plugin.json` | Plugin manifest. |
 | `plugins/browser-delegate/agents/browser-delegate.md` | The agent: frontmatter above, with a body holding workflow, session naming, convergence, report format. |
-| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses the fresh-sessions option, cites scratch artifacts), multi-client guidance. |
+| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines), multi-client guidance. |
 | `plugins/cdocs/skills/iterate/SKILL.md` | One clause on the `confirmed` row: an artifact produced by a subagent the reviewer dispatched this round counts as its own. |
 
 Example dispatch (Agent tool, `subagent_type: "browser-delegate:browser-delegate"`):
@@ -314,7 +314,7 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
   Between dispatches (closed, or idle past an hour), the next dispatch reports `opened`, and a dispatcher that expected continuity treats that as lost state.
 - **Two dispatches target the same session name.** The dispatcher keeps one live delegate per session name, the session analog of `tool-use-safeguards.md` "One writer per file": serialize, or give the second a different role suffix.
 - **Convergence never completes.** Reported as divergence with each side's last-seen state at the timeout.
-- **An implementer's delegate artifacts are offered as proof.** They are third-party to the reviewer and do not make a `confirmed` row, so the reviewer dispatches its own with the fresh-sessions option.
+- **An implementer's delegate artifacts are offered as proof.** They are third-party to the reviewer and do not make a `confirmed` row, so the reviewer dispatches its own on `<branch>-review-<role>` names with the fresh-sessions option.
 - **No cdocs installed.** The delegate works the same, and the dispatcher reviews the artifacts by whatever means it has.
 
 ## Test Plan
@@ -327,9 +327,9 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
 - **Baseline diff.** One dispatch with a baseline returns an `AE score` line naming both paths, and one with a differently sized baseline reports the size mismatch.
 - **Session states.** A second dispatch on a live name reports `reused`, and the same dispatch with the fresh-sessions option reports `opened`.
   `playwright-cli -s=<name> close` between dispatches, then re-dispatch: `opened`.
-  `playwright-cli kill-all` from another shell during a dispatch's `wait-for`: `reopened`.
+  `playwright-cli -s=<name> close` from another shell during a dispatch's `wait-for`: `reopened` (not `kill-all`, which ends every session on the host).
 - **Worktree hygiene.** After a dispatch, the dispatcher's worktree has no new `.playwright-cli/` or other untracked files.
-- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review cites the scratch path with the report's facts inlined, and the overseer records `confirmed`.
+- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches on `<branch>-review-<role>` names with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review cites the scratch path with the report's `Sessions`, `Facts`, and `AE score` lines inlined, the implementer's sessions are still live and untouched, and the overseer records `confirmed`.
 - **Multi-client convergence.** One delegate, two sessions (sharer/sharee) on a real sync-capable route: convergence detected by polling within the timeout, and a forced non-convergence reports divergence, not a pass.
 - **Missing CLI.** Make neither the global nor the project-local CLI resolve: the delegate reports `FAILED` and does not fall back.
 
@@ -349,6 +349,8 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 - `@playwright/cli` SIGTRAP/crashpad exposure in the target devcontainer(s).
 - Named-session isolation sufficiency: `-s=<name>` alone isolates two concurrent sessions (two roles in one delegate, and two worktrees).
   Also record whether session names are scoped by cwd or workspace (the `show` dashboard groups sessions by workspace), and confirm the agent's fixed `cd "$d"` keeps reuse-by-name working across dispatches.
+- Session liveness: whether a command against a non-live session name errors or auto-opens a new browser, and how `list` reports live and dead sessions.
+  If commands auto-open, the delegate cannot see a mid-dispatch death, and `reopened` detection needs another signal.
 - CLI resolution: whether the delegate should prefer a project-local `npx --no-install playwright cli` (which inherits the project's existing Playwright pin, as in weftwise) over a global `playwright-cli`, resolved to an absolute command before the `cd`.
   Also record whether the project's `.playwright/cli.config.json` is needed (for example for a pinned `channel` or `executablePath`), and if so pass it with `--config <abs path>`.
   The answer is folded into the availability check.
@@ -362,7 +364,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 
 - Add the marketplace entry, `plugin.json`, `agents/browser-delegate.md`, and `README.md` per the file table.
 - Agent body: CLI resolution and availability check, scratch root and `--filename` captures, session naming and sanitization, the fresh-sessions option, re-open handling, action vocabulary, single-pair AE diff, bounded poll loop, report format.
-- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses the fresh-sessions option, cites scratch artifacts), multi-client guidance.
+- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines), multi-client guidance.
 - Success: a dispatch from a session with no Playwright MCP server produces a named session, a saved screenshot, an `AE score` against a supplied baseline, and a report matching the format, verified by opening the artifacts.
 - Constraints: no skills, no `rules/`, no changes to `scripts/build-opencode.ts` or any OpenCode artifact.
 - Depends on: Phase 1 for README pinning wording and CLI resolution, and for session naming if the isolation spike fails.
@@ -370,7 +372,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 ### Phase 3: Iterate integration
 
 - Add the one-clause `confirmed` clarification to `plugins/cdocs/skills/iterate/SKILL.md`.
-- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched with the fresh-sessions option, whose sessions report `opened`.
+- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched on `<branch>-review-<role>` names with the fresh-sessions option, whose inlined `Sessions` line reports `opened`.
 - Constraints: no other cdocs agent or skill changes (`reviewer.md` already has `tools: "*"`).
 - Depends on: Phase 2.
 
