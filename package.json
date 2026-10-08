@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "build": "tsx scripts/build-opencode.ts",
-    "build:cdocs": "tsx scripts/build-opencode.ts cdocs"
+    "build:cdocs": "tsx scripts/build-opencode.ts cdocs",
+    "test:opencode": "npm run build:cdocs && tsx --test scripts/build-opencode.test.ts"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
