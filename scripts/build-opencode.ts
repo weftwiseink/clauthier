@@ -323,13 +323,13 @@ function main(): void {
     const inputPath = join(AGENTS_DIR, file);
     const outputPath = join(OUT_AGENTS, file);
     console.log(`    ${file}`);
-    // CC may tolerate frontmatter strict YAML rejects: warn, skip this agent, keep building.
+    // CC may tolerate frontmatter strict YAML rejects: on any conversion error, warn, skip this agent, keep building.
     let converted: string;
     try {
       converted = convertAgent(inputPath);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn(`  Warning: Skipping agent ${file}: frontmatter could not be parsed: ${message}`);
+      console.warn(`  Warning: Skipping agent ${file}: could not be converted: ${message}`);
       skipped.push(file);
       continue;
     }
@@ -357,7 +357,7 @@ function main(): void {
   console.log(`\nbuild-opencode: Done.`);
   console.log(`  Agents converted: ${agentFiles.length - skipped.length}`);
   if (skipped.length > 0) {
-    console.warn(`  Agents skipped (frontmatter parse errors): ${skipped.join(", ")}`);
+    console.warn(`  Agents skipped (conversion errors): ${skipped.join(", ")}`);
   }
   console.log(`  Output: ${OUTPUT_DIR}`);
 }
