@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: awaiting maintainer: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: prop-1 adding Phase 4 (value beyond grep); then fresh review, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -38,6 +38,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): upstream `dist/` resolution note drafted in the report, filing held for the maintainer.
   - decision (overseer call): BLUF leads with per-role answer; implementers "usable now with discipline, flexible mid-edit waits for upstream".
   - decision (overseer call): full trim to ~half (maintainer prefers minimal docs).
+  - decision (overseer call): Phase 4 graph arm uses the `source`-conditions scratch graph (the recommended config), not the shipped graph.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -91,6 +92,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | return | rev-impl-2 | `92f1522` | 2026-10-08T22:15 | accept, `review_proof: confirmed`: 7-step floor exit 0, counts exact, timings within 2.5%, collateral clean; toolchain inert (vite 7.3.0 / vitest 4.0.16 / tsc 5.9.3 bundler; 7 vite + 5 vitest configs, not 5 + 2); Q8 partial confirmed; Q4 35 not 34; fresh-worktree with `source` 8.96 s. Non-blocking: ~5,300 words, BLUF reaches per-role answer on line 9 and is stricter than the role table for implementers; repetition (tally, `path`, background caveat 3-4x); process detail belongs in devlog. 2 maintainer questions (BLUF framing, trim depth) |
 | dispatch | trim-1 (cdocs:implementer, opus, fresh) | report, impl devlog | 2026-10-08T22:17 | accept-round items: BLUF per-role first, full trim to ~half, wording/count fixes; docs only, no number or verdict change |
 | return | trim-1 | `72fc23c`, `f962f61` | 2026-10-08T22:35 | accept-round items applied; BLUF per-role first; 5,265 to 3,668 words before floor (~30%, not half: kept sections ~1,570 words; further cuts would drop Runtime Matrix/Candidates rows); process detail moved to impl devlog; floor byte-identical; only new values Q4 35 and config counts 7/5/13; nit_fix clean (semicolons left) |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T22:45 | add Phase 4 "Value beyond grep": scenario classes, pre-investigation questions, two-arm (graph-assisted vs grep-only) sonnet runs, blind opus judge, `source` scratch graph, scenario map + skill guidance |
 
 ## Steering Log
 
@@ -99,3 +101,5 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 - 2026-10-08T19:55: maintainer: "where do those other markdown headings come from? In weftwise docs/references should prob be excluded but otherwise markdown can prob be included unless detrimental". Overseer measured md heading nodes (current graph, 6,913 total): `_archive` 6,003 (devlogs 3,539, proposals 1,870, reports 576), `docs/` 553 (references 256, other 297), `packages/` 131, `.claude/` 117 (rules/cdocs.md 70, commands 47), `AGENTS.md` 77, `CLAUDE.md` 18, `README.md` 14. Proposal default flips to markdown in, except `/_archive/`, `/cdocs/`, `/docs/references/`; other exclusions only if shown detrimental.
 
 - 2026-10-08T22:30: maintainer: "Sounds like no meaningful improvement to graphify performance, only tiptoe-ing around their poor perf, right? How did the usefulness assessment fare?" then "It never found useful info beyond grep across all sample scenarios? What were the scenarios?" Overseer: correct on perf; usefulness grading was against a grep ground truth, so it measured efficiency, not discovery, and the devlog-sampled questions name their entities (favouring grep). Offered a discovery-style follow-up (questions without entity names, second grader); not dispatched.
+
+- 2026-10-08T22:45: maintainer: "This is why I asked for a focus on holistic assessment: the assessor should put more effort into verifying whether graphify could provide value beyond grep and in what scenarios. Otherwise it will always look inferior and pointless." Overseer miss: Phase 2 as proposed (and accepted through two reviews under this overseer) graded against a grep ground truth on entity-named questions, so its ceiling was a tie. Phase 4 added: two-arm discovery tasks across scenario classes, blind judge.
