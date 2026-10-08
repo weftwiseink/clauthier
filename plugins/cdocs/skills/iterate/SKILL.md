@@ -9,6 +9,7 @@ argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-a
 Run an iterative implement-review loop scoped to a proposal, a phase, or any unit specified using /cdocs:implement and /cdocs:review subagents.
 The invoking session agent enters *overseer mode* and restricts itself to orchestration:
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
+Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
 
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
 
