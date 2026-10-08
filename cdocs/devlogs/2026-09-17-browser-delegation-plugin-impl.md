@@ -5,7 +5,12 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: devlog
 state: live
-status: review_ready
+status: done
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-5-5"
+  at: 2026-10-07T21:38:21-07:00
+  round: 2
 part_of: cdocs/devlogs/2026-09-17-browser-delegation-plugin.md
 tags: [browser, delegation, playwright, implementation]
 ---
@@ -25,9 +30,9 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T22:05:00-07:00
-- now: r2 review accepted (`cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md` on main); its six non-blocking items are resolved (Verification > r2 follow-ups); devlog `review_ready`.
-- next: none here; the coordinator lands the branch. To re-run: `S=<scratchpad above>`; `cd $S/site && python3 -m http.server 18731 --bind 127.0.0.1 &`; `cd $S/sync && node relay.mjs &`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt> [cwd]` (cwd defaults to the scratch repo `$S/iterrepo`, so a nested dispatcher never writes into a worktree); `$S/dispatch/parse_report.py $S/dispatch/<tag>/delegate-return.txt`. Both fixture servers and all CLI sessions are stopped.
+- as_of: 2026-10-07T21:38:21-07:00
+- now: done; implementation accepted at round 2 (`cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md` on main), with its non-blocking items resolved (Verification > r2 follow-ups).
+- next: the branch `browser-delegate` is ready for the coordinator to land; after landing opencode-build-fixes, the coordinator re-runs `npm run build:cdocs` to confirm the OpenCode output of the edited `iterate/SKILL.md` and `reviewer.md`. Re-run recipe for the scratch harness: `S=<scratchpad above>`; start `$S/site` (`python3 -m http.server 18731 --bind 127.0.0.1`) and `$S/sync/relay.mjs`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt> [cwd]` (cwd defaults to the scratch repo `$S/iterrepo`); `$S/dispatch/parse_report.py`. All fixture servers and CLI sessions are stopped.
 - important_files: `plugins/browser-delegate/agents/browser-delegate.md`, `plugins/browser-delegate/README.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
 - callouts:
   - decision: work only in `/var/home/mjr/code/weft/clauthier/browser-delegate`; never merge; proposal status is the overseer's.
