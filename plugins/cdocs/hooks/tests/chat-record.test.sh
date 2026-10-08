@@ -785,6 +785,7 @@ Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
     want init_real && init_real
     want rules_check && rules_check
     want multi_turn && multi_turn
+    want canary_check && canary_check
   fi
 }
 
@@ -852,6 +853,41 @@ rules_check() {
   hasnt "no hook emitted additionalContext" "$(jq -r 'select(.type == "system" and .subtype == "hook_response") | .stdout' "$J")" 'additionalContext'
   echo "  info: devlog chat_record: $(grep -A2 '^chat_record:' "$P"/cdocs/devlogs/*.md 2>/dev/null | tr '\n' ' ')"
   echo "  info: record markers: $(markers "$(the_rec "$P")")"
+}
+
+# canary_check (TEMPORARY extra, --only canary_check; removed once the rules-references phase 3
+# gate is recorded): with no CLAUDE.md import, is .claude/rules/cdocs.md re-injected from disk
+# after /compact? The canary word is swapped on disk between turns one and two, so only a
+# re-read of the file (not the compaction summary) can yield the new word.
+canary_check() {
+  section "headless: canary_check - unscoped rules re-injected from disk after /compact, no import"
+  local P J name=canary_check fifo pid before t lim m post
+  P="$(hproj canary_check)"; init_rules "$P"; printf '# Project\n' > "$P/CLAUDE.md"
+  printf '\nThe cdocs canary word is `heliotrope`.\n' >> "$P/.claude/rules/cdocs.md"
+  fifo="$SB/$name.fifo"; rm -f "$fifo"; mkfifo "$fifo"
+  claude_run "$name" "$P" -- -p --input-format stream-json --permission-mode bypassPermissions < "$fifo" &
+  pid=$!
+  exec 7> "$fifo"
+  local -a msgs=("What is 2 + 2?" "/compact" "Without tools, what is the cdocs canary word? Say UNKNOWN if it is not in your context.")
+  for m in "${msgs[@]}"; do
+    # drive's send-and-wait loop, inlined so the swap runs between turns one and two.
+    [ "$m" = /compact ] && sed -i 's/heliotrope/marzipan/' "$P/.claude/rules/cdocs.md"
+    before="$(grep -c '"type":"result"' "$SB/$name.jsonl" 2>/dev/null)"
+    jq -cn --arg c "$m" '{type: "user", message: {role: "user", content: $c}}' >&7
+    t=0; lim="$HTIMEOUT"
+    case "$m" in /*) lim=60 ;; esac
+    while [ "$(grep -c '"type":"result"' "$SB/$name.jsonl" 2>/dev/null)" -le "${before:-0}" ] && [ "$t" -lt "$lim" ]; do
+      sleep 1; t=$((t + 1))
+    done
+  done
+  exec 7>&-
+  wait "$pid"
+  J="$SB/$name.jsonl"
+  echo "  info: on-disk canary line: $(grep 'canary word' "$P/.claude/rules/cdocs.md")"
+  has "a compaction happened" "$(grep -c '"compact_boundary"' "$J")" '^[1-9]'
+  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text' 2>/dev/null)"
+  echo "  info: post-compaction assistant text blocks:"; printf '%s\n' "$post" | sed 's/^/    /'
+  has "a post-compaction assistant text block contains marzipan" "$post" 'marzipan'
 }
 
 # multi_turn (extra, run with --only multi_turn): a realistic multi-turn session under the
