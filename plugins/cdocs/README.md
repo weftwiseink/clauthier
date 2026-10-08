@@ -46,6 +46,7 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:full-send` | Author a proposal via `/cdocs:propose-revise`, then run it to completion via `/cdocs:iterate` |
 | `/cdocs:oversee` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and AFK continuation |
 | `/cdocs:ablate` | Prove whether an MCP tool helps a cdocs task via a metered, honesty-gated A/B scorecard |
+| `/cdocs:graphify` | Load code context from a graphify graph via `cdocs-graphify`: the workstream's base query, entities, and paths |
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.
 Devlogs are most commonly auto-invoked; proposals, reviews, and reports are typically user-requested.
