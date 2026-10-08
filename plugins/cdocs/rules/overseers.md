@@ -27,8 +27,8 @@ chat-record note --as opus-5-5 <<'EOF'
 EOF
 ```
 
-The first turn you work on a devlog, add the output of `chat-record path` to its `chat_record:` frontmatter list.
+The first turn you work on a devlog, and after the session is renamed (each name gets its own record), add the output of `chat-record path` to its `chat_record:` frontmatter list.
 
 **After a compaction:** run `chat-record path`, read the `## Scratchpoint` and any handoff of the devlogs that list it, then `tail -n 80` of the record to get up to speed.
 
-Commit the record by explicit path with its devlog; never edit files under `cdocs/_chat/`.
+Commit a devlog's records by explicit path with it; never edit files under `cdocs/_chat/`.
