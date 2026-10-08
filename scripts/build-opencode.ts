@@ -19,6 +19,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, cpSync, rmSync } from "fs";
 import { join, resolve, dirname } from "path";
+import YAML from "yaml";
 
 // ---------------------------------------------------------------------------
 // Paths - resolved from repo root (one level up from scripts/)
@@ -115,13 +116,13 @@ function mapTools(ccTools: string): { tools: OCToolConfig; permission: OCPermiss
 }
 
 // ---------------------------------------------------------------------------
-// Frontmatter parsing (simple regex-based, no YAML library needed)
+// Frontmatter parsing (YAML, via the `yaml` package)
 // ---------------------------------------------------------------------------
 
 interface CCFrontmatter {
   name?: string;
   model?: string;
-  description?: string;
+  description?: unknown;
   tools?: string;
   skills?: string[];
   [key: string]: unknown;
@@ -133,31 +134,12 @@ function parseFrontmatter(content: string): { frontmatter: CCFrontmatter; body: 
     throw new Error("No frontmatter found");
   }
 
-  const fmRaw = match[1];
-  const body = match[2];
-  const frontmatter: CCFrontmatter = {};
-
-  // Simple state machine: when we see "skills:", we initialize the list,
-  // then subsequent "  - item" lines push to it. The list collection ends
-  // naturally when the next key-value line is encountered.
-  for (const line of fmRaw.split("\n")) {
-    const kvMatch = line.match(/^(\w[\w-]*?):\s*(.*)$/);
-    if (kvMatch) {
-      const [, key, value] = kvMatch;
-      if (key === "skills") {
-        frontmatter.skills = [];
-        continue;
-      }
-      frontmatter[key] = value;
-    }
-    // Handle YAML list items for skills
-    const listMatch = line.match(/^\s+-\s+(.+)$/);
-    if (listMatch && frontmatter.skills !== undefined) {
-      (frontmatter.skills as string[]).push(listMatch[1]);
-    }
+  const parsed: unknown = YAML.parse(match[1]);
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Frontmatter is not a YAML mapping");
   }
 
-  return { frontmatter, body };
+  return { frontmatter: parsed as CCFrontmatter, body: match[2] };
 }
 
 // ---------------------------------------------------------------------------
@@ -165,15 +147,15 @@ function parseFrontmatter(content: string): { frontmatter: CCFrontmatter; body: 
 // ---------------------------------------------------------------------------
 
 function generateOCFrontmatter(cc: CCFrontmatter): string {
-  const lines: string[] = ["---"];
+  const oc: Record<string, unknown> = {};
 
-  // description
-  if (cc.description) {
-    lines.push(`description: ${cc.description}`);
+  // description (String() only when present: String(undefined) would emit "undefined")
+  if (cc.description !== undefined && cc.description !== null) {
+    oc.description = String(cc.description);
   }
 
   // mode: subagent (all cdocs agents are subagents)
-  lines.push("mode: subagent");
+  oc.mode = "subagent";
 
   // model: expand short alias
   if (cc.model) {
@@ -181,30 +163,25 @@ function generateOCFrontmatter(cc: CCFrontmatter): string {
     if (!MODEL_MAP[cc.model]) {
       console.warn(`  Warning: Unknown model alias "${cc.model}" — passing through as-is`);
     }
-    lines.push(`model: ${fullModel}`);
+    oc.model = fullModel;
   }
 
   // tools: expand to boolean object
   if (cc.tools) {
     const { tools, permission } = mapTools(cc.tools);
-    lines.push("tools:");
-    lines.push(`  read: ${tools.read}`);
-    lines.push(`  edit: ${tools.edit}`);
-    lines.push(`  write: ${tools.write}`);
-    lines.push(`  bash: ${tools.bash}`);
+    oc.tools = tools;
 
     // permission block
     if (Object.keys(permission).length > 0) {
-      lines.push("permission:");
-      if (permission.edit) lines.push(`  edit: ${permission.edit}`);
-      if (permission.write) lines.push(`  write: ${permission.write}`);
+      oc.permission = permission;
     }
   }
 
   // Dropped fields: name (OC infers from filename), skills (OC has no equivalent)
 
-  lines.push("---");
-  return lines.join("\n");
+  // lineWidth: 0 disables folding: single-line values stay on one line,
+  // multi-line strings become `|` block scalars, unsafe values get quoted.
+  return "---\n" + YAML.stringify(oc, { lineWidth: 0 }) + "---";
 }
 
 // ---------------------------------------------------------------------------
@@ -338,11 +315,21 @@ function main(): void {
   // Convert agents
   const agentFiles = readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md"));
   console.log(`\n  Converting ${agentFiles.length} agents...`);
+  const skipped: string[] = [];
   for (const file of agentFiles) {
     const inputPath = join(AGENTS_DIR, file);
     const outputPath = join(OUT_AGENTS, file);
     console.log(`    ${file}`);
-    const converted = convertAgent(inputPath);
+    // CC may tolerate frontmatter strict YAML rejects: warn, skip this agent, keep building.
+    let converted: string;
+    try {
+      converted = convertAgent(inputPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`  Warning: Skipping agent ${file}: frontmatter could not be parsed: ${message}`);
+      skipped.push(file);
+      continue;
+    }
     writeFileSync(outputPath, converted);
   }
 
@@ -365,7 +352,10 @@ function main(): void {
 
   // Summary
   console.log(`\nbuild-opencode: Done.`);
-  console.log(`  Agents converted: ${agentFiles.length}`);
+  console.log(`  Agents converted: ${agentFiles.length - skipped.length}`);
+  if (skipped.length > 0) {
+    console.warn(`  Agents skipped (frontmatter parse errors): ${skipped.join(", ")}`);
+  }
   console.log(`  Output: ${OUTPUT_DIR}`);
 }
 
