@@ -93,11 +93,10 @@ payload() { # payload <cwd> [jq-args...] <filter-extension>
   local cwd="$1"; shift
   jq -cn --arg sid "$SID" --arg cwd "$cwd" "$@"
 }
-ups() { # ups <cwd> <prompt> [transcript] [extra-env...] -> stdout of the hook; UPS_TITLE sets session_title
-  local cwd="$1" prompt="$2" tr="${3:-/nonexistent}"; shift 3 2>/dev/null || shift $#
-  jq -cn --arg sid "$SID" --arg cwd "$cwd" --arg p "$prompt" --arg tr "$tr" --arg st "${UPS_TITLE:-}" \
-    '{session_id: $sid, cwd: $cwd, prompt: $p, transcript_path: $tr, hook_event_name: "UserPromptSubmit"}
-     + (if $st == "" then {} else {session_title: $st} end)' \
+ups() { # ups <cwd> <prompt> [extra-env...] -> stdout of the hook
+  local cwd="$1" prompt="$2"; shift 2
+  jq -cn --arg sid "$SID" --arg cwd "$cwd" --arg p "$prompt" \
+    '{session_id: $sid, cwd: $cwd, prompt: $p, transcript_path: "/nonexistent", hook_event_name: "UserPromptSubmit"}' \
     | env "$@" "$CR" UserPromptSubmit
 }
 stop() { # stop <cwd> <stop_hook_active> [permission_mode] [transcript] [extra-env...]
@@ -111,18 +110,10 @@ note() { # note <cwd> [args...] ; body on stdin
   (cd "$cwd" && CLAUDE_CODE_SESSION_ID="$SID" "$CR" note "$@")
 }
 rec() { ls "$1"/cdocs/_chat/*-"$SID".md 2>/dev/null | head -n 1; }
-titles() { # titles <transcript> <title>...: append one custom-title line per title
-  local f="$1" t; shift
-  for t in "$@"; do jq -cn --arg t "$t" '{type: "custom-title", customTitle: $t, sessionId: "x"}' >> "$f"; done
-}
 
 unit_suite() {
-  local U="$SCRATCH/unit" P out f rc D
-  D="$(date +%Y-%m-%d)"
-  # Hermetic config dir: agent modes glob <config>/projects/*/<sid>.jsonl for the session
-  # name, and must never see the calling session's transcripts.
-  mkdir -p "$U/cfg"
-  export CLAUDE_CONFIG_DIR="$U/cfg"
+  local U="$SCRATCH/unit" P out f rc
+  mkdir -p "$U"
 
   section "unit: script and hooks.json"
   check "script is mode 755 in the index" \
@@ -146,7 +137,7 @@ unit_suite() {
   f="$(rec "$P")"
   has "header timestamp matches SIGNOFF_RE time part" "$(head -n 1 "$f")" "^@user: ${TS_RE}\$"
   has "sign-off matches SIGNOFF_RE" "$(grep -E -- '^-- ' "$f")" "$SIGNOFF_RE"
-  has "unnamed record is <date>-<sid>.md" "$(basename "$f")" "^[0-9]{4}-[0-9]{2}-[0-9]{2}-$SID\.md\$"
+  has "record is named <date>-<session_id>.md" "$(basename "$f")" "^[0-9]{4}-[0-9]{2}-[0-9]{2}-$SID\.md\$"
 
   section "unit: grammar round trip"
   P="$U/grammar"; newproj "$P"
@@ -193,100 +184,13 @@ unit_suite() {
   printf '%s\n' '{"type":"custom-title","customTitle":"old title","sessionId":"x"}' \
     '{"type":"user","message":"noise"}' \
     '{"type":"custom-title","customTitle":"my canary \"v2\"","sessionId":"x"}' > "$T"
-  ups "$P" "t1" "$T" >/dev/null; stop "$P" true default "$T" >/dev/null
-  check "last custom-title, slugged" \
-    "$(tail -n 2 "$P/cdocs/_chat/$D-my-canary-v2-$SID.md" | head -n 1 | sed 's/ at .*//')" "-- my-canary-v2"
+  ups "$P" "t1" >/dev/null; stop "$P" true default "$T" >/dev/null
+  check "last custom-title, mapped" "$(tail -n 2 "$(rec "$P")" | head -n 1 | sed 's/ at .*//')" "-- my-canary--v2-"
   printf '%s\n' '{"type":"custom-title","customTitle":"","sessionId":"x"}' > "$T"
-  ups "$P" "t2" "$T" >/dev/null; stop "$P" true default "$T" >/dev/null
-  check "empty title -> sid8" "$(tail -n 2 "$P/cdocs/_chat/$D-$SID.md" | head -n 1 | sed 's/ at .*//')" "-- $SID8"
-  ups "$P" "t3" "$U/missing.jsonl" >/dev/null; stop "$P" true default "$U/missing.jsonl" >/dev/null
-  check "unreadable transcript -> sid8" "$(tail -n 2 "$P/cdocs/_chat/$D-$SID.md" | head -n 1 | sed 's/ at .*//')" "-- $SID8"
-
-  section "unit: session name in the record filename"
-  mkdir -p "$U/name"
-  name_of() { # name_of <transcript-lines...>: name segment of the record one UPS writes ('' = unnamed)
-    local d t b; d="$(mktemp -d "$U/name/XXXXXX")"; newproj "$d"; t="$d.jsonl"; : > "$t"
-    [ $# -gt 0 ] && printf '%s\n' "$@" > "$t"
-    ups "$d" "x" "$t" >/dev/null
-    b="$(basename "$(rec "$d")" .md)"; b="${b:11}"; b="${b%"$SID"}"; printf '%s' "${b%-}"
-  }
-  ct() { jq -cn --arg t "$1" '{type: "custom-title", customTitle: $t, sessionId: "x"}'; }
-  local A63; A63="$(printf 'a%.0s' $(seq 63))"
-  check "slug: quotes and spaces" "$(name_of "$(ct 'my canary "v2"')")" "my-canary-v2"
-  check "slug: punctuation" "$(name_of "$(ct 'Second: Name!')")" "second-name"
-  check "slug: non-ASCII dropped" "$(name_of "$(ct 'Café plan')")" "caf-plan"
-  check "slug: no alphanumerics -> unnamed" "$(name_of "$(ct '!!!')")" ""
-  check "slug: 70 chars cut at 64, no trailing -" "$(name_of "$(ct "$A63 bbbbbb")")" "$A63"
-  check "slug: a later ai-title is ignored" \
-    "$(name_of "$(ct 'Real Name')" '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" "real-name"
-  check "slug: ai-title alone -> unnamed" "$(name_of '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" ""
-
-  section "unit: first prompt of a named session (transcript not yet written)"
-  P="$U/firstname"; newproj "$P"
-  local FC="$U/cfg-first"; mkdir -p "$FC/projects/p"; local FT="$FC/projects/p/$SID.jsonl"
-  UPS_TITLE="First Name" ups "$P" "one" "$FT" >/dev/null
-  check "no transcript yet: UPS names the record from session_title" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" \
-    "$D-first-name-$SID.md"
-  titles "$FT" "First Name"
-  echo "- one" | CLAUDE_CONFIG_DIR="$FC" note "$P" --as tester; stop "$P" false default "$FT" >/dev/null
-  check "note and Stop join the same record" "$(markers "$P/cdocs/_chat/$D-first-name-$SID.md")|$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" \
-    "U A:tester S:first-name|1"
-  P="$U/firstname2"; newproj "$P"; : > "$U/firstname2.jsonl"
-  UPS_TITLE="Auto Title" ups "$P" "one" "$U/firstname2.jsonl" >/dev/null
-  check "transcript exists: session_title ignored, transcript decides" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" "$D-$SID.md"
-
-  section "unit: rename starts a new record; renaming back resumes"
-  local RC="$U/cfg-rename" TR
-  mkdir -p "$RC/projects/p"; TR="$RC/projects/p/$SID.jsonl"; : > "$TR"
-  P="$U/rename"; newproj "$P"
-  rturn() { # rturn <tag>: UPS, note, Stop, all reading the session's transcript
-    ups "$P" "prompt $1" "$TR" >/dev/null
-    echo "- $1" | CLAUDE_CONFIG_DIR="$RC" note "$P" --as tester
-    stop "$P" false default "$TR" >/dev/null
-  }
-  titles "$TR" "Name A"; rturn one
-  check "turn 1 writes only A's record" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" "$D-name-a-$SID.md"
-  check "A's record: one full turn" "$(markers "$P/cdocs/_chat/$D-name-a-$SID.md")" "U A:tester S:name-a"
-  titles "$TR" "B"; rturn two
-  check "turn 2 writes B's record" "$(markers "$P/cdocs/_chat/$D-b-$SID.md")" "U A:tester S:b"
-  check "turn 2 leaves A's record unchanged" "$(markers "$P/cdocs/_chat/$D-name-a-$SID.md")" "U A:tester S:name-a"
-  check "path prints B's record" "$(cd "$P" && CLAUDE_CONFIG_DIR="$RC" CLAUDE_CODE_SESSION_ID="$SID" "$CR" path)" \
-    "cdocs/_chat/$D-b-$SID.md"
-  titles "$TR" "name a"; rturn three
-  check "renaming back resumes A's record" "$(markers "$P/cdocs/_chat/$D-name-a-$SID.md")" \
-    "U A:tester S:name-a U A:tester S:name-a"
-  check "renaming back leaves B's record unchanged" "$(markers "$P/cdocs/_chat/$D-b-$SID.md")" "U A:tester S:b"
-  check "two records, no unnamed one" "$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" "2"
-
-  section "unit: agent modes find the session name"
-  local AC="$U/cfg-agent"; mkdir -p "$AC/projects/some-project"
-  titles "$AC/projects/some-project/$SID.jsonl" "Agent A"
-  P="$U/agentname"; newproj "$P"
-  echo "- named" | CLAUDE_CONFIG_DIR="$AC" note "$P" --as tester
-  check "note appends to the named record" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" "$D-agent-a-$SID.md"
-  check "path prints the named record" "$(cd "$P" && CLAUDE_CONFIG_DIR="$AC" CLAUDE_CODE_SESSION_ID="$SID" "$CR" path)" \
-    "cdocs/_chat/$D-agent-a-$SID.md"
-  echo "- unnamed" | note "$P" --as tester
-  check "no transcript: note uses the unnamed record" "$(markers "$P/cdocs/_chat/$D-$SID.md")" "A:tester"
-  check "no transcript: path prints the unnamed record" "$(cd "$P" && CLAUDE_CODE_SESSION_ID="$SID" "$CR" path)" \
-    "cdocs/_chat/$D-$SID.md"
-  mkdir -p "$U/home/.claude/projects/p"; titles "$U/home/.claude/projects/p/$SID.jsonl" "Home Name"
-  check "CLAUDE_CONFIG_DIR unset: path globs ~/.claude" \
-    "$(cd "$P" && env -u CLAUDE_CONFIG_DIR HOME="$U/home" CLAUDE_CODE_SESSION_ID="$SID" "$CR" path)" \
-    "cdocs/_chat/$D-home-name-$SID.md"
-
-  section "unit: name-exact lookup"
-  P="$U/exact"; newproj "$P"
-  local UREC="$P/cdocs/_chat/2026-01-01-$SID.md" NREC="$P/cdocs/_chat/2026-01-02-name-a-$SID.md"
-  printf '%s' $'@user: 2026-10-05T12:00:00-07:00\nq\n\n' > "$UREC"; cp "$UREC" "$NREC"
-  echo "- unnamed" | note "$P" --as tester; stop "$P" false >/dev/null
-  check "unnamed calls touch only the unnamed record" "$(markers "$UREC")|$(markers "$NREC")" "U A:tester S:$SID8|U"
-  local EC="$U/cfg-exact"; mkdir -p "$EC/projects/p"; titles "$EC/projects/p/$SID.jsonl" "Name A"
-  echo "- named" | CLAUDE_CONFIG_DIR="$EC" note "$P" --as tester
-  stop "$P" false default "$EC/projects/p/$SID.jsonl" >/dev/null
-  check "named calls touch only the named record" "$(markers "$UREC")|$(markers "$NREC")" \
-    "U A:tester S:$SID8|U A:tester S:name-a"
-  check "no other record created" "$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" "2"
+  ups "$P" "t2" >/dev/null; stop "$P" true default "$T" >/dev/null
+  check "empty title -> sid8" "$(tail -n 2 "$(rec "$P")" | head -n 1 | sed 's/ at .*//')" "-- $SID8"
+  ups "$P" "t3" >/dev/null; stop "$P" true default "$U/missing.jsonl" >/dev/null
+  check "unreadable transcript -> sid8" "$(tail -n 2 "$(rec "$P")" | head -n 1 | sed 's/ at .*//')" "-- $SID8"
 
   section "unit: Stop decision table"
   local base="$U/stop" r
@@ -365,7 +269,7 @@ unit_suite() {
   check "note with CDOCS_CHAT_RECORD=off exits 0 silently" "$rc:$out" "0:"
   out="$(cd "$P" && CDOCS_CHAT_RECORD=off CLAUDE_CODE_SESSION_ID="$SID" "$CR" path 2>&1)"; rc=$?
   check "path with CDOCS_CHAT_RECORD=off exits 0 silently" "$rc:$out" "0:"
-  ups "$P" "x" /nonexistent CDOCS_CHAT_RECORD=off >/dev/null
+  ups "$P" "x" CDOCS_CHAT_RECORD=off >/dev/null
   check "hooks with CDOCS_CHAT_RECORD=off write nothing" "$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" "0"
   (cd "$P" && printf '' | CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>/dev/null); rc=$?
   [ "$rc" -ne 0 ] && ok "empty note body exits non-zero" || bad "empty note body exit 0"
@@ -596,7 +500,7 @@ hs() { # hs <name> <description>: scenario header; returns 1 when filtered out
 
 headless_suite() {
   headless_setup
-  local P F J out sid sid2 b day
+  local P F J out sid sid2 b
 
   if hs cmdv "command -v chat-record resolves into the plugin under test"; then
     P="$(hproj cmdv)"
@@ -815,30 +719,17 @@ and then reply received." --permission-mode bypassPermissions
     check "fork-session starts a new file" "$(nrec "$P")" "2"
   fi
 
-  if hs rename_record "stream-json /rename between two prompts starts a new record; the old one stays"; then
-    P="$(hproj rename_record)"
-    drive rename_record "$P" "$(note_prompt 'Reply one.' '- turn one')" "/rename Second Name" \
-      "$(note_prompt 'Reply two.' '- turn two')"
-    J="$SB/rename_record.jsonl"; sid="$(stream_sid "$J")"; day="$(date +%Y-%m-%d)"
-    echo "  info: records: $(ls "$P/cdocs/_chat" | paste -sd' ' -)"
-    check "two records" "$(nrec "$P")" "2"
-    check "unnamed record: turn one only" "$(markers "$P/cdocs/_chat/$day-$sid.md")" "U A:haiku-4-5 S:${sid:0:8}"
-    check "named record: turn two only" "$(markers "$P/cdocs/_chat/$day-second-name-$sid.md")" "U A:haiku-4-5 S:second-name"
-    hasnt "no @user block for /rename" "$(cat "$P"/cdocs/_chat/[0-9]*.md)" "/rename"
-    check "two Stops, no block" "$(stop_count "$J"):$(stop_blocks "$J")" "2:0"
-  fi
-
-  if hs rename_record_name "--name names the first record; --resume with another --name starts a new one"; then
-    P="$(hproj rename_record_name)"
-    claude_run rename_record_name "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --name "First Name" \
-      --permission-mode bypassPermissions
-    sid="$(stream_sid "$SB/rename_record_name.jsonl")"; day="$(date +%Y-%m-%d)"
-    claude_run rename_record_name "$P" -- -p "$(note_prompt 'Reply two.' '- turn two')" --resume "$sid" --name "Other" \
-      --permission-mode bypassPermissions
-    echo "  info: records: $(ls "$P/cdocs/_chat" | paste -sd' ' -)"
-    check "two records, none unnamed" "$(nrec "$P"):$([ -e "$P/cdocs/_chat/$day-$sid.md" ] && echo unnamed)" "2:"
-    check "first turn in first-name" "$(markers "$P/cdocs/_chat/$day-first-name-$sid.md")" "U A:haiku-4-5 S:first-name"
-    check "resumed turn in other" "$(markers "$P/cdocs/_chat/$day-other-$sid.md")" "U A:haiku-4-5 S:other"
+  if hs rename "custom-title in the transcript names the sign-off"; then
+    P="$(hproj rename)"
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --permission-mode bypassPermissions
+    sid="$(stream_sid "$SB/rename.jsonl")"
+    local tr; tr="$(find "$CFG/projects" -name "$sid.jsonl" | head -n 1)"
+    printf '{"type":"custom-title","customTitle":"my-canary","sessionId":"%s"}\n' "$sid" >> "$tr"
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply two.' '- turn two')" --resume "$sid" --permission-mode bypassPermissions
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply three.' '- turn three')" --resume "$sid" --permission-mode bypassPermissions
+    out="$(markers "$(the_rec "$P")")"
+    has "a later sign-off carries the title" "$out" "S:my-canary\$"
+    echo "  info: markers: $out"
   fi
 
   if hs plan_mode "plan mode: one Stop, no decision, @user then sign-off"; then

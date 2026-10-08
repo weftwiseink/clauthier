@@ -17,17 +17,16 @@ Isolation (worktrees, fresh context) binds dispatched implementers and reviewers
 ## Chat record
 
 Top-level agents must use the `chat-record` command to maintain chat records (subagents should never).
-Before ending a turn that began with a human prompt, briefly note the turn's most salient information: the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words.
-The quoted heredoc keeps the body byte-exact:
+Before ending a turn that began with a human prompt, append one to three one-line bullets (`gist:`, `query:`, `read:`, `follow-up:`); the quoted heredoc keeps the body byte-exact:
 
 ```bash
 chat-record note --as opus-5-5 <<'EOF'
-- Proposal ready for review: the session name goes in the record filename, so a rename starts a new record and the old one stays.
+- gist: reviewer r5 returned revise on two blockers
 EOF
 ```
 
-The first turn you work on a devlog, and after the session is renamed (each name gets its own record), add the output of `chat-record path` to its `chat_record:` frontmatter list.
+The first turn you work on a devlog, add the output of `chat-record path` to its `chat_record:` frontmatter list.
 
 **After a compaction:** run `chat-record path`, read the `## Scratchpoint` and any handoff of the devlogs that list it, then `tail -n 80` of the record to get up to speed.
 
-Commit a devlog's records by explicit path with it; never edit files under `cdocs/_chat/`.
+Commit the record by explicit path with its devlog; never edit files under `cdocs/_chat/`.
