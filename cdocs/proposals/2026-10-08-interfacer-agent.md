@@ -18,7 +18,7 @@ tags: [architecture, claude_skills, interfacer, browser_delegation, testing, sub
 
 > BLUF: Delete the `browser-delegate` plugin and add one ~70-line sonnet agent, `cdocs:interfacer`, shaped like `bash-runner`.
 > Any agent dispatches it as a testing assistant: it learns how to drive the target from the dispatch prompt and the project's own docs and scripts, writes media and a brief `report.md` under `${TMPDIR:-/tmp}/claude-<uid>/interfacer/<instance>/NN-<check>/`, and replies with the path and a short summary.
-> Durable by default: the dispatcher keeps the returned `agentId` and resumes it with `SendMessage` for follow-up checks, and tells it to tear down its tooling before the dispatcher itself returns.
+> Durable by default: the instance directory (a `notes.md` the agent keeps, plus each check's report and media) and the tooling it started outlive each dispatch, so every follow-up check, and the tear down before the dispatcher returns, is a fresh dispatch naming that directory.
 
 ## Summary
 
@@ -45,9 +45,8 @@ Remove the separate, playwright-specific `browser-delegate` plugin it supersedes
 - `plugins/browser-delegate/agents/browser-delegate.md` and its reviews (`cdocs/reviews/*browser-delegation*`): real failures they found, which the new rules cover in one sentence each:
   matching eval errors counted as convergence (impl r1, blocking), a piped command's exit status read as the tool's (impl r2), and session reuse across agents breaking reviewer independence (r3-r7).
 - [`plugins/cdocs/agents/bash-runner.md`](../../plugins/cdocs/agents/bash-runner.md): the style target (65 lines, "Prompt with:" description, `${TMPDIR:-/tmp}/claude-$(id -u)` scratch, fixed brief report, capture left in place).
-- [`cdocs/reports/2026-09-19-claude-code-subagents-feature-breakdown.md`](../reports/2026-09-19-claude-code-subagents-feature-breakdown.md) §4-5, 8, 10: the mechanics "durable" rests on.
-  `SendMessage(to: <id or name>)` resumes an agent with full history, tool results, and tool set, cache-warm; the Agent tool result carries `agentId` (nested dispatchers' Agent tool has no `name` parameter, report line 132); long-running commands started by a background subagent can outlive it; subagents inherit MCP tools unless `tools` narrows them; nesting is three layers by default.
-- "CDocs Overseer Rules › Stay thin": warm subagents are expected, with a fresh one of the same type past ~400K context after a handoff.
+- [`cdocs/reports/2026-09-19-claude-code-subagents-feature-breakdown.md`](../reports/2026-09-19-claude-code-subagents-feature-breakdown.md) §8, 10: long-running commands started by a subagent can outlive it; subagents inherit MCP tools unless `tools` narrows them; nesting is three layers by default.
+- [`cdocs/reports/2026-10-08-subagent-context-preservation-options.md`](../reports/2026-10-08-subagent-context-preservation-options.md): how a dispatcher waits on a subagent (foreground where `run_in_background` is offered, else ending its turn), and the cost of a fresh dispatch per check.
 - `plugins/cdocs/skills/iterate/SKILL.md`: Turn N.b requires the reviewer to re-run empirical floors and cite an artifact; the `confirmed` row already counts "an artifact produced by a subagent the reviewer dispatched this round" as the reviewer's own.
 - `plugins/cdocs/agents/reviewer.md` line 50: the `_media` copy clause, keyed to a subagent report's `Artifacts` line (the `BROWSER DELEGATE REPORT` field) and to `.png`.
 
@@ -82,7 +81,8 @@ description: |
   - Optional: sessions or processes to reuse, by name
   - Optional: which states to capture, and any logs wanted
 
-  Durable by default: keep the returned `agentId`, resume it with `SendMessage` for follow-up checks, and say "tear down" before you return.
+  For a follow-up check, and for "tear down" before you return, dispatch a fresh interfacer naming the instance directory its report gave.
+  Dispatch in the foreground (`run_in_background: false`) where offered, else end your turn and the report wakes you.
   Responds with its report path, a short summary, and what it left running.
 color: cyan
 maxTurns: 40
@@ -94,29 +94,29 @@ Drive the interface a dispatching agent wants checked, capture media, and report
 
 Don't read rules files.
 
-## Setup (first dispatch only)
+## Setup
 
-1. Make your instance directory, `d="${TMPDIR:-/tmp}/claude-$(id -u)/interfacer"; mkdir -p "$d"; mktemp -d "$d/XXXXXX"`, and reuse its printed path as a literal for every later call and follow-up.
+If the prompt names an instance directory, read its `notes.md` first and skip to the check; otherwise:
+1. Make your instance directory, `d="${TMPDIR:-/tmp}/claude-$(id -u)/interfacer"; mkdir -p "$d"; mktemp -d "$d/XXXXXX"`, and use its printed path as a literal in every call.
 2. Learn how this project drives the target: the prompt first, then the project's own docs and scripts.
    If you find no working way to drive it, stop and report `FAILED` with what you looked for.
 
 ## Each check
 
-The first dispatch and each follow-up message is one check, in `<instance>/NN-<slug>/` (`NN` counts up from `01`).
+Each dispatch, tear down included, is one check, in `<instance>/NN-<slug>/` (`NN` is the next free number, from `01`).
 
-1. Start or reuse what the check needs, run its steps, and capture media into the check directory.
-2. Look at every capture you describe (`Read` shows images).
-3. Write `report.md` in the check directory, then reply.
+1. Start what the check needs, or reuse it once you confirm it is alive; run its steps, capture media into the check directory, and look at every capture you describe (`Read` shows images).
+2. Update `<instance>/notes.md` (how the target is driven, what is running with its real PID or session name, not a wrapper's, and gotchas), write `report.md` in the check directory, then reply.
 
 ## Rules
 
 - Use the project's setup as documented: don't install tools, change config, or swap in a different tool when it fails, but report what is missing.
 - Write only under your instance directory, by absolute path, and never create or edit files in the project tree (if a tool writes into its cwd anyway, say so in the report).
-- Never close, kill, restart, or reuse sessions and processes you did not start, unless the prompt names them.
-- Start long-lived things (servers, apps, browser sessions) detached (the tool's own daemon, or `setsid`/`nohup`) so they outlive the Bash call, and leave them running until told to tear down.
-- An error is never a pass: report every failed command, timeout, missing element, or blank capture, including ones a retry got past, and never read a piped command's exit status as the tool's.
+- Never close, kill, restart, or reuse sessions and processes this instance did not start (per `notes.md`), unless the prompt names them.
+- Start long-lived things (servers, apps, browser sessions) detached (the tool's own daemon, or `setsid`/`nohup`) so they outlive the Bash call and this dispatch, and leave them running until a dispatch says tear down.
+- An error is never a pass: any failed command, error status (such as a 404), timeout, missing element, or blank capture makes `Status:` `WARNINGS` or `FAILED`, even when the check was probing for it; report each one, including ones a retry got past, and never read a piped command's exit status as the tool's.
 - Describe what you observed and point at the media that shows it ("the Save button rendered, disabled"), but leave whether the change is correct or acceptable to the dispatcher.
-- On "tear down", stop everything you started and list what you stopped.
+- On "tear down", stop everything `notes.md` lists as running, by its recorded PID or session name (never a pattern like `pkill -f`), confirm each is gone, and list what you stopped.
 
 ## Report
 
@@ -136,17 +136,18 @@ Setup: <how you drove it: commands or scripts, versions, and the doc or script t
 <errors, surprises, anything the dispatcher should know>
 ```
 
-Your final message is only `INTERFACER REPORT`, then the report path and its `Status:` and `Left running:` lines, then a two-to-five-line summary.
+Reply only through your final message, never `SendMessage`; it is only `INTERFACER REPORT`, then the report path and its `Status:` and `Left running:` lines, then a two-to-five-line summary.
 
-The instance directory is what the dispatcher cites: never delete it.
+The instance directory is what the dispatcher cites and the next dispatch starts from: never delete it.
 ````
 
 Output layout:
 
 ```
 ${TMPDIR:-/tmp}/claude-<uid>/interfacer/
-  <XXXXXX>/              one per interfacer instance, made on its first dispatch
-    01-<slug>/           one per check (dispatch or follow-up)
+  <XXXXXX>/              one per interfacer instance, made by its first dispatch
+    notes.md             how the target is driven, what is running (real PIDs), gotchas
+    01-<slug>/           one per check (each dispatch, tear down included)
       report.md
       <step>.png, <step>.log, ...
     02-<slug>/
@@ -154,48 +155,50 @@ ${TMPDIR:-/tmp}/claude-<uid>/interfacer/
 
 ### Durable by default
 
-The agent stays warm across the dispatcher's whole engagement; its tooling lives within one dispatcher turn.
+The instance directory and the tooling the interfacer started outlive each dispatch; the agent itself does not.
 
-> NOTE(opus-5-5/cdocs/interfacer-agent): Replies are asynchronous, not returned like a call (claude 2.1.285 and 2.1.293, Phase 4 canary).
-> A resumed check always runs in the background, and a first dispatch does too unless the dispatcher passes `run_in_background: false`; the reply arrives as a notification at the dispatcher's next tool call.
-> A dispatcher that ends its turn never receives it, so the dispatcher stays in its turn (short Bash `sleep`s; the harness refuses long ones) until each reply arrives, and the agent's description says so.
-> The diagram's reply arrows show content, not a synchronous return.
+> NOTE(opus-5-5/cdocs/interfacer-agent): Why fresh dispatches rather than one warm agent resumed with `SendMessage`: [the context preservation report](../reports/2026-10-08-subagent-context-preservation-options.md).
 
 ```mermaid
 sequenceDiagram
   participant D as Dispatcher (implementer, reviewer, any agent)
-  participant I as interfacer (sonnet)
+  participant I as interfacer (fresh per dispatch)
+  participant F as Instance dir (notes.md, NN-*/)
   participant T as Project tooling (server, app, browser session)
-  D->>I: Agent(subagent_type cdocs:interfacer, prompt), keeps agentId
-  I->>T: start (outlives the Bash call)
-  I-->>D: report path 01-..., Left running
-  D->>I: SendMessage(to agentId): follow-up check
-  I->>T: reuse
-  I-->>D: report path 02-...
-  D->>I: SendMessage: tear down (before D returns)
-  I->>T: stop
-  I-->>D: stopped list
-  Note over D,I: next round, D resumes the same agentId, which restarts what it needs
+  D->>I: Agent(cdocs:interfacer, what to check)
+  I->>F: mktemp, write notes.md, 01-*/report.md
+  I->>T: start, detached
+  I-->>D: report path, Left running
+  D->>I: Agent(cdocs:interfacer, follow-up + instance dir)
+  I->>F: read notes.md, write 02-*/report.md
+  I->>T: confirm alive, reuse
+  I-->>D: report path
+  D->>I: Agent(cdocs:interfacer, "tear down" + instance dir)
+  I->>T: stop by recorded PID or session name
+  I-->>D: report path, Left running: none
 ```
 
-- **Warm agent.** The dispatcher keeps the `agentId` from the Agent tool result; it passes no `name`, which nested Agent tools lack and which, with agent teams enabled, spawns a teammate instead of a subagent.
-  A resume keeps the agent's history, so a follow-up is one sentence ("now submit the form and screenshot the result"), and it hits the prompt cache.
-- **Live tooling.** The interfacer starts servers and apps so they outlive its Bash calls: detached (the tool's own daemon, such as a browser CLI's session, or `setsid`/`nohup`), not Bash `run_in_background`, which nested callers lack.
-  Its `Left running` line is the dispatcher's inventory of what to tear down.
-- **Ending.** A dispatcher sends "tear down" before it returns; a warm implementer resumes the same interfacer next round, which restarts what it needs.
+- **Instance directory.** The first dispatch makes it and starts `notes.md`: how the project drives the target, what is running with real PIDs or session names (not a `setsid` or shell wrapper's), and gotchas met so far.
+  A later dispatch handed the directory reads `notes.md`, confirms what it lists is alive, and takes the next free `NN`, so a follow-up prompt is one sentence plus the path.
+  The notes survive the dispatcher's compaction and replacement.
+- **Live tooling.** The interfacer starts servers and apps so they outlive its Bash calls and its dispatch: detached (the tool's own daemon, such as a browser CLI's session, or `setsid`/`nohup`), not Bash `run_in_background`, which nested callers lack.
+  `notes.md` and the report's `Left running` line are the inventory of what to tear down.
+- **Waiting.** Where the Agent tool offers `run_in_background` (headless callers), the dispatcher passes `false` and gets the report as the tool result; where it does not (interactive subagent callers), the dispatch is async, and the dispatcher ends its turn and is woken by the report.
+  No sleeping or polling.
+- **Ending.** A dispatcher dispatches "tear down" naming the instance before it returns; an implementer that names the same instance next round restarts what it needs from `notes.md`.
   This keeps single-instance targets (fixed ports, one app per simulator, desktop apps) free for the reviewer's fresh run and avoids stale servers across the implementer's edits.
 
 ### Callers
 
 Any agent dispatches it directly, with no skill and no wrapper.
 
-- **Implementer.** `plugins/cdocs/skills/implement/SKILL.md` step 5's verification bullet gains: "for checks against a running app or interface, prefer dispatching a `cdocs:interfacer` (kept warm) over driving the tool yourself."
-  A warm implementer under iterate resumes its interfacer across rounds, since its history holds the `agentId`.
+- **Implementer.** `plugins/cdocs/skills/implement/SKILL.md` step 5's verification bullet gains: "for checks against a running app or interface, prefer dispatching a `cdocs:interfacer` (follow-ups name its instance directory) over driving the tool yourself."
+  An implementer under iterate may name the same instance across rounds; its devlog's Scratchpoint holds the path if it is rotated.
 - **Reviewer.** `reviewer.md` gains one sentence and the `_media` clause is generalized:
-  - New: "For a runtime check, dispatch your own `cdocs:interfacer` asking for fresh sessions, never resume one another agent started, and tear it down before you return."
+  - New: "For a runtime check, dispatch your own `cdocs:interfacer` asking for fresh sessions, never name an instance directory another agent started, and dispatch its tear down before you return."
   - Generalized line 50: "When your verdict relies on media a subagent produced (such as your interfacer's), look at it yourself, `cp -n` it to `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.<ext>` ..." (the rest of the clause unchanged).
 - **Iterate.** Turn N.b: "the reviewer empirically re-runs the floor, itself or through its own `cdocs:interfacer`, and cites at least one artifact path".
-  `confirmed` row: "(an artifact produced by a subagent the reviewer dispatched this round, such as its `cdocs:interfacer`, counts as its own; one from an interfacer another agent started does not)".
+  `confirmed` row: "(an artifact produced by a subagent the reviewer dispatched this round, such as its `cdocs:interfacer`, counts as its own; one from an interfacer instance another agent started does not)".
 - **Devlogs.** The devlog skill's Screenshots bullet gains: "copy from an interfacer's report directory (tmp paths do not persist)."
 
 The interfacer never writes `cdocs/_media/`: the dispatcher copies only what its doc cites, per the old proposal's maintainer decision.
@@ -204,12 +207,12 @@ The interfacer never writes `cdocs/_media/`: the dispatcher copies only what its
 
 | File | Change |
 |---|---|
-| `plugins/cdocs/AGENTS.md` "Formal Agents" | Add `interfacer` (sonnet; inherits all tools, including the project's MCP servers). |
+| `plugins/cdocs/AGENTS.md` "Formal Agents" | Add `interfacer` (follow-ups are fresh dispatches naming its instance directory; sonnet; inherits all tools, including the project's MCP servers). |
 | `plugins/cdocs/README.md` | "7 agents converted" becomes 8; "`bash-runner` follows no rules" names `interfacer` too. |
 | `CLAUDE.md` | No change: it lists skills, not agents. |
 | `scripts/build-opencode.ts`, its test | No change. With `tools` omitted the build emits no `tools`/`permission` block (OpenCode: all tools), drops `model`, and round-trips the description; the test loops over every agent file. |
 
-The CC-specific word in the description (`SendMessage`) passes through to OpenCode as text; an OpenCode caller resumes subagents its own way.
+The CC-specific parameter in the description (`run_in_background`) passes through to OpenCode as text; an OpenCode caller waits on subagents its own way.
 
 ## Important Design Decisions
 
@@ -236,17 +239,16 @@ The old "mechanical facts only" rule made the dispatcher re-open every screensho
 A sonnet describing a screenshot it looked at is reliable and checkable, since each observation points at its media.
 Acceptability ("the fix works", "matches the design") needs the proposal's criteria and, under iterate, belongs to the reviewer, who looks at any media its verdict relies on.
 
-### D5: Durable by default means warm agent plus live tooling
+### D5: Durable by default means a durable instance directory with live tooling
 
-> NOTE(opus-5-5/cdocs/interfacer-agent): "Keeping an `agentId`" also means waiting in-turn for each asynchronous reply; see the NOTE under "Durable by default".
+Each check is a fresh dispatch that resumes from the instance directory: one `Read` of `notes.md` and a liveness check replace setup discovery, about one to two tool rounds per follow-up, and the tooling stays up, so there is no cold app start.
+A warm agent's history would carry the same knowledge implicitly, but it grows with every check, does not survive the dispatcher's replacement, and its resume runs in the background, which a headless dispatcher that ends its turn never receives.
+`notes.md` makes that knowledge explicit, and one design serves headless and interactive dispatchers with no waiting instructions beyond the platform default.
 
-Re-dispatching for each follow-up pays a fresh briefing, a fresh setup discovery, and a cold app start.
-`SendMessage` resume and long-lived processes are native mechanics, so durability costs keeping an `agentId` and a "tear down" before each return, with no state file.
+### D6: Fresh instance per reviewer, reused instance per implementer
 
-### D6: Fresh per reviewer, warm per implementer
-
-Reviewer independence needs its own sessions and its own agent, so a reviewer never resumes or reuses the implementer's, and always tears down (no hand-off to the overseer: the report's `Setup:` line and media let a human reproduce the state).
-The implementer benefits most from warmth (many small checks while fixing).
+Reviewer independence needs its own sessions and its own instance, so a reviewer never names or reuses the implementer's instance directory or sessions, and always dispatches its tear down (no hand-off to the overseer: the report's `Setup:` line and media let a human reproduce the state).
+The implementer benefits most from reuse (many small checks while fixing).
 
 ### D7: Report file plus short final message
 
@@ -257,10 +259,10 @@ The dispatcher gets a few lines in context and reads `report.md` or the media on
 - **No documented setup.** The interfacer reports `FAILED` with what it searched; the dispatcher either names the command or fixes the project's docs.
 - **A tool writes into its cwd** (some browser CLIs write a state dir there). The interfacer notes it in the report, and if the project's docs give a cwd or output flag, it uses that.
 - **Two agents told to reuse the same named session.** Not prevented: the rule against touching unnamed sessions covers the default case, and naming a shared session is the dispatcher's explicit choice.
-- **A dispatcher returns without tearing down.** `Left running` in the last report names what is up; processes started under Claude Code's Bash may die with the session, and daemons idle out on the tool's own timeout.
-- **Process lifetime after a foreground interfacer returns.** Documented for background subagents only. WARN(opus-5-5/cdocs/interfacer-agent): unverified for foreground, though it only has to span the gap between a check's return and the dispatcher's next `SendMessage`, which Phase 4 tests; starting processes detached is what makes it hold.
-  > NOTE(opus-5-5/cdocs/interfacer-agent): Resolved for the gap it covers: in the devcontainer canary a foreground first dispatch (`run_in_background: false`) started a detached server that survived into checks 02-03 (one PID across 61 one-second samples).
-- **`maxTurns` across resumes.** Whether the 40-turn cap is per resume or cumulative is unverified; a capped result is marked partial and resumable, so the dispatcher can continue it either way.
+- **A dispatcher returns without tearing down.** `notes.md` and `Left running` in the last report name what is up; processes started under Claude Code's Bash may die with the session, and daemons idle out on the tool's own timeout.
+- **Process lifetime across dispatches.** Documented for background subagents only; starting processes detached is what makes it hold after a foreground dispatch returns, and Phase 4 checks one server PID across checks.
+- **A stale `notes.md`.** A process it lists may have died (session end, a crash); the next check confirms liveness before reusing it, restarts what is gone, and records the new PID.
+- **Two dispatches naming one instance at once.** Unsupported: a dispatcher runs its checks against an instance one at a time.
 
 ## Test Plan
 
@@ -277,17 +279,17 @@ A live canary, in the style of `cdocs/devlogs/_verify/2026-10-05-bash-runner-liv
 1. **Fixture project.** A `mktemp -d` git repo with a two-page static site, a `health.json`, and a README stating how to serve it (`python3 -m http.server`) and drive it.
    The verifier, not the interfacer, installs the browser tooling into the fixture (playwright-cli is not on this host's `PATH`; `~/.cache/ms-playwright/` holds `chromium_headless_shell-1208`, so a project-local `@playwright/cli` plus a config pinning that `executablePath` is the likely setup).
    If no browser launches, the canary still runs with `curl` as the tool, and the devlog flags the browser path as unverified.
-2. **Nested dispatch.** `claude -p --plugin-dir <repo>/plugins/cdocs --output-format stream-json --verbose` from the fixture; the top-level agent dispatches a `general-purpose` stand-in, which dispatches `cdocs:interfacer` with a prompt naming only what to check ("check the home page renders and its link reaches page two"), not how.
-3. **Follow-up.** The stand-in resumes the same agent with `SendMessage` ("click the link and screenshot page two"), then sends "tear down".
+2. **Nested dispatch.** `claude -p --plugin-dir <repo>/plugins/cdocs --output-format stream-json --verbose` from the fixture; the top-level agent dispatches a `general-purpose` stand-in, which dispatches `cdocs:interfacer` in the foreground (`run_in_background: false`) with a prompt naming only what to check ("check the home page renders and its link reaches page two"), not how.
+3. **Follow-up.** The stand-in dispatches a fresh interfacer naming the instance directory from check 1's report ("click the link and screenshot page two"), then another with "tear down", each in the foreground, with no `sleep`.
 4. **Error probe.** One check targets a missing element or a 404 route; its report must not say `OK` for that step.
+5. **Interactive run.** The same pattern dispatched from inside an interactive session, where dispatches are async: the stand-in ends its turn after each dispatch and is woken by each report.
 
 Pass criteria, from the stream and the filesystem:
 
-- The stream shows `Agent` with `subagent_type: cdocs:interfacer` at depth 2, and `SendMessage` to the same `agentId`.
-- The stream shows whether the interfacer ran in the foreground or the background; a background run leaves the foreground-lifetime WARN open, and the devlog says so.
-- One instance directory holds `01-*/` and `02-*/`, each with `report.md` and at least one screenshot whose description matches the image (the verifier looks).
-- Check 1's report's `Setup:` cites the fixture README; check 2 reused check 1's server and session (same PID, no second `open`) rather than restarting them.
-- After tear down, the server PID and the browser session are gone.
+- The stream shows each check as an `Agent` call with `subagent_type: cdocs:interfacer` at depth 2 and `is_backgrounded: false`, with no `SendMessage` and no stand-in `sleep`.
+- One instance directory holds `notes.md`, `01-*/`, and `02-*/`, each check with `report.md` and at least one screenshot whose description matches the image (the verifier looks).
+- Check 1's report's `Setup:` cites the fixture README; check 2 read `notes.md` and reused check 1's server and session (same PID, no second `open`) rather than restarting them.
+- After tear down, the server PID and the browser session are gone, and `notes.md` lists nothing running.
 - `git status` in the fixture shows nothing the interfacer created.
 - One screenshot is copied to `cdocs/_media/2026-10-08-interfacer-canary-<description>.png` and embedded in the sub-devlog, exercising the `_media` convention.
 
@@ -320,13 +322,13 @@ Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook al
 
 ### Phase 4: Live canary
 
-- Run the Verification Methodology and record stream excerpts, report paths, and pass/fail per criterion in the sub-devlog.
-- If a process does not survive between checks, fix how the agent detaches it and re-run.
+- Run the Verification Methodology (headless, then the interactive run) and record stream excerpts, report paths, and pass/fail per criterion in the sub-devlog.
+- If a process does not survive between dispatches, fix how the agent detaches it and re-run.
 - Success: every pass criterion met, or each miss flagged with its cause.
 
 ## Maintainer Overrides
 
-> NOTE(opus-5-5/cdocs/interfacer-agent): These are settled as decisions (D3, D5, D6) but the maintainer has not answered them yet, so the maintainer may override any of them.
-> 1. "Durable by default" means a warm agent resumed by `agentId`, with tooling scoped to one dispatcher turn.
->    Rejected readings: (a) media persisted to a project path (writes into the project tree, duplicates the `_media` decision); (b) re-opening and retrying (retries hide errors); (c) `background: true` (forces every caller async, strips `Agent`, and changes process lifetime unasked).
+> NOTE(opus-5-5/cdocs/interfacer-agent): D5 follows maintainer direction (context preservation for efficiency, without depending on `SendMessage`); D3 and D6 are settled as decisions but unanswered, so the maintainer may override any of them.
+> 1. "Durable by default" means an instance directory (`notes.md` plus per-check reports) with live tooling across fresh dispatches, torn down before the dispatcher returns.
+>    Rejected readings: (a) media persisted to a project path (writes into the project tree, duplicates the `_media` decision); (b) re-opening and retrying (retries hide errors); (c) `background: true` (forces every caller async, strips `Agent`, and changes process lifetime unasked); (d) one warm agent resumed with `SendMessage` (see D5).
 > 2. All tools are inherited (D3), and reviewers always tear down (D6).
