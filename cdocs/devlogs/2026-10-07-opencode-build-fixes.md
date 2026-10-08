@@ -35,7 +35,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: iterate Turn 1.b: rev-1 reviewing implementation 4ded3b7..e242f37.
+- next_steps: impl-1 applying accept nits (catch wording, CRLF) and setting proposal implementation_accepted; then final report.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
@@ -56,6 +56,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 |---|---|---|---|---|---|---|
 | p1 | prop-1 (cdocs:proposer) | rev-p1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | blockers: parse error must warn+skip (HR2); NOTE that omit-model supersedes brief's "current model ids" floor |
 | p2 | prop-1 (cdocs:proposer) | rev-p2 (cdocs:reviewer) | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-r2.md | 7 non-blocking nits sent to warm proposer; reviewer loaded output in OpenCode 1.17.5 (`opencode agent list --pure`) |
+| 1 | impl-1 (cdocs:implementer) | rev-1 (cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-impl.md | reviewer re-ran floor; artifacts in scratchpad/rev-1/ (build.log, test.log, s8-build.log, oc-agent-list.log, pre-vs-post.txt); nits 1-2 (catch message, CRLF) sent to warm impl-1 |
 
 ## Judge Log
 
@@ -79,6 +80,8 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | impl-1 (cdocs:implementer) | scripts/build-opencode.ts, scripts/build-opencode.test.ts, package.json, package-lock.json, .github/workflows/opencode-build.yml, cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | 2026-10-07T19:01 | iteration 1, full proposal |
 | return | impl-1 (cdocs:implementer) | (as dispatched) | 2026-10-07T19:07 | 4ded3b7..e242f37; steps 0-8 pass; plugins/ diff empty |
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-impl.md | 2026-10-07T19:08 | implementation review r1 |
+| return | rev-1 (cdocs:reviewer) | review + sub-devlog last_reviewed | 2026-10-07T19:13 | f40c605; accept |
+| dispatch | impl-1 (cdocs:implementer, warm) | scripts/build-opencode.ts, scripts/build-opencode.test.ts, sub-devlog, proposal frontmatter | 2026-10-07T19:14 | accept nits 1-2, finalize statuses |
 
 ## Iterate Brief
 
