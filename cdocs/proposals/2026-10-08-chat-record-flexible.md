@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -120,10 +120,6 @@ Prototype outputs: `my canary "v2"` to `my-canary-v2`, `Second: Name!` to `secon
 `CLAUDE_CODE_SESSION_ID` is already how agent modes learn the session; the Bash tool inherits `CLAUDE_CONFIG_DIR` from the Claude Code process, so the glob finds the same file the hooks are handed.
 No transcript found means unnamed, for hooks and agent modes alike.
 
-> NOTE(opus-5-5/chat-record-flexible): A new session's first `UserPromptSubmit` fires before the transcript file exists (probed on claude 2.1.293), so a `--name` session's first `@user` went to the unnamed record.
-> When the transcript file does not exist, `UserPromptSubmit` slugs the payload's `session_title` (present on that event only) instead; once it exists, the transcript alone decides.
-> See `cdocs/devlogs/2026-10-08-chat-record-flexible-impl.md`.
-
 **Lookup.**
 `find_record <sid> <name>` and `record_for <sid> <name>` take the name and match only that name segment:
 
@@ -169,6 +165,11 @@ After a compaction, `chat-record path` and `tail -n 80` read the current name's 
   The maintainer's criterion already excludes dispatch narration that is not news to the user.
 - **The transcript is the only name source.** It is what `session_token` already reads and what the hooks are handed.
   Rejected: the sessions registry (`~/.claude/sessions/<pid>.json`, used by `plugins/converser`), which is undocumented, per-process, and would give `note` a different source from the hooks; a state file written by the hooks, which breaks "no state beyond the record".
+
+  > NOTE(opus-5-5/chat-record-flexible): A new session's first `UserPromptSubmit` fires before the transcript file exists (probed on claude 2.1.293), so a `--name` session's first `@user` went to the unnamed record.
+  > When the transcript file does not exist, `UserPromptSubmit` slugs the payload's `session_title` (`Stop` does not carry it) instead; once it exists, the transcript alone decides.
+  > See `cdocs/devlogs/2026-10-08-chat-record-flexible-impl.md`.
+
 - **Exact name matching, not "latest record".** Choosing the most recently written record would need mtimes (reset by `git checkout`) or timestamp parsing; matching (session id, name) is stateless and makes renaming back resume the earlier record.
 - **`path` stays one line.** Printing every record of the session would spare the agent noticing renames, but changes `path`'s contract, the compaction step, and the commit step.
   The rename is in the agent's context, so the rule sentence is enough.
