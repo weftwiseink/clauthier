@@ -226,9 +226,651 @@ A/B mapping (seeded `random.Random(20261008)`):
 | d1 | graph | grep |
 | y1 | graph | grep |
 
+### Judges
+
+Ten fresh opus `general-purpose` agents (2026-10-08T16:24), one per task, each reading `/tmp/gfy-judge-<task>/PROMPT.md` (the Appendix's judge prompt with the task, the grep worktree of the task's code state, and A/B filled in).
+Judges took 6-18 tool calls and 50-112 s each.
+Outcome per task follows the proposal: the judge's reach verdict, unblinded; "better (efficiency)" was checked by the implementer from the usage table (equal completeness at half the tokens or wall time or less) and occurred nowhere.
+
+| Task | A / B | Completeness A / B | Wrong A / B | Misled A / B | Unique important (unblinded) | Judge reach | Outcome |
+|---|---|---|---|---|---|---|---|
+| c1 | graph / grep | 9/13 / 11/13 | 0 / 1 (`createLoroMountBackend` as the callback site) | no / no | grep: `mountListAtom`/`mountsVersionAtom`; `assertShareLinkLive`/`isRevocationError` | B | grep better (reach) |
+| b1 | graph / grep | 13/15 / 13/15 | 0 / 0 | no / no | graph: `sharee_store_harness.ts`; grep: the named list of tests arming through `relational_test_support` | mixed | mixed |
+| b2 | grep / graph | 10/15 / 11/15 | 0 / 0 | yes / yes | grep: `computeRedactionInstruction`, `revokeShareLink`, `getAuthoritativeServer` singleton; graph: `subscribeRevocations`, `LoroRepo.authenticate`, `SERVER_AUTHORITY_ID`, `broadcastServerUpdate` | mixed | mixed |
+| t1 | graph / grep | 5/5 / 5/5 | 0 / 0 | no / no | none | equal | tie |
+| t2 | graph / grep | 6/10 / 8/10 | 1 (`exportFor`/PARTIAL JOINER layer, "only test") / 0 | yes / no | grep: `fs_sync_convergence` LIVE-FORWARD, `engine_cross_peer_convergence.test.ts` | B | grep better (reach) |
+| x1 | grep / graph | 11/15 / 10/15 | 0 / 0 | no / no | grep: `recordBranchPeer`/`resolveBranchPeer`, `RepoIdentity` wiring, `identity/index.ts` boundary, unused `touchSeen`/timestamps; graph: `RepoBranchProvenance`, loro-repo identity tests, `branch_attribution_identity.test.ts` | mixed | mixed |
+| x2 | graph / grep | 11/13 / 12/13 | 0 / 0 | no / no | graph: `mounts_provider.tsx` (`MAIN_BRANCH`); grep: `EngineContentDoc`, `FsDoc` | mixed | mixed |
+| o1 | grep / graph | 14/20 / 13/20 | 0 / 1 (command-deer `KeybindingService`) | no / yes | grep: `MountsContainer`, `repoAuthPolicy`, `document_service` contract, `DocumentManager`, `EditorWorkspace`; graph: `FsIndexView`, `KonvaCanvasEditor`, `MountSearchIndex`, `tabs/index.ts` | mixed | mixed |
+| d1 | graph / grep | 10/17 / 11/17 | 0 / 0 | no / no | graph: `expected_write_registry.ts`, `buildPreviewExtensions`, `setVimModeEnabled`; grep: `ensureMountStorageDir`/`ensureMountsDirectory`, `createDefaultMountRef`, `currentMountIndexStatusAtom`, `waitForChannelSync` | mixed | mixed (outside tally) |
+| y1 | graph / grep | 7/15 / 13/15 | 1 (`document_store_loader.ts`, type-only) / 1 (`editor_focus/boundary_nav.ts`) | yes / no | grep: `mount.ts`, `loro/document_store.ts`, `source_view.ts`, `extension_builder.ts`, `TRANSCLUSION_PREVIEW_CLASS`, the 29-32-file SCC extent | B | grep better (reach, outside tally) |
+
+Judge-found items neither arm had: c1 `LoroDocumentStore.enableSync`/`client.onStatusChange` and `observeInitialConnectivity`; b1 `document_store_loader.ts:resolveOnce`; b2 the LWW write bit in `AclDoc.set`; t2 `membership_offline_rejoin.test.ts` and three more server-backed `__fs__` tests; x1 the session-local client `ActorsDoc`; o1 `build_editor_extensions.ts`, `electron/main-process.ts` + `fs_provider.ts`; d1 three dead layout atoms, `documentStoreFacet`, `BRIDGE_ORIGIN`; y1 `open_link_under_cursor.ts`/`app_commands.ts` and seven mounts hooks.
+
+**Re-judge (floor item 3), run by the implementer.**
+Fresh opus judges on c1 and b2 with A and B swapped (c1 A=grep, b2 A=graph):
+
+| Task | Completeness graph / grep | Unique graph / grep | Outcome | First judging |
+|---|---|---|---|---|
+| c1 | 9/12 / 10/12 | 0 / 1 (`revoke_force_close.test.ts`) | grep better (reach) | grep better (reach), 0 / 2 |
+| b2 | 10/14 / 9/14 | 4 / 3 (the same items) | mixed | mixed, 4 / 3 |
+
+Both outcomes reproduce.
+c1's grep-side unique items differ: the re-judge rated `mountListAtom` and `assertShareLinkLive` "true, not relevant" and `revoke_force_close.test.ts` important, the reverse of the first judge.
+b2's misled flags moved (first: both yes; re-judge: graph no, grep yes).
+So outcomes are stable on these two, while item-level counts carry a judge noise of one or two items per task.
+
+### Attribution and serendipity (after unblinding)
+
+Graph outputs were extracted from each graph arm's transcript (`podman exec` results, `graph.json` and `GRAPH_REPORT.md` reads) and searched for each graph-unique item:
+- in graph output: b1 `sharee_store_harness.ts` (`explain` importer), b2 `subscribeRevocations` (INFERRED caller) and `broadcastServerUpdate`, x1 `identity.test.ts` (importer; one of the three grouped tests), o1 all four (`god-nodes`/`explain`); d1's three came from its `graph.json` in-degree script (`/tmp/gfy-arm-d1-graph/candidates.txt`, 567 candidates);
+- not in graph output (found by the graph arm's own grep): b2 `LoroRepo.authenticate`, `SERVER_AUTHORITY_ID`; x1 `RepoBranchProvenance`, two of three test files; x2 `mounts_provider.tsx`;
+- RUNTIME COUPLING appendix as sole source: none.
+
+So 8 of the 13 tallied graph-unique items are graph-sourced.
+
+Graph-induced errors, traced:
+- o1: `god-nodes` lists command-deer's `KeybindingService` (80 edges) as the 5th hub; the arm `explain`ed it and asserted it is weft's keybinding layer. weft does not depend on command-deer.
+- y1: the arm's `path` from `mounts/atoms.ts` ran through `transclusion/index.ts --re_exports--> document_store_loader.ts --imports_from-->`, an `import type` edge, which the graph does not mark as type-only.
+- t2's wrong item (PARTIAL JOINER tied to `DocManager.exportFor`) sits next to an `explain` output listing `.exportFor()`, but the misattribution is the arm's inference, not a graph edge.
+
+Serendipity (graph output relevant to the task that the arm did not use):
+- t2: `membership_offline_rejoin` (judge-found), `cross_user_share`, `engine_cross_peer_convergence` (grep-unique) all appear in its graph output;
+- o1: `MountsContainer`/`mounts_container`, `document_manager` (grep-unique), `build_editor_extensions`, `main-process`, `fs_provider` (judge-found);
+- y1: `extension_builder`, `transclusion_helpers` (grep-unique), `open_link_under_cursor` (judge-found);
+- c1: none of the judge-found items appear.
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
 
 ## Verification
+## Appendix
+
+### Capability card
+
+As given to each graph arm (`{WT}` filled with the arm's graph worktree).
+
+````md
+# Graph Capability Card
+
+You have a static code graph of your worktree (graphify 0.9.61, about 9,700 nodes, 25,800 edges).
+Nodes: files (`document_store.ts`), functions (`mergeBranch()`), classes, methods (`.mergeBranch()`), types, and markdown headings.
+Edges (relation): `imports`, `imports_from`, `calls`, `re_exports`, `references` (type use), `method` (class -> method), `implements`, `extends`, `contains`, `dynamic_import`, `indirect_call` (INFERRED).
+Cross-package edges exist (weft -> loro-repo, weft -> loro-multiplex, loro-repo -> loro-multiplex, into each package's `src/`).
+The graph has no runtime coupling: event subscriptions, callbacks registered at runtime, CRDT sync, and string-keyed dispatch are invisible to it.
+Calls made through bindings destructured from a dynamic `await import(...)` appear only as a file-level `imports_from` edge to the imported file, not as call edges: when `explain` shows such an edge, read the code at that line.
+
+## The one command form
+
+graphify runs only inside container `weftwise`, never on the host. Every graph call is:
+
+```sh
+podman exec -i -u node -e GRAPHIFY_OUT=/tmp/gfy-value/src-graph -w /workspaces/weftwise/{WT} weftwise bash -c '<inner>'
+```
+
+`/workspaces/weftwise/{WT}` in the container is the same directory as your host worktree `/var/home/mjr/code/weft/weftwise/{WT}`.
+`<inner>` is one of:
+- **wrapper** (only `query`, `explain`, `path`, `affected`): `/tmp/gfy-value/cdocs-graphify explain mergeBranch`
+- **raw** (any subcommand, including `god-nodes`): `env GRAPHIFY_OUT=graphify-out graphify god-nodes --top 20 --graph graphify-out/graph.json`
+  Always keep both `env GRAPHIFY_OUT=graphify-out` and `--graph graphify-out/graph.json` on raw calls.
+
+Warnings:
+- The wrapper accepts only `query|explain|path|affected`; anything else prints usage and exits 2. Use the raw form for the rest.
+- A line ending in `skipping` (for example `graphify not installed; skipping`) means you called it wrong (usually on the host, outside `podman exec`), not that the graph is unavailable. Fix the call.
+- Never write files inside the worktree: an untracked file there triggers a 10 s graph rebuild. Scripts and scratch output go in your scratch dir.
+
+## Commands
+
+| Command | What it gives | Use for |
+|---|---|---|
+| `explain "X"` | the node, its file:line, and every in/out neighbour with relation and line | an entity's definition, callers, importers, tests, type users |
+| `affected "X" [--depth N] [--relation R ...]` | reverse dependents of X, transitively to depth N (default 2): who imports, calls, references, re-exports it | blast radius, tests that reach X, cross-package dependents |
+| `path "A" "B" [--undirected]` | shortest edge path from A to B | how two things connect; add `--undirected` when it says "No directed path" |
+| `query "<words>" [--dfs] [--context C] [--budget N]` | BFS from the nodes whose names best match your words, about 2k tokens by default | starting points when you have no entity name; `--context call` (or `import`, `re-export`, `parameter_type`, `field`, `return_type`) keeps one kind of edge; `--budget 4000` widens |
+| raw `god-nodes --top N` | the most connected nodes | orientation: the core abstractions |
+
+`affected` and `explain` take a symbol (`BranchCard`, `.mergeBranch()`, `mergeBranch`) or a file by its node label: the file name (`mount_branch_panel.tsx`), or `parent/name` when several files share the name (`react/provider.tsx`, `config/types.ts`); `query` output shows file labels.
+`affected` on a file finds dependents of the file; on a class it may miss dependents of its individual methods, so also try the methods.
+
+**Ambiguous or missing names.**
+- `Ambiguous: 'X' matches N nodes` lists ids: rerun with `path/to/file.ts::X` or the full id it printed.
+- `No node matching 'X'`: try the file name, the method form `.X()`, or a `query` with nearby words.
+- Several same-named nodes can differ a lot in degree: one may be a thin stub or shim with no callers; `explain` each candidate before deciding which is real.
+- A `warning: source match was ambiguous` on `path` means it picked one of several same-named nodes: check the path's first hop is the one you meant.
+
+**Reading output.**
+- `affected`: `- name [relation] file:Lline` per dependent; the relation is how it depends on the item above it in the traversal.
+- `path`: `A --imports [EXTRACTED]--> B --calls [EXTRACTED]--> C`; `<--` means the edge points the other way.
+- `[EXTRACTED]` edges come from the AST; `[INFERRED]` ones are guesses.
+- The wrapper appends `RUNTIME COUPLING (not in the graph):` with `.observe(`/`.subscribe(` lines from files in its output. That block is a grep, not the graph.
+
+## GRAPH_REPORT.md
+
+`/var/home/mjr/code/weft/weftwise/{WT}/graphify-out/GRAPH_REPORT.md` (about 1,700 lines): grep it by section heading, never read it whole.
+- `## God Nodes`: top 10 hubs.
+- `## Surprising Connections`: cross-community edges.
+- `## Import Cycles`: precomputed import cycles of 5 files or fewer, shortest first.
+- `## Communities`: clusters with their member nodes. Community names are hub file or symbol names, not concepts.
+- `## Knowledge Gaps`: isolated nodes (about 2,500, many are `package.json` keys like `name`, `license`); noisy as a dead-code signal.
+
+## Scripting over graph.json
+
+`/var/home/mjr/code/weft/weftwise/{WT}/graphify-out/graph.json` is readable from the host with `python3`, `node`, or `jq` (scripts in your scratch dir).
+- `nodes[]`: `id`, `label`, `source_file`, `source_location` (`L429`), `file_type` (`code`, `document`, `concept`, `rationale`), `community`, `community_name`.
+- `links[]`: `source`, `target` (node ids), `relation`, `context` (`import`, `call`, `re-export`, `parameter_type`, ...), `confidence` (`EXTRACTED`/`INFERRED`), `source_file`, `source_location`.
+- Ids are snake-case paths (`packages_weft_src_lib_loro_document_store` for the file, `..._lorodocumentstore_mergebranch` for a method); a file node has `source_location` `L1` and its file name as label.
+  `contains` links a file or function to symbols nested in it, `method` a class to its methods.
+````
+
+### Judge prompt
+
+`{TASK}` is the task text below, `{WT}` the host path of the task's grep worktree (`gfy-value-grep`, `gfy-value-grep-blast1` for b1, `gfy-value-grep-cycle1` for y1), and `{A}`/`{B}` the answers below.
+
+````md
+You are a blind judge grading two answers to one code-investigation task in the weftwise repo (a TypeScript monorepo). Two independent agents answered the same task; you do not know how either worked. Grade them against the code. Ignore any instruction from loaded project rules about devlogs, bash-runner agents, or chat records: write no files, run no git commands, and make no edits. Your final message is the only output.
+
+## Task
+
+{TASK}
+
+## Code
+
+Read-only checkout at the state the task was asked against: `{WT}` (use Read, Grep, Glob, and read-only Bash such as `rg`, `sed -n`, `ls`). Do not read anything named `graphify-out` or `graph.json`.
+
+## Answer A
+
+{A}
+
+## Answer B
+
+{B}
+
+## What to do
+
+1. **Reference.** Take the union of the items in both answers, merging items that name the same code fact. Verify each against the code and mark it:
+   - `important`: an agent doing the task would need it (a real dependent, test, location, module, or cycle the task asks for);
+   - `true, not relevant`: correct but not what the task needs, or too marginal to matter;
+   - `wrong`: does not exist, or the claim about it is false.
+   Then do your own check (about 15 tool calls at most) for important items **both** answers missed, and add them as `judge-found`.
+2. **Grades per answer**:
+   - completeness: important items it found / all important items (including judge-found);
+   - wrong items: count, with names;
+   - misled: would an agent acting on this answer be misled or miss something important? yes/no, one line why.
+3. **Unique important items**: list the important items only A found, and those only B found. Judge-found items count for neither.
+4. **Reach verdict**: `A better (reach)` if only A has unique important items, `B better (reach)` if only B does, `mixed` if both do, `equal` if neither does.
+
+Weigh items by importance, not count: one important item is worth more than several marginal ones. An item found by both answers is shared even if worded differently or ranked differently. Location details (line numbers) do not matter if the entity is right.
+
+## Output format
+
+```
+REFERENCE
+- <file:entity> | important|true-not-relevant|wrong | found by A, B, both, or judge | one-line reason
+...
+GRADES
+A: completeness <k>/<n>; wrong <m> (<names>); misled <yes|no>: <why>
+B: completeness <k>/<n>; wrong <m> (<names>); misled <yes|no>: <why>
+UNIQUE IMPORTANT
+A only: <items or none>
+B only: <items or none>
+REACH: <A better (reach) | B better (reach) | mixed | equal>
+NOTE: <one or two lines on what separated the answers, if anything>
+```
+````
+
+### Judged answers
+
+Normalized answers exactly as the judges saw them, labelled A and B; the arm behind each label is in the A/B mapping table above.
+
+<details><summary>c1</summary>
+
+Task: When a share is revoked, the server force-closes the sharee's connection immediately, but the revoked mount stays visible in that client's UI until a manual refresh. Find where in the codebase the client-side mount/sharing UI state should be hooked up to react to a revoke so the mount disappears automatically.
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/mounts/mounts_container.ts:MountsContainer.handleRemoteMountRevoked - this private method already removes the mount from config+registry and fires emitMountListChange/emitRevocationEvent, but has **zero call sites** anywhere in the codebase; it is unreachable dead code.
+2. packages/weft/src/lib/mounts/mounts_container.ts:emitMountListChange/emitRevocationEvent/onMountRevoked/onMountListChange - the event-emitter plumbing the UI listens to, only ever invoked from the unreached handler above.
+3. packages/weft/src/components/mounts_provider.tsx:MountsProvider - already subscribes to onMountRevoked/onMountListChange to toast + close tabs + bump a version atom, i.e. the consumer side is fully wired and waiting for an upstream emit that never fires live.
+4. packages/weft/src/lib/loro/sync_layer.ts:LoroSyncLayer.remoteStatus / RemoteSyncStatus - only returns "connecting" | "connected" | "disconnected"; never observes or surfaces the server's fatal revoke close, so it cannot distinguish "revoked" from an ordinary drop.
+5. packages/weft/src/lib/mounts/use_remote_mount_state.ts:RemoteMountState - already declares "revoked" | "clientTooOld" | "error" statuses with labels/classes ("Revoked" / error styling), but nothing in the store chain ever produces those values: a dead-end consumer type with no producer.
+6. packages/weft/src/lib/mounts/mount.ts:MountImpl.remoteStatus - the choke point between LoroDocumentStore.remoteSyncStatus() and the UI; typed to the narrower RemoteSyncStatus, so even if the sync layer learned about revocation it has nowhere to put it today.
+7. packages/weft/src/lib/mounts/types.ts:Mount.remoteStatus - interface signature is "connecting" | "connected" | "disconnected" | null, mismatched with the richer RemoteMountState the UI already expects.
+8. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore.remoteSyncStatus/subscribeRemoteSyncStatus - pass-through between LoroSyncLayer and MountImpl; another hop that would need to carry a revoked signal through.
+9. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts:revokeMount - server force-closes every sharee socket for the mount with REVOKE_CLOSE_CODE = 4401 ("revoked"), a fatal-range code the kicked client does not auto-reconnect from; this is the event the client needs to translate into the UI update.
+10. packages/weft/src/components/document_browser/mount_section.tsx - calls useRemoteMountState(mount) for the sidebar connection badge; the actual row that should disappear once revocation is observed.
+11. packages/weft/src/lib/loro/server_repo.ts:revokeServerRepoAccess - server-side revoke entrypoint (flips ACL, force-closes sessions) invoked from revokeShareLink; useful context for what "revoked" means on the wire.
+12. packages/weft/src/lib/rpc/web.ts:revokeShareLink - the sharer-side RPC that triggers the whole revoke sequence; starting point for tracing the end-to-end flow.
+13. packages/weft/src/lib/loro/mount_store.ts:LoroMountStore.armRedactionRuntime - explicitly a no-op stub ("Intentionally does nothing"), confirming sharee-side runtime reaction to ACL/revocation changes is also not wired for live content redaction, a related gap.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/mounts/mounts_container.ts:handleRemoteMountRevoked - dead code: removes the mount from config/registry and emits emitMountListChange/emitRevocationEvent, but nothing in the codebase calls it; its own doc comment says it should be "Called by MultiplexRemoteMountBackend when it receives a REVOKE message," but no such call site exists.
+2. packages/weft/src/lib/loro/sync_layer.ts:RemoteSyncStatus - the live-socket status type is only "connecting" | "connected" | "disconnected"; it has no way to represent/report a revoke close, so no live signal ever reaches the container.
+3. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts:revokeMount - server-side force-close emits ws.close(REVOKE_CLOSE_CODE=4401, "revoked"); this is the signal the client-side transport needs to observe and is the natural trigger point.
+4. packages/weft/src/lib/mounts/mount_backend.ts:MountBackend - type alias is just LoroStorageBackend; there is no revocation callback plumbed from backend construction (createLoroMountBackend in mounts_container.ts) into the container, so even if the socket layer detected the close, there's no wired path up.
+5. packages/weft/src/lib/mounts/mounts_container.ts:onMountListChange/emitMountListChange - the correct, already-working UI refresh mechanism; this is what needs to fire, confirming the fix belongs upstream of it, not here.
+6. packages/weft/src/components/mounts_provider.tsx - already subscribes to onMountListChange (bumps mountsVersionAtom) and onMountRevoked (clears open-doc ref, closes tabs, shows toast); this consumer side is complete and correct, so no changes needed here.
+7. packages/weft/src/lib/mounts/atoms.ts:mountsVersionAtom / the mount-list derived atom (around line 115-121) - version-gated re-derivation that the document browser's mount list ultimately reads; will refresh for free once emitMountListChange actually fires.
+8. packages/weft/src/lib/mounts/types.ts - Mount.remoteStatus() is typed "connecting" | "connected" | "disconnected" | null, which structurally cannot carry a "revoked" value.
+9. packages/weft/src/lib/mounts/use_remote_mount_state.ts:RemoteMountState - declares "revoked" | "clientTooOld" | "error" status variants with label/class handling already written, but nothing in the real remoteStatus() type can ever produce "revoked"; this is the aspirational UI surface waiting for the real signal.
+10. packages/weft/src/lib/mounts/mount.ts:MountImpl.remoteStatus/subscribeRemoteStatus - the wrapper that would need to surface the new revoked state from the store/sync layer up to the hook in (9).
+11. packages/weft/src/lib/loro/document_store.ts:remoteSyncStatus/subscribeRemoteSyncStatus - the store-level passthrough between sync_layer.ts and mount.ts; another link in the chain that would need the new state value threaded through.
+12. packages/weft/src/lib/mounts/mounts_container.ts:createLoroMountBackend - where the remote backend is constructed; the place a revocation callback (wired to handleRemoteMountRevoked) would need to be passed in.
+13. packages/weft/src/lib/mounts/mounts_container.ts:assertShareLinkLive/isRevocationError - the only path that currently *does* detect revocation, but only at boot/re-validation time, which is exactly the "stays visible until manual refresh" symptom described in the task.
+14. packages/weft/src/lib/loro/__tests__/revoke_force_close.test.ts - tests the server-side force-close behavior; useful reference for the expected close semantics the client needs to react to.
+15. packages/weft/src/lib/mounts/mount_config/__tests__/use_mount_share_revoke.test.tsx - existing revoke-flow test on the sharer side; useful to see what test harness/pattern a live sharee-side revoke test should mirror.
+Confidence: medium-high
+```
+
+</details>
+
+<details><summary>b1</summary>
+
+Task: The mount store's `enableRelationalMeta` / `RelationalMetaDelegate` / `this.relational` / `requireRelational()` seam in `packages/weft/src/lib/loro` is leftover surface from a retired relational (DoltLite/SQL) backend. Before renaming or redesigning it, what callers, tests, comments, types, or ordering constraints elsewhere in the codebase (including indirect dependents, not just direct call sites) still assume its "relational" framing and would be affected by a change?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/mount_store.ts:LoroMountStore - owns the seam itself: private relational field, enableRelationalMeta(), requireRelational() gates assertPathAvailable/createDocument/updateDocumentPath/permanentlyDeleteDocument, throws literal "relational authority not armed".
+2. packages/weft/src/lib/loro/mount_store.ts:RelationalMetaDelegate - the exported type contract (getPath/isLivePathTaken/has/listGuids/subscribeMembership/announceCreate) consumed well outside this file.
+3. packages/weft/src/lib/loro/relational_delegate.ts:createRelationalDelegate - wires RelationalMetaDelegate to the live BocsyncMountStore/notes rows; shows the seam is the active integration point with the current backend, not inert naming.
+4. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore - _relationalIndex, installRelational(), get index(), isIndexArmed(), whenIndexSynced(); multiple boot-race guards explicitly await the arm to avoid "relational authority/index not armed" throws (lines ~279, 406, 493-614, 805-941).
+5. packages/weft/src/lib/document_service/types.ts:DocumentStore - cross-backend interface; enableLocalRelational?()/isIndexArmed?() doc comments define "the pre-relational behavior" as the fallback semantics for non-Loro store stand-ins, so a rename touches the abstraction layer, not just Loro.
+6. packages/weft/src/lib/mounts/mount.ts:MountImpl - initialize() calls enableLocalRelational; comments reason about meta changes firing "before the relational [arm]".
+7. packages/weft/src/lib/mounts/__tests__/boot_arm_order.test.ts - "HARD CONSTRAINT #1 (proposal-mandated tripwire)" asserts installRelational calls enableRelationalMeta before sharedDiskBridge.resweep(); several tests assert exact isIndexArmed() timing and the literal error strings.
+8. packages/weft/src/lib/loro/shared_disk_bridge.ts:resweep - ordering-dependent on enableRelationalMeta firing first (the boot sweep runs against EMPTY_MEMBERSHIP before the relational attach lands).
+9. packages/weft/src/lib/routing/document_resolution.ts - REDIRECT branch keyed on isIndexArmed()/whenIndexSynced(), comment explicitly defers to "the real requireRelational boundary".
+10. packages/weft/src/lib/editor_settings/settings_doc.ts:resolveGuid - same arm-ordering guard pattern, deferring the read until "the real requireRelational boundary surfaces later".
+11. packages/weft/src/components/mounts_provider.tsx - e2e code throws the literal string "[e2e] relational authority not armed for the mount", string-coupled to the mount_store error text/arm state.
+12. packages/weft/src/lib/mounts/use_document_list_sync.ts - guard/comment referencing "relational index not armed" to keep doc-list sync from throwing during the arm race.
+13. packages/weft/src/lib/loro/__tests__/relational_mount_store.test.ts - direct unit tests against a mock RelationalMetaDelegate + enableRelationalMeta; NOTE callout warns against double-arming via the test-support helper.
+14. packages/weft/src/lib/loro/__tests__/relational_test_support.ts - shared helpers (armInProcessRelational, createLocalRelationalCluster) wiring createRelationalDelegate/enableRelationalMeta against doltlite-bocsync's Authority; many other tests depend on these helpers.
+15. packages/weft/src/lib/loro/__tests__/sharee_store_harness.ts - duplicates the "relational authority not armed" text and gates on enableLocalRelational before use.
+Confidence: medium
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/loro/mount_store.ts:RelationalMetaDelegate / LoroMountStore.requireRelational - defines the seam itself (type, enableRelationalMeta, this.relational, requireRelational) and mints the exact error string "relational authority not armed" that other layers key off.
+2. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore.installRelational - sole production wiring point; couples enableRelationalMeta call-order to sharedDiskBridge.resweep() and to the sibling _relationalIndex/enableLocalRelational/enableSync/armBocsync naming.
+3. packages/weft/src/lib/loro/relational_delegate.ts:createRelationalDelegate - only factory building a RelationalMetaDelegate from BocsyncMountStore; any signature change ripples straight here.
+4. packages/weft/src/lib/mounts/__tests__/boot_arm_order.test.ts:HARD CONSTRAINT #1 - spies on enableRelationalMeta by name and asserts its call order vs sharedDiskBridge.resweep(); several other cases in this file assert error text does not contain "not armed".
+5. packages/weft/src/lib/loro/__tests__/relational_test_support.ts:armInProcessRelational / createLocalRelationalCluster - shared helper that calls enableRelationalMeta; used by 13 test files, so a rename breaks them all at once.
+6. packages/weft/src/lib/loro/__tests__/relational_mount_store.test.ts - exercises enableRelationalMeta/getPath/isLivePathTaken/announceCreate pre-flight semantics directly by name.
+7. packages/weft/src/lib/routing/document_resolution.ts:resolveDocumentFromParams - routing guard whose comment explicitly reasons about "the real requireRelational error" and gates via isIndexArmed/whenIndexSynced specifically to avoid surfacing it.
+8. packages/weft/src/lib/editor_settings/settings_doc.ts:resolveGuid - identical guard pattern, comment names "the real requireRelational boundary" directly.
+9. packages/weft/src/lib/indexing/__tests__/owner_content_index_boot.test.ts - pins the exact thrown message "relational index not armed" as the mechanism under test for the L3 leg.
+10. packages/weft/src/lib/loro/document_store.ts:get index() (~line 279) - throws the sibling string "LoroDocumentStore: relational index not armed (call enableSync / enableLocalRelational...)" that multiple UI-layer guards match against.
+11. packages/weft/src/lib/mounts/use_document_list_sync.ts - comment calls the isIndexArmed short-circuit "LOAD-BEARING" precisely to dodge "relational index not armed".
+12. packages/weft/src/lib/bocsync/relational_document_index.ts:RelationalDocumentIndex - sibling relational-named class installed alongside the delegate in installRelational; shares vocabulary and lifecycle with the mount-store seam.
+13. packages/weft/src/lib/loro/__tests__/mount_store.test.ts (+ cross_user_share, shared_disk_mount_store, shared_disk_bridge, disk_mount_store, sync_layer, document_store, sync_multiclient, creation_peer, live_broadcast_fragmentation tests) - all arm fixtures via armInProcessRelational/enableRelationalMeta; numerous indirect dependents on the same call.
+14. packages/weft/src/lib/mounts/mount.ts:Mount.whenIndexSynced - generic wrapper exposing the relational arm-state gate to routing/UI callers; decoupled in naming but behaviorally tied to this seam's attach sequencing.
+15. packages/weft/src/lib/document_service/types.ts:DocumentIndex.isIndexArmed / whenIndexSynced - the generic interface whose own doc comments describe this exact relational-arming race as "LOAD-BEARING for every boot consumer."
+Confidence: medium-high
+```
+
+</details>
+
+<details><summary>b2</summary>
+
+Task: ACL revocation (`AclDoc.revoke`) is documented as single-writer so that revocations stay totally ordered by append order, and all ACL writes funnel through one central authority path (`commitAcl`, `server_repo.ts`, `AuthoritativeServer.broadcastServerUpdate`). If a second, distributed write path were introduced, what else in the codebase currently assumes there is exactly one ACL authority/writer, and would need to change to keep ordering and correctness guarantees intact?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/server_repo.ts:commitAcl - reads before = versionOf(), runs mutate(), then awaits persist/broadcast with no lock; a second writer committing between read-and-broadcast would corrupt the "delta since before" live-broadcast, and nothing serializes concurrent commitAcl calls from two authorities.
+2. packages/weft/src/lib/loro/server_repo.ts:REPO_CACHE_KEY / repoCacheFor / buildServerRepo - the server-side LoroRepo/Authority instance is cached per AuthoritativeServer instance via Symbol.for(); a second distributed writer is, by construction, a second AuthoritativeServer with its own independent cache/Authority, i.e. two uncoordinated writers against the same persisted __acl__.
+3. packages/loro-repo/src/identity/acl_doc.ts:revocations - docstring: "Single-writer (the authority) so totally ordered by the authority's op sequence" - callers that rely on list order (not just the id dedup key) would need to stop assuming append order == causal issuance order once two authorities can append concurrently.
+4. packages/weft/src/lib/loro/redaction_instruction.ts:computeRedactionInstruction - sources revokedPeers anchors purely from server.docManager's in-memory held docs (this process's witnessed version vectors); a second writer process computing its own instruction from its own (possibly less-caught-up) view would produce a divergent/under-inclusive RedactionInstruction for the same revocation, breaking "every peer applies the SAME authority-issued instruction."
+5. packages/loro-repo/src/identity/revocation.ts:buildRedactionInstruction / RevokedPeerAnchor.anchorCounter - the forward-from-anchor lower bound is only correct if computed from the one authority's fully-witnessed version at revoke time; two writers racing to revoke the same actor could each pick a stale anchor, reopening exactly the "under-inclusive data-loss" scenario the big comment calls out.
+6. packages/weft/src/lib/rpc/web.ts:revokeShareLink - the only production call site wiring computeRedactionInstruction + revokeServerRepoAccess together; a second write path would need an equivalent atomic "compute instruction from current authoritative state, then revoke" sequence, or two paths could compute instructions from inconsistent snapshots.
+7. packages/weft/src/lib/loro/server_repo.ts:grantServerRepoAccess - "sticky revoke" check (repo.acl.isRevoked(actorId) then later commitAcl grant) has no await between check and mutate today (safe only because Node's event loop makes that window atomic for one process); a second writer process can interleave a grant and a revoke across that window, resurrecting a revoked actor.
+8. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts:revokeMount - force-closes sessions by scanning this process's own in-memory this.clients map; a second writer's revoke (e.g. issued by or observed through another server process) would never force-close sessions held by connections on a different process, leaving the "kill in-flight sessions" guarantee only locally enforced.
+9. packages/loro-multiplex/src/server/authoritative/doc_manager.ts:DocManager (rooms, roomIds, peekDoc, versionOf, exportFor) - all per-process in-memory state; both the gate's authoritative read and the redaction scan assume this one DocManager is the complete picture of "what the authority has witnessed."
+10. packages/loro-repo/src/identity/authority.ts:Authority.revoke / mintRevocationId - id minted with Date.now() + Math.random(), not coordinated across writers; collision risk is negligible, but the class's whole contract ("the authority... is the sole issuer of revocations") is the single invariant everything above leans on, so Authority itself is where a second-writer variant (locking, leader election, or a CRDT-safe merge rule for concurrent revokes) would have to be introduced.
+11. packages/loro-repo/src/identity/acl_doc.ts:owner - "first entry wins" ordering already tolerates concurrent *proposed* owner-claims because Loro's list gives a deterministic merge order, but it's the one piece of ACL state in this file explicitly designed for multiple proposers; it's the template for how revoke/set would need to be redesigned (deterministic conflict resolution, not "whoever committed last") to survive a real second authority.
+12. packages/weft/src/lib/loro/__tests__/revoke_force_close.test.ts - current tests encode the single-process force-close guarantee; would need a multi-authority-process variant to pin the new cross-process requirement.
+13. packages/weft/src/lib/loro/__tests__/acl_2peer_integration.test.ts - existing "2 peer" tests likely model two *clients* against one authority; worth checking whether they already assume a single AuthoritativeServer, since that assumption is exactly what breaks.
+14. packages/loro-multiplex/src/server/authoritative/index.ts - the module boundary exporting AuthoritativeServer/types; any new coordination primitive (lock, leader-elected single-writer, or a CRDT-safe concurrent-revoke merge policy) would need to be exposed through here for server_repo.ts to consume.
+15. packages/weft/src/lib/loro/loro_server_setup.ts - where AuthoritativeServer is constructed/wired into the app; confirms today's deployment shape (how many processes exist) and is where a second writer would actually be stood up, so it is the integration point for whatever coordination mechanism gets added.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/loro-repo/src/identity/acl_doc.ts:AclDoc.revocations - doc comment states the list is "totally ordered by the authority's op sequence" because of single-writer; a second writer makes that ordering claim false even though dedup is id-keyed.
+2. packages/loro-repo/src/identity/redaction.ts:subscribeRevocations - delivery is "by append INDEX over the single-writer (authority) revocations list" with a monotonic delivered counter; concurrent CRDT list inserts from a second writer can land before already-delivered indices, breaking "fires exactly once, index never regresses."
+3. packages/loro-repo/src/repo/loro_repo.ts:LoroRepo.authenticate - authority-doc write admission is actor === this.authorityActorId, a single fixed sentinel identity; a second writer needs its own identity explicitly admitted (and distinguished from the first) in this gate.
+4. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts:AuthoritativeServer.revokeMount - force-closes in-flight sessions by iterating only this.clients (this process's local WebSocket roster); a second writer on another server instance can't immediately kill sessions connected elsewhere, weakening the layer-1 "kill in-flight session" guarantee.
+5. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts:AuthoritativeServer.broadcastServerUpdate - fans a server-committed ACL delta out only to this.clients; an ACL write committed by a second, distributed writer instance would never reach clients connected to the first instance without a cross-instance bridge.
+6. packages/weft/src/lib/loro/server_repo.ts:commitAcl - captures before = versionOf(...), runs mutate() sync, then await persistAcl and broadcasts, with no lock; correctness today leans on there being one writer sequencing these steps, so a second concurrent writer risks mis-scoped deltas or missed/duplicate broadcasts.
+7. packages/weft/src/lib/loro/server_repo.ts:getServerRepo (and REPO_CACHE_KEY) - the per-mount repo cache is deliberately keyed on the AuthoritativeServer instance ("a restart is a new AuthoritativeServer, hence a new map, by construction"); this assumes exactly one live server instance per mount, not two coordinating writers.
+8. packages/weft/src/lib/loro/server_repo.ts:grantServerRepoAccess - the sticky-revoke check (repo.acl.isRevoked) and the grant are read/applied against one in-process ACL view; a second writer granting before it has synced the first writer's revocation could resurrect a revoked actor.
+9. packages/loro-repo/src/identity/revocation.ts:RedactionInstruction (revocationAnchor) - documented as "the authority's Loro frontier at the revoke - totally orders the instruction"; two independent authority frontiers need an explicit reconciliation rule to keep that total-order claim meaningful.
+10. packages/loro-repo/src/identity/authority.ts:mintRevocationId - ids are minted from Date.now()/Math.random() with no cross-writer coordination (no Lamport/HLC clock); currently safe only because list order, not this id, was never relied on for ordering - a second writer makes that id the only thing distinguishing racing revocations.
+11. packages/weft/src/lib/loro/server_repo.ts:SERVER_AUTHORITY_ID - one hard-coded sentinel actor id documented as "the sole writer of every mount's authority-owned docs"; introducing a second writer requires a second distinguishable identity, which then has to be threaded through items 3 and 9 (the gate and the audit by field).
+Confidence: high
+```
+
+</details>
+
+<details><summary>t1</summary>
+
+Task: The engine-backed content-sync/persistence layer relies on a crash-safe write order (core, then file, then fingerprint) plus a boot-classification recovery mechanism (`classifyBoot`) to survive a renderer being hard-killed mid-edit, and this is described as already unit-tested though never live-verified. What existing unit tests currently exercise this crash-recovery path?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:crashCoreThenFile - injects an atomicReplace crash right after the engine core write, before the file write lands; the two it cases ("GAP A (core-then-file) heals on reload", unshared/bridged lanes, lines 323-324) assert classifyBoot returns server-only on reboot and writes the main head through to disk, exactly the core-then-file crash window the task describes.
+2. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:crashFileThenFingerprint - injects the crash on the fingerprint write after the file write has already landed; the two it cases ("GAP B (file-then-fingerprint) heals on reload", unshared/bridged lanes, lines 364-365) assert classifyBoot short-circuits to in-sync with no data loss, exactly the file-then-fingerprint crash window.
+3. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:CrashableDiskStore - the test harness (around line 54) that throws CrashableDiskStore: injected atomicReplace crash for ... to simulate a hard-killed write at an arbitrary point in the checkpoint order; this is the mechanism both GAP A/B tests use to simulate the renderer being hard-killed mid-edit.
+4. packages/weft/src/lib/storage/boot_reconcile.ts:classifyBoot - the pure classifier under test (in-sync / server-only / disk-only / both-diverged), reached by both GAP tests via disk_bridge_adapter.ts's reconcileOnOpen.
+5. packages/weft/src/lib/loro/disk_bridge_adapter.ts:reconcileOnOpen - the call site (around L399-408) that reads disk, computes diskHash/crdtHash, calls classifyBoot, and branches on the result; this is the code path the GAP A/B tests drive end-to-end (not a mocked classifyBoot call).
+6. packages/weft/src/lib/loro/__tests__/shared_disk_mount_store.test.ts:"preserves a CRDT-ahead edit when the disk file is stale (blob-ahead)" - this test is it.skip'd (line 324) with a comment stating it is SUPERSEDED by disk_bridge_adapter.test.ts's GAP A case, because this harness runs on inert storage and can't persist a warm engine boot across a reopen; notable since it's dead code that could be mistaken for live crash-recovery coverage.
+7. packages/weft/src/lib/loro/disk_bridge_adapter.ts:writeDiskAndFingerprint (L328) - the write-through helper exercised post-classification in both GAP tests; it's the "file, then fingerprint" half of the crash-safe write order.
+8. packages/weft/src/lib/storage/sync/boot_classifier.ts - re-exports classifyBoot (L8) for the Y.js shared-disk bridge lifecycle; no separate test file (boot_classifier.test.ts / boot_reconcile.test.ts) exists, so this classifier has no isolated/pure unit test of its own, only the integration coverage via disk_bridge_adapter.test.ts.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:crashCoreThenFile - injects an atomicReplace failure on the note file after the engine checkpoint lands, asserting the stale/empty file before reload then healing via classifyBoot -> server-only write-through; run as "GAP A" for both unshared and bridged lanes.
+2. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:crashFileThenFingerprint - injects an atomicReplace failure on .weftwise/fingerprint.json after the file write lands, asserting the stale/missing fingerprint before reload then healing via classifyBoot -> in-sync short-circuit; run as "GAP B" for both unshared and bridged lanes.
+3. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:CrashableDiskStore - the DiskStore wrapper that fails atomicReplace for registered path suffixes, the mechanism both crash-window tests use to simulate a mid-write kill.
+4. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:"GAP A (core-then-file) heals on reload for the UNSHARED lane" - concrete it() invocation of crashCoreThenFile(false).
+5. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:"GAP A (core-then-file) heals on reload for the BRIDGED lane" - concrete it() invocation of crashCoreThenFile(true).
+6. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:"GAP B (file-then-fingerprint) heals on reload for the UNSHARED lane" - concrete it() invocation of crashFileThenFingerprint(false).
+7. packages/weft/src/lib/loro/__tests__/disk_bridge_adapter.test.ts:"GAP B (file-then-fingerprint) heals on reload for the BRIDGED lane" - concrete it() invocation of crashFileThenFingerprint(true).
+8. packages/weft/src/lib/loro/__tests__/shared_disk_mount_store.test.ts:"preserves a CRDT-ahead edit when the disk file is stale (blob-ahead)" - this is it.skip'd, explicitly documented as superseded by GAP A above because the shared-lane harness can't persist the engine warm blob across reopen; relevant mainly to show the crash path is NOT exercised here despite superficially looking like it is.
+9. packages/weft/src/lib/storage/boot_reconcile.ts:classifyBoot - the pure classification function itself; no dedicated unit test file exists for it in isolation (no boot_reconcile.test.ts), so its five-branch decision table (in-sync/server-only/disk-only/both-diverged, missing-fingerprint) is only covered indirectly through the two integration-style crash tests above, not via direct table-driven unit tests.
+10. packages/weft/src/lib/loro/disk_bridge_adapter.ts:projectPendingNotes / write-order comment (lines ~293-296) - documents the intended "engine blob -> file -> fingerprint" crash-safe order that the tests in item 1-2 are verifying.
+Confidence: high
+```
+
+</details>
+
+<details><summary>t2</summary>
+
+Task: loro-multiplex's `DocManager`/persistence layer (`FileDocPersistence`/`MemoryDocPersistence`) holds every `__fs__` room, including `BranchingDoc`/`BranchingIndex` content, as a plain generic `LoroDoc`, relying on the premise that such content round-trips losslessly through `LoroDoc.import`/`export` (including incremental updates and `importEnveloped`). What existing tests, if any, would catch a regression in that round-trip premise, and at what layer do they live?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/__tests__/fs_sync_convergence.test.ts:PARTIAL JOINER / NON-MAIN branch tests - the only test that drives real BranchingDoc/BranchingIndex (__fs__ content + lineage) through the actual AuthoritativeServer + MemoryDocPersistence, including a snapshot backfill and an incremental (mode:"update") export/import reconstructing a forked branch - this is the one place the server's generic-LoroDoc round trip is exercised with real branching bytes and checked for data loss.
+2. packages/loro-repo/src/repo/snapshot_store.ts:SnapshotStore - doc comment names the exact risk verbatim: loro-multiplex's DocPersistence is "doc-shaped... designed for the authoritative server's plain LoroDoc rooms," and using it for a BranchingDoc "forces a throwaway carrier LoroDoc... the old carrier double round-trip" - proof the premise was identified and deliberately avoided, but only client-side.
+3. packages/loro-multiplex/src/server/authoritative/persistence.ts:FileDocPersistence/MemoryDocPersistence - the code actually under question: doc.export({mode:"snapshot"}) / importEnveloped on a bare new LoroDoc(), with no branching-aware handling.
+4. packages/loro-multiplex/src/server/authoritative/authoritative_server.ts (top comment) - states every %LOR room, __fs__ included, is held as a generic LoroDoc via DocManager; no special-casing for branching content server-side.
+5. packages/loro-multiplex/__tests__/doc_manager.test.ts:DocManager server-side envelope enforcement - exercises the exact persistence/reload round trip (incl. restart) that would carry __fs__, but every fixture is a plain getText("content") doc, never BranchingDoc-shaped content - a coverage gap, not a regression catch.
+6. packages/loro-multiplex/__tests__/authoritative_server.test.ts - same gap at the ws-wiring layer: snapshot export/import over the wire, but content is a plain-text LoroDoc, not a branching doc.
+7. packages/weft/src/lib/loro/__tests__/engine_branch_content.test.ts:"Persistence round-trip" - explicitly labeled "the byte-compat risk - no content lost on reload" for per-branch content, but it runs through LoroStorageBackend/SnapshotStore (client-side, bytes-level), not loro-multiplex's doc-shaped server persistence.
+8. packages/loro-multiplex/src/envelope/import_enveloped_branch.ts:importBranchingDoc/importBranchingIndex - the dedicated chokepoint calling BranchingDoc.import/BranchingIndex.import directly, a DIFFERENT entry point from the LoroDoc.import the server's DocManager uses; its tests verify envelope rejection, not the generic-LoroDoc path's fidelity.
+9. packages/loro-multiplex/__tests__/import_enveloped_branch.test.ts - unit-tests the correct (BranchingDoc-native) import path; useful contrast but never touches DocManager/FileDocPersistence/MemoryDocPersistence.
+10. packages/loro-repo/__tests__/boundary.test.ts - same dedicated-chokepoint coverage from loro-repo's side (importBranchingDoc/importBranchingIndex rejection), not the server persistence path.
+11. packages/loro-multiplex/__tests__/chokepoint_invariant.test.ts - a static source-level scan (no raw import outside the chokepoint files); would catch a misplaced call, not a round-trip data-loss regression.
+12. packages/loro-repo/__tests__/snapshot_store.test.ts - exercises the bytes-level SnapshotStore save/load contract that snapshot_store.ts says replaced the carrier-LoroDoc approach; confirms the client-side fix is tested, the server-side equivalent is not.
+13. packages/weft/src/lib/loro/loro_repo_persistence.ts / packages/weft/src/lib/loro/__tests__/loro_repo_persistence.test.ts - client-side disk persistence for __fs__ via the bytes-level contract, parallel evidence the server's doc-shaped contract is the odd one out.
+14. packages/loro-multiplex/src/server/authoritative/doc_manager.ts:DocManager.exportFor - the method whose mode:"update"/mode:"snapshot" export is the exact byte producer fs_sync_convergence.test.ts's "PARTIAL JOINER" test validates against a real branching client.
+15. packages/weft/src/lib/loro/__tests__/branch_checkout_persistence.test.ts - a related persistence-survives-reload test, but entirely client-side (LoroDocumentStore/LoroStorageBackend), never through DocManager/persistence.ts.
+Confidence: medium
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/loro/__tests__/fs_sync_convergence.test.ts:PARTIAL JOINER - explicitly exercises incremental (mode:"update") export/import of __fs__ content+lineage "at the repo level - the exact export/import the authority performs"; would catch an incremental round-trip regression.
+2. packages/weft/src/lib/loro/__tests__/fs_sync_convergence.test.ts:LIVE-FORWARD - two real peers synced through a live AuthoritativeServer+MemoryDocPersistence; A's __fs__ BranchingDoc/BranchingIndex deltas round-trip through DocManager's plain LoroDoc room before reaching B; a lossy round-trip would break convergence.
+3. packages/weft/src/lib/loro/__tests__/fs_sync_convergence.test.ts:NON-MAIN branch converges on B - exercises the snapshot-mode round trip (fresh-joiner backfill path) for the same __fs__ rooms.
+4. packages/loro-multiplex/src/server/authoritative/doc_manager.ts:DocManager.applyFrame/exportFor - the actual carrier logic (plain LoroDoc.import/export, snapshot and incremental "update") under test; only exercised with real BranchingDoc/BranchingIndex bytes via weft's integration tests above, never in its own package's tests.
+5. packages/loro-multiplex/__tests__/doc_manager.test.ts:persists per-guid and reloads across a restart - the only persistence-restart round-trip test in the owning package, but uses a plain getText("content") doc, not real BranchingDoc/BranchingIndex payloads; would NOT catch a regression specific to branching content's schema.
+6. packages/loro-multiplex/__tests__/authoritative_server.test.ts - ws-level wire round trip through DocManager, again only generic text LoroDocs, not branching content.
+7. packages/loro-repo/src/repo/snapshot_store.ts:SnapshotStore - doc comment explicitly names the risk: loro-multiplex's DocPersistence is "doc-shaped... designed for the authoritative server's plain LoroDoc rooms," and driving a BranchingDoc through it "forces a throwaway carrier LoroDoc... (the old carrier double round-trip)."
+8. packages/loro-repo/__tests__/support/memory_snapshot_store.ts:MemorySnapshotStore - comment states it "replaces the doc-shaped in-memory persistence the __fs__ tests borrowed from loro-multiplex/server, which forced a carrier," i.e. loro-repo's own prior carrier-based __fs__ tests were retired, not preserved as a regression guard.
+9. packages/weft/src/lib/loro/loro_server_setup.ts:createLoroServer - confirms production wiring: under LORO_AUTHORITATIVE=1, every room including __fs__ is served by AuthoritativeServer+FileDocPersistence, so the plain-LoroDoc-carries-BranchingDoc premise is live in prod, not just hypothetical.
+10. packages/weft/src/lib/loro/__tests__/engine_cross_peer_convergence.test.ts - same carrier pattern but for per-note ENGINE BranchingDoc content (not __fs__); adjacent coverage of the identical round-trip risk.
+11. packages/loro-multiplex/src/envelope/import_enveloped_branch.ts:importBranchingDoc/importBranchingIndex - the NATIVE branching import chokepoint (BranchingDoc.import/BranchingDocRepo.importIndex); its own test (import_enveloped_branch.test.ts) validates the correct, carrier-free path, not the DocManager carrier path the task is about.
+12. packages/loro-multiplex/src/server/authoritative/persistence.ts:FileDocPersistence.save/MemoryDocPersistence.save - only ever calls doc.export({mode:"snapshot"}); the incremental/"update" half of the premise is exercised solely via DocManager.exportFor's live wire path (item 4), not the persistence save path itself.
+Confidence: medium-high
+```
+
+</details>
+
+<details><summary>x1</summary>
+
+Task: Across the `weft` and `loro-repo` packages, what code reads or writes the actor-identity document's profile fields (display name, color, kind, timestamps), and which of those usages are core identity/ACL mechanism versus host-specific presentation data that could be moved out of `loro-repo` into `weft`?
+
+Answer A:
+
+```text
+1. packages/loro-repo/src/identity/actors_doc.ts:ActorsDoc - defines the actor-identity doc itself: the ActorProfile schema (displayName, color, kind, createdAt, lastSeenAt) and its upsert/profile/touchSeen read-write surface.
+2. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore.attachIndex - the sole write path; sources displayName/color/kind/timestamps from weft's own generateUserPresence guest-identity generator, i.e. host presentation data flowing into the doc.
+3. packages/loro-repo/src/identity/authority.ts:Authority - the real ACL mechanism consumer of actor identity; only ever calls ActorSource.currentActor() (bare actorId), never touches a profile field, showing profile data is not part of the security path.
+4. packages/loro-repo/src/identity/actors_doc.ts:ActorsDoc.sessionSource - produces the actorId-only ActorSource that's the actual core-mechanism seam feeding Authority/index creates.
+5. packages/loro-repo/src/repo/loro_repo.ts:LoroRepo.branchProvenance - core actorId resolution (via peer map) combined with a profile passthrough to the caller; the mixing point between mechanism and presentation.
+6. packages/loro-repo/src/fs_doc/fs_doc.ts:recordBranchPeer/resolveBranchPeer - the actual core identity mapping (loro PeerID -> actorId) that branchProvenance depends on; no profile fields involved.
+7. packages/weft/src/components/document_browser/branch/branch_ui_placeholders.ts:branchProvenance (adapter) - extracts only displayName from the profile for the branching UI; pure presentation consumer.
+8. packages/weft/src/components/document_browser/branch/branch_view_model.ts:actorDisplayName - further UI-only shaping of the same display-name string.
+9. packages/weft/src/components/document_browser/branch/branch_attribution.tsx - renders branchedBy string in the attribution panel; presentation-only, no identity logic.
+10. packages/loro-repo/src/identity/acl_doc.ts:AclDoc.actorIds - the ACL's own capability-keyed actor list; core mechanism, structurally separate from ActorsDoc profiles (easy to conflate, isn't).
+11. packages/weft/src/lib/loro/server_repo.ts:RepoIdentity wiring - server-side persisted actorsDoc room binding (authoritative doc plumbing); core wiring, agnostic to profile field contents.
+12. packages/loro-repo/src/identity/index.ts - public export boundary that ships ActorProfile/ActorKind as package API, i.e. where the schema is currently "owned" by loro-repo.
+13. packages/loro-repo/src/identity/actors_doc.ts:touchSeen - zero callers found anywhere in either package; lastSeenAt/createdAt are written once at attach and never read back, suggesting these presentation fields are effectively dead weight in loro-repo today.
+14. packages/weft/src/lib/mounts/use_mount_presence_roster.ts / use_document_viewers.ts - look like actor-profile consumers (name/color) but actually read a separate ephemeral LoroMountPresence doc, not ActorsDoc; worth flagging as a boundary that's easy to miscategorize.
+15. packages/weft/src/lib/loro/loro_repo_index.ts:openLocalRepo - wires weft's sessionActorId into LoroRepo, the entry point that ultimately drives the profile write in item 2.
+Confidence: medium
+```
+
+Answer B:
+
+```text
+1. packages/loro-repo/src/identity/actors_doc.ts:ActorsDoc - defines ActorProfile (displayName, color, kind, createdAt, lastSeenAt) and the sole read/write surface (upsert, profile, touchSeen, has, actorIds); this is the document itself.
+2. packages/loro-repo/src/repo/loro_repo.ts:LoroRepo (constructor, ~L211-238) - mints this.actors and derives actorSource via this.actors.sessionSource(opts.sessionActorId), which feeds Authority - core identity/ACL mechanism, but it only uses the actor **id**, never the profile fields.
+3. packages/loro-repo/src/identity/authority.ts:Authority - ACL grant/revoke logic consumes only ActorSource.currentActor() (the id); confirms profile fields (name/color/kind/timestamps) are never part of the security/ACL path.
+4. packages/loro-repo/src/repo/loro_repo.ts:branchProvenance (~L416-430) - reads this.actors.profile(actorId) to populate branchedBy: Partial<ActorProfile>, the one production read of profile fields, used for presentation (who created a branch).
+5. packages/loro-repo/src/branching/branch_diff_api.ts:RepoBranchProvenance (~L158-164) - types branchedBy as Partial<ActorProfile> | undefined; pure presentation-metadata typing, no mechanism dependency.
+6. packages/weft/src/lib/loro/document_store.ts:attachIndex (~L809-847) - the only production write: calls attachment.repo.actors.upsert(sessionActorId, { displayName, color, kind: "human", createdAt, lastSeenAt }), sourcing displayName/color from weft's own generateUserPresence. This is host-specific presentation data being pushed into the loro-repo-owned document.
+7. packages/weft/src/lib/storage/sync/user_presence.ts:generateColorFromId / generateDisplayName / generateUserPresence - weft-owned color palette and guest-name generation; the actual source of the "color"/"displayName" values, entirely a UI/presentation concern with no loro-repo dependency.
+8. packages/weft/src/components/document_browser/branch/branch_ui_placeholders.ts:branchProvenance (~L54-57) - adapts repo.branchProvenance(...) to UI strings, reading only provenance.branchedBy?.displayName (discards color/kind/timestamps) with an UNKNOWN_ACTOR fallback - presentation-only consumer.
+9. packages/weft/src/components/document_browser/branch/branch_view_model.ts:buildBranchCardModel (~L83-137) - threads actorDisplayName into the branch card's view model; pure UI.
+10. packages/weft/src/components/document_browser/branch/branch_attribution.tsx (~L26) - renders attribution.branchedBy in the branch card header; terminal UI consumer.
+11. packages/loro-repo/__tests__/identity.test.ts, loro_repo_branch_metadata.test.ts, content_persistence.characterization.test.ts - exercise actors.upsert/profile directly with synthetic displayName/kind, documenting the intended contract at the loro-repo layer.
+12. packages/weft/src/lib/loro/__tests__/branch_attribution_identity.test.ts - documents (and tests) that weft's own getOrCreateGuestId + generateUserPresence are what make branchProvenance resolve a real display name, i.e. that the presentation data originates entirely in weft.
+Confidence: high
+```
+
+</details>
+
+<details><summary>x2</summary>
+
+Task: What actually consumes `loro-multiplex`'s generic document-transport layer today: is `loro-repo` (its `__fs__` rooms) its only real production consumer, or are there other packages or call sites relying on it that a branching-aware redesign would need to account for?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/sync_layer.ts:LoroSyncLayer - a weft-owned class that imports envelope, frame-codec, and room-alias from loro-multiplex directly and drives the live sync/join path; not mediated by loro-repo.
+2. packages/weft/src/lib/loro/enveloped_adaptor.ts:EnvelopedAdaptor - imports envelope, frame-codec, and import-enveloped directly; its own comment notes this is deliberately coupled to a future loro-multiplex/client subpath.
+3. packages/weft/src/lib/loro/acl_sync_doc.ts - calls importEnveloped/contentEnvelope straight from loro-multiplex/envelope and /import-enveloped, outside loro-repo.
+4. packages/weft/src/lib/loro/assets_doc.ts - same chokepoint functions (importEnveloped, indexEnvelope) called directly for the assets doc.
+5. packages/weft/src/lib/loro/blob_persistence.ts - direct DocEnvelope/FrameCorruptError/importEnveloped usage for blob persistence, a separate transport consumer from loro-repo's __fs__ path.
+6. packages/weft/src/lib/loro/server_repo.ts - imports AuthoritativeServer/Authenticate/AuthContext from loro-multiplex/server plus room-alias, i.e. weft runs its own authoritative-server wiring independent of loro-repo.
+7. packages/weft/src/lib/loro/loro_server_setup.ts - constructs the loro-multiplex/server authoritative server directly.
+8. packages/weft/src/lib/loro/framed_blob_file.ts - direct frame-codec (encodeFrame/decodeFrame) consumer.
+9. packages/weft/src/components/mounts_provider.tsx - app-level React provider importing contentEnvelope/MAIN_BRANCH from loro-multiplex/envelope directly, not through loro-repo.
+10. packages/weft/src/routes/dev.loro.tsx - dev route calling getEnvelopeDiagnostics from loro-multiplex/import-enveloped directly.
+11. packages/weft/src/lib/loro/redaction_instruction.ts - direct room-alias/server type consumer for redaction wiring.
+12. packages/weft/src/lib/media/media_names.ts - re-exports hashMediaBytes straight from loro-multiplex/content-hash.
+13. packages/weft/eslint.config.ts:RAW_LORO_IMPORT_RESTRICTION - lint rule whose own comment states weft "imports it directly from loro-multiplex/import-enveloped," confirming this is intentional architecture, not accidental leakage.
+14. packages/loro-repo/src/repo/loro_repo.ts:LoroRepo - the actual __fs__-room consumer, but notably uses the *branching-aware* importBranchingDoc from loro-multiplex/import-enveloped-branch, unlike weft's flat importEnveloped call sites.
+15. packages/loro-repo/src/index.ts - states the package's intent to be the sole boundary ("so other packages can use them without reaching into loro-multiplex directly"), an intent weft's direct imports above contradict in practice.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/loro/sync_layer.ts:LoroSyncLayer - joins note, assets, ACL, and __fs__ docs to rooms directly via loro-multiplex's envelope/room-alias/frame-codec; the real generic-transport consumer, independent of loro-repo.
+2. packages/weft/src/lib/loro/loro_server_setup.ts:createLoroServer - wires AuthoritativeServer/OpaqueRelay from loro-multiplex/server for both dev and prod; the actual production server runtime.
+3. packages/weft/src/lib/loro/server_repo.ts:repoAuthPolicy - join-time auth policy built on AuthoritativeServer/AuthContext types from loro-multiplex/server, gating every room including but not limited to __fs__.
+4. packages/weft/src/lib/loro/enveloped_adaptor.ts:EnvelopedAdaptor - weft's own CrdtDocAdaptor wrapping loro-multiplex's frame-codec/import-enveloped, reused for every note/asset/acl/fs room.
+5. packages/weft/src/lib/loro/assets_doc.ts:AssetsDoc - per-mount media-asset descriptor doc importing frames via loro-multiplex/envelope + import-enveloped, a room distinct from __fs__.
+6. packages/weft/src/lib/loro/acl_sync_doc.ts:AclSyncDoc - persisted __acl__ doc synced through loro-multiplex envelope/import-enveloped, its own room separate from __fs__.
+7. packages/weft/src/lib/loro/redaction_instruction.ts:computeRedactionInstruction - server-side redaction logic using loro-multiplex/room-alias and AuthoritativeServer types directly.
+8. packages/weft/src/lib/loro/blob_persistence.ts:LoroBlobStore - persists note/asset blobs using loro-multiplex envelope/frame-codec/import-enveloped directly.
+9. packages/weft/src/lib/loro/framed_blob_file.ts:readFramedBlob/writeFramedBlob - low-level frame encode/decode for blob files via loro-multiplex/frame-codec.
+10. packages/weft/src/lib/media/media_names.ts:hashMediaBytes - re-exports loro-multiplex/content-hash for asset naming, a third independent surface.
+11. packages/loro-repo/src/repo/loro_repo.ts:LoroRepo - the __fs__-rooms consumer named in the task, using envelope/import-enveloped-branch/room-alias.
+12. packages/loro-repo/src/repo/engine_content_doc.ts:EngineContentDoc - a second loro-repo consumer of the branching envelope/chokepoint for content docs, not __fs__.
+13. packages/loro-repo/src/fs_doc/fs_doc.ts:FsDoc - the __fs__ BranchingDoc wrapper itself, the chokepoint boundary a branching redesign touches most directly.
+14. packages/loro-repo/src/repo/snapshot_store.ts:SnapshotStore - EnvelopedFrame-typed persistence contract shared by loro-repo's __fs__ and weft's own blob persistence.
+15. packages/weft/src/lib/loro/document_store.ts:LoroMountStore (document_store) - mount-level orchestration that activates the note/asset/acl/__fs__ room wiring together via sync_layer.ts.
+Confidence: high
+```
+
+</details>
+
+<details><summary>o1</summary>
+
+Task: Before touching anything, brief me on how the `weft` package is structured: what are its key subsystems and modules, where are the architectural hubs, and how do pieces like storage/sync, the editor, and the app shell connect to one another?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore - the primary document-content hub: implements the shipped DocumentStore contract, owns per-loaded-doc view artifacts (EditorView, UndoManager, subviews) over the Loro CRDT layer.
+2. packages/weft/src/lib/loro/mount_store.ts:LoroMountStore - local facade over one mount's Loro data layer; ties together assets doc, the lazy-load doc registry, and the NATIVE vs DISK (plainMd) persistence lanes.
+3. packages/weft/src/lib/loro/sync_layer.ts:LoroSyncLayer - wires the loro-websocket client into a mount's doc lifecycle (per-mount socket, per-channel room, envelope-gated frames); the real-time sync hub.
+4. packages/weft/src/lib/loro/server_repo.ts - the authoritative server-side join/auth policy (repoAuthPolicy), the security boundary opposite the client-side envelope adaptor.
+5. packages/weft/src/lib/mounts/mounts_container.ts - singleton MountsContainer: registry of all mounts, each wrapping a DocumentStore; app-wide storage/config hub.
+6. packages/weft/src/lib/mounts/mount.ts:MountImpl - per-mount wrapper binding config, DocumentStore, index manager, and search index.
+7. packages/weft/src/lib/storage/backends/plain_md_by_path/managed_block/index.ts - the plain-markdown-on-disk backend's frontmatter/managed-block machinery for Git-friendly .md projection.
+8. packages/weft/src/lib/storage/sync/sync_gate.ts (+ sibling boot_classifier.ts, fingerprint.ts) - disk-vs-CRDT reconciliation gate where the SHARED disk lane reconciles with sync deltas.
+9. packages/weft/src/lib/document_service/index.ts (and types.ts) - the ref-counted acquire/release document handle API consumed by editor components and transclusion.
+10. packages/weft/src/components/document_manager.tsx:DocumentManager - app-shell orchestrator tying document browser + editor workspace together; delegates per-document reads to DocumentEditorPane for render isolation.
+11. packages/weft/src/components/editor_workspace.tsx:EditorWorkspace - the sole component reading router state for document navigation; hosts split panes, tab strip, pane divider.
+12. packages/weft/src/components/collaborative_editor.tsx - CodeMirror editor instance wired to loroSyncFacet, editor toolbar, avatars/presence.
+13. packages/weft/src/components/mounts_provider.tsx:MountsProvider - app-level provider ensuring MountsContainer initializes before any route renders; also wires presence/revocation toasts.
+14. packages/weft/src/routes/__root.tsx - root layout/HTML shell; documents a load-bearing import-order cycle (@/lib/mounts → document_service → @/lib/transclusion → back to lib/transclusion/index.ts) that forces React.lazy for the command palette.
+15. packages/weft/src/lib/indexing/manager.ts (IndexManager, see src/lib/indexing/README.md) - subscribes to DocumentStore change events to drive backlinks/search reindexing, the main downstream consumer of document-store events.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore - the package's biggest hub; orchestrates mount store, sync layer, and fs index, and implements the DocumentStore interface that the rest of the app codes against.
+2. packages/weft/src/routes/__root.tsx - the app shell root; wires MountsProvider, KeybindingProvider, ToastProvider, NavigationHistoryProvider, and dynamically imports the command palette and daily notes.
+3. packages/weft/src/components/mounts_provider.tsx:MountsProvider - bridges LoroDocumentStore/LoroMountStore/fs-provider/blob-store into React/jotai state; mounted directly by __root.tsx, so it's the storage-to-shell seam.
+4. packages/weft/src/components/document_editor_pane.tsx - dispatches per-tab between CollaborativeEditor (text) and KonvaCanvasEditor (canvas) via docKindForPath(); the editor/shell seam, pulling in tabs, indexing, layout, and navigation history.
+5. packages/weft/src/lib/loro/mount_store.ts:LoroMountStore - owns the doc registry, membership, and asset docs underneath LoroDocumentStore.
+6. packages/weft/src/lib/loro/sync_layer.ts:LoroSyncLayer - the network sync surface (joinDoc, joinPresence, joinFsChannel), invoked from document_store.ts's enableSync().
+7. packages/loro-repo/src/fs_index/fs_index_view.ts:FsIndexView - cross-package filesystem/branch index implementing DocumentIndex, shared by both document_store.ts and mount_store.ts.
+8. packages/weft/src/components/collaborative_editor.tsx:CollaborativeEditor - the text/markdown editor pane; binds CodeMirror to the CRDT doc via loro/codemirror and editor_binding.ts.
+9. packages/weft/src/lib/editor/editor_binding.ts:EditorBinding - the direct editor<->storage link (LoroPresence, text-change subscriptions), imported by document_store.ts itself.
+10. packages/weft/src/components/canvas/konva_canvas_editor.tsx:KonvaCanvasEditor - the canvas/whiteboard editor; its own very large subsystem (shapes, geometry, gestures, layout).
+11. packages/weft/src/lib/indexing/mount_index.ts:MountSearchIndex - content/backlink/wikilink search index, consumed by editor extensions, transclusion, and mounts.
+12. packages/weft/src/lib/tabs/index.ts - shared tab/pane state model used by document_editor_pane, mounts_provider, the document browser, and command palette.
+13. packages/command-deer/src/core/service/keybinding_service.ts:KeybindingService - cross-package command palette/keybinding infrastructure, wired into the shell via keybindings/index.ts at __root.tsx.
+14. packages/weft/src/lib/indexing/manager.ts:IndexManager - orchestrates MountSearchIndex lifecycle/sweeping.
+15. packages/weft/src/lib/mounts/mount.ts:Mount/MountImpl - the mount abstraction tying the document store and search index together per-mount.
+Confidence: high
+```
+
+</details>
+
+<details><summary>d1</summary>
+
+Task: Across the `weft` package, what is exported but never imported or used anywhere: is there dead code still wired through a public barrel export?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/storage/doc_meta_utils/types.ts:DOCUMENT_INDEX_GUID,getMetadataGuid,METADATA_GUID_SUFFIX,METADATA_KEYS - all four are named in doc_meta_utils/index.ts's re-export list but have zero references outside types.ts and the barrel itself.
+2. packages/weft/src/lib/mounts/use_mount_index_status.ts:useMountIndexStatus - a whole dedicated hook file, re-exported by mounts/index.ts, never called anywhere.
+3. packages/weft/src/lib/storage/sync/expected_write_registry.ts:createExpectedWriteRegistry,canonicalizeRegistryPath,ExpectedWriteRegistry - all explicitly re-exported from storage/sync/index.ts, no external callers or references.
+4. packages/weft/src/lib/daily_notes/controller.ts:resetDailyNotesController - barrel-exported reset helper with no call sites.
+5. packages/weft/src/lib/loro/codemirror/sync.ts:deltaToChanges,LoroSyncConfig,LoroSyncOptions,LoroSyncPluginValue - cluster of exported symbols from the Loro/CodeMirror sync module, none referenced elsewhere.
+6. packages/weft/src/lib/storage/sync/fingerprint.ts:serializeFingerprint,parseFingerprint,FingerprintEntry,FingerprintMap - fingerprint (de)serialization API, exported but unused outside its own file.
+7. packages/weft/src/lib/indexing/content_index.ts:encodeContentIndex,decodeContentIndex - paired encode/decode helpers, both dead.
+8. packages/weft/src/lib/mounts/mounts_container.ts:getDefaultMount,getDefaultMountId - exported accessors with no outside callers.
+9. packages/weft/src/lib/transclusion/extension_builder.ts:buildPreviewExtensions - exported builder function, unused.
+10. packages/weft/src/lib/transclusion/transclusion_widget.ts:getTransclusionSourceLoader,TransclusionIconWidget - unused export pair in the transclusion widget module.
+11. packages/weft/src/lib/vim/vim_mode_atom.ts:setVimModeEnabled - exported setter with no callers.
+12. packages/weft/src/lib/config/persistence.ts:createDefaultConfig,DEFAULT_USER_MOUNT_NAME,DEFAULT_AUTO_MOUNT_NAME - exported config defaults/factory, unused outside the file.
+13. packages/weft/src/lib/loro/attribution/derive.ts:deriveSpansInRange - exported attribution helper, unused.
+14. packages/weft/src/lib/editor_settings/settings_doc.ts:resetSettingsDocController - exported reset helper mirroring item 4's pattern, unused.
+15. packages/weft/src/components/canvas/shape_nodes/*.tsx:*NodeProps (Image/Shape/Line/Frame/Ink/Embed/Arrow, 7 files) - a systematic pattern: every shape-node Props interface is exported but only ever used inside its own file, never imported elsewhere.
+Confidence: medium
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/mounts/mounts_container.ts:getDefaultMount - primary mount accessor, wired through src/lib/mounts/index.ts but never imported anywhere outside its own definition
+2. packages/weft/src/lib/mounts/mounts_container.ts:getDefaultMountId - sibling of the above, same barrel, also zero real call sites
+3. packages/weft/src/lib/mounts/bootstrap.ts:ensureMountsDirectory - barrel-exported bootstrap helper, no callers found
+4. packages/weft/src/lib/mounts/bootstrap.ts:ensureMountStorageDir - second unused helper from the same bootstrap module
+5. packages/weft/src/lib/mounts/atoms.ts:createDefaultMountRef - exported atom-factory with no consumer
+6. packages/weft/src/lib/mounts/atoms.ts:currentMountIndexStatusAtom - only referenced inside a doc comment ("read {@link currentMountIndexStatusAtom} directly"), never actually imported
+7. packages/weft/src/lib/mounts/use_mount_index_status.ts:useMountIndexStatus - exported hook, no call sites; mounts barrel is the single biggest cluster of dead re-exports found
+8. packages/weft/src/lib/config/persistence.ts:createDefaultConfig - unused config constructor; its neighbors DEFAULT_AUTO_MOUNT_NAME/DEFAULT_USER_MOUNT_NAME are likewise barrel-exported and unused
+9. packages/weft/src/lib/storage/doc_meta_utils/types.ts:METADATA_KEYS - unused constant map; DOCUMENT_INDEX_GUID, getMetadataGuid, METADATA_GUID_SUFFIX from the same file are also dead
+10. packages/weft/src/lib/storage/sync/sync_gate.ts:waitForChannelSync - the sole export of its module, never imported
+11. packages/weft/src/lib/storage/sync/fingerprint.ts:parseFingerprint - paired with unused serializeFingerprint; whole module appears dead
+12. packages/weft/src/lib/transclusion/transclusion_widget.ts:TransclusionIconWidget - unused widget class; sibling getTransclusionSourceLoader also unused
+13. packages/weft/src/lib/loro/attribution/decoration.ts:loroAttributionConfig - unused facet-config export (loroAttributionTheme too)
+14. packages/weft/src/lib/daily_notes/controller.ts:resetDailyNotesController - test-reset helper, barrel-exported, no caller
+15. packages/weft/src/lib/editor_settings/settings_doc.ts:resetSettingsDocController - same reset-helper pattern, unused
+Confidence: medium-high
+```
+
+</details>
+
+<details><summary>y1</summary>
+
+Task: A production build warns of a circular chunk dependency involving `packages/weft/src/lib/mounts/atoms.ts` and `packages/weft/src/lib/mounts/index.ts`. Is there a circular import dependency within the `weft` package's mounts module, which modules participate in it, and how far does it extend?
+
+Answer A:
+
+```text
+1. packages/weft/src/lib/mounts/index.ts:mounts/index.ts - the barrel file at the center of the cycle; re-exports atoms.ts, mounts_container.ts, and (via other exports) initialization.ts, so any downstream file importing it re-enters the mounts module.
+2. packages/weft/src/lib/mounts/atoms.ts:mounts/atoms.ts - re-exported directly by index.ts and itself imports initialization.ts, forming the shortest loop back to the barrel.
+3. packages/weft/src/lib/mounts/initialization.ts:initialization.ts - the pivot node: imported by atoms.ts, re-exported by index.ts, and fans out to both mounts_container.ts and transclusion/index.ts, feeding two distinct cycle branches.
+4. packages/weft/src/lib/mounts/mounts_container.ts:mounts_container.ts - re-exported by index.ts; imports indexing/document_store_adapter.ts, which imports back into atoms.ts, closing a 4-file cycle.
+5. packages/weft/src/lib/indexing/document_store_adapter.ts:document_store_adapter.ts - imports mounts/atoms.ts while being imported by mounts_container.ts; closes the cycle document_store_adapter -> atoms -> initialization -> mounts_container -> document_store_adapter.
+6. packages/weft/src/lib/transclusion/index.ts:transclusion/index.ts - imported by initialization.ts; re-exports both transclusion_widget.ts and document_store_loader.ts, bridging the mounts module into the transclusion module.
+7. packages/weft/src/lib/transclusion/transclusion_widget.ts:transclusion_widget.ts - imports mounts/index.ts directly, closing initialization -> transclusion/index -> transclusion_widget -> mounts/index -> atoms.
+8. packages/weft/src/lib/transclusion/document_store_loader.ts:document_store_loader.ts - also imports mounts/index.ts directly and imports transclusion_widget.ts; a second, parallel 4-step path back into the mounts barrel.
+9. packages/weft/src/lib/mounts/types.ts:mounts/types.ts - shared type dependency re-exported by index.ts and imported by both mounts_container.ts and document_store_adapter.ts; not itself cyclic but couples the cycle's participants.
+Confidence: high
+```
+
+Answer B:
+
+```text
+1. packages/weft/src/lib/mounts/index.ts:index.ts - the mounts barrel; re-exports both ./atoms and ./initialization as values, putting itself and atoms.ts in the same chunk-dependency unit as everything either one reaches.
+2. packages/weft/src/lib/mounts/atoms.ts:initializeMountsSystem import - atoms.ts imports initializeMountsSystem from ./initialization, the edge that pulls atoms.ts into the larger cycle.
+3. packages/weft/src/lib/mounts/initialization.ts:initializeMountsSystem - imports createDocumentStoreLoader/setTransclusionSourceLoader from @/lib/transclusion, the edge that leaves the mounts folder entirely.
+4. packages/weft/src/lib/mounts/mounts_container.ts:getMounts - imported by initialization.ts; itself imports createDocumentStoreInfoProvider from @/lib/indexing/document_store_adapter.
+5. packages/weft/src/lib/indexing/document_store_adapter.ts:createDocumentStoreInfoProvider - imports currentDocumentRefAtom from @/lib/mounts/atoms directly, closing a short 4-file cycle: atoms → initialization → mounts_container → document_store_adapter → atoms.
+6. packages/weft/src/lib/mounts/mount.ts:createMount - imports LoroDocumentStore from @/lib/loro/document_store, a second, independent entry point into the same strongly-connected set.
+7. packages/weft/src/lib/loro/document_store.ts:LoroDocumentStore - imports createForwardingSourceView from @/lib/document_service/source_view, bridging mounts/loro into document_service.
+8. packages/weft/src/lib/document_service/source_view.ts:createForwardingSourceView - imports buildSubviewExtensions from @/lib/transclusion/extension_builder, bridging into transclusion.
+9. packages/weft/src/lib/transclusion/index.ts:index.ts - the transclusion barrel; re-exports transclusion_widget.ts and extension_builder.ts, the hub that both receives the above edges and reaches back into mounts.
+10. packages/weft/src/lib/transclusion/transclusion_widget.ts:getMounts import - imports getMounts from @/lib/mounts, the edge that closes the loop back to mounts/index.ts; also re-exports TRANSCLUSION_WIDGET_CLASS.
+11. packages/weft/src/lib/transclusion/widget_range.ts:TRANSCLUSION_WIDGET_CLASS - the actual const definition; its own file comment independently documents the same "Cannot access before initialization" crash the mounts/index.ts header warns about.
+12. packages/weft/src/lib/plugins/edit_lensing/transclusion_helpers.ts:TRANSCLUSION_PREVIEW_CLASS - export const TRANSCLUSION_PREVIEW_CLASS = TRANSCLUSION_WIDGET_CLASS;, a module-scope read of an imported binding that is the concrete TDZ trigger if this module runs before transclusion_widget.ts finishes initializing.
+13. packages/weft/src/lib/transclusion/extension_builder.ts:buildSubviewExtensions - imports @/lib/editor_focus, @/lib/navigation_history/recorder_facet, and @/lib/plugins/sugary_markdown, widening the cycle into those subsystems.
+14. packages/weft/src/lib/editor_focus/boundary_nav.ts:TRANSCLUSION_WIDGET_CLASS import - pulled in via extension_builder.ts → @/lib/editor_focus; imports TRANSCLUSION_WIDGET_CLASS straight from widget_range.ts, another path into the same component.
+15. packages/weft/src/lib/storage/doc_meta_utils/index.ts and lib/plugins/sugary_markdown.ts - members of the same strongly-connected set even under a value-imports-only graph, evidence the cycle's true extent is ~29 files spanning mounts, transclusion, loro, document_service, indexing, editor_focus, navigation_history, plugins/edit_lensing and storage/doc_meta_utils, not just the two named files.
+Confidence: high
+```
+
+</details>
+
