@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-06T09:57:37-07:00
 task_list: cdocs/rules-context-decomposition
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, implementation_review, rules, context_budget, live_smoke, evidence_audit]
 ---

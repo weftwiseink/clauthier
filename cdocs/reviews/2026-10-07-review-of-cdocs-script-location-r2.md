@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-07T12:59:30-07:00
 task_list: cdocs/script-location
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, runtime_validated, test_plan, documentation]
 ---

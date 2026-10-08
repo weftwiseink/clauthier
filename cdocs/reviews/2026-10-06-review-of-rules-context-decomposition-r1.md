@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-06T09:31:19-07:00
 task_list: cdocs/rules-context-decomposition
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, formalism_reduction, rules, phase_gating, verification, dead_references, orchestration_discipline]
 ---

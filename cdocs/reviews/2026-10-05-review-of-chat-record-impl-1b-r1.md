@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-05T13:20:54-07:00
 task_list: cdocs/chat-record-devlog-management
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, implementation_review, phase_1b, runtime_validated, hooks, portability, rules_check, test_plan]
 ---

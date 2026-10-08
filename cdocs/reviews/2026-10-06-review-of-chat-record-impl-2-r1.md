@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-06T09:01:45-07:00
 task_list: cdocs/chat-record-devlog-management
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, implementation_review, phase_2, devlog_splitting, triage, runtime_validated]
 ---

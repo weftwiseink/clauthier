@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-06T12:11:47-07:00
 task_list: cdocs/devlog-ownership-rework
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, implementation_review, devlog, orchestration_discipline, evidence_checked, live_smoke]
 ---

@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-06T17:39:49-07:00
 task_list: cdocs/nested-subagent-workflows
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, runtime_validated, architecture, orchestration_discipline, degradation_path, test_plan]
 ---
