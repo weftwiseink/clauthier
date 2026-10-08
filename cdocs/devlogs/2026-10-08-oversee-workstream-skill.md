@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: rev-impl-1 reviewing `dacf590`; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: impl-1 rebasing over graphify + F1-F4; then maintainer acceptance and landing; `rules_check` question open; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -42,6 +42,7 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | reviewed against mid-review maintainer direction; fork leak blocking |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r2.md` | 3 one-line blocking defects |
 | r3 | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r3.md` | non-blocking cuts only |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-impl-r1.md` (branch) | wording nits; rules_check question |
 
 ## Dispatch/Return Events
 
@@ -66,6 +67,8 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../oversee-workstream`, branch `oversee-workstream` | 2026-10-08T15:50 | iterate round 1, phases 1-4 |
 | return | impl-1 | `d025c88..dacf590` | 2026-10-08T16:40 | phases 1-4; rules 18/0, unit 98/0 (Stop reason 254 B), opencode 9/0, init_real 12/0, headless top_level_only 14/0 (parent + cdocs:proposer + general-purpose + fork; only parent calls chat-record), grep = listed exceptions + 5 test-file lines. Live opus propose-revise + `/compact`: `Skill(oversee-workstream)` then `Skill(chat-record)` before first Agent; both in post-compaction `invoked_skills`; no subagent loaded a skill. Deviations: unlisted `init_real` edits, skill text from current wording, consistency edits, background tasks off in live run. Unverified: `rules_check`, `multi_turn` scenarios. Post-compaction turn-3 note came only after one Stop block. Phase 4 evidence in sub-devlog Verification |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-impl-r1.md` (branch) | 2026-10-08T16:42 | must re-run floor incl. top_level_only; run rules_check and multi_turn |
+| return | rev-impl-1 | `1688560` (branch) | 2026-10-08T17:05 | accept, `review_proof: confirmed`: rules 18, unit 98, opencode 9, init_real 12, top_level_only 14 (only parent calls chat-record, no subagent loads the skill), grep clean bar test fixtures; live-run evidence confirmed. `rules_check` fails 3/5 on haiku on base and branch alike (pre-existing; haiku skips post-compaction steps); `multi_turn` passes, fallback-block counts noisy. All 5 deviations accepted. F1-F4 wording nits. Maintainer question: `rules_check` keep-as-known-failure / move to sonnet / delete (reviewer: delete). Conflicts with graphify in `CLAUDE.md`, `tool-use-safeguards.md` as predicted |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T17:07 | rebase over graphify, F1-F4; `rules_check` left for maintainer |
 
 ## Steering Log
 
