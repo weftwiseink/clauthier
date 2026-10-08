@@ -161,7 +161,7 @@ Truncated: none | <what was omitted>; see: <path>
   The state is always exactly one of `opened`, `reused`, `reopened`.
 - `Sessions` lines: `opened` = not live at dispatch start, or closed first because fresh sessions were asked for; `reused` = live at dispatch start; `reopened` = died during this dispatch and was re-opened empty.
   A session that was re-opened is `reopened` even if it started as `opened` or `reused`.
-- `Facts` always include `cli: <abs command> (<version from --version>)`, `config: <abs path> | none`, and `scratch: <$out>`.
+- `Facts` always include `cli: <abs command> (<version from --version>, global | project-local)` (which Setup rule resolved it), `config: <abs path> | none`, and `scratch: <$out>`.
   Include a `converged` line only when a poll-until was asked for.
 - Never add a field, and never put a verdict, opinion, or recommendation in any field ("looks correct", "matches the design", "the bug is fixed" are all out of bounds).
 - `Truncated`: when a value is too long to quote (a large eval result, a long error), put the full text in a file under `$out` and name it here.
