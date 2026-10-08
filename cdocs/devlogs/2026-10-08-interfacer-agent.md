@@ -34,6 +34,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+| `cdocs/devlogs/2026-10-08-interfacer-agent-impl.md` (branch `interfacer-agent`) | phases 1-4 implementation and canary | review_ready | checking canary evidence or the agent's added clauses |
 
 ## Iterate Brief (Turn 0)
 
@@ -47,6 +48,7 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | both blocking fixes delete text; agent draft 78 lines vs bash-runner 65 |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 69 lines; nits only |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | pending | pending | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | container canary via curl; host browser run secondary |
 
 ## Judge Log
 
@@ -68,6 +70,8 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | prop-1 (warm) | proposal | 2026-10-08T10:06 | accept-round nits |
 | return | prop-1 | `85c5463` | 2026-10-08T10:12 | nits resolved; detach instruction also folded into the agent's "Start long-lived things" rule |
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../interfacer-agent`, branch `interfacer-agent` | 2026-10-08T10:14 | iterate round 1, phases 1-4 incl. live canary; lands before graphify (ordering override) |
+| return | impl-1 | `7224fcb..a277fa5` | 2026-10-08T11:20 | phases 1-4; agent 70 lines; test:rules 11/11, test:opencode 9/9. Container canary (claude 2.1.285, run 5/5) passes all but screenshots (browser lacks 11 system libs; curl fallback); host run covers browser path, `_media` screenshot. Deviations: SendMessage follow-ups run in background, description now tells dispatchers to wait in-turn (run 2 stalled without it); 3 canary-driven clauses (probed 404 not OK, reply only in final message, tear down by PID/session not pattern). Unverified: browser in container, reviewer clauses until a real iterate round |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | 2026-10-08T11:22 | implementation round 1; must re-run floor for `confirmed` |
 
 ## Steering Log
 
