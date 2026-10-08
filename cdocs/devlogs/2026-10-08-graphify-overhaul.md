@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: dispatch proposer.
+- next_steps: explainer artifact for the maintainer; `/cdocs:iterate` after the interfacer branch lands (shared `reviewer.md`, `iterate/SKILL.md`), in its own worktree; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -62,6 +62,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | 2026-10-08T10:42 | round 2; may check CLI claims against graphify 0.9.61 in the devcontainer |
 | return | rev-2 | `cd84ce3` | 2026-10-08T10:55 | proposal_accepted; container-verified 0.9.61: no `update --code-only` (exit 2); update uses no LLM but adds md heading nodes (cdocs/ = 6637/7375 nodes); `.graphifyignore` honored and evicts on plain update; `--graph` on query/explain/path/affected; relative node paths (copy works; `.graphify_root` absolute); update locks per output dir and prunes deleted files; ~2.4 s cold. F1-F5 trims; F6: shared `/var/cache/graphify` holds a stale 73-node test fixture (the overwrite problem, observed) |
 | dispatch | prop-1 (warm) | proposal | 2026-10-08T10:57 | accept-round F1-F5; defaults for 2 maintainer questions (stamp dropped; missing cdocs ignore = stderr hint) |
+| return | prop-1 | `d0fc1b7` | 2026-10-08T11:00 | F1-F6 applied, `implementation_ready`; wrapper ≤~60 lines, 7 steps; portable `grep -qxE` |
+| dispatch | explainer (general-purpose, opus) | scratch HTML → Artifact | 2026-10-08T11:01 | maintainer-requested explainer with SVG relationship/flow diagrams, 120ch |
 
 ## Steering Log
 
