@@ -45,7 +45,7 @@ Failure picture: rename appends to the old record, `ai-title` changes the filena
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible.md` | nits only |
-| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | pending | pending | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md` (branch) | `session_title` first-prompt fallback deviation |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md` (branch) | `session_title` first-prompt fallback accepted as correct and minimal |
 
 ## Judge Log
 
@@ -65,6 +65,8 @@ Failure picture: rename appends to the old record, `ai-title` changes the filena
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../chat-record-flexible`, branch `chat-record-flexible` | 2026-10-08T10:50 | iterate round 1, phases 1-4 |
 | return | impl-1 | `c5fe184..fa9523e` | 2026-10-08T11:25 | phases 1-4; unit 126/0 (was 95), test:rules 11/0, init_real 132/0, headless rename/clear/resume/two_prompts 16/0 kept at `/tmp/chat-record-test.jGFd47`. Deviation `a8c33ba`: first UserPromptSubmit fires before the transcript exists, so it falls back to payload `session_title` (else a `--name` session's first prompt split across records). Not verified: interactive `/rename`, `claude --name`, rest of headless suite. This repo's `cdocs/_chat/README.md` still has old wording |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md` (branch) | 2026-10-08T11:27 | implementation round 1 |
+| return | rev-impl-1 | `33ecf79` (branch) | 2026-10-08T11:35 | accept, `review_proof: confirmed`: unit 126/0, init_real 135/0, rules 11/0, headless 12/0; own `--name` and `/rename` runs: first turn fully in named record, `path` agrees with hooks, prose note byte-exact. `session_title` holds only user-set names (read from bundled CLI). 5 non-blocking (4 cuts + regenerate this repo's `_chat/README.md`) |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T11:36 | pre-landing items 1-4, statuses |
 
 ## Steering Log
 
