@@ -39,6 +39,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | both blocking fixes delete text; agent draft 78 lines vs bash-runner 65 |
 
 ## Judge Log
 
@@ -52,6 +53,8 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-interfacer-agent.md` | 2026-10-08T09:22 | initial proposal |
 | return | prop-1 | `8ccb18c` | 2026-10-08T09:28 | `review_ready`. Single agent, inherits all tools, per-instance tmp dir with `NN-<slug>/report.md` + media, observations allowed but verdicts stay with dispatcher; durable = named, warm via SendMessage, tooling left running until "tear down"; reviewers start fresh and tear down. Unverified: started processes surviving a foreground dispatch; maxTurns per resume. `playwright-cli` not on host (headless shell cached). Open: durable reading, tools scope, reviewer leaving apps up |
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | 2026-10-08T09:35 | round 1; told to prefer findings that remove text |
+| return | rev-1 | `7dbd973` | 2026-10-08T09:45 | revise; OC build 9/9 and test:rules 11/11 with draft; deletion list complete; blocking: agentId not `name` (no `name` param at depth 1; teams turn named calls into teammates), dispatchers always tear down tooling (warm implementer tooling collides with reviewer's fresh run on fixed ports/simulators) |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T09:58 | r1 revision; reviewer's open-question answers adopted with "maintainer may override" NOTE |
 
 ## Steering Log
 
