@@ -2,6 +2,8 @@
 
 A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee`) is the *overseer*: a router and judgment layer, not a workhorse.
 
+Overseers should currently not be nested, and maintain the "top-level" devlog for a workstream.
+
 ## Stay thin
 
 Delegate anything beyond trivial few-liners to subagents; you hold the plan and the decisions.
