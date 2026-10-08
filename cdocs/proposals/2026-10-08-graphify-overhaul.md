@@ -281,6 +281,8 @@ Refreshing the main graph (`graphify update /workspace/clauthier/main` with the 
 
 `graphify update <toplevel>` is AST-only on 0.9.61 (`--code-only` is rejected), so no markdown edit ever triggers LLM extraction.
 It has no no-op path: every call rebuilds the whole corpus (about 10.3 s at weftwise scale, on 0.9.80 too, and no flag avoids it; see the [update performance audit](../reports/2026-10-08-graphify-update-performance-audit.md)).
+The cause is upstream: `update` ignores its own AST manifest and `detect_incremental`, JS/TS files skip the per-file cache and are parsed twice (the cross-file symbol pass alone is about 4.1 s), and graphify's own incremental path still takes 8.6 s for one edit and yields a different graph on TS.
+The stamp is a workaround and goes away once graphify fixes `update` upstream.
 So the wrapper skips it when the graphed tree is unchanged since the last successful update, which brings a no-op query from about 11.1 s to about 0.75-0.85 s at weftwise scale.
 The stamp is the diff from a base commit it records, not from `HEAD`, so it identifies the graphed tree's content rather than its history: committing code that is already graphed, or a `cdocs/`-only change, leaves it unchanged, which matters because agents commit early and often.
 Leaving `.graphifyignore` paths out of the stamp means a `cdocs/` devlog edit, which happens between almost every pair of queries, does not trigger a rebuild either; any code edit, new file, or deletion does.
