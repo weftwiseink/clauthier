@@ -86,6 +86,7 @@ Map each requested action to one CLI command, always `"$cli" -s=<name> ...` from
 | poll-until | see Convergence | `converged: ...` |
 
 Always pass `--filename` with an absolute path under `$out`; never let a capture land at a default relative path.
+Never pipe a command whose exit status you report (`cmd | tail; echo $?` reports `tail`'s status): capture its output to a variable or file first, or read `${PIPESTATUS[0]}`.
 Name captures `<session>-<short-step>` (e.g. `main-review-preview-settings.png`).
 For other CLI commands the dispatcher names explicitly, run them as given and record their exit status and any value they print.
 If an action fails for a reason other than session death, record the failure as a fact, set `Status: WARNINGS` (or `FAILED` if nothing could be captured), and continue with the remaining actions where that still makes sense.
@@ -112,19 +113,25 @@ The condition holds when every session returns the same value (and it equals the
 
 Run the whole poll in one Bash call, printing only the final states.
 The Bash tool's `timeout` maximum is 600000 ms, so the script caps the convergence timeout at 570 s itself, and you set that call's Bash tool `timeout` to `(T + 30) * 1000` ms, which never exceeds 600000.
-When the script prints a `timeout capped` line, copy it into `Facts` verbatim.
+Fill `req_in` and `i_in` with the timeout and interval exactly as requested (quoted, so `10s` cannot break the arithmetic); the script keeps the leading digits.
+When the script prints a `timeout parsed`, `timeout capped`, or `poll expected: none` line, copy it into `Facts` verbatim.
 
 ```bash
 cd "$d"; cli=<abs>; expr='<js expression returning a string or number>'; expected='<optional>'
-req=<requested timeout s, default 30>; T=$(( req > 570 ? 570 : req )); I=<interval s>
+req_in='<requested timeout as given, e.g. 30 or 30s; default 30>'; i_in='<requested interval as given; default 1>'
+req=${req_in%%[!0-9]*}; req=$((10#${req:-30})); I=${i_in%%[!0-9]*}; I=$((10#${I:-1})); [ "$I" -ge 1 ] || I=1
+[ "$req_in" = "$req" ] || echo "timeout parsed: asked '$req_in', used ${req}s"
+T=$(( req > 570 ? 570 : req ))
 [ "$req" -gt 570 ] && echo "timeout capped: asked ${req}s, used 570s (Bash tool limit 600s)"
-start_s=$SECONDS; sessions=(<name1> <name2>)
+[ -n "$expected" ] || echo "poll expected: none (agreement may be vacuous)"
+errf=$(mktemp "$d/poll-err.XXXXXX"); start_s=$SECONDS; sessions=(<name1> <name2>)
 while :; do
   declare -A v=(); same=1; firstiter=1; first=
   for s in "${sessions[@]}"; do
-    raw=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>&1); rc=$?
+    raw=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>"$errf"); rc=$?
     v[$s]=$(printf '%s\n' "$raw" | grep -v -e '^###' -e '^[[:space:]]*$' | head -n 1)
-    [ "$rc" -ne 0 ] || [ -z "${v[$s]}" ] && same=0
+    if [ "$rc" -ne 0 ]; then same=0; [ -n "${v[$s]}" ] || v[$s]="exit $rc: $(head -n 1 "$errf")"
+    elif [ -z "${v[$s]}" ]; then same=0; fi
     if [ "$firstiter" = 1 ]; then first=${v[$s]}; firstiter=0
     elif [ "${v[$s]}" != "$first" ]; then same=0; fi
   done
@@ -134,12 +141,16 @@ while :; do
   if [ $el -ge $T ]; then echo "timed out at ${el}s"; break; fi
   sleep "$I"
 done
-for s in "${sessions[@]}"; do echo "last-seen $s: ${v[$s]}"; done
+for s in "${sessions[@]}"; do echo "last-seen $s: ${v[$s]}"; done; rm -f "$errf"
 ```
 
 An eval error is never agreement: a nonzero exit or no output from any session makes that iteration diverge, even when every session prints the same error.
+Values come from stdout only (every CLI result and error is on stdout); stderr goes to a scratch file and is used only to explain a nonzero exit with no stdout.
+Without an expected value, agreement can be vacuous: an expression that returns `undefined` or `null` when its target is absent agrees across sessions, and a one-session poll agrees with itself on any successful eval.
+Dispatchers should supply an expected value or an expression that throws on absence; when none was given, the report says so.
 `--raw eval` prints each value as one JSON-encoded line (a string arrives quoted, `"hello"`), which is why `expected` is compared with quotes added; keep expected values to plain text without quotes or backslashes.
 A timeout is divergence, never success: `converged: no, timed out at <n>s; last-seen <session>: <state>` with one `last-seen` per session.
+A poll that times out (even with erroring evals) does not by itself change `Status`: `Status` reflects whether the sessions and captures worked, and the `converged` fact carries the outcome.
 If a poll value is a dead-session error, re-open per Sessions (outside the loop) and re-run the poll once with the time remaining.
 Sequence cross-client actions ("sharer types, then sharee reads") yourself, in the order given, before starting the poll.
 
@@ -162,6 +173,7 @@ Truncated: none | <what was omitted>; see: <path>
 - Repeat the key on every line, so each line parses alone: one `Sessions:` line per session, one `Artifacts:` line per artifact, and no bullets or indented continuation lines under them (only `Facts:` has `- ` items).
   With no artifacts, write `Artifacts: none`; when no session was opened or reused (a `FAILED` before any `open`), write `Sessions: none`.
   The state is always exactly one of `opened`, `reused`, `reopened`.
+- The `role:` field is the role entry exactly as requested (`review-viewer` stays `review-viewer`, even though the name is `<branch>-review-viewer`).
 - `Sessions` lines: `opened` = not live at dispatch start, or closed first because fresh sessions were asked for; `reused` = live at dispatch start; `reopened` = died during this dispatch and was re-opened empty.
   A session that was re-opened is `reopened` even if it started as `opened` or `reused`.
 - `Facts` always include `cli: <abs command> (<version>, global | project-local)`, literally that shape with no narration, `config: <abs path> | none`, and `scratch: <$out>`.
