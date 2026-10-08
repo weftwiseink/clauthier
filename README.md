@@ -4,6 +4,7 @@ Clothe thine claude.
 
 Plugins:
 * [cdocs](plugins/cdocs/): Structured development documentation: devlogs, proposals, reviews, and reports.
+* [browser-delegate](plugins/browser-delegate/): A sonnet leaf agent that drives named `@playwright/cli` browser sessions and reports artifacts and mechanical facts.
 
 ## Normal Installation
 
