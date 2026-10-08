@@ -19,14 +19,14 @@ tags: [architecture, claude_skills, rules_delivery]
 > BLUF: Rename `cdocs:oversee` to `cdocs:oversee-many` and delete `rules/overseers.md`.
 > Its content moves into two skills: `cdocs:oversee-workstream` (overseer intro and "Stay thin") and `cdocs:chat-record` (the "Chat record" section).
 > Loop skills invoke `oversee-workstream` with the Skill tool.
-> One rule bullet tells only the top-level session (not Agent-started, not a fork) to invoke `chat-record`, plus `oversee-workstream` when leading a loop.
+> One rule bullet tells only the top-level session (not Agent-started, not a fork) to invoke `chat-record`.
 > A new check fails CI on any `/cdocs:<name>` that does not resolve.
 > Design source: [the load-by-reference evaluation](../reports/2026-10-08-skill-load-by-reference-evaluation.md).
 
 ## Summary
 
 Subagents stop receiving instructions meant only for the top-level session or a loop lead, which removes the confusion that let a dispatched loop write into its parent's chat record (see Important Design Decisions).
-All of `overseers.md` (about 285 words) leaves the always-loaded rules, and about 45 words come back in one bullet.
+All of `overseers.md` (about 285 words) leaves the always-loaded rules, and about 30 words come back in one bullet.
 
 > NOTE(opus/oversee-workstream-skill): This work lands after the `graphify-overhaul` branch, or rebases over it.
 > That branch edits `iterate/SKILL.md`, `.gitignore` (next to line 16), `rules/tool-use-safeguards.md` ("Tools and Skills", where §3's bullet goes), `CLAUDE.md`, both READMEs, `devlog/SKILL.md`, `devlog/template.md` and `init/SKILL.md`.
@@ -68,16 +68,12 @@ description: Discipline for a session leading a cdocs loop as its overseer
 A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee-many`, `ablate`) is the *overseer*: a router and judgment layer, not a workhorse.
 
 Overseers are not nested, and maintain the "top-level" devlog for a workstream.
-If the Agent tool dispatched you, your dispatcher owns the chat record.
 If asked to oversee multiple workstreams, invoke `/cdocs:oversee-many`.
 
 ## Stay thin
 
 [Today's "Stay thin" section of overseers.md, verbatim, including the Isolation paragraph.]
 ```
-
-> NOTE(opus/oversee-workstream-skill): The "dispatcher owns the chat record" sentence is the overseer's default wording, not the maintainer's; the maintainer may reword or delete it.
-> It deliberately says nothing about the devlog, since `iterate` and `propose-revise` have every overseer own its top-level devlog.
 
 ### 2. `cdocs:chat-record` skill
 
@@ -105,7 +101,9 @@ Forks need two guards because a fork inherits the parent's context, including an
 
 - Delete `plugins/cdocs/rules/overseers.md`.
 - Add one bullet to "CDocs Tool Use Guidance › Tools and Skills":
-  "Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record` with the Skill tool, plus `/cdocs:oversee-workstream` when leading a loop, and again after a compaction when their text is not in context."
+  "Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record` with the Skill tool, and again after a compaction when its text is not in context."
+
+> NOTE(opus/oversee-workstream-skill): Following r3, the overseer dropped a "plus `/cdocs:oversee-workstream` when leading a loop" clause from this bullet, since loop skills load it themselves; the maintainer may restore it.
 
 No other rule text changes, and no rule file is added.
 
@@ -148,7 +146,8 @@ The "skip if" clause keeps full-send from loading the skill three times: once it
 | `plugins/cdocs/AGENTS.md:33` | `/cdocs:oversee-many` (rename only) |
 | `CLAUDE.md:48` | drop the Overseers rule import line |
 | `CLAUDE.md:51` | skills list: `oversee` becomes `oversee-many` (Phase 2); add `chat-record` and `oversee-workstream` (Phase 3) |
-| `CLAUDE.md:61`, `plugins/cdocs/README.md:123`, `scripts/check-rule-refs.ts:5` | example reference becomes `"CDocs Workflow Patterns › Completeness"` |
+| `CLAUDE.md:61`, `scripts/check-rule-refs.ts:5` | example reference becomes `"CDocs Workflow Patterns › Completeness"` |
+| `plugins/cdocs/README.md:123` | whole-rule example becomes `"CDocs Workflow Patterns"`; section example becomes `"CDocs Workflow Patterns › Completeness"` |
 | `plugins/cdocs/README.md:47` | rename the row (Phase 2); add `oversee-workstream` and `chat-record` rows (Phase 3) |
 | `plugins/cdocs/README.md:60` | drop the `overseers.md` bullet |
 | `plugins/cdocs/README.md:153` | "per `/cdocs:chat-record`" |
@@ -161,7 +160,7 @@ The references that stay are listed under Verification step 1; documents under `
 
 ### 7. Skill-reference check
 
-This check is an addition to the request, kept as the overseer's default: it is cheap and catches stale `/cdocs:oversee` references after the rename, and after §6 `frontmatter-spec.md` refers to a skill.
+This check is the overseer's default: it is cheap and catches stale `/cdocs:oversee` references after the rename, and after §6 `frontmatter-spec.md` refers to a skill.
 
 Add `skillRefProblems()` to `scripts/check-rule-refs.ts`.
 - **Matching.** Every `/cdocs:<name>` whose name matches `[A-Za-z0-9][A-Za-z0-9_-]*` must resolve to `plugins/cdocs/skills/<name>/SKILL.md` or `plugins/cdocs/agents/<name>.md`.
@@ -196,10 +195,6 @@ On today's tree the check passes.
   It addresses the skill by name.
   It is also the only form that compaction re-attaches as a skill.
   Content loaded by `Read` falls into the capped "recent files" restore.
-- **One rule bullet carries both pointers.**
-  The resume-plus-compaction gap only arises when a new process resumes a session, and only a top-level session is resumed.
-  In-process compaction re-attaches invoked skills, including inside a dispatched overseer.
-  So "top-level only" is the right scope for the `oversee-workstream` pointer as well.
 - **The ablate floor stays.**
   Its bullets are specific to ablation (an inline arm contaminates the measurement), and they do not restate "Stay thin".
 - **The stale OpenCode skill gets a README note.**
@@ -209,12 +204,13 @@ On today's tree the check passes.
 
 - **Opus skips a Skill line inside a long loop skill.**
   This is an inferred risk: the probes used haiku and sonnet.
-  The rule bullet is a second path to the skill, and Phase 4 checks a real transcript.
+  Phase 4 checks a real transcript.
 - **A fork inherits the chat-record text.**
   The §2 guards cover it, and so does the extended `top_level_only` scenario.
 - **The top-level session misses the rule bullet.**
   The first `Stop` block names `/cdocs:chat-record`, and the note still gets written.
-- **A resume followed by a compaction.** Skills are not re-attached; the rule bullet says to re-invoke them.
+- **A resume followed by a compaction.** Skills are not re-attached.
+  The rule bullet re-invokes `chat-record`; a resumed loop lead loses `oversee-workstream` until it re-reads its loop skill, which is accepted.
 - **A consumer has not re-run `/cdocs:init`.**
   The stale `.claude/rules/cdocs.md` still carries "CDocs Overseer Rules".
   Guidance is duplicated, not missing, and the SessionStart nudge fires.
@@ -223,7 +219,6 @@ On today's tree the check passes.
   Arc files are unchanged, so `/cdocs:oversee-many resume` picks up an arc that is already running.
 - **The deferred [`2026-10-06-nest-overseers-rfp.md`](./2026-10-06-nest-overseers-rfp.md).**
   A dispatched sub-overseer loads `oversee-workstream` but not `chat-record`.
-  That matches the "dispatcher owns the chat record" line.
 - **Skill compaction budget.**
   The budget is 25,000 tokens across all skills.
   `iterate` is about 2.1k, and the two new skills are about 0.2k each, so there is ample headroom.
@@ -261,8 +256,8 @@ On today's tree the check passes.
    It returns only these exceptions:
    - `.claude/oversee/` arc-state paths in `.gitignore:17`, `skills/oversee-many/SKILL.md` and `template.md`;
    - the `.opencode/skills/oversee/` path in the README "OpenCode Installation" NOTE (§6);
-   - the "CDocs Overseer Rules" inline fixtures in `check-rule-refs.test.ts`, which need not name a real rule;
-   - the `overseers.md` placeholder in the comment at `check-rule-refs.ts:145`.
+   - the inline fixtures in `check-rule-refs.test.ts`;
+   - the `overseers.md` placeholder in the `check-rule-refs.ts` comment "Drop matches contained in a longer match".
 2. **CI suites.** `npm run test:rules`, `chat-record.test.sh --unit` and `npm run test:opencode` all pass.
 3. **Materialization.** Run `/cdocs:init` in a scratch project that has `opencode.json`, on a sandboxed `CLAUDE_CONFIG_DIR` with `--plugin-dir plugins/cdocs`.
    - `node --import tsx scripts/check-rule-refs.ts --materialized <proj>` passes.
