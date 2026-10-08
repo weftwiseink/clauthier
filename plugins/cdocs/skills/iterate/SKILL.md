@@ -10,9 +10,7 @@ Run an iterative implement-review loop scoped to a proposal, a phase, or any uni
 The invoking session agent enters *overseer mode* and restricts itself to orchestration:
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
-The overseer discipline is defined in [`overseers.md`](../../rules/overseers.md); this skill references it rather than restating it.
 The overseer should feel empowered to ask the user multi-choice questions for feedback and guidance unless otherwise strongly stated.
-The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
 Code and cdocs should be committed early and often.
 
@@ -37,9 +35,9 @@ Code and cdocs should be committed early and often.
 - `--graphify-scope`: opt into priming a graphify-resolved dependent-set brief into the reviewer's dispatch (see "Graphify scoping" below).
   DEFAULT OFF: with the flag absent the loop behaves exactly as today and makes zero graphify calls.
 
-## Graphify scoping (flag-gated, reviewer only, default OFF)
+## Graphify scoping
 
-When `--graphify-scope` is passed, the overseer primes a compact graph-resolved dependent-set brief into the reviewer's dispatch prompt up front, so the reviewer starts from the change's true MULTI-FILE dependent set instead of a speculative read sweep.
+When `--graphify-scope` is passed, the overseer preps a compact graph-resolved dependent-set brief into the reviewer's dispatch prompt up front, so the reviewer starts from the change's true MULTI-FILE dependent set instead of a speculative read sweep.
 This is deliberately minimal: prime a brief + point the reviewer at the graphify CLI. It is currently wired for the REVIEWER role only (the RFP's original consumer); implementer and judge are out of scope for this increment.
 
 At **Turn N.b (Review)**, before dispatching the reviewer, and ONLY when the flag is on, the overseer runs the helper (on `PATH` from the plugin's `bin/`) against the round's changed files:
@@ -104,13 +102,13 @@ The overseer may invoke the judge earlier on suspicion of trouble (high uncertai
 
 ### Turn N.d (Judge)
 
-Dispatch a fresh judge with the iteration log and the recent review paths.
+Dispatch a fresh judge with the iteration log and the recent review paths to evaluate if the workstream is stuck or going in circles.
 The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale in its final message.
 Append a Judge Log row, and when the reasoning matters (typically `rotate-implementer` or `escalate`) add a short note beneath the row, then run the Checkpoint (below).
 
-### Checkpoint (handoff)
+### Checkpoints and handoffs
 
-Keep your Scratchpoint current and write handoffs per the devlog skill's "The Scratchpoint Section" and "Handoffs".
+Keep your Scratchpoint current and write handoffs per the `/devlog` skill's guidance.
 When a finished concern's writer did not mark its sub-devlog `done` (the next concern went to another implementer), mark it.
 
 ## Termination
@@ -120,8 +118,8 @@ No retry-count cap on Accept-bound progress: a patient overseer is bounded by re
 
 ## Steering
 
-A human message that arrives while a subagent is in flight is queued, never injected: fold it into the next dispatch.
-Note each directive in your devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it, so a resumed overseer can pick up any not yet applied.
+A human message that arrives while a subagent is in flight is queued until the next dispatch.
+Note each directive in your devlog's `## Steering Log` (free text: when, for whom, what, where applied) as soon as you see it.
 
 ## Iteration Log and Judge Log
 
@@ -135,19 +133,6 @@ The Iteration Log's `review_proof` takes one value per row:
 - `skipped`: fail-loud; the overseer justifies it in `notes` before Accept.
 
 The log is the durable resumption point: write a final row before yielding so an interrupted loop never leaves it half-populated.
-
-## Conventions
-
-### Freshness disciplines
-
-Reviewers are fresh every iteration.
-The judge is fresh every invocation.
-Implementers are fresh only when the judge says `rotate-implementer`: an implementer mid-task carries valuable context and is not replaced reflexively.
-
-### The judge is a meta-reviewer
-
-The reviewer judges the work; the judge judges the loop.
-A short rationale is mandatory: the verdict alone is not auditable.
 
 ### Sandboxed-runtime trust posture
 
