@@ -5,7 +5,7 @@
     "build": "tsx scripts/build-opencode.ts",
     "build:cdocs": "tsx scripts/build-opencode.ts cdocs",
     "test:opencode": "npm run build:cdocs && tsx --test scripts/build-opencode.test.ts",
-    "test:rules": "tsx --test scripts/check-rule-refs.test.ts"
+    "test:rules": "node --import tsx --test scripts/check-rule-refs.test.ts"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
