@@ -78,6 +78,10 @@ Remaining: `workflow-patterns.md:18` and `overseers.md` "Stay thin" read as whol
 
 **Rules references** (own top-level devlog `2026-10-07-rules-references.md`): top-level propose-revise (4 rounds) then iterate (impl accepted r1, `review_proof: confirmed`); landed at `e0d9ec9`. Heading references ("CDocs Overseer Rules › Chat record"), `npm run test:rules` blocking CI check, agent Startup rule reads removed, `/cdocs:init` drops the `CLAUDE.md` `@`-import after a swapped-word canary showed compaction re-injects unscoped `.claude/rules/` from disk.
 
+**Cleanup sweep** (fork, maintainer request "fix typos and any obvious cleanup"): `d1c1dcf` skill/agent typos, unclosed `<model_description` placeholders, redundant propose-revise lines; `19a5333` dead rule-file refs in two RFPs re-pointed to headings; `926e8a0` browser r2/r3 review timestamps set to commit times, rules-references proposal `last_reviewed.round` 5, `chat_record:` added to the browser-delegation and opencode-build-fixes devlogs, sentence-per-line splits.
+Left alone on purpose: em-dashes in the init-copied proposals README template, multi-sentence lines in reviews/devlogs (records), older-session docs, the maintainer's `overseers.md` wording.
+`test:rules` 11/11, `chat-record --unit` 95/95.
+
 ## Changes Made
 
 | File | Description |
