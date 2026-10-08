@@ -106,7 +106,7 @@ If the prompt names an instance directory, read its `notes.md` first and skip to
 Each dispatch, tear down included, is one check, in `<instance>/NN-<slug>/` (`NN` is the next free number, from `01`).
 
 1. Start what the check needs, or reuse it once you confirm it is alive; run its steps, capture media into the check directory, and look at every capture you describe (`Read` shows images).
-2. Update `<instance>/notes.md` (how the target is driven, what is running with its real PID or session name, not a wrapper's, and gotchas), write `report.md` in the check directory, then reply.
+2. Rewrite `<instance>/notes.md` (how the target is driven, what is running with its real PID or session name, not a wrapper's, and gotchas), write `report.md` in the check directory, then reply.
 
 ## Rules
 
@@ -157,8 +157,6 @@ ${TMPDIR:-/tmp}/claude-<uid>/interfacer/
 
 The instance directory and the tooling the interfacer started outlive each dispatch; the agent itself does not.
 
-> NOTE(opus-5-5/cdocs/interfacer-agent): Why fresh dispatches rather than one warm agent resumed with `SendMessage`: [the context preservation report](../reports/2026-10-08-subagent-context-preservation-options.md).
-
 ```mermaid
 sequenceDiagram
   participant D as Dispatcher (implementer, reviewer, any agent)
@@ -184,7 +182,6 @@ sequenceDiagram
 - **Live tooling.** The interfacer starts servers and apps so they outlive its Bash calls and its dispatch: detached (the tool's own daemon, such as a browser CLI's session, or `setsid`/`nohup`), not Bash `run_in_background`, which nested callers lack.
   `notes.md` and the report's `Left running` line are the inventory of what to tear down.
 - **Waiting.** Where the Agent tool offers `run_in_background` (headless callers), the dispatcher passes `false` and gets the report as the tool result; where it does not (interactive subagent callers), the dispatch is async, and the dispatcher ends its turn and is woken by the report.
-  No sleeping or polling.
 - **Ending.** A dispatcher dispatches "tear down" naming the instance before it returns; an implementer that names the same instance next round restarts what it needs from `notes.md`.
   This keeps single-instance targets (fixed ports, one app per simulator, desktop apps) free for the reviewer's fresh run and avoids stale servers across the implementer's edits.
 
@@ -301,6 +298,7 @@ The first such round after landing is the end-to-end check of the reviewer claus
 Implementation serializes after the graphify overhaul, which also edits `reviewer.md` and `iterate/SKILL.md`; rebase onto it and keep each edit to the clause named here.
 
 > NOTE(opus-5-5/cdocs/interfacer-agent): The overseer reversed this ordering: the interfacer landed before the graphify overhaul, which rebases onto it.
+
 Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook allowlist (`CDOCS_AGENTS` in `plugins/cdocs/hooks/validate-cdocs-edit-path.sh`, which would block the interfacer's `report.md` writes under tmp), or historical cdocs documents beyond the old proposal's frontmatter and NOTE.
 
 ### Phase 1: The agent and its listings

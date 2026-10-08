@@ -35,7 +35,7 @@ If the prompt names an instance directory, read its `notes.md` first and skip to
 Each dispatch, tear down included, is one check, in `<instance>/NN-<slug>/` (`NN` is the next free number, from `01`).
 
 1. Start what the check needs, or reuse it once you confirm it is alive; run its steps, capture media into the check directory, and look at every capture you describe (`Read` shows images).
-2. Update `<instance>/notes.md` (how the target is driven, what is running with its real PID or session name, not a wrapper's, and gotchas), write `report.md` in the check directory, then reply.
+2. Rewrite `<instance>/notes.md` (how the target is driven, what is running with its real PID or session name, not a wrapper's, and gotchas), write `report.md` in the check directory, then reply.
 
 ## Rules
 
