@@ -20,7 +20,7 @@ tags: [graphify, performance, evaluation, investigation]
 > On 14 questions sampled from recent devlogs, graphify scores 7 hit, 5 partial, 1 miss, and 1 misleading against a grep ground truth, using about half of grep's tokens.
 > It is strong on entity lookup.
 > It is weak on cross-package flow, because it resolves workspace imports to the gitignored `dist/` output, so the graph has no edges from `weft` into `loro-repo/src` or `loro-multiplex/src`.
-> A `"source"` export condition on those packages fixes this: it adds 551 cross-package edges at no measurable runtime cost and is inert for every tool weftwise builds with.
+> A `"source"` export condition on those packages fixes this: it adds 623 edges into workspace packages' `src/` (551 of them from `weft`) at no measurable runtime cost and is inert for every tool weftwise builds with.
 > On that graph the score is 8 hit and 6 partial, with no miss and nothing misleading.
 > Per role:
 > - Startup and reviewers: use now.
@@ -276,7 +276,7 @@ Upstream issues worth filing, alongside the fork RFP:
 > **Workspace imports resolve to unextracted `dist/` output, dropping cross-package edges**
 > In a pnpm workspace whose packages export only built output (`"exports": {".": {"import": "./dist/index.js", "types": "./dist/index.d.ts"}}`, with `dist/` gitignored), `_package_entry_candidates` follows the `exports` targets.
 > When `dist/` exists, the import resolves to a gitignored file that is never extracted, so the edge is dropped; when it does not exist, the import lands on the package's `ref_*` stub node.
-> Either way the graph has no edges from consumers into the package's `src/` (here, none of the 551 such edges a `source` condition recovers, across three consumer/package pairs with 32, 53, and 7 importing files), so `path` and `affected` cannot cross package boundaries, and graph content depends on whether the package was built.
+> Either way the graph has no edges from consumers into the package's `src/` (here, none of the 623 such edges a `source` condition recovers, across three consumer/package pairs with 32, 53, and 7 importing files), so `path` and `affected` cannot cross package boundaries, and graph content depends on whether the package was built.
 > A `"source"` condition works around it, since `_EXPORT_CONDITION_PRIORITY` ranks `source` first.
 > Suggested fix: when an `exports` target falls under an ignored or unextracted path, try the source equivalent (via the package tsconfig `rootDir`/`outDir`, or `src/` with the same stem) before giving up.
 > Graphify 0.9.61.
