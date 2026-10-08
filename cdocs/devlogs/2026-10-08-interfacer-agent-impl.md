@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-interfacer-agent.md
 tags: [interfacer, browser_delegation, subagents, runtime_validated]
 ---
@@ -24,14 +24,14 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: overseer review of round 1; the proposal NOTE for the ordering reversal and the D5 resume mechanics are the overseer's.
+- next_steps: none; review r1 accepted (`cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md`), its wording and NOTE items are applied, and the branch is ready to land.
 - important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`, this devlog's Phase 4 sections.
 - callouts:
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
   - decision: per maintainer steering, the canary that counts ran in the `clauthier` lace devcontainer (claude 2.1.285); a host run (claude 2.1.293) is secondary and covers the browser.
   - blocker: the devcontainer cannot launch headless Chromium (11 missing system libraries; `--with-deps` dry-run fails on apt), so the browser path is unverified there.
   - deviation: four canary-driven agent fixes (probed errors are not `OK`, final-message-only replies, in-turn wait for resumes, tear down by PID); see the run table.
-  - deviation: `SendMessage` resumes run in the background (`is_backgrounded: true`); a dispatcher that ends its turn never gets the reply. The proposal's D5 and sequence diagram do not say so.
+  - deviation: replies are async (resumes always; a first dispatch unless `run_in_background: false`); a dispatcher that ends its turn never gets the reply. The proposal now carries NOTEs under "Durable by default" and D5.
   - todo: the reviewer clauses (own interfacer, `_media` copy) are unexercised until the first real iterate round with a runtime floor, as the proposal says.
   - observation: a `setsid` wrapper PID was twice recorded as the server PID (both runs self-corrected); tool knowledge, left to projects.
   - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run.
@@ -143,13 +143,13 @@ Five runs; all evidence is container-local and ephemeral (`/tmp/ifx-canary-runN.
 > NOTE(opus-5-5/cdocs/interfacer-agent): Four agent fixes came out of the canary; each is one clause, and the agent is 70 lines.
 > 1. Status rule: a 404, missing element, or other error makes `Status:` `WARNINGS`/`FAILED` "even when the check was probing for it" (run 1).
 > 2. Final message only, never `SendMessage` (run 1's resumed turns sent headerless replies).
-> 3. Description: "A resumed check runs in the background and its reply arrives at your next tool call: stay in your turn (e.g. Bash `sleep 10`) until it does." (runs 2-3).
+> 3. Description: an in-turn wait for background replies (runs 2-3); after review r1 it reads "Replies can arrive in the background (a resumed check's always does), so stay in your turn (e.g. a short Bash `sleep`; the harness refuses long sleeps) until each arrives."
 > 4. Tear down "by the PID or session name you recorded (never a pattern like `pkill -f`)" (run 4).
 
 #### Resume mechanics (deviation from the proposal's model)
 
 The proposal's D5 and sequence diagram assume a `SendMessage` follow-up returns its reply to the dispatcher like a call.
-In claude 2.1.285 it does not: the stream's `task_started` events show the first dispatch at `spawn_depth: 2, is_backgrounded: false`, and every `SendMessage` resume at `spawn_depth: 2, is_backgrounded: true`, with the `SendMessage` tool result only `{"success":true,"message":"Resuming agent ..."}`.
+In claude 2.1.285 it does not: the stream's `task_started` events show the first dispatch at `spawn_depth: 2, is_backgrounded: false` (only because the stand-in passed `run_in_background: false`; an `Agent` call that omits it is async too, as the host run's depth-1 stand-in and review r1's host run show), and every `SendMessage` resume at `spawn_depth: 2, is_backgrounded: true`, with the `SendMessage` tool result only `{"success":true,"message":"Resuming agent ..."}`.
 The resumed reply is delivered as a task-notification at the dispatcher's next tool call; a nested dispatcher that ends its turn instead never receives it (run 2), and the notification surfaces at the root session.
 Run 1 only progressed because the interfacer itself `SendMessage`d the stand-in, which re-woke it.
 The description sentence (fix 3) is the whole remedy; run 4 and run 5 show a stand-in following it from the description alone.
@@ -178,7 +178,7 @@ Run 5 `task_started`/`task_notification` excerpt (`jq` over `/tmp/ifx-canary-run
 |---|---|---|
 | `Agent` with `subagent_type: cdocs:interfacer` at depth 2 | Pass | `task_started` `spawn_depth: 2`, `subagent_type: cdocs:interfacer` |
 | `SendMessage` to the same `agentId` | Pass | all three `to: a69ee1ef15ce073b0`, the `agentId` of the first dispatch (task `a69ee1ef`) |
-| Foreground or background recorded | Pass, both | first dispatch foreground (`is_backgrounded: false`); resumes background. The server started in foreground check 01 survived into checks 02-03, so the foreground-lifetime WARN holds for the gap it covers. |
+| Foreground or background recorded | Pass, both | first dispatch foreground (`is_backgrounded: false`, because the stand-in passed `run_in_background: false`); resumes background. The server started in foreground check 01 survived into checks 02-03, so the foreground-lifetime WARN holds for the gap it covers. |
 | One instance dir with `01-*/` and `02-*/`, each with `report.md` | Pass | `uAlIdy/{01-home-to-page2,02-follow-link,03-missing-and-delete}/report.md` |
 | Each check has a screenshot matching its description | **Not met (container)** | no browser in the container (see setup); media are saved HTML and headers. Browser path: see the host run below. |
 | Check 1 `Setup:` cites the fixture README | Pass | "README.md says to serve with `python3 -m http.server 8799 ...` and drive via curl" |
@@ -230,7 +230,7 @@ The prompt is the container one with "click the link on the home page and screen
 
 | Criterion | Result | Evidence |
 |---|---|---|
-| Depth 2, same `agentId` | Pass | `task_started` `spawn_depth: 2`, `cdocs:interfacer`; three `SendMessage` `to: aee6c5abf76331362`; stand-in waited with `sleep 15`-`30` between them |
+| Depth 2, same `agentId` | Pass | `task_started` `spawn_depth: 2`, `cdocs:interfacer`; three `SendMessage` `to: aee6c5abf76331362`; stand-in waited with `sleep 15` and `sleep 20` between them; the harness refused its `sleep 30` (`Blocked: standalone sleep 30. To wait for a condition, use Monitor with an until-loop ...`, twice). The depth-1 stand-in itself ran in the background (`is_backgrounded: true`; the top level's `Agent` call omitted `run_in_background`), while its interfacer dispatch passed `false` and ran in the foreground |
 | Instance dir with `01-*/`, `02-*/`, `report.md` and screenshots | Pass | `/tmp/claude-1000/interfacer/E24cvT/{01-home-to-page2/{home,page2}.png, 02-click-link-page2/page2.png, 03-missing-and-delete/{missing,page2}.png}`; the verifier viewed `home.png`, both `page2.png`, and `missing.png`, and each matches its description |
 | `Setup:` cites the README | Pass | "README.md in the project ... Driven with `npx playwright-cli -s=chk --config .../E24cvT/cli.config.json` (copy of project config plus outputDir)" |
 | Server and session reused | Pass | one new headless-shell PID (`3959784`, 09:42:42-09:44:04, versus a 19-process baseline from other sessions) and one server PID (`3959597`) across all checks; checks 02-03 use `goto`, never `open` |
