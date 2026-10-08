@@ -21,9 +21,9 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T21:00:00-07:00
-- now: Phase 1 verdicts recorded (see Phase 1 Results).
-- next: Phase 2 scaffold (marketplace entry, plugin.json, agent, README) and nested-harness dispatch.
+- as_of: 2026-10-07T21:10:00-07:00
+- now: Phases 1-2 done and verified through a nested `claude -p` harness (see Verification).
+- next: Phase 3 (iterate `confirmed` clause, two `reviewer.md` bullets), then Phase 4 convergence against a scratch sync fixture.
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
 - callouts:
   - decision: work only in `/var/home/mjr/code/weft/clauthier/browser-delegate`; never merge; proposal status is the overseer's.
@@ -81,10 +81,35 @@ All runs used `@playwright/cli@0.1.22` (bundles `playwright-core 1.64.0-alpha-17
 
 ## Implementation Notes
 
+### Phase 2
+
+- **CLI resolution (Phase 1 item 4):** global `playwright-cli`, then `<start-cwd>/node_modules/.bin/playwright-cli`, else `FAILED`; never `npx -y` (separate session namespace per npx copy).
+- **Config:** prompt path, else `<start-cwd>/.playwright/cli.config.json`, passed as `--config=<abs>` on `open`; the CLI also reads `~/.playwright/cli.config.json` itself.
+- **wait-for:** the CLI has no wait command, so `wait-for` maps to `run-code "async page => { await page.locator(<sel>).waitFor({ timeout }) ... }"` (verified: exit 0 "found", exit 1 `TimeoutError`).
+- **Death detection (Phase 1 item 3):** the two error strings `is not open, please run open first` and `Target page, context or browser has been closed`.
+- **Blank-capture guard:** each screenshot gets an `identify -format '%wx%h colors=%k'` fact, so a single-color capture (`colors=1`) is visible in the report without the delegate judging it.
+- **Report contract tightening** after the first real dispatch (d1): `Sessions:` entries are roles (d1 used `preview` as a literal name), keys repeat per line (d1 bulleted `Artifacts`), and `Sessions: none` when nothing opened (d6 invented a `not opened` state).
+- **Test harness:** nested `claude -p --model sonnet --plugin-dir <worktree>/plugins/browser-delegate --strict-mcp-config --settings '{"enabledPlugins":{"cdocs@clauthier":false}}' --allowedTools "Agent Bash Read" --output-format stream-json --verbose`, cwd = this worktree, `PATH` prefixed with the scratch CLI's `bin`.
+  The `cdocs` plugin is disabled in the nested session only because its top-level chat-record rule made the nested *dispatcher* write `cdocs/_chat/<session>.md` into the worktree on d1 (deleted; not a delegate write).
+  Driver, extractor, and report parser: `$S/dispatch/run.sh`, `$S/dispatch/extract.py`, `$S/dispatch/parse_report.py`.
+
+> NOTE(opus-5-5/browser-delegation): Deviations from the proposal's agent spec, all driven by Phase 1:
+> the description gains one prompt line (`Optional: config ...`), because a config is required wherever system Chrome is absent and the proposal left its source open ("if so pass it with `--config <abs path>`");
+> project-local resolution is `node_modules/.bin/playwright-cli`, not `npx --no-install playwright cli`, because weftwise's pinned Playwright 1.57 has no `cli` subcommand and `npx` resolution risks a different session namespace;
+> the `wait-for` action is implemented with `run-code`, since the CLI has no wait command;
+> the report adds `colors=` facts and `Sessions: none` / `Artifacts: none` forms, which stay inside the proposal's field set.
+> The README also lists the plugin in the root `README.md` (one line, outside the proposal's file table).
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| `.claude-plugin/marketplace.json` | `browser-delegate` entry. |
+| `plugins/browser-delegate/.claude-plugin/plugin.json` | Manifest, version 0.1.0. |
+| `plugins/browser-delegate/agents/browser-delegate.md` | The agent. |
+| `plugins/browser-delegate/README.md` | Install, pinning, dispatch, report contract, sessions, multi-client, iterate integration, complements. |
+| `README.md` | Plugin list entry. |
+| `cdocs/_media/2026-10-07-browser-delegate-*.png` | Cited evidence screenshots. |
 
 ## Verification
 
@@ -173,3 +198,63 @@ Claude Code side: `https://code.claude.com/docs/en/chrome.md` (Claude in Chrome 
 result: Tools in my pool whose names start with mcp__: - mcp__playwright__browser_click ... (25 tools)
         I called mcp__playwright__browser_navigate once with http://127.0.0.1:18731/. The page title it returned is "Delegate Fixture".
 ```
+
+### Phase 2
+
+`claude plugin validate plugins/browser-delegate`, `claude plugin validate plugins/browser-delegate/agents`, `claude plugin validate .`: all `✔ Validation passed`.
+
+Nested dispatches (cwd = this worktree, agent `browser-delegate:browser-delegate` listed in each session's init `agents`; the delegate's tool calls are `Bash` only):
+
+| Run | Session | Prompt gist | Report (parser) | Cost |
+|---|---|---|---|---|
+| d1 | `3817fa3f` | role `preview`, baseline forest | `preview` treated as a name, bulleted Artifacts: INVALID, fixed in `530d00b` | $0.22 |
+| d2 | `fb49caa0` | same as d1 | `browser-delegate-preview ... opened`, AE 435: VALID | $0.18 |
+| d3 | `f56835a5` | same name, 800x450 baseline | `reused`, `size mismatch 1280x720 vs 800x450`: VALID | $0.16 |
+| d4 | `f4e6a991` | fresh sessions | `opened` (live one closed first): VALID | $0.15 |
+| d5b | `9af004f9` | `wait-for #late` (appears at 15 s), closed from another shell 3 s into `run-code` | `reopened`, `#late found: yes (retry)`: VALID | $0.07 |
+| d6b | `da9d9af1` | no CLI on `PATH`, none project-local | `Sessions: none`, `Status: FAILED`, `cli: not found`, one Bash call, no fallback: VALID | $0.16 |
+
+d2 report, verbatim:
+```
+BROWSER DELEGATE REPORT
+Sessions: browser-delegate-preview (role: preview, route: http://127.0.0.1:18731/, opened)
+Status: OK
+Artifacts: /tmp/claude-1000/browser-delegate/run.j0BpMd/browser-delegate-preview-settings.png (screenshot)
+Artifacts: /tmp/claude-1000/browser-delegate/run.j0BpMd/browser-delegate-preview-diff.png (diff)
+AE score: 435 (/tmp/claude-1000/browser-delegate/run.j0BpMd/browser-delegate-preview-settings.png vs $S/baselines/settings-forest.png)
+Facts:
+- cli: $S/pwcli/node_modules/.bin/playwright-cli (0.1.22)
+- config: $S/cfg/hs1208.json
+- scratch: /tmp/claude-1000/browser-delegate/run.j0BpMd
+- loaded preview: yes (Page URL http://127.0.0.1:18731/, Page Title "Delegate Fixture")
+- selector #settings-panel found: yes
+- text "Theme: ocean" present: yes
+- screenshot dimensions: 1280x720 colors=1790
+- baseline dimensions: 1280x720
+- compare exit status: 1 (images differ; 435 pixels, fraction 0.000472005)
+- session left open: yes
+Truncated: none
+```
+(`$S` abbreviates the scratchpad path; the report has it in full.)
+Independent recheck of d1's identical pair: `compare -metric AE <shot> settings-forest.png null:` printed `435 (0.000472005)` exit 1; `identify` printed `1280x720 colors=1790`.
+
+![d2 screenshot: fixture page with the settings panel and "Theme: ocean"](../_media/2026-10-07-browser-delegate-impl-d2-preview.png)
+*Source: `/tmp/claude-1000/browser-delegate/run.j0BpMd/browser-delegate-preview-settings.png`. Shows what the Facts claim: the `#settings-panel` box and the text "Theme: ocean".*
+
+![d2 diff: only the theme word differs from the forest baseline](../_media/2026-10-07-browser-delegate-impl-d2-diff.png)
+*Source: `/tmp/claude-1000/browser-delegate/run.j0BpMd/browser-delegate-preview-diff.png`. Red marks only the "ocean"/"forest" word, consistent with AE 435.*
+
+![d5b screenshot after the mid-dispatch re-open](../_media/2026-10-07-browser-delegate-impl-d5b-reopened.png)
+*Source: `/tmp/claude-1000/browser-delegate/run.mpSDfD/browser-delegate-reopen-late.png`. The `#late` element is present after the re-open and retry.*
+
+d5b watcher log:
+```
+watcher: saw run-code at 2026-10-07T21:04:48-07:00
+3044388 node .../playwright-cli -s=browser-delegate-reopen run-code async pa...
+watcher: closing at 2026-10-07T21:04:51-07:00
+Browser 'browser-delegate-reopen' closed
+```
+(The first attempt, d5, fired early: the watcher's `pgrep -f` matched its own parent shell's command line, so the close happened before the dispatch began and the run reported `opened`; d5b uses a self-excluding pattern.)
+
+**Worktree hygiene:** `git status --short --untracked-files=all` in this worktree was empty after d2, d3, d4, d5, d5b, d6, d6b.
+The CLI's `.playwright-cli/` (14 files) is only in `/tmp/claude-1000/browser-delegate/`.
