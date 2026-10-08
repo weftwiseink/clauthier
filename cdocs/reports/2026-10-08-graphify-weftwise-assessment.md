@@ -7,10 +7,10 @@ type: report
 state: live
 status: review_ready
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-5-5"
-  at: 2026-10-08T15:16:00-07:00
-  round: 2
+  at: 2026-10-08T16:45:00-07:00
+  round: 3
 tags: [graphify, performance, evaluation, investigation]
 ---
 
