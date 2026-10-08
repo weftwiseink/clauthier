@@ -77,8 +77,26 @@ interface OCPermission {
   write?: string;
 }
 
-function mapTools(ccTools: string): { tools: OCToolConfig; permission: OCPermission } {
-  const toolNames = ccTools.split(",").map((t) => t.trim());
+/**
+ * Normalize CC `tools` to a list of names: a string splits on commas, a YAML
+ * sequence is used as-is, and null/absent is an empty list (all tools).
+ */
+function normalizeTools(ccTools: unknown): string[] {
+  let names: unknown[];
+  if (ccTools === undefined || ccTools === null) {
+    names = [];
+  } else if (typeof ccTools === "string") {
+    names = ccTools.split(",");
+  } else if (Array.isArray(ccTools)) {
+    names = ccTools;
+  } else {
+    console.warn(`  Warning: Unrecognized CC tools value ${JSON.stringify(ccTools)} — treating as all tools`);
+    names = [];
+  }
+  return names.map((t) => String(t).trim()).filter((t) => t.length > 0);
+}
+
+function mapTools(toolNames: string[]): { tools: OCToolConfig; permission: OCPermission } {
   const tools: OCToolConfig = {
     read: false,
     edit: false,
@@ -123,7 +141,7 @@ interface CCFrontmatter {
   name?: string;
   model?: string;
   description?: unknown;
-  tools?: string;
+  tools?: unknown;
   skills?: string[];
   [key: string]: unknown;
 }
@@ -166,9 +184,12 @@ function generateOCFrontmatter(cc: CCFrontmatter): string {
     oc.model = fullModel;
   }
 
-  // tools: expand to boolean object
-  if (cc.tools) {
-    const { tools, permission } = mapTools(cc.tools);
+  // tools: absent, empty, or "*" emits no tools/permission block, which OC
+  // documents as all tools enabled (CC "*" = deliberately not narrowed).
+  // An explicit list expands to a boolean object.
+  const toolNames = normalizeTools(cc.tools);
+  if (toolNames.length > 0 && !toolNames.includes("*")) {
+    const { tools, permission } = mapTools(toolNames);
     oc.tools = tools;
 
     // permission block
