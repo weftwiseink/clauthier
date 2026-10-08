@@ -35,7 +35,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: revision r1 in flight (warm proposer), then review r2.
+- next_steps: proposal review r2 in flight.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
@@ -69,5 +69,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | rev-p1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | 2026-10-07T18:30 | proposal review r1 |
 | return | rev-p1 (cdocs:reviewer) | review + proposal last_reviewed | 2026-10-07T18:34 | a2c5c76; revise |
 | dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:35 | revision r1 |
+| return | prop-1 (cdocs:proposer) | proposal | 2026-10-07T18:45 | be140f5; review_ready |
+| dispatch | rev-p2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-r2.md | 2026-10-07T18:46 | proposal review r2 |
 
 ## Steering Log
