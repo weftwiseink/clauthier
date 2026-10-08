@@ -281,8 +281,6 @@ From impl-r2 finding 7, which reads the single run as between decision-map rows 
 
 Once (1) ships, the wrapper's stamp is redundant and can go.
 
-
-
 ## Changes Made
 
 | File | Description |
