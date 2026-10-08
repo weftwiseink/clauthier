@@ -109,7 +109,18 @@ From `graphify --help` (subcommand `--help` is not supported: `query --help` run
 | `serve.py` MCP tools | unavailable | `mcp` not installed |
 | `graphify label`, `extract --backend` (LLM) | out of scope | no-LLM config (overseer call) |
 
-Card: `scratchpad/p4/card.md` (about 800 words), copied verbatim into each graph arm prompt with `{WT}` filled in.
+Card: about 870 words, copied verbatim into each graph arm prompt with `{WT}` filled in; final text in the Appendix.
+
+### Pilot (held-out Q5, not graded)
+
+Sonnet graph arm on Phase 2's Q5 (`revokeShareLink` `spareId` fallback): 13 tool calls (3 wrapper `explain`, 5 grep, 4 reads, 1 ls), 62,040 tokens, 76.6 s; transcript check clean.
+It drove the card without stumbling: the three-way ambiguous `explain revokeShareLink` was retried with `web.ts::revokeShareLink` as the card says.
+The answer is a hit on Phase 2's ground truth (`revokeShareLink`, the `LEGACY-OWNER-SPARE` test) and goes further (callee-side `listMountSharees`, `revokeServerRepoAccess`, sticky revoke in `grantServerRepoAccess`).
+
+Card fixes from the pilot's notes:
+- Added: calls through bindings destructured from `await import(...)` appear only as a file-level `imports_from` edge (verified: `explain web.ts::revokeShareLink` shows `--> server_repo.ts [imports_from] L327` but no edge to `mountOwner`, `listMountSharees`, or `revokeServerRepoAccess`, which it calls).
+  This is a graph gap in its own right: the pilot found the callee side by grepping `spareId`, not from the graph.
+- Added: same-named nodes can differ in degree (the `electron.ts` `revokeShareLink` is a degree-1 stub); `explain` each candidate.
 
 ## Changes Made
 
