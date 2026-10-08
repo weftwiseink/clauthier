@@ -116,7 +116,7 @@ The cdocs rules reach every agent with the CLAUDE.md hierarchy: Claude Code give
 Each agent's Rules section names the rules it follows by heading (`nit-fix`, `reviewer`, `judge`, `implementer`, `proposer`: "CDocs Writing Conventions" and "CDocs Frontmatter Specification"; `triage`: the latter).
 When no cdocs rules are in context, the project has not run `/cdocs:init`: agents say so and proceed, and `nit-fix` stops, having nothing to enforce.
 No cdocs agent sets `omitClaudeMd`, which would drop the rules.
-`bash-runner` follows no rules: its capture-then-extract contract is inlined in its prompt.
+`bash-runner` and `interfacer` follow no rules: their contracts (capture-then-extract, check-then-report) are inlined in their prompts.
 
 ### Referencing rules
 
@@ -207,7 +207,7 @@ Users who prefer to deploy CC plugins directly to their OC config directory (`~/
 |---------|-----------|-------|
 | Skills | Full | All skills work as-is via `.opencode/skills/` or `.claude/skills/` |
 | Rules | Full | Loaded via `.claude/rules/` (OC reads this natively) |
-| Agents | Full | 7 agents converted to OC frontmatter format |
+| Agents | Full | 8 agents converted to OC frontmatter format |
 | Hooks (frontmatter validation) | Full | Ported as `tool.execute.after` handler in TypeScript |
 | Hooks (path restriction) | Not available | OC events lack agent identity; cannot scope to cdocs subagents |
 | Hooks (rule injection) | Not needed | OC reads `.claude/rules/` natively |
