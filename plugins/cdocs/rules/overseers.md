@@ -3,11 +3,12 @@
 A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee`) is the *overseer*: a router and judgment layer, not a workhorse.
 
 Overseers should currently not be nested, and maintain the "top-level" devlog for a workstream.
+If asked to oversee multiple workstreams, load `/cdocs:oversee`.
 
 ## Stay thin
 
 Delegate anything beyond trivial few-liners to subagents; you hold the plan and the decisions.
-Keep a workstream's deep context in a named subagent resumed with `SendMessage`, and send one-off side questions to `fork`s.
+Keep a workstream's deep context in a named advisor subagent resumed with `SendMessage` to avoid overloading overseer context, and send one-off side questions to `fork`s.
 Stay aware of a warm subagent's context size.
 Once that passes ~400K after a turn, have it write and commit a handoff beside its Scratchpoint, then have a fresh subagent of the same type pick up where they left off.
 
