@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: impl-2 applying r2 nits; then maintainer acceptance, rebase onto main (fixes report link), ff-merge, remove worktree; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
+- next_steps: branch ready at `7010bec`; on maintainer acceptance set `implementation_accepted`, rebase onto main (fixes report link), ff-merge, remove worktree; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -83,6 +83,7 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r2.md` (branch) | 2026-10-08T13:27 | must re-run container floor; host browser screenshot if feasible |
 | return | rev-impl-2 | `641b744` (branch) | 2026-10-08T13:55 | accept, `review_proof: confirmed`: own container canary (curl) and host browser canary (playwright-cli, one PID/browser across checks, 3 screenshots viewed, 1 in `_media`); rules 11, opencode 9. Nits: `notes.md` "Update" to "Rewrite" (append-log can leave a dead PID listed, PIDs wrap); 2 proposal cuts; blockquote blank line; report link needs rebase onto main |
 | dispatch | impl-2 (warm, SendMessage) | branch | 2026-10-08T13:56 | accept-round nits 1-4 |
+| return | impl-2 | `641b744..7010bec` | 2026-10-08T14:00 | nits 1-4 applied (`notes.md` "Rewrite"); sub-devlog `done`; rules 11, opencode 9; canary not re-run for the one-word change |
 
 ## Steering Log
 
