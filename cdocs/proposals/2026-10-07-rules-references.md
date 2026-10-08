@@ -181,19 +181,27 @@ The concatenation order, hook, marker, hash, step 5, and step 6 are unchanged.
 A project that already has the import keeps it until its next `/cdocs:init`, and the file loads once meanwhile (the probe above).
 The rule edits in this proposal change the hash, so every initialized project is nudged to run `/cdocs:init` once, which removes the line.
 That holds only if phase 3 ships in the same plugin release as phase 2's rule edits: phase 3 changes no rule body, so released alone it triggers no nudge.
-Ship phases 2 and 3 together when the gate passes; otherwise consumers keep a harmless import line until the next rule edit.
+A release is one `plugin.json` version bump; because the nudge follows the rule hash, not the version, and consumers can install from `main` between bumps, phases 2 and 3 also land on `main` in one push.
+Ship them together when the gate passes; otherwise consumers keep a harmless import line until the next rule edit.
 
 Removing the import moves the post-compaction guarantee from "project-root CLAUDE.md and its imports" to "unscoped rules", which the docs state but no probe has shown.
-So phase 3 starts with a one-off canary probe, run through the existing `drive` helper on haiku and recorded in the devlog:
+So phase 3 starts with a canary probe on haiku, recorded in the devlog.
+It runs as a temporary `--only canary_check` extra in `chat-record.test.sh`, beside `rules_check`, and is removed once the gate is recorded:
 
-1. A fixture project from `init_rules` with no import line, whose `.claude/rules/cdocs.md` gains one line: "The cdocs canary word is `<random word>`."
-2. Three turns: a trivial task that never mentions the canary; `/compact`; "Without tools, what is the cdocs canary word? Say UNKNOWN if it is not in your context."
-3. Pass if the reply contains the word. The compaction summary cannot carry a word the conversation never used, so a pass shows the rule file was re-injected.
+1. Fixture: `P="$(hproj canary_check)"; init_rules "$P"; printf '# Project\n' > "$P/CLAUDE.md"`, which overwrites the import line `init_rules` writes, then append "The cdocs canary word is `heliotrope`." to `$P/.claude/rules/cdocs.md`.
+   The hook does not hash the project file, so the appended line triggers no nudge.
+2. One stream-json session, opened as `drive` opens it (`claude_run` on a fifo, each message sent after the previous `result`), with three turns:
+   "What is 2 + 2?"; then `sed -i 's/heliotrope/marzipan/' "$P/.claude/rules/cdocs.md"` on disk, then `/compact`; then "Without tools, what is the cdocs canary word? Say UNKNOWN if it is not in your context."
+   `drive` sends its messages back to back, so the extra inlines its send-and-wait loop to run the `sed` between turns one and two.
+3. Pass if any assistant text block after the `compact_boundary` contains `marzipan`.
+   Search every block, not only the final `result`: the Stop hook can block once for a `chat-record note`, making the follow-up the final result.
 
+The compaction summary sees the injected rules and carries the original word forward even when the conversation never used it, so a single unchanged word cannot tell re-injection from the summary.
+Only the file on disk holds the new word, so `marzipan` after `/compact` shows the rule file was re-injected; `heliotrope` alone means the summary answered.
 If it fails, init keeps writing the import and phase 3 ends there.
-An optional control run with the import line rules out a broken probe.
-`rules_check` is not the gate: it measures resumption behavior, not rule presence, and it fails on the current baseline.
-It runs only as a no-regression comparison: its results without the import match its results with it.
+
+`rules_check` is not the gate: it measures resumption behavior, not rule presence.
+It runs only as a no-regression comparison: run `--only rules_check` with the import before editing `init_rules`, then again without it, and compare which assertions pass and fail, not the transcripts.
 
 > NOTE(@claude-opus-5-5/cdocs/rules-references): The hook's directive text says "The current session's @-imported rules are stale until you do".
 > Without the import the wording is inexact, but the instruction (run `/cdocs:init`, then Read) is unchanged, so the hook is left alone.
@@ -286,15 +294,15 @@ It would remove the freshness hook, but the cache path is per machine and per ve
 | Rule invariants, resolution, filename refs, `omitClaudeMd`, extractor | Assertions 1-5 | `scripts/check-rule-refs.test.ts`, CI |
 | The check catches today's refs | Run on the pre-change tree: expect every filename and path site in Audit verification, and no others; `triage/SKILL.md:69` is prose with no path and is fixed by hand | Phase 1, manual |
 | Mutation | Rename a heading, add `overseers.md` to a skill, misspell a title: each fails with a fix hint | Phase 1, manual |
-| Post-compaction without the import (gate) | Canary probe (section 3) | One-off `drive` run, recorded in the devlog |
-| No regression | `rules_check` results without the import match those with it | `chat-record.test.sh --only rules_check` (headless) |
+| Post-compaction without the import (gate) | Canary probe: word swapped on disk before `/compact`; a post-compaction assistant text block contains the new word | Temporary `chat-record.test.sh --only canary_check`, recorded in the devlog |
+| No regression | `rules_check` per-assertion pass/fail without the import equals a with-import run made just before | `chat-record.test.sh --only rules_check` (headless) |
 | Real init | `init_real` seeds `CLAUDE.md` with the import line; its "CLAUDE.md imports the rules" assertion is inverted to assert the line is gone; it also asserts `--materialized` passes | `chat-record.test.sh --only init_real` (headless) |
 | Existing suites | `chat-record.test.sh --unit`, `npm run test:opencode` | CI |
 
 ## Verification Methodology
 
 1. `npm run test:rules` green, and red on the mutations above; record the pre-change hit list in the devlog.
-2. The phase 3 gate: the canary probe reports the word after `/compact` with no import line; `rules_check` matches its with-import results.
+2. The phase 3 gate: with no import line, a post-compaction assistant reply in the canary probe contains the swapped-in word; `rules_check` passes and fails the same assertions as its with-import run.
 3. In a scratch git project initialized by the changed `/cdocs:init`, `claude -p /context < /dev/null` lists `.claude/rules/cdocs.md` once and `CLAUDE.md` has no import line.
 4. In that project, add a sentinel convention under the "CDocs Writing Conventions" part of `.claude/rules/cdocs.md` (for example "Replace the word *utilize* with *use*"), then dispatch `cdocs:nit-fix` on a fixture devlog using *utilize* and `cdocs:reviewer` on the same devlog.
    `nit-fix` must apply the sentinel fix and name the rule in its report, and neither transcript may Read or Glob a rule path.
@@ -304,7 +312,7 @@ It would remove the freshness hook, but the cache path is per machine and per ve
 ## Implementation Phases
 
 Phases 1 and 2 are the core and land together.
-Phase 3 can be deferred without affecting them, but should ship in the same plugin release as phase 2 so the rule-hash nudge removes legacy import lines (section 3).
+Phase 3 can be deferred without affecting them, but should ship in the same plugin release (one `plugin.json` version bump, one push to `main`) as phase 2, so the rule-hash nudge removes legacy import lines (section 3).
 
 ### Phase 1: The check
 
@@ -323,8 +331,8 @@ Phase 3 can be deferred without affecting them, but should ship in the same plug
 
 ### Phase 3: Drop the import
 
-1. Gate: run the canary probe (section 3) and record it in the devlog. If it fails, stop.
-2. Change `init_rules` (`chat-record.test.sh:804`) to write no import line, and run `rules_check` as the no-regression comparison.
+1. Gate: add the temporary `canary_check` extra, run the probe (section 3), record the result in the devlog, and remove the extra. If it fails, stop.
+2. Run `--only rules_check` with the import as the baseline, change `init_rules` (`chat-record.test.sh:804`) to write no import line, run it again, and compare per-assertion pass/fail.
 3. `init/SKILL.md` step 3 (no import, remove the legacy line) and the Read-after-write directive.
 4. `init_real` (`chat-record.test.sh:~821`): seed the import line, invert "CLAUDE.md imports the rules" to assert the line is gone, and call `--materialized`.
 5. README "Rules Integration" and root `CLAUDE.md` item 1.
