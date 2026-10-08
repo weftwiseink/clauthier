@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: explainer artifact for the maintainer; `/cdocs:iterate` after the interfacer branch lands (shared `reviewer.md`, `iterate/SKILL.md`), in its own worktree; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: maintainer to confirm the ablate deferral to weftwise (`1da4f80`), then `implementation_ready`; `/cdocs:iterate` after the interfacer branch lands (shared `reviewer.md`, `iterate/SKILL.md`), in its own worktree; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -70,6 +70,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | return | prop-1 | `924b9f1` | 2026-10-08T11:50 | `review_ready`; wrapper `bin/cdocs-graphify`; tag `[base_query: set|empty]`; index-copy step renamed "Copy"; ablate task on rule-reference format (multi-file), unassisted arm withheld by instruction; exclusion check = 0 `cdocs/` source_file nodes; rfp step 6 |
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | 2026-10-08T11:52 | round 3, delta since r2 |
 | return | rev-3 | `4dffb5d` | 2026-10-08T12:00 | proposal_accepted; renames complete. Non-blocking: F3 ablate task can't discriminate on clauthier (answer greppable in 11 md files; graphify graphs only md headings) so run on weftwise; F5 stub run would miss `cdocs-graphify` (PATH has main checkout's bin, not the branch's); F6 rfp step condition should be "main graph exists"; F4/F7/F1 small. 3 maintainer questions (ablate location, ablate intent, rfp step keep/drop) |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T12:15 | maintainer ablate direction (reuse earlier ablate if it transfers) + r3 F1/F4-F7 |
+| return | prop-1 | `1da4f80` | 2026-10-08T12:25 | earlier ablate = Probe A (`2026-09-18-ablate-e2e-probeA-inject-rules.md`): setup transfers (single-shot, 2 detached worktrees at a pinned commit, sonnet arms, opus evaluator, prompt-withheld arm + `detect-usage`, `ANSWER.md`); task does not (one small file, no clauthier task discriminates). Ablate moved to weftwise: blast radius of the most-imported atom in `packages/weft/src/lib/mounts/atoms.ts` (33 importers); deferred until weftwise's devcontainer has graphify + `.graphifyignore` + main graph. F1/F4-F7 applied; status left `review_ready` |
 
 ## Steering Log
 
