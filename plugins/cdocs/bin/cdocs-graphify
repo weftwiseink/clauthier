@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# cdocs-graphify {query|explain|path|affected} ARGS...
+# Runs graphify against this worktree's own index (<toplevel>/graphify-out/): copies the main
+# graph there if absent, refreshes it with `graphify update` (AST-only), passes the arguments
+# through with --graph, and appends .observe/.subscribe sites the graph cannot see.
+# Design: cdocs/proposals/2026-10-08-graphify-overhaul.md. Portable bash (Linux and macOS).
+set -u
+note() { echo "cdocs-graphify: $*" >&2; }
+skip() { note "$*; skipping"; exit 0; }
+case "${1:-}" in
+  query | explain | path | affected) ;;
+  *) echo "usage: cdocs-graphify {query|explain|path|affected} ARGS..." >&2; exit 2 ;;
+esac
+command -v graphify >/dev/null 2>&1 || skip "graphify not installed"
+top=$(git rev-parse --show-toplevel 2>/dev/null) || skip "not in a git worktree"
+wt_out="$top/graphify-out"
+main_out="${GRAPHIFY_OUT:-}"
+[ -n "$main_out" ] || main_out=$(git worktree list --porcelain | awk '
+  /^worktree / { w = substr($0, 10) }
+  $0 == "branch refs/heads/main" { print w "/graphify-out"; exit }')
+
+# Copy the main graph once, without its absolute scan root, self-gitignored.
+if [ ! -f "$wt_out/graph.json" ]; then
+  [ -f "$main_out/graph.json" ] || skip "no graph index"
+  tmp=$(mktemp -d "$top/graphify-out.tmp.XXXXXX") && cp -R "$main_out/." "$tmp/" &&
+    rm -f "$tmp/.graphify_root" && echo '*' >"$tmp/.gitignore" &&
+    { [ -e "$wt_out" ] || mv "$tmp" "$wt_out"; }
+  rm -rf "$tmp" 2>/dev/null
+  [ -f "$wt_out/graph.json" ] || skip "could not copy $main_out"
+fi
+[ -d "$top/cdocs" ] && ! grep -qxE '/?cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
+  note "hint: .graphifyignore lacks cdocs/; run /cdocs:init"
+GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
+  note "update failed (graphify-out/update.log); querying existing index"
+
+# Pass through unchanged, then surface runtime coupling in files the output names.
+res=$(mktemp "${TMPDIR:-/tmp}/cdocs-graphify.XXXXXX") || exit 1
+trap 'rm -f "$res"' EXIT
+graphify "$@" --graph "$wt_out/graph.json" >"$res"
+rc=$?
+cat "$res"
+# TODO(claude-opus-5-5/cdocs/graphify-overhaul): take the pattern list from the consuming repo.
+hits=$(cd "$top" && grep -oE '[A-Za-z0-9_./@+-]+\.[A-Za-z0-9]+' "$res" | grep -v '^graphify-out/' |
+  sort -u | while IFS= read -r f; do
+    [ -f "$f" ] && grep -nE '\.(observe|subscribe)\(' "$f" /dev/null
+  done | head -n 30)
+[ -n "$hits" ] && printf '\nRUNTIME COUPLING (not in the graph):\n%s\n' "$hits"
+exit "$rc"
