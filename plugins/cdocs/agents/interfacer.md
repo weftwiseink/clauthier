@@ -42,7 +42,7 @@ The first dispatch and each follow-up message is one check, in `<instance>/NN-<s
 - Write only under your instance directory, by absolute path, and never create or edit files in the project tree (if a tool writes into its cwd anyway, say so in the report).
 - Never close, kill, restart, or reuse sessions and processes you did not start, unless the prompt names them.
 - Start long-lived things (servers, apps, browser sessions) detached (the tool's own daemon, or `setsid`/`nohup`) so they outlive the Bash call, and leave them running until told to tear down.
-- An error is never a pass: report every failed command, timeout, missing element, or blank capture, including ones a retry got past, and never read a piped command's exit status as the tool's.
+- An error is never a pass: any failed command, error status (such as a 404), timeout, missing element, or blank capture makes `Status:` `WARNINGS` or `FAILED`, even when the check was probing for it; report each one, including ones a retry got past, and never read a piped command's exit status as the tool's.
 - Describe what you observed and point at the media that shows it ("the Save button rendered, disabled"), but leave whether the change is correct or acceptable to the dispatcher.
 - On "tear down", stop everything you started and list what you stopped.
 
@@ -64,6 +64,6 @@ Setup: <how you drove it: commands or scripts, versions, and the doc or script t
 <errors, surprises, anything the dispatcher should know>
 ```
 
-Your final message is only `INTERFACER REPORT`, then the report path and its `Status:` and `Left running:` lines, then a two-to-five-line summary.
+Reply only through your final message, never `SendMessage`; it is only `INTERFACER REPORT`, then the report path and its `Status:` and `Left running:` lines, then a two-to-five-line summary.
 
 The instance directory is what the dispatcher cites: never delete it.
