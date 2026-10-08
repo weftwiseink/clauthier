@@ -35,7 +35,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: accept nits in flight; then iterate Turn 1.a (implementer).
+- next_steps: iterate Turn 1.a: impl-1 implementing full proposal; then fresh reviewer.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
@@ -48,6 +48,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+| cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | implementation of the proposal (all phases) | wip | resuming implementation or reviewing verification evidence |
 
 ## Iteration Log
 
@@ -74,5 +75,13 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | rev-p2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-r2.md | 2026-10-07T18:46 | proposal review r2 |
 | return | rev-p2 (cdocs:reviewer) | review r2 + proposal frontmatter | 2026-10-07T18:52 | 121875d; proposal_accepted |
 | dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:53 | accept nits |
+| return | prop-1 (cdocs:proposer) | proposal | 2026-10-07T19:00 | 1d1695c |
+| dispatch | impl-1 (cdocs:implementer) | scripts/build-opencode.ts, scripts/build-opencode.test.ts, package.json, package-lock.json, .github/workflows/opencode-build.yml, cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | 2026-10-07T19:01 | iteration 1, full proposal |
+
+## Iterate Brief
+
+Scope: full proposal `cdocs/proposals/2026-10-07-opencode-build-fixes.md` (all phases).
+Verification floor: the proposal's Verification Methodology steps 0-8, plus the brief's floor as amended by the proposal's Decision 3 NOTE (no `model:` line instead of current model ids).
+Failure picture: a generated agent with `description: |` and nothing after it, `implementer.md` with `edit: false`, or any stale `anthropic/claude-*-2025*` id.
 
 ## Steering Log
