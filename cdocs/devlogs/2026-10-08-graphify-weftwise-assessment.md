@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: rev-3 reviewing Phase 4; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: prop-1 revising Phase 4 per r3; then fresh rev-4,, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -39,6 +39,9 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): BLUF leads with per-role answer; implementers "usable now with discipline, flexible mid-edit waits for upstream".
   - decision (overseer call): full trim to ~half (maintainer prefers minimal docs).
   - decision (overseer call): Phase 4 graph arm uses the `source`-conditions scratch graph (the recommended config), not the shipped graph.
+  - decision (overseer call): no LLM-labelled graph variant (our skill does not label; credentials/cost); recorded as a verdict-changer.
+  - decision (overseer call): leaked tasks run on their pre-investigation commit with the `source` patch, not rephrased; replaced only if the patch does not apply.
+  - decision (overseer call): grep arm gets everything but graphify (Bash, scripts, `tsc`, no installs); no subagents, no git, both arms.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -61,6 +64,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 3 pre-dispatch fixes + trims |
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | `dist/` resolution gap + `source` condition fix; 39-edge misattribution; Q12 regrade |
 | impl-2 | impl-1 (warm) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | accept-round: BLUF framing, trim, small fixes |
+| r3 (Phase 4) | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | graph arm silent fallback, in-worktree leaks, weak grep arm |
 
 ## Judge Log
 
@@ -95,6 +99,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T22:45 | add Phase 4 "Value beyond grep": scenario classes, pre-investigation questions, two-arm (graph-assisted vs grep-only) sonnet runs, blind opus judge, `source` scratch graph, scenario map + skill guidance |
 | return | prop-1 | `0931be5` | 2026-10-08T22:52 | Phase 4 added (Phase 2 NOTE: measured efficiency, not discovery). Two throwaway worktrees at `2791713d` with `cdocs/` + `_archive/` deleted (no devlog leakage), `source` scratch graph (9,744/25,774); capability inventory + one-page card for graph arm; 10-12 tasks from objectives/problem statements, leak check; sonnet arms independent, ~40-call soft cap, tool-neutral answer format; fresh opus judge per task, A/B blind, scrubbed, own check, "materially better" defined; post-unblind serendipity check; deliverable a "Value Beyond Grep" report section + skill guidance as recommendation; floor re-judges 2 tasks blind. Choices: capability card not current skill text; delete dirs not sparse-checkout; `loro/` added to do-not-touch |
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | 2026-10-08T22:54 | Phase 4 design: best-case seeking vs grep bias, manufactured-win risk, capability claims, ceremony |
+| return | rev-3 | `af68641` | 2026-10-08T23:05 | revise. Blocking: graph arm can silently become a grep arm (host has wrapper, no graphify: "not installed; skipping" exit 0; wrapper only `query|explain|path|affected`); in-worktree leaks (`git show HEAD:cdocs/...`, `git log` subjects, fix comments/test names echo task wording, helps grep only); grep arm weaker than a real non-graph agent (no scripts/tsc while graph arm may script). Capability claims verified; missed: built-in Import Cycles (14), Knowledge Gaps (2,488 isolated), hub-file community labels (no LLM labelling), `tree`/`callflow-html` HTML-only, MCP needs uninstalled `mcp`. Collateral: reviewer probe rewrote main graph `cache/last_query_stamp` (raw calls write next to `--graph`, not `GRAPHIFY_OUT`); `graph.json` untouched. ~38 dispatches, one session. 3 maintainer questions |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:07 | r3 revisions + overseer calls on 3 questions; `--graph` scratch-copy rule |
 
 ## Steering Log
 
