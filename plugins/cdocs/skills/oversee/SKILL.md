@@ -10,7 +10,6 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m
 Its unit of work is a proposal: it advances to the next one only when the current one reaches a terminal accepted state.
 
 The arc overseer runs in *overseer mode* per [`overseers.md`](../../rules/overseers.md).
-The human user is the supervisor: they invoke the skill and receive escalations.
 
 > NOTE: `/oversee` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/oversee` declines or runs advisory only, and says so.
 
