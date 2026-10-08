@@ -6,6 +6,11 @@ task_list: cdocs/delete-ablate
 type: proposal
 state: live
 status: implementation_wip
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-5-5"
+  at: 2026-10-08T13:08:00-07:00
+  round: 1
 tags: [claude_skills, ablation, minimalism]
 ---
 
