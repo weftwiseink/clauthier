@@ -21,7 +21,7 @@ tags: [meta, tooling, context_persistence, hooks, devlog, orchestration, agent-m
 > A rolling devlog **`## Scratchpoint`** holds current state; devlogs split at closed-concern boundaries.
 > cdocs' existing agent-side compaction cadence and context self-estimates are removed; handoffs stay at task-unit boundaries.
 
-> NOTE(opus-5-5/chat-record-flexible): Notes are free-form and records are named per session name; see [2026-10-08-chat-record-flexible.md](2026-10-08-chat-record-flexible.md).
+> NOTE(opus-5-5/chat-record-flexible): Notes are free-form (no note types); see [2026-10-08-chat-record-flexible.md](2026-10-08-chat-record-flexible.md).
 
 ## Summary
 
