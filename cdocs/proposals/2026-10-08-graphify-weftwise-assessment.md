@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: wip
+status: review_ready
 tags: [graphify, performance, evaluation]
 ---
 
