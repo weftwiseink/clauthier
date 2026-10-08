@@ -120,6 +120,10 @@ Prototype outputs: `my canary "v2"` to `my-canary-v2`, `Second: Name!` to `secon
 `CLAUDE_CODE_SESSION_ID` is already how agent modes learn the session; the Bash tool inherits `CLAUDE_CONFIG_DIR` from the Claude Code process, so the glob finds the same file the hooks are handed.
 No transcript found means unnamed, for hooks and agent modes alike.
 
+> NOTE(opus-5-5/chat-record-flexible): A new session's first `UserPromptSubmit` fires before the transcript file exists (probed on claude 2.1.293), so a `--name` session's first `@user` went to the unnamed record.
+> When the transcript file does not exist, `UserPromptSubmit` slugs the payload's `session_title` (present on that event only) instead; once it exists, the transcript alone decides.
+> See `cdocs/devlogs/2026-10-08-chat-record-flexible-impl.md`.
+
 **Lookup.**
 `find_record <sid> <name>` and `record_for <sid> <name>` take the name and match only that name segment:
 
