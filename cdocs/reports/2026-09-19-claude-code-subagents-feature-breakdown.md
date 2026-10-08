@@ -239,6 +239,9 @@ This is the contract `rules/orchestration-discipline.md` builds on: the overseer
 - Adding or removing plugin agents is cache-safe (appended, not prefix-changing).
 - Local example: the cdocs plugin ships `judge`, `reviewer`, `nit-fix`, `triage` and relies on relative `rules/*.md` reads plus `/cdocs:init` materialization because plugins cannot ship rules natively (CLAUDE.md, "Cross-Target Rules Architecture").
 
+> NOTE(@claude-opus-5-5/cdocs/rules-references): cdocs agents read rules from context, not relative `rules/*.md`: non-fork subagents receive the project's `.claude/rules/`, and the Read tool resolves paths against the session, not the agent file.
+> See [rules references](../proposals/2026-10-07-rules-references.md).
+
 ### 14. Agent teams (experimental)
 
 Contrasted with subagents, from the agent-teams page (v2.1.178 semantics):
