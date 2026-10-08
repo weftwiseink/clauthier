@@ -5,7 +5,7 @@ first_authored:
 task_list: build/opencode-model-mapping
 type: proposal
 state: live
-status: request_for_proposal
+status: evolved
 tags: [build, opencode, models, multi-target]
 ---
 
@@ -14,6 +14,8 @@ tags: [build, opencode, models, multi-target]
 > BLUF(opus-5-5/build/opencode-model-mapping): The OpenCode build pins every cdocs agent to a stale model id (e.g. `sonnet` -> `claude-sonnet-4-20250514`, `haiku` -> `claude-3-5-haiku-20241022`); decide how CC tier aliases should resolve for OC so the mapping stays current without hand edits.
 >
 > - **Motivated By:** [`2026-10-05-oversee-haiku-bash-wrapper.md`](../devlogs/2026-10-05-oversee-haiku-bash-wrapper.md) (noticed while moving `cdocs:bash-runner` to `model: sonnet`)
+
+> NOTE(opus-5-5/build/opencode-build-fixes): Evolved into [`2026-10-07-opencode-build-fixes.md`](2026-10-07-opencode-build-fixes.md), which resolves this RFP's scope and open questions.
 
 ## Objective
 

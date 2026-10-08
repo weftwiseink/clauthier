@@ -5,7 +5,7 @@ first_authored:
 task_list: build/opencode-wildcard-tools
 type: proposal
 state: live
-status: request_for_proposal
+status: evolved
 tags: [build, opencode, multi-target]
 ---
 
@@ -14,6 +14,8 @@ tags: [build, opencode, multi-target]
 > BLUF(opus-5-5/build/opencode-wildcard-tools): `scripts/build-opencode.ts` `mapTools` treats CC `tools: "*"` as an unknown tool name, so the generated OC `implementer`, `reviewer`, and `proposer` ship with `read`, `edit`, `write`, and `bash` all `false`; decide how a wildcard (and an omitted `tools:`) should map to OC.
 >
 > - **Motivated By:** [`2026-10-06-nested-subagent-workflows.md`](2026-10-06-nested-subagent-workflows.md) (out-of-scope NOTE), [`2026-10-06-nested-subagent-workflows-implementation.md`](../devlogs/2026-10-06-nested-subagent-workflows-implementation.md)
+
+> NOTE(opus-5-5/build/opencode-build-fixes): Evolved into [`2026-10-07-opencode-build-fixes.md`](2026-10-07-opencode-build-fixes.md), which resolves this RFP's scope and open questions.
 
 ## Objective
 

@@ -5,7 +5,7 @@ first_authored:
 task_list: build/opencode-yaml-frontmatter
 type: proposal
 state: live
-status: request_for_proposal
+status: evolved
 tags: [build, opencode, yaml, frontmatter, multi-target]
 ---
 
@@ -13,6 +13,8 @@ tags: [build, opencode, yaml, frontmatter, multi-target]
 
 > BLUF(claude-opus-5-5/build-opencode-yaml-frontmatter): `scripts/build-opencode.ts` parses CC frontmatter with a hand-rolled line scanner that cannot handle YAML block scalars; `description: |` on `bash-runner.md` comes out empty in the generated OC agent. Replace the scanner with a real YAML parser.
 > Motivated By: `cdocs/reviews/2026-10-05-review-of-bash-runner-maintainer-rewrite.md` (299394a), `cdocs/devlogs/2026-10-05-oversee-haiku-bash-wrapper.md`
+
+> NOTE(opus-5-5/build/opencode-build-fixes): Evolved into [`2026-10-07-opencode-build-fixes.md`](2026-10-07-opencode-build-fixes.md), which resolves this RFP's scope and open questions.
 
 ## Objective
 
