@@ -110,12 +110,15 @@ No baseline: `AE score: n/a`.
 A `poll-until` names a JavaScript expression evaluated in each listed session, an optional expected value, a timeout (default 30 s), and an interval (default 1 s).
 The condition holds when every session returns the same value (and it equals the expected value, if one was given).
 
-Run the whole poll in one Bash call, printing only the final states, with the Bash tool `timeout` set above the convergence timeout (convergence timeout + 30 s, in ms).
-The Bash tool caps at 600 s, so cap the convergence timeout at 570 s; if a larger one was asked for, use 570 and record `timeout capped: asked <n>s, used 570s (Bash tool limit 600s)`.
+Run the whole poll in one Bash call, printing only the final states.
+The Bash tool's `timeout` maximum is 600000 ms, so the script caps the convergence timeout at 570 s itself, and you set that call's Bash tool `timeout` to `(T + 30) * 1000` ms, which never exceeds 600000.
+When the script prints a `timeout capped` line, copy it into `Facts` verbatim.
 
 ```bash
 cd "$d"; cli=<abs>; expr='<js expression returning a string or number>'; expected='<optional>'
-T=<timeout s>; I=<interval s>; start_s=$SECONDS; sessions=(<name1> <name2>)
+req=<requested timeout s, default 30>; T=$(( req > 570 ? 570 : req )); I=<interval s>
+[ "$req" -gt 570 ] && echo "timeout capped: asked ${req}s, used 570s (Bash tool limit 600s)"
+start_s=$SECONDS; sessions=(<name1> <name2>)
 while :; do
   declare -A v=(); same=1; first=
   for s in "${sessions[@]}"; do
