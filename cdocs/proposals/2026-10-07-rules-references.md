@@ -19,7 +19,7 @@ tags: [rules, rules_delivery, init, testing, architecture]
 > BLUF: Shipped cdocs content refers to rules by heading, never by filename: `"CDocs Overseer Rules › Chat record"`, which resolves wherever the rules are delivered.
 > A `node:test` check (`npm run test:rules`, blocking in CI) resolves every such reference against the rule headings and rejects rule-filename references; `--materialized` runs it on real `/cdocs:init` output.
 > Agents drop their rule-file reads, since the rules already reach every subagent's context.
-> `/cdocs:init` keeps `.claude/rules/cdocs.md`, which Claude Code auto-loads, and stops adding a `CLAUDE.md` `@`-import, once a no-import post-compaction test passes.
+> `/cdocs:init` keeps `.claude/rules/cdocs.md`, which Claude Code auto-loads, and stops adding a `CLAUDE.md` `@`-import, once a post-compaction canary probe shows unscoped rules are re-injected.
 
 ## Summary
 
@@ -34,7 +34,7 @@ Three reference kinds are affected:
 
 The check is the requested double check: CI resolves references against the source rule headings, and `--materialized` resolves them against what a real `/cdocs:init` run wrote.
 
-Delivery stays one concatenated file, in alphabetical order.
+Delivery stays one concatenated file.
 Claude Code auto-loads every unscoped `.md` under `.claude/rules/`, gives it to subagents, and re-injects it after compaction, so the `CLAUDE.md` `@`-import is redundant.
 Init stops writing the import and removes an existing one.
 The hook and the marker are unchanged.
@@ -91,7 +91,7 @@ Each audit claim was checked against the tree at `7cad508`:
 
 > NOTE(@claude-opus-5-5/cdocs/rules-references): Headless probes on v2.1.293 in a scratch git project confirmed rows one and four: `.claude/rules/top.md` and `.claude/rules/cdocs/nested.md` loaded with no import, a `paths:`-scoped sibling did not, and a dispatched `general-purpose` subagent saw both loaded sentinels.
 > With `CLAUDE.md` also `@`-importing `.claude/rules/top.md`, `claude -p /context` listed the file once; the docs promise that deduplication only for `AGENTS.md`.
-> Row three (post-compaction re-injection of unscoped rules) is documented but not probed; phase 3 is gated on probing it.
+> Row three (post-compaction re-injection of unscoped rules) is documented but not probed; phase 3 is gated on a canary probe of it.
 
 ### Related documents
 
@@ -154,7 +154,6 @@ The test file asserts, over the source rules in `plugins/cdocs/rules/`:
    Materialization keeps rule bodies verbatim, and the existing `chat-record.test.sh --unit` guard keeps init's rule list equal to `rules/`, so source headings are the materialized headings.
 3. **No filename references:** scanned content contains no `<rule-file>.md` for any file in `rules/`, no `rules/<name>.md` path for any name or glob (catches deleted rules and `rules/*.md`), and no `plugins/cdocs/rules` path.
    These are rejected outright: they never resolve in a consuming project.
-   `${CLAUDE_PLUGIN_ROOT}/rules/...` is allowed, since Claude Code substitutes it in skill and agent bodies.
 4. **No `omitClaudeMd`:** no cdocs agent sets it, since the agents rely on rules arriving with the CLAUDE.md hierarchy.
 5. **Extractor fixtures:** a misspelled title fails; a heading inside a code fence is not indexed; curly quotes and the ` > ` separator are recognized.
 
@@ -165,26 +164,36 @@ Failures print `file:line`, the offending text, and a fix: for a filename hit, t
 The `init_real` headless scenario calls it after running the real `/cdocs:init`: that is the check of what consumers actually receive.
 
 CI: `.github/workflows/cdocs-hooks.yml` gains a `rules` job (ubuntu, `actions/setup-node` 22, `npm ci`, `npm run test:rules`), and its `paths` filters widen to `plugins/cdocs/**`, `scripts/check-rule-refs*.ts`, `package.json`, and `package-lock.json`.
+The workflow's header comment, which lists the suites it runs, gains the `rules` job.
 The widening also makes the existing bash suites run when `rules/` or `skills/init/` change, which they read but did not trigger on.
 The job does not go in `opencode-build.yml`: that workflow is `continue-on-error` so OpenCode never gates Claude Code, which would make this check either non-blocking or an OpenCode gate on Claude Code changes.
 
 ### 3. Delivery: keep the file, drop the import
 
-`/cdocs:init` step 3 changes in three places:
+`/cdocs:init` step 3 changes in two places:
 
-- Concatenate the rules in alphabetical filename order (the hook's hash order), not the step 6 order.
 - Do not add `@.claude/rules/cdocs.md` to `CLAUDE.md`: Claude Code auto-loads the file.
 - If `CLAUDE.md` contains that exact line, remove it.
 
 The Read-after-write directive drops "@-imported" ("The version loaded at session start is stale").
-The hook, marker, hash, step 5, and step 6 are unchanged.
+The concatenation order, hook, marker, hash, step 5, and step 6 are unchanged.
 
 A project that already has the import keeps it until its next `/cdocs:init`, and the file loads once meanwhile (the probe above).
 The rule edits in this proposal change the hash, so every initialized project is nudged to run `/cdocs:init` once, which removes the line.
+That holds only if phase 3 ships in the same plugin release as phase 2's rule edits: phase 3 changes no rule body, so released alone it triggers no nudge.
+Ship phases 2 and 3 together when the gate passes; otherwise consumers keep a harmless import line until the next rule edit.
 
 Removing the import moves the post-compaction guarantee from "project-root CLAUDE.md and its imports" to "unscoped rules", which the docs state but no probe has shown.
-So phase 3 starts by running `rules_check` against an `init_rules` fixture with no import line, and changes init only if it passes.
+So phase 3 starts with a one-off canary probe, run through the existing `drive` helper on haiku and recorded in the devlog:
+
+1. A fixture project from `init_rules` with no import line, whose `.claude/rules/cdocs.md` gains one line: "The cdocs canary word is `<random word>`."
+2. Three turns: a trivial task that never mentions the canary; `/compact`; "Without tools, what is the cdocs canary word? Say UNKNOWN if it is not in your context."
+3. Pass if the reply contains the word. The compaction summary cannot carry a word the conversation never used, so a pass shows the rule file was re-injected.
+
 If it fails, init keeps writing the import and phase 3 ends there.
+An optional control run with the import line rules out a broken probe.
+`rules_check` is not the gate: it measures resumption behavior, not rule presence, and it fails on the current baseline.
+It runs only as a no-regression comparison: its results without the import match its results with it.
 
 > NOTE(@claude-opus-5-5/cdocs/rules-references): The hook's directive text says "The current session's @-imported rules are stale until you do".
 > Without the import the wording is inexact, but the instruction (run `/cdocs:init`, then Read) is unchanged, so the hook is left alone.
@@ -277,14 +286,15 @@ It would remove the freshness hook, but the cache path is per machine and per ve
 | Rule invariants, resolution, filename refs, `omitClaudeMd`, extractor | Assertions 1-5 | `scripts/check-rule-refs.test.ts`, CI |
 | The check catches today's refs | Run on the pre-change tree: expect every filename and path site in Audit verification, and no others; `triage/SKILL.md:69` is prose with no path and is fixed by hand | Phase 1, manual |
 | Mutation | Rename a heading, add `overseers.md` to a skill, misspell a title: each fails with a fix hint | Phase 1, manual |
-| Post-compaction without the import (gate) | `rules_check` with `init_rules` writing no import line | `chat-record.test.sh --only rules_check` (headless) |
-| Real init | `init_real` seeds `CLAUDE.md` with the import line, then asserts `.claude/rules/cdocs.md` written, the line removed, and `--materialized` passes | `chat-record.test.sh --only init_real` (headless) |
+| Post-compaction without the import (gate) | Canary probe (section 3) | One-off `drive` run, recorded in the devlog |
+| No regression | `rules_check` results without the import match those with it | `chat-record.test.sh --only rules_check` (headless) |
+| Real init | `init_real` seeds `CLAUDE.md` with the import line; its "CLAUDE.md imports the rules" assertion is inverted to assert the line is gone; it also asserts `--materialized` passes | `chat-record.test.sh --only init_real` (headless) |
 | Existing suites | `chat-record.test.sh --unit`, `npm run test:opencode` | CI |
 
 ## Verification Methodology
 
 1. `npm run test:rules` green, and red on the mutations above; record the pre-change hit list in the devlog.
-2. The phase 3 gate: `rules_check` passes with no import line.
+2. The phase 3 gate: the canary probe reports the word after `/compact` with no import line; `rules_check` matches its with-import results.
 3. In a scratch git project initialized by the changed `/cdocs:init`, `claude -p /context < /dev/null` lists `.claude/rules/cdocs.md` once and `CLAUDE.md` has no import line.
 4. In that project, add a sentinel convention under the "CDocs Writing Conventions" part of `.claude/rules/cdocs.md` (for example "Replace the word *utilize* with *use*"), then dispatch `cdocs:nit-fix` on a fixture devlog using *utilize* and `cdocs:reviewer` on the same devlog.
    `nit-fix` must apply the sentinel fix and name the rule in its report, and neither transcript may Read or Glob a rule path.
@@ -293,7 +303,8 @@ It would remove the freshness hook, but the cache path is per machine and per ve
 
 ## Implementation Phases
 
-Phases 1 and 2 are the core and land together; phase 3 is independent and can be deferred without affecting them.
+Phases 1 and 2 are the core and land together.
+Phase 3 can be deferred without affecting them, but should ship in the same plugin release as phase 2 so the rule-hash nudge removes legacy import lines (section 3).
 
 ### Phase 1: The check
 
@@ -312,10 +323,11 @@ Phases 1 and 2 are the core and land together; phase 3 is independent and can be
 
 ### Phase 3: Drop the import
 
-1. Gate: change `init_rules` (`chat-record.test.sh:804`) to write no import line and run `rules_check`. If it fails, revert the fixture, record the result in the devlog, and stop.
-2. `init/SKILL.md` step 3 (alphabetical order, no import, remove the legacy line) and the Read-after-write directive.
-3. `init_real`: seed the import line; assert its removal and call `--materialized`.
-4. README "Rules Integration" and root `CLAUDE.md` item 1.
+1. Gate: run the canary probe (section 3) and record it in the devlog. If it fails, stop.
+2. Change `init_rules` (`chat-record.test.sh:804`) to write no import line, and run `rules_check` as the no-regression comparison.
+3. `init/SKILL.md` step 3 (no import, remove the legacy line) and the Read-after-write directive.
+4. `init_real` (`chat-record.test.sh:~821`): seed the import line, invert "CLAUDE.md imports the rules" to assert the line is gone, and call `--materialized`.
+5. README "Rules Integration" and root `CLAUDE.md` item 1.
 - Success: Verification steps 2, 3, and 5.
 
 ### Constraints
