@@ -53,7 +53,7 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
    - Work through phases sequentially (or in parallel per "CDocs Workflow Patterns › Loops and multi-phase plans" when applicable).
    - Commit frequently using conventional commit format.
    - Update the devlog as work proceeds (decisions, complications, deviations from the plan).
-   - Follow verification and troubleshooting methodology to ensure results are as expected; for checks against a running app or interface, prefer dispatching a `cdocs:interfacer` (kept warm) over driving the tool yourself.
+   - Follow verification and troubleshooting methodology to ensure results are as expected; for checks against a running app or interface, prefer dispatching a `cdocs:interfacer` (follow-ups name its instance directory) over driving the tool yourself.
    - Top-level mode: dispatch `/cdocs:review` after each phase, and `/cdocs:report` for research topics not covered by the proposal.
      Dispatched mode: the loop's reviewer reviews.
 6. **On completion**: update the devlog with verification results, mark it `status: review_ready`.
