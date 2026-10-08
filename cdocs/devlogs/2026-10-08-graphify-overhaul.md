@@ -59,4 +59,6 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Steering Log
 
+- 2026-10-08T09:35: maintainer on r1 questions: seed query reaches any code-reading agent (via the rule line). On index refresh and the coupling guard, asked what `graphify update` does and how the old wrapper handled coupling: "if we can reduce our wrapper to augmenting the tool to auto-update (assuming incrementalism) and solve this issue then we should keep it and rework it considerably". README: update re-extracts only changed files; code is tree-sitter AST with no LLM, docs use an LLM; `--watch` and a git hook (AST-only) exist; locking undocumented.
+
 - 2026-10-08: maintainer: "Recursive symbol search removes all subtlety graphify could supply. We should probably delete the graphify-scope script entirely"; workstream seed query for `graphify query`, possibly wrapped by a new `/cdocs:code-query` since graphify's skill.md seems bloated; fresh contexts run it themselves.

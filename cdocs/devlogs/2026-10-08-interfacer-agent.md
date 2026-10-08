@@ -50,6 +50,8 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-interfacer-agent.md` | 2026-10-08T09:22 | initial proposal |
+| return | prop-1 | `8ccb18c` | 2026-10-08T09:28 | `review_ready`. Single agent, inherits all tools, per-instance tmp dir with `NN-<slug>/report.md` + media, observations allowed but verdicts stay with dispatcher; durable = named, warm via SendMessage, tooling left running until "tear down"; reviewers start fresh and tear down. Unverified: started processes surviving a foreground dispatch; maxTurns per resume. `playwright-cli` not on host (headless shell cached). Open: durable reading, tools scope, reviewer leaving apps up |
+| dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | 2026-10-08T09:35 | round 1; told to prefer findings that remove text |
 
 ## Steering Log
 
