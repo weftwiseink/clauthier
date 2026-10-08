@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/oversee-workstream-skill
 type: devlog
 state: live
-status: wip
+status: done
 tags: [oversight, rules, claude_skills]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: maintainer accepted; impl-1 applying final edits; then land; `rules_check` question open; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: none; landed. Delete-ablate iterate follows (it edits the `oversee-workstream` loop list). `rules_check` question open; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -71,6 +71,8 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T17:07 | rebase over graphify, F1-F4; `rules_check` left for maintainer |
 | return | impl-1 | `23dcf18..4439781` | 2026-10-08T17:35 | rebased over graphify: `CLAUDE.md` skills list keeps graphify + adds chat-record/oversee-many/oversee-workstream; Tools and Skills keeps graphify bullet + top-level chat-record bullet; `.gitignore`, `iterate/SKILL.md` clean. F1-F4 applied. rules 18, unit 98, opencode 9, skill refs resolve (incl. `/cdocs:graphify`), grep = 5 exceptions. Headless not re-run post-rebase (main touched no chat-record code) |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T17:46 | drop "with the Skill tool", delete `rules_check`, `implementation_accepted` |
+| return | impl-1 | `f12636d..21ee0b5` | 2026-10-08T18:05 | "with the Skill tool" removed everywhere (0 left), `rules_check` deleted, proposal `implementation_accepted`; rules 18, unit 98, opencode 9, headless top_level_only 14/0 re-run |
+| land | overseer | main | 2026-10-08T18:07 | rebased onto main, ff-merged; on main rules 18, build + opencode 9, chat-record unit 98, cdocs-graphify 27; `rules/` = 4 files (no `overseers.md`); `/oversee` grep = 5 listed exceptions; worktree and branch removed |
 
 ## Steering Log
 
