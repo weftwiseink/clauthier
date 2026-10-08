@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: dispatch proposer; implementation serializes after the graphify overhaul's (shared `reviewer.md`, `iterate/SKILL.md`).
+- next_steps: iterate round 1 implementer running in `../interfacer-agent`; then fresh reviewer. This lands first; the graphify overhaul rebases onto it (shared `reviewer.md`, `iterate/SKILL.md`), overriding the proposal's "serializes after graphify" line.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -35,11 +35,18 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 | devlog | concern | status | read this when |
 |---|---|---|---|
 
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-interfacer-agent.md` (`implementation_ready`, `85c5463`), overseer: this top-level session; worktree `../interfacer-agent`, branch `interfacer-agent`.
+Verification floor: the proposal's live canary (depth-2 dispatch, SendMessage follow-up to the same agentId, error probe not OK, `01-*`/`02-*` report + screenshot in one instance dir, clean tear down, fixture clean, one `_media` copy).
+Failure picture: setup not learned from the fixture README, a 404 reported OK, server restarted between checks, processes left after tear down.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | both blocking fixes delete text; agent draft 78 lines vs bash-runner 65 |
+| r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 69 lines; nits only |
 
 ## Judge Log
 
@@ -57,6 +64,10 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T09:58 | r1 revision; reviewer's open-question answers adopted with "maintainer may override" NOTE |
 | return | prop-1 | `ad55df3` | 2026-10-08T10:00 | all r1 items applied; agent draft 69 lines (52 body); Open Questions became "Maintainer Overrides" NOTE |
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 2026-10-08T10:01 | round 2 |
+| return | rev-2 | `6ce7e8b` | 2026-10-08T10:05 | proposal_accepted, `implementation_ready`; 3 nits (detached-process fallback since nested callers lack run_in_background; length target; text cuts) |
+| dispatch | prop-1 (warm) | proposal | 2026-10-08T10:06 | accept-round nits |
+| return | prop-1 | `85c5463` | 2026-10-08T10:12 | nits resolved; detach instruction also folded into the agent's "Start long-lived things" rule |
+| dispatch | impl-1 (cdocs:implementer, opus) | worktree `../interfacer-agent`, branch `interfacer-agent` | 2026-10-08T10:14 | iterate round 1, phases 1-4 incl. live canary; lands before graphify (ordering override) |
 
 ## Steering Log
 
