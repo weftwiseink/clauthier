@@ -55,6 +55,8 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | 2026-10-08T09:35 | round 1; told to prefer findings that remove text |
 | return | rev-1 | `7dbd973` | 2026-10-08T09:45 | revise; OC build 9/9 and test:rules 11/11 with draft; deletion list complete; blocking: agentId not `name` (no `name` param at depth 1; teams turn named calls into teammates), dispatchers always tear down tooling (warm implementer tooling collides with reviewer's fresh run on fixed ports/simulators) |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T09:58 | r1 revision; reviewer's open-question answers adopted with "maintainer may override" NOTE |
+| return | prop-1 | `ad55df3` | 2026-10-08T10:00 | all r1 items applied; agent draft 69 lines (52 body); Open Questions became "Maintainer Overrides" NOTE |
+| dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 2026-10-08T10:01 | round 2 |
 
 ## Steering Log
 
