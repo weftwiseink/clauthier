@@ -19,7 +19,7 @@ last_reviewed:
 > BLUF: A Claude Code-only plugin, `browser-delegate`, ships one `bash-runner`-shaped agent: a sonnet leaf that drives `@playwright/cli` named sessions and returns a fixed report of artifact paths and mechanical facts.
 > It never renders verdicts or writes devlogs.
 > Under `/cdocs:iterate` the reviewer dispatches it, so its artifacts count as reviewer-produced.
-> One delegate drives N sessions for sync tests, and a Phase 1 spike gates the toolset default.
+> One delegate drives N sessions for sync tests, and Phase 1 spikes settle pinning guidance and session isolation.
 
 ## Summary
 
@@ -30,7 +30,7 @@ This proposal commits to:
 
 1. **One agent, `browser-delegate` (sonnet), in a new sibling plugin.**
    Agent-only, dispatched directly like `bash-runner`: a "Prompt with:" description, a fixed report, a scratch artifact directory under `$TMPDIR`, no `Agent` tool (a leaf), no skills, no rules files.
-2. **`@playwright/cli` as the driving tool**, for its native named, isolated sessions and because it keeps browser tool schemas out of the lead's context.
+2. **`@playwright/cli` as the driving tool**, for its native named, isolated sessions and because it keeps browser tools out of the lead's tool pool.
 3. **Evidence, not verdicts.**
    The report has no verdict field.
    Within `/cdocs:iterate`, the reviewer dispatches the delegate and cites its artifacts as its own.
@@ -120,7 +120,7 @@ description: |
   - Sessions: one or more roles (e.g. sharer, sharee); names default to <sanitized-branch>-<role>
   - Route(s) per session
   - Actions (navigate, click, type, wait-for, screenshot, snapshot, poll-until)
-  - Optional: baseline image for an AE diff; output dir for durable artifacts; convergence condition and timeout
+  - Optional: one baseline image and the screenshot to diff against it; convergence condition and timeout
   Responds with artifact paths and mechanical facts only. Prefer it over driving a browser MCP yourself.
 tools: Bash, Read
 maxTurns: 40
@@ -129,9 +129,11 @@ maxTurns: 40
 The body holds everything the agent needs, and reads no rules files:
 
 - **Workflow.**
-  Check `playwright-cli` is on `PATH` (if not: `Status: FAILED` with the fact, no fallback).
-  Create a per-dispatch scratch dir, `d="${TMPDIR:-/tmp}/claude-$(id -u)/browser-delegate"; mkdir -p "$d"; out=$(mktemp -d "$d/run.XXXXXX")`, unless the prompt names an output dir.
-  Open or reuse each named session, run the actions, capture screenshots and accessibility snapshots into the output dir, and run `compare -metric AE` against a baseline if one was given.
+  Resolve the CLI to an absolute command: global `playwright-cli`, or the project-local `playwright cli` if Phase 1 prefers it (if neither: `Status: FAILED` with the fact, no fallback).
+  If a baseline was given, also check ImageMagick `compare` (if absent: `Status: WARNINGS` with the fact, and no diff).
+  Use a stable scratch root and a per-dispatch output dir: `d="${TMPDIR:-/tmp}/claude-$(id -u)/browser-delegate"; mkdir -p "$d"; out=$(mktemp -d "$d/run.XXXXXX")`.
+  Run every CLI command from `cd "$d"`, so the CLI's auto-snapshots (`.playwright-cli/`) and config lookup stay out of the dispatcher's worktree, and pass `--filename=$out/<name>` to every screenshot and snapshot.
+  Open or reuse each named session, run the actions, and, if a baseline was given, run `compare -metric AE` on that one baseline/candidate pair (a size mismatch is reported as a fact, not diffed).
   Leave artifacts in place: they are what the dispatcher cites.
 - **Session naming.**
   Default name: current branch, with characters outside `[A-Za-z0-9_-]` replaced by `-` (`feature/foo` becomes `feature-foo`), suffixed `-<role>`.
@@ -139,6 +141,7 @@ The body holds everything the agent needs, and reads no rules files:
   A killed or expired session is re-opened under the same name, never replaced by an unnamed default, and the re-open is reported.
 - **Convergence.**
   For a `poll-until` condition across sessions, poll shared/awareness state at a fixed interval until every session agrees or the timeout elapses (mirroring weftwise's `e2e/livesharing/convergence.spec.ts`).
+  The poll runs inside one Bash invocation, a shell loop over `playwright-cli -s=<name> eval ...` per session bounded by the timeout, printing only the final states, so it costs one turn and little context.
   A timeout is reported as divergence with each session's last-seen state, never as success.
 - **No judgment.**
   Report what happened (loaded, selector found, text present, AE score), never whether the render looks right.
@@ -156,7 +159,7 @@ BROWSER DELEGATE REPORT
 Sessions: <name> (role: <role>, route: <url>, opened | reused | reopened) [one line each]
 Status: OK | FAILED | WARNINGS
 Artifacts: <abs path> (<screenshot | snapshot | diff>) [one line each]
-AE score: <n> vs <baseline abs path> | n/a
+AE score: <n> (<candidate abs path> vs <baseline abs path>) | size mismatch <WxH> vs <WxH> | n/a
 Facts:
 - <mechanical fact>: <yes | no | value>
 - converged: yes after <n>s | no, timed out at <n>s; last-seen <session>: <state>
@@ -164,17 +167,24 @@ Truncated: none | <what was omitted>; see: <path>
 ```
 
 There is no field a verdict could go in (D6).
+`opened` is a fresh session (including one the delegate closed first because the prompt asked), `reused` is a live session it found, and `reopened` is one that died mid-flow and came back empty.
 The `Sessions` lines are the role-to-session registry: a dispatcher that wants it durable copies it into its own devlog.
 
 ### Iterate integration
 
 When a `/cdocs:iterate` verification floor needs browser evidence, the round's reviewer dispatches `browser-delegate` itself, looks at the returned artifacts, and cites their paths in its review.
 Artifacts from a delegate the reviewer dispatched this round count as reviewer-produced for a `confirmed` row, and artifacts from an implementer's or earlier round's delegate do not.
-Phase 3 adds that clause to the `confirmed` row in `plugins/cdocs/skills/iterate/SKILL.md` so the rule reads unambiguously without this plugin's context.
-Scratch screenshots are ephemeral, so a reviewer that needs them durable passes an output dir under `cdocs/_media/` with a dated name.
+Phase 3 adds that clause to the `confirmed` row in `plugins/cdocs/skills/iterate/SKILL.md`, where iterate defines admissibility (Turn N.b already points there), so the rule reads unambiguously without this plugin's context.
+
+The reviewer's delegate runs on fresh sessions, never the implementer's: the reviewer names them with its own suffix (`<branch>-review-<role>`), or has the delegate close and re-open the named session first.
+Its report must list each session as `opened`, and a `reused` session never backs a `confirmed` row.
+Default branch-derived names would otherwise land the reviewer in the implementer's live browser, with its cookies, storage, and page state.
+
+Scratch artifacts are ephemeral, so the reviewer follows iterate's existing rule for them: it cites the scratch path and inlines the report's `Facts` and `AE score` lines plus its own description of what the artifact shows.
+`reviewer.md` needs no change.
 
 Depth: under a top-level overseer the reviewer is layer 1 and the delegate layer 2, and a nested overseer ([nest-overseers RFP](2026-10-06-nest-overseers-rfp.md)) puts the delegate at layer 3, the default limit, which is fine for a leaf.
-Any wrapper agent between the reviewer and the delegate would push the delegate past the limit, so fan-out to multiple delegates is always done by the dispatcher directly, never by an intermediate agent.
+Under a nested overseer, any wrapper agent between the reviewer and the delegate pushes the delegate past the limit, so fan-out to multiple delegates is always done by the dispatcher directly, never by an intermediate agent.
 
 Outside iterate, any agent can dispatch the delegate and review the artifacts however it likes: the plugin has no dependency on cdocs.
 
@@ -202,9 +212,11 @@ This is additive to weftwise's existing patterns:
 
 ### Session reuse across turns
 
-`@playwright/cli` sessions persist independently of the process addressing them, so a fresh delegate dispatch resumes the same browser by name.
+`@playwright/cli` sessions outlive the process addressing them, so a fresh delegate dispatch resumes the same browser by name while the session lives.
 For a long multi-step flow, the dispatcher may keep one named delegate and resume it with `SendMessage` (`overseers.md` "Stay thin"), which retains the agent's step context.
 Past that rule's ~400K context threshold, the dispatcher dispatches a fresh delegate on the same session names with the remaining steps in its prompt: the browser state carries over, so no handoff file is needed.
+Profiles are in-memory by default and a headless session shuts down after an hour idle, so a dispatch past that window gets a `reopened` session with empty cookies and storage.
+Long flows pass `--idle-timeout=<ms>` at open, and `--persistent` stays out of the default because on-disk profiles would weaken isolation.
 
 ### Plugin files
 
@@ -213,7 +225,7 @@ Past that rule's ~400K context threshold, the dispatcher dispatches a fresh dele
 | `.claude-plugin/marketplace.json` | Add a `browser-delegate` entry (`source: ./plugins/browser-delegate`). |
 | `plugins/browser-delegate/.claude-plugin/plugin.json` | Plugin manifest. |
 | `plugins/browser-delegate/agents/browser-delegate.md` | The agent: frontmatter above, with a body holding workflow, session naming, convergence, report format. |
-| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration, multi-client guidance. |
+| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (fresh reviewer sessions, citing scratch artifacts), multi-client guidance. |
 | `plugins/cdocs/skills/iterate/SKILL.md` | One clause on the `confirmed` row: an artifact produced by a subagent the reviewer dispatched this round counts as its own. |
 
 Example dispatch (Agent tool, `subagent_type: "browser-delegate:browser-delegate"`):
@@ -222,7 +234,7 @@ Example dispatch (Agent tool, `subagent_type: "browser-delegate:browser-delegate
 Sessions: preview
 Route: https://<branch>.weftwise.localhost:1355/settings
 Actions: navigate; wait-for #settings-panel; screenshot full-page
-Baseline: cdocs/_media/2026-09-10-settings-mock.png
+Baseline: cdocs/_media/2026-09-10-settings-mock.png (diff the full-page screenshot)
 ```
 
 ## Important Design Decisions
@@ -234,7 +246,7 @@ The delegate produces evidence: different tools, different job.
 Keeping evidence-gathering in a leaf the reviewer dispatches preserves the reviewer's single purpose while still letting it own the evidence for `review_proof`.
 It also keeps the same verifier/fixer split Report A recommends for any future fixer, one layer earlier.
 
-### D2: `@playwright/cli` over `@playwright/mcp`, gated on a SIGTRAP spike
+### D2: `@playwright/cli` over `@playwright/mcp`
 
 Reachability is not the reason: subagents inherit the parent's MCP tools by default, so a delegate could drive `@playwright/mcp`.
 The reasons, in order of weight:
@@ -243,13 +255,14 @@ The reasons, in order of weight:
    `playwright-cli -s=<name>` (or `PLAYWRIGHT_CLI_SESSION=<name>`) addresses an isolated browser.
    `list`, `close-all`, and `kill-all` manage the set, and `show` opens a dashboard for human oversight.
    `@playwright/mcp` has no equivalent, and its maintainers point at `playwright-cli` for multi-session use.
-2. **Browser tool schemas stay out of the lead's context.**
+2. **The lead is not invited to drive.**
    Plugin agents ignore `mcpServers`, so the plugin cannot give its agent a private inline Playwright server.
    Using MCP means configuring it at the session level, which puts its tools in the lead's pool and invites the lead to drive directly.
+   The context cost is small, since MCP tools are deferred by default and the lead pays for tool names rather than full schemas, but the invitation remains.
    A CLI adds nothing to any agent's tool list.
 3. **The version-pin regression class, possibly.**
    `@playwright/cli` likely bundles its own `playwright-core`, so it may share `@playwright/mcp`'s `channel: "chrome-for-testing"` crashpad/SIGTRAP exposure.
-   Phase 1 spikes it.
+   Phase 1 spikes it, and the result gates README pinning guidance only.
    If it shares the risk, the plugin still adopts the CLI on points 1 and 2, and the README documents the same pin-and-track discipline weftwise applies to `@playwright/mcp`.
 
 `chrome-devtools-mcp` and `@playwright/mcp` remain complements, documented in the README, for network/performance traces, accessibility-tree-driven test authoring, or a lead-held interactive session.
@@ -262,7 +275,7 @@ Report A lays out three tiers of "minor UI tweaking": locator repair (Playwright
 v1 takes none, including the narrowest, because the Healer's `claude` integration mode is search-verified only.
 Primary-verifying it is the prerequisite for Phase 5's fixer item.
 
-### D4: Named-subagent reuse now, A2A only for cross-harness needs
+### D4: Named-subagent reuse in v1, A2A only for cross-harness needs
 
 A2A's selling point (cross-process, cross-org task lifecycle) does not describe this problem: every dispatch is inside one Claude Code session.
 `overseers.md` "Stay thin" already gives a browser agent the dispatcher converses with across turns.
@@ -294,7 +307,7 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
 - **A named session is killed or expires mid-flow.** Re-opened under the same name and reported as `reopened`, so the dispatcher sees the session was not continuous.
 - **Two dispatches target the same session name.** The dispatcher keeps one live delegate per session name, the session analog of `tool-use-safeguards.md` "One writer per file": serialize, or give the second a different role suffix.
 - **Convergence never completes.** Reported as divergence with each side's last-seen state at the timeout.
-- **An implementer's delegate artifacts are offered as proof.** They are third-party to the reviewer and do not make a `confirmed` row, so the reviewer dispatches its own.
+- **An implementer's delegate artifacts are offered as proof.** They are third-party to the reviewer and do not make a `confirmed` row, so the reviewer dispatches its own, on fresh sessions.
 - **No cdocs installed.** The delegate works the same, and the dispatcher reviews the artifacts by whatever means it has.
 
 ## Test Plan
@@ -302,9 +315,12 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
 - **MCP-inheritance current-behavior check.** From a session with a Playwright MCP server configured, dispatch a subagent and record whether `mcp__playwright__*` tools appear in its pool (transcript `tool_use` names or its tool list); from a session without one, confirm `browser-delegate` drives via the CLI.
   The design does not depend on the first result: it records current behavior so D2 stays honest.
 - **Named-session isolation.** Two concurrent sessions with distinct names against the same route (one delegate, and separately two delegates from two worktrees): confirm no shared cookies or localStorage, per `playwright-cli list` and a set-then-read probe.
-- **SIGTRAP/crashpad spike (Phase 1, gating).** `playwright-cli open --headless <url>` in the target devcontainer, checking stderr and process exit, not just the exit code.
+- **SIGTRAP/crashpad spike (Phase 1, gating).** `playwright-cli open <url>` (headless by default) in the target devcontainer, checking stderr and process exit, not just the exit code.
 - **Report contract.** Every dispatch returns a report that parses against the format above, with absolute artifact paths that exist, and no verdict language.
-- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser: the reviewer dispatches the delegate, cites the artifact path, and the overseer records `confirmed`.
+- **Baseline diff.** One dispatch with a baseline returns an `AE score` line naming both paths, and one with a differently sized baseline reports the size mismatch.
+- **Re-open path.** `playwright-cli -s=<name> close`, then re-dispatch on that name: the report lists the session as `reopened`.
+- **Worktree hygiene.** After a dispatch, the dispatcher's worktree has no new `.playwright-cli/` or other untracked files.
+- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer's delegate reports its sessions as `opened` (not `reused`), the review cites the scratch path with the report's facts inlined, and the overseer records `confirmed`.
 - **Multi-client convergence.** One delegate, two sessions (sharer/sharee) on a real sync-capable route: convergence detected by polling within the timeout, and a forced non-convergence reports divergence, not a pass.
 - **Missing CLI.** Remove `playwright-cli` from `PATH`: the delegate reports `FAILED` and does not fall back.
 
@@ -319,29 +335,32 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 
 ## Implementation Phases
 
-### Phase 1: Spikes (gate on default-toolset claims only)
+### Phase 1: Spikes (gate README guidance and session naming only)
 
 - `@playwright/cli` SIGTRAP/crashpad exposure in the target devcontainer(s).
 - Named-session isolation sufficiency: `-s=<name>` alone isolates two concurrent sessions (two roles in one delegate, and two worktrees).
+  Also record whether session names are scoped by cwd or workspace (the `show` dashboard groups sessions by workspace), and confirm the agent's fixed `cd "$d"` keeps reuse-by-name working across dispatches.
+- CLI resolution: whether the delegate should prefer a project-local `npx --no-install playwright cli` (which inherits the project's existing Playwright pin, as in weftwise) over a global `playwright-cli`, resolved to an absolute command before the `cd`.
+  The answer is folded into the availability check.
 - First-party browser-use tool: primary-verify GA status and runtime availability in the target harness/devcontainer against `platform.claude.com`'s docs.
 - MCP-inheritance current-behavior check (Test Plan).
 - Success: one confirmed/denied line per item, with any fallback a later phase actually uses.
 - Depends on: nothing.
-  The scaffold may proceed in parallel, and only README "default" language waits on this phase.
+  The scaffold may proceed in parallel, and only README pinning wording, CLI resolution, and (if isolation fails) session naming wait on this phase.
 
 ### Phase 2: Plugin scaffold and the agent
 
 - Add the marketplace entry, `plugin.json`, `agents/browser-delegate.md`, and `README.md` per the file table.
-- Agent body: availability check, scratch dir, session naming and sanitization, re-open handling, action vocabulary, AE diff, report format.
-- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration, multi-client guidance.
-- Success: a dispatch from a session with no Playwright MCP server produces a named session, a saved screenshot, and a report matching the format, verified by opening the artifact.
+- Agent body: CLI resolution and availability check, scratch root and `--filename` captures, session naming and sanitization, re-open handling, action vocabulary, single-pair AE diff, bounded poll loop, report format.
+- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (fresh reviewer sessions, citing scratch artifacts), multi-client guidance.
+- Success: a dispatch from a session with no Playwright MCP server produces a named session, a saved screenshot, an `AE score` against a supplied baseline, and a report matching the format, verified by opening the artifacts.
 - Constraints: no skills, no `rules/`, no changes to `scripts/build-opencode.ts` or any OpenCode artifact.
-- Depends on: Phase 1 for README default wording only.
+- Depends on: Phase 1 for README pinning wording and CLI resolution, and for session naming if the isolation spike fails.
 
 ### Phase 3: Iterate integration
 
 - Add the one-clause `confirmed` clarification to `plugins/cdocs/skills/iterate/SKILL.md`.
-- Success: an iterate round with a browser floor ends with a `confirmed` row citing a reviewer-dispatched delegate artifact.
+- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a reviewer-dispatched delegate whose sessions report `opened`.
 - Constraints: no other cdocs agent or skill changes (`reviewer.md` already has `tools: "*"`).
 - Depends on: Phase 2.
 
@@ -365,7 +384,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 - **`@playwright/cli` SIGTRAP/channel-pin exposure.** Unconfirmed in either report, spiked in Phase 1.
   Affects only D2 point 3 and README pinning guidance.
 - **Named-session isolation sufficiency.** Report B's isolation question concerned `@playwright/mcp`'s location-derived profile default, whereas the CLI isolates by explicit name, so this is a narrower, CLI-specific check.
-  Phase 1, gating D5's isolation claim.
+  Phase 1, gating D5's isolation claim and, if it fails, the agent's session naming.
 - **First-party browser-use tool GA and in-harness availability.** Existence and behavior are primary-verified, but GA date and devcontainer availability are secondary-sourced (Report A).
   Gates Phase 5's promotion only.
 - **Playwright Healer's `claude` integration (v1.56+).** Search-verified only.
@@ -378,6 +397,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
   v1 assumes the latter and is not designed around either answer.
 - What dispatch round-trip count makes an exploratory loop (a lead refining actions across several dispatches) costlier than the lead driving directly?
   v1 dispatches are bounded and single-shot, but an iterative loop re-approaches lead-holds-the-loop at dispatch granularity.
+- **Committed evidence (maintainer).** v1 iterate evidence is scratch-only; committing screenshots to `cdocs/_media/` alongside the review would need a one-clause `reviewer.md` amendment and is a later choice.
 - Should Phase 2's scaffold wait for Phase 1, or is parallel work (as planned) worth the risk of README rework?
 
 ## Links
