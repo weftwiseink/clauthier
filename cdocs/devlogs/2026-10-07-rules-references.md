@@ -32,7 +32,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 | devlog | concern | writer | status |
 |---|---|---|---|
-| `cdocs/devlogs/2026-10-07-rules-references-impl.md` (branch `rules-references`) | phases 1-3 implementation | implementer (opus) | wip |
+| `cdocs/devlogs/2026-10-07-rules-references-impl.md` (branch `rules-references`) | phases 1-3 implementation | implementer (opus) | done |
 
 ## Iterate Brief (Turn 0)
 
@@ -80,6 +80,7 @@ If the phase 3 gate fails, phase 3 stops and phases 1-2 land alone (an accepted 
 - 2026-10-07T23:22 dispatch: fresh opus `cdocs:reviewer`, implementation round 1; claims `cdocs/reviews/2026-10-07-review-of-rules-references-impl-r1.md` + proposal `last_reviewed` on branch.
 - 2026-10-07T23:33 return: impl review r1 accept, `review_proof: confirmed` (`f4a7708` on branch).
 - 2026-10-07T23:34 dispatch: same warm implementer for the four non-blocking items before landing.
+- 2026-10-07T23:38 return: non-blocking items applied (`45635a7` drop nit-fix 3e, `6e0b4b4` exemption narrowed to `.claude/rules/cdocs.md`, `6828720` `test:rules` via `node --import tsx --test`, `eac928a` triage:52, `3c0be8b` sub-devlog done); `test:rules` 11/0 under long TMPDIR, `--unit` 95/0, `init_real` 9/0. Not re-reviewed (minimizing edits, self-verified).
 
 ## Steering Log
 
