@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -156,6 +156,11 @@ ${TMPDIR:-/tmp}/claude-<uid>/interfacer/
 
 The agent stays warm across the dispatcher's whole engagement; its tooling lives within one dispatcher turn.
 
+> NOTE(opus-5-5/cdocs/interfacer-agent): Replies are asynchronous, not returned like a call (claude 2.1.285 and 2.1.293, Phase 4 canary).
+> A resumed check always runs in the background, and a first dispatch does too unless the dispatcher passes `run_in_background: false`; the reply arrives as a notification at the dispatcher's next tool call.
+> A dispatcher that ends its turn never receives it, so the dispatcher stays in its turn (short Bash `sleep`s; the harness refuses long ones) until each reply arrives, and the agent's description says so.
+> The diagram's reply arrows show content, not a synchronous return.
+
 ```mermaid
 sequenceDiagram
   participant D as Dispatcher (implementer, reviewer, any agent)
@@ -233,6 +238,8 @@ Acceptability ("the fix works", "matches the design") needs the proposal's crite
 
 ### D5: Durable by default means warm agent plus live tooling
 
+> NOTE(opus-5-5/cdocs/interfacer-agent): "Keeping an `agentId`" also means waiting in-turn for each asynchronous reply; see the NOTE under "Durable by default".
+
 Re-dispatching for each follow-up pays a fresh briefing, a fresh setup discovery, and a cold app start.
 `SendMessage` resume and long-lived processes are native mechanics, so durability costs keeping an `agentId` and a "tear down" before each return, with no state file.
 
@@ -252,6 +259,7 @@ The dispatcher gets a few lines in context and reads `report.md` or the media on
 - **Two agents told to reuse the same named session.** Not prevented: the rule against touching unnamed sessions covers the default case, and naming a shared session is the dispatcher's explicit choice.
 - **A dispatcher returns without tearing down.** `Left running` in the last report names what is up; processes started under Claude Code's Bash may die with the session, and daemons idle out on the tool's own timeout.
 - **Process lifetime after a foreground interfacer returns.** Documented for background subagents only. WARN(opus-5-5/cdocs/interfacer-agent): unverified for foreground, though it only has to span the gap between a check's return and the dispatcher's next `SendMessage`, which Phase 4 tests; starting processes detached is what makes it hold.
+  > NOTE(opus-5-5/cdocs/interfacer-agent): Resolved for the gap it covers: in the devcontainer canary a foreground first dispatch (`run_in_background: false`) started a detached server that survived into checks 02-03 (one PID across 61 one-second samples).
 - **`maxTurns` across resumes.** Whether the 40-turn cap is per resume or cumulative is unverified; a capped result is marked partial and resumable, so the dispatcher can continue it either way.
 
 ## Test Plan
@@ -289,6 +297,8 @@ The first such round after landing is the end-to-end check of the reviewer claus
 ## Implementation Phases
 
 Implementation serializes after the graphify overhaul, which also edits `reviewer.md` and `iterate/SKILL.md`; rebase onto it and keep each edit to the clause named here.
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): The overseer reversed this ordering: the interfacer landed before the graphify overhaul, which rebases onto it.
 Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook allowlist (`CDOCS_AGENTS` in `plugins/cdocs/hooks/validate-cdocs-edit-path.sh`, which would block the interfacer's `report.md` writes under tmp), or historical cdocs documents beyond the old proposal's frontmatter and NOTE.
 
 ### Phase 1: The agent and its listings
