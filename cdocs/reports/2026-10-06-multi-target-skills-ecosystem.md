@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-06T12:00:00-07:00
 task_list: cdocs/multi-target-skills-ecosystem
 type: report
-state: live
-status: review_ready
+state: archived
+status: done
 tags: [opencode, agent_skills, cross_tool, build, architecture, multi_target]
 ---
 

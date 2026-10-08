@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-06T11:07:01-07:00
 task_list: cdocs/rules-context-decomposition
 type: report
-state: live
-status: wip
+state: archived
+status: done
 tags: [orchestration_discipline, durable_specialists, context_budget, agent_memory, rules]
 ---
 

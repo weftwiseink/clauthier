@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-06T17:30:54-07:00
 task_list: meta/software-factory-landscape
 type: report
-state: live
-status: wip
+state: archived
+status: done
 tags: [landscape, orchestration, spec_driven_development, agent_memory, evaluation, architecture]
 ---
 
