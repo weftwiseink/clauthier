@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: branch at `b808867` + decision-map NOTE; maintainer acceptance, land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: landed `21bdaaf`; post-accept main-graph rebuild + exclusion check running; the live iterate-round check is logged on the next real `/cdocs:iterate` in the container; RFPs (fork, delete-ablate) open; land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -105,6 +105,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | impl-1 (warm, SendMessage) | proposal | 2026-10-08T16:26 | NOTE: base query stays default regardless of row 2 |
 | return | impl-1 | `0648b9b` | 2026-10-08T16:28 | decision-map NOTE: base query stays default |
 | return | rfp-ablate | `e20d18b` | 2026-10-08T16:40 | delete-ablate RFP: 0 of 3 runs changed a decision (Probe A harness shakedown, Probe B VOID self-test, weftwise inconclusive; graphify-integration check never run); footprint `ablate/` 896 lines, CLAUDE.md/README lines, `graphify-scope` comment, this branch's `detect-usage` checks; plain grep is not a safe `detect-usage` swap (matches prompts and quoted reports), the ~10-line jq filter is; inline vs standalone left open |
+| land | overseer | main | 2026-10-08T16:46 | proposal `implementation_accepted`; rebased (43 commits) onto main, ff-merged at `21bdaaf`; on main rules 11, build + opencode 9, cdocs-graphify 27, chat-record unit 97, edit-path 17, removal and `graphify_query` greps 0; worktree and branch removed |
+| dispatch | post-accept (cdocs:bash-runner, sonnet) | clauthier container `$GRAPHIFY_OUT` | 2026-10-08T16:47 | rebuild main graph with `/cdocs/` ignore; exclusion check; one wrapper query from main (worktree index, mtime) |
 
 ## Steering Log
 
@@ -113,6 +115,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 - 2026-10-08T10:25: maintainer: "make sure we aren't including cdocs in any graphify operations as it's quite large." Relayed to the reviser mid-revision.
 - 2026-10-08T11:45: maintainer: "lets go with cdocs:graphify over code-query after all as we're using it for more subcommands than just query"; use "graphify_base_query" instead of seed query and replace `graphify_query` in the Scratchpoint template/docs; "I'm not clear on how cdocs path is being ignored, an ablate seems like a good idea"; "graph-refresh outside our skills is left to consumer for now, except maybe /rfp 'make sure main graphify graph is up to date'". Post-acceptance revision dispatched; fresh review follows.
 - 2026-10-08T12:15: maintainer on r3's ablate questions: "We already did an ablate earlier in the initial workstream. See if that approach transfers to the new usage and use that if so." rfp step: unanswered; overseer default is r3's narrower condition (main graph exists). Dispatched to the warm proposer with r3 F1/F4-F7.
+
+- 2026-10-08T16:45: maintainer: "Accept graphify worktree." Landed.
 
 - 2026-10-08T16:25: maintainer: "rfp forking and fixing graphify with details including open issues. Graphify should not be opt in, if it's good we always want it. If ablate in this case failed to produce any useful information, /cdocs:rfp deleting it." Base query stays default (NOTE added to the proposal's decision map); RFPs dispatched: `cdocs/proposals/2026-10-08-graphify-fork-rfp.md`, `cdocs/proposals/2026-10-08-delete-ablate-rfp.md`. Landing still awaits explicit acceptance.
 
