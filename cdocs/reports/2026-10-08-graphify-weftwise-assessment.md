@@ -22,6 +22,10 @@ tags: [graphify, performance, evaluation, investigation]
 >   A background refresh answers fast but misses just-edited code.
 >   Flexible mid-edit querying waits for upstream incremental updates (a changed-files-only refresh measures about 3.5 s here).
 >
+> Use it alongside grep, not instead of it.
+> On 8 discovery tasks run by a graph-assisted and a grep-only agent and graded blind, each side found important code the other missed on 5 tasks, the grep side found more on 2, and neither was cheaper (unique important finds: graph 13, grep 19).
+> The graph's own finds come from `explain` neighbour lists on blast radius and hub ranking for orientation; on tests, cross-package importers, concepts, and cycles, grep did as well or better.
+>
 > Recommended: the maintainer adds `"source"` export conditions to the workspace packages, whose imports graphify otherwise resolves to gitignored `dist/`, leaving no cross-package edges.
 > They add 623 such edges at no measurable graphify build cost, are inert for weftwise's toolchain from reading configs (builds/tests not run), and lift the 14-question score from 7 hit, 5 partial, 1 miss, 1 misleading to 8 hit, 6 partial.
 > Also keep the wrapper's stamp across the copy (fresh-worktree first query 11.9 s -> 0.9 s).
@@ -87,6 +91,93 @@ The non-hits have two causes:
 - **Coupling that is not a static edge** (Q8's CRDT sync into a shared doc, Q9's subscriber hop through `backing.ts`), which no import config fixes; the wrapper's runtime-coupling block names `.observe`/`.subscribe` sites only in files the output already lists.
 
 Topic `query` returns about 1.8k tokens, 30-60% unrelated: it hits on distinctive entity names (Q13, Q14) and is partial on concepts (Q12).
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): These questions name their entities and are graded against a grep ground truth, so they measure efficiency on grep's best case; discovery is measured in Value Beyond Grep below.
+
+## Value Beyond Grep
+
+On discovery tasks, where the agent does not yet know the entity names, does the graph find important code that grep does not (reach), or reach the same answer materially cheaper (efficiency)?
+Over 8 tallied tasks the graph never won: each side found important items the other missed on 5 tasks (mixed), grep's side found more on 2, 1 tied, and neither was materially cheaper.
+The graph's unique finds cluster in blast radius and orientation; grep's side found as much or more on every class.
+
+**Method** (design: proposal Phase 4; execution, transcript summaries, A/B mapping, and the judged answers: `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md`).
+- 10 tasks sampled by a sonnet agent from weftwise problem statements (RFP stubs, Objectives), phrased as before investigation, and leak-checked; two run at their pre-investigation commit.
+- Per task, two sonnet arms ran concurrently in throwaway worktrees with `cdocs/` and `_archive/` deleted, no git, no subagents.
+  The graph arm had a capability card beyond the shipped skill, a graph-first rule, and grep; its graph is the `source`-conditions graph (9,744 nodes, 25,774 edges at `2791713d`).
+  The grep arm had everything except graphify (`rg`, scripts, installed `tsc`).
+- A fresh blind opus judge per task graded both answers, normalized to `file:entity`, against the verified union of their items plus its own check.
+  An important item only one answer found is that arm's **unique** item (its reach).
+- Graph-arm tokens include the card (about 1.2k), and its wall time includes `podman exec` (about 0.5 s per graph call); both are real costs.
+
+| Task | Class | Task (source; code state) | Outcome | Complete graph / grep | Unique graph / grep | Tokens graph / grep | Wall s graph / grep | Graph features used |
+|---|---|---|---|---|---|---|---|---|
+| c1 | concept | A revoked sharee's mount stays visible until refresh: where should client UI state react to a revoke? (`proposals/2026-09-05-graceful-unshare-unmount-rfp.md`) | grep (reach) | 9/13 / 11/13 | 0 / 2 | 108k / 85k | 263 / 201 | `query` 2, `explain` 3 |
+| b1 | blast | What, beyond direct call sites, assumes the mount store's `enableRelationalMeta`/`requireRelational` seam's "relational" framing? (`proposals/2026-09-17-relational-meta-surface-rethink.md`; `3fbd7251`, the seam is gone at `2791713d`) | mixed | 13/15 / 13/15 | 1 / 1 | 80k / 77k | 146 / 119 | `explain` 2 |
+| b2 | blast | `AclDoc.revoke` is single-writer: what else assumes exactly one ACL authority if a second write path appears? (`proposals/2026-09-17-distributable-acl-authority-rfp.md`) | mixed | 11/15 / 10/15 | 4 / 3 | 84k / 74k | 173 / 122 | `explain` 7, `affected` 1 |
+| t1 | tests | Which unit tests exercise the crash-recovery path (core, file, fingerprint write order; `classifyBoot`)? (`proposals/2026-09-21-engine-content-sync-robustness.md`) | tie | 5/5 / 5/5 | 0 / 0 | 60k / 61k | 71 / 73 | `explain` 1, `affected` 1 |
+| t2 | tests | Which tests would catch a regression in branching content round-tripping through loro-multiplex's plain-`LoroDoc` `DocManager`/persistence? (`proposals/2026-09-16-loro-multiplex-branching-carrier-roundtrip-test.md`) | grep (reach) | 6/10 / 8/10 | 0 / 2 | 105k / 107k | 271 / 212 | `explain` 3, `query` 1 |
+| x1 | cross-package | Across weft and loro-repo, what reads or writes the actor doc's profile fields, and which uses are ACL mechanism versus presentation? (`proposals/2026-09-17-actor-docs-to-host-app-rfp.md`) | mixed | 10/15 / 11/15 | 3 / 4 | 70k / 81k | 104 / 136 | `explain` 1, `affected` 1 |
+| x2 | cross-package | What consumes loro-multiplex's generic transport: is loro-repo's `__fs__` its only production consumer? (`proposals/2026-09-17-branching-aware-transport-reconsideration.md`) | mixed | 11/13 / 12/13 | 1 / 2 | 67k / 79k | 100 / 113 | `god-nodes` 1, `affected` 1 |
+| o1 | orientation | Brief me on `weft`: subsystems, hubs, how storage/sync, editor, and shell connect (`devlogs/2026-07-12-weft-architecture-reports-and-review.md`) | mixed | 13/20 / 14/20 | 4 / 5 | 85k / 78k | 133 / 80 | `god-nodes` 1, report sections 3, `explain` 15, `affected` 1 |
+| d1 (synthetic class) | dead code | Across `weft`, what is exported but never imported? (`devlogs/2026-08-26-weft-code-smell-audit.md`) | mixed | 10/17 / 11/17 | 3 / 4 | 81k / 102k | 252 / 240 | `graph.json` scripting 10, no CLI call |
+| y1 (synthetic class) | cycles | A build warns of a chunk cycle through `mounts/atoms.ts` and `mounts/index.ts`: which modules take part, and how far does it extend? (`proposals/2026-09-09-prod-build-circular-chunk-warnings.md`; `41b30188`, the fix's comment names the cycle at `2791713d`) | grep (reach) | 7/15 / 13/15 | 0 / 6 | 69k / 86k | 83 / 222 | Import Cycles section, `path` 2, `explain` 7 |
+
+Code state is `2791713d` unless noted; the older-commit graphs had 10,327 / 27,153 (`3fbd7251`) and 8,287 / 20,647 (`41b30188`) nodes / edges, with every `./dist/`-exporting workspace package given the `source` condition.
+y1's arms started about 70 s apart (subagent limit), so its wall times are not comparable.
+
+Tally over the 8 tallied tasks (d1 and y1 are the synthetic classes, kept outside):
+- outcomes: graph better 0, grep better (reach) 2, mixed 5, tie 1; no efficiency outcome either way;
+- unique important items: graph 13, grep 19; completeness on important items: graph 78/106, grep 84/106;
+- wrong items: graph 2 (t2, o1), grep 1 (c1); "would mislead": graph 3 (b2, t2, o1), grep 1 (b2);
+- cost: graph 659k tokens and 1,260 s, grep 642k and 1,056 s.
+
+Of the graph arms' 13 unique items, 8 appear in their graph output (b1 1, b2 2, x1 1, o1 4); the other 5 the graph arm found by grepping.
+None came only from the wrapper's RUNTIME COUPLING appendix.
+Re-judging c1 and b2 blind with A and B swapped gave the same outcomes; b2's unique items were identical, while c1's grep-side unique items changed (judges differ on which marginal items are important), so per-item counts carry judge noise of a few items per task.
+
+**Scenario map.**
+
+| Class | Unique important, graph / grep | Outcomes | Why |
+|---|---|---|---|
+| named-entity lookup (Usefulness, Q1-Q14) | not measured as reach | graph better (efficiency) | `explain` gives definition, callers, importers, and tests in 100-300 tokens, about half of grep's output |
+| transitive blast radius | 5 / 4 | mixed, mixed | Graph reach is real here: `explain` neighbour lists surfaced callers on INFERRED call edges (`subscribeRevocations`, `broadcastServerUpdate`) and a test harness importing the seam, which grep's arm never read. Grep reached invariants stated in comments and orchestration with no edge to the named entity (`computeRedactionInstruction`, `revokeShareLink`). Complementary, not superior |
+| orientation | 4 / 5 | mixed | `god-nodes` and `explain` on hubs named subsystems grep's arm skipped (canvas editor, search index, tabs model, loro-repo's `FsIndexView`); grep's arm read module headers and found the shell composition (`MountsContainer`, `DocumentManager`). `god-nodes` is repo-wide, and it produced the graph arm's false claim that command-deer's `KeybindingService` is weft's keybinding layer |
+| cross-package dependents | 4 / 6 | mixed, mixed | `rg 'from "loro-multiplex'` lists importers as completely as `affected`; the extra finds on both sides came from reading, and only 1 of the graph's 4 appears in graph output |
+| tests covering a behaviour | 0 / 2 | tie, grep (reach) | Tests are identified by names and comments (`GAP A`, `LIVE-FORWARD`), which grep reads and the graph does not index. In t2 the graph output listed the missed tests, but the arm did not follow them |
+| concept discovery | 0 / 2 | grep (reach) | `query` seeds on names; both arms reached the same core (an uncalled revoke handler, a status type with no revoked state), and grep's arm also found the boot-only detection path |
+| dead code (outside tally) | 3 / 4 | mixed | In-degree scripting over `graph.json` and a grep export scanner are equivalent methods; each found a different subset of about 17 dead exports |
+| dependency cycles (outside tally) | 0 / 6 | grep (reach) | Not the graph win the design expected: Import Cycles lists only cycles of 5 files or fewer and counts `import type` edges, and the graph arm stopped there (plus one type-only edge, wrong). Grep's arm computed the 32-file value-import strongly connected component and the TDZ trigger |
+
+Serendipity (after unblinding; commentary only): the graph output held items its arm did not use in t2 (three server-backed `__fs__` tests, one found only by the judge), o1 (`MountsContainer`, `DocumentManager`, `build_editor_extensions`), and y1 (`extension_builder`, `transclusion_helpers`, `open_link_under_cursor`).
+The graph put its arm in the right neighbourhood more often than the arm used it.
+
+**Reading.**
+Graphify does give reach grep does not, mostly from `explain` neighbour lists and hub ranking, but grep-only agents find as much or more, and nothing comes cheaper.
+A graph-assisted agent behaves like a differently biased second searcher, not a better first one: its answer and a grep answer overlap on the core and diverge at the edges.
+The graph also brings its own errors: repo-wide hubs read as package hubs, and type-only imports read as runtime edges.
+With labels from hub file names and no runtime coupling, its best case is blast radius around a named entity and first orientation in a package.
+
+**Guidance for `/cdocs:graphify`** (proposed skill text; not landed):
+
+```md
+## When the graph helps
+
+- Blast radius of a named entity: `explain` it and treat each neighbour (callers, importers, INFERRED calls, test files) as a lead, then `affected` it.
+  Also grep the name: invariants stated in comments and orchestration with no static edge are grep-only.
+- Orientation in a package: `god-nodes` (repo-wide: drop hubs outside the package), then `explain` the top hubs.
+- Named entities: `explain` before reading the file.
+
+When the output lists a file you have not read whose name fits the question, read it before answering.
+
+## When to skip it
+
+- Which tests cover a behaviour: grep test names, `describe`/`it` strings, and comments.
+- Who imports a package: `rg 'from "<package>'`.
+- Concepts with no entity name: grep the domain words; `query` matches names, not behaviour.
+- Import cycles: GRAPH_REPORT.md lists only cycles of five files or fewer and counts `import type` edges; compute the strongly connected component over value imports.
+```
+
+Wrapper changes this suggests (not landed): accept `god-nodes`, which the wrapper rejects today, and fix the stamp's ignore filter, which passes the ignored paths to `grep -e` as one argument and silently yields an empty change set once they exceed the kernel's argument limit (seen with 3,825 deleted `cdocs/` files; the worktree then never refreshes).
 
 ## Runtime Matrix
 
@@ -166,6 +257,10 @@ Every timing range is within 0.4 s, so no verdict sits on a boundary by noise.
 | Reviewers (`explain`/`path` on changed entities, after commits) | 0.54 s commit-only; queries 0.23-0.50 s; at most one 11.8 s refresh | entity 4/4 hit; `affected` 1 hit, 2 partial; `path` 1 partial, 1 miss, 1 misleading, or 1 hit and 2 partial with `source` | **Use now** for `explain` and `affected`. Without `source`, grep cross-package chains; with it, `path` is a usable first pass that still misses runtime coupling |
 | Implementers mid-edit | 11.84 s (11.74-11.87) blocking, once per edit batch; `explain` on a stamp hit 0.6 s | same | **Usable now with discipline**: `explain` before editing, as the skill directs, and batch post-edit questions behind one blocking refresh. **Flexible mid-edit use waits for upstream**: the whole blocking range is over 10 s. Background refresh trades the wait for staleness |
 
+Value Beyond Grep leaves every verdict standing and narrows what "use" means: the graph is a second searcher next to grep, not a replacement.
+It earns its place on a reviewer's or implementer's blast-radius question about a named entity (`explain` neighbours found callers and importers grep missed, in both blast tasks) and on a startup agent's first orientation in a package (`god-nodes`); there, completeness comes from running both.
+For tests, package importers, and concept questions, grep alone did as well or better.
+
 ## Recommendations
 
 - Keep the committed `.graphifyignore`, with markdown, `package.json`, `tsconfig*.json`, and tests in the graph; skip `--no-cluster`, `GRAPHIFY_VIZ_NODE_LIMIT=0`, `GRAPHIFY_NO_BACKUP=1`, and `GRAPHIFY_MAX_WORKERS`.
@@ -189,6 +284,8 @@ What would change the verdict:
 - The fork RFP's fixes 1 and 2 (a manifest no-op gate and a JS/TS fact cache): at about 3.5 s per refresh, implementers move to the middle band, near the 3 s bar.
 - `extract --code-only` reaching edge parity with `update` and reading `update`-built manifests, so the wrapper could use it at about 3.6 s.
 - A runtime-coupling pass that names subscribers, for the remaining flow non-hits (Q8, Q9).
+- LLM community labels (`graphify label`): community names here are hub file names (`label_communities_by_hub`), which weakens concept discovery and orientation; labelled communities were not tested (they need credentials and cost per relabel), and they might change those two rows.
+- Distinguishing `import type` edges and listing longer cycles, which would make the precomputed Import Cycles an answer rather than a lead.
 
 ## Not Verified
 
@@ -198,6 +295,8 @@ What would change the verdict:
 - The background-refresh prototype ran only with sequential queries, never with a concurrent editor writing during the refresh; the stamp-race reasoning is from the code.
 - The kept stamp was not exercised against a main graph built from a dirty tree.
 - Timings come from one container on a host with other load (1-minute load 0.9-4.3).
+- Value Beyond Grep: one run per arm and 8 tallied tasks, 1-2 per class, so each class rests on one or two tasks; one judge per task, with two tasks re-judged (same outcomes, different marginal items on one).
+  The arms were sonnet with a capability card, not the shipped skill text; the proposed guidance was not itself tested.
 
 ## Verification Floor
 
@@ -288,3 +387,9 @@ Expected:
    loro-repo-package bcb0711702c22a97710b75f0d4abd4570dd09715 1
    ```
    Dirty counts belong to the maintainer and may move with their own work; HEADs must match unless they committed.
+
+**Value Beyond Grep floor.**
+1. Graph: step 6 above builds the `source`-conditions graph the graph arms used at `2791713d` (`nodes 9744 edges 25774`); the older-commit counts are in the task table's note.
+2. Records: this section holds the tasks, outcomes, and grades; the devlog holds per-arm summaries, transcript flags, the A/B mapping, pilot card fixes, the normalized answers, and the judge prompt.
+3. Grades: re-judge any two tasks blind from the devlog's normalized answers and judge prompt, with a fresh agent and read access to that task's code state; the outcome should match the table.
+4. No collateral: step 7's checks, plus `git worktree list` showing no `gfy-value-*` worktree.
