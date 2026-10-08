@@ -41,7 +41,7 @@ claude plugin install browser-delegate@clauthier
 ### Pinning
 
 `@playwright/cli` resolves browser channels with the same `playwright-core` code as `@playwright/mcp`, so it shares that package's version-coupling hazard: `--browser=chromium` means the full chrome-for-testing binary (with `chrome_crashpad_handler`, the binary behind weftwise's 2026 SIGTRAP incidents), and the default means system Chrome.
-At 0.1.22 (chrome-for-testing 155) the full binary launched cleanly in the weftwise devcontainer image, but earlier revisions crashed there.
+At 0.1.22 (chrome-for-testing 155) the full binary launched cleanly in the weftwise devcontainer image; the crashes on record are weftwise's `@playwright/mcp` incidents at earlier chrome-for-testing revisions, which were not retested with the CLI.
 Apply the same discipline as for `@playwright/mcp`: pin the CLI version, pin `executablePath` to an installed headless-shell revision in the config, and bump both together.
 
 ## Dispatch
@@ -124,6 +124,14 @@ For fixed CI regression flows, a Playwright test driving N `browser.newContext()
 When a verification floor needs browser evidence, the round's **reviewer** dispatches the delegate itself:
 
 - It names sessions `<branch>-review-<role>` and asks for fresh sessions, so it never lands in the implementer's browser and its report lists every session as `opened`.
+  Passing the role as `review-<role>` gets that name from the default `<branch>-<role>` rule:
+
+  ```
+  Sessions: review-viewer
+  Fresh sessions.
+  ```
+
+  An explicit name works too: `Sessions: viewer (name: feature-foo-review-viewer)`.
   A `reused` session never backs a `confirmed` row.
 - It inlines every report line except `Truncated` in the review, plus its own description of what each cited artifact shows.
 - For each screenshot its verdict relies on (only paths in the inlined `Artifacts` lines), it copies the file with `cp -n` to `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png`, checks the copy with `cmp` (a mismatch means the name was taken: pick another description, never overwrite), embeds it captioned with its scratch source path, and commits it with the review by exact path.
