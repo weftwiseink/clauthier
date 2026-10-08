@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-delivery/oversee-workstream-skill
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -18,7 +18,7 @@ tags: [architecture, claude_skills, rules_delivery]
 
 > BLUF: Rename `cdocs:oversee` to `cdocs:oversee-many` and delete `rules/overseers.md`.
 > Its content moves into two skills: `cdocs:oversee-workstream` (overseer intro and "Stay thin") and `cdocs:chat-record` (the "Chat record" section).
-> Loop skills invoke `oversee-workstream` with the Skill tool.
+> Loop skills invoke `oversee-workstream`.
 > One rule bullet tells only the top-level session (not Agent-started, not a fork) to invoke `chat-record`.
 > A new check fails CI on any `/cdocs:<name>` that does not resolve.
 > Design source: [the load-by-reference evaluation](../reports/2026-10-08-skill-load-by-reference-evaluation.md).
@@ -101,7 +101,7 @@ Forks need two guards because a fork inherits the parent's context, including an
 
 - Delete `plugins/cdocs/rules/overseers.md`.
 - Add one bullet to "CDocs Tool Use Guidance › Tools and Skills":
-  "Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record` with the Skill tool, and again after a compaction when its text is not in context."
+  "Top-level session only (not started by the Agent tool, and not a fork): invoke `/cdocs:chat-record`, and again after a compaction when its text is not in context."
 
 > NOTE(opus/oversee-workstream-skill): Following r3, the overseer dropped a "plus `/cdocs:oversee-workstream` when leading a loop" clause from this bullet, since loop skills load it themselves; the maintainer may restore it.
 
@@ -111,7 +111,7 @@ No other rule text changes, and no rule file is added.
 
 Each loop skill gets one line at the point where it enters overseer mode:
 
-> Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
+> Before dispatching, invoke `/cdocs:oversee-workstream` (skip if its text is already in context).
 
 | File | Anchor | Change |
 |---|---|---|
@@ -121,7 +121,7 @@ Each loop skill gets one line at the point where it enters overseer mode:
 | `skills/oversee-many/SKILL.md` | line 12, "per "CDocs Overseer Rules"" | replace with the line |
 | `skills/ablate/SKILL.md` | line 20, "The canonical discipline is …; the inline floor:" | replace the rule reference with the line; keep the ablation-specific bullets |
 | `skills/ablate/SKILL.md` | line 290, Links | "Overseer discipline: `/cdocs:oversee-workstream`." |
-| `skills/implement/SKILL.md` | line 19, top-level mode | "a thin lead: invoke `/cdocs:oversee-workstream` with the Skill tool before dispatching" |
+| `skills/implement/SKILL.md` | line 19, top-level mode | "a thin lead: invoke `/cdocs:oversee-workstream` before dispatching" |
 | `skills/propose/SKILL.md` | line 144, author checklist, top-level mode | same wording as implement |
 
 The "skip if" clause keeps full-send from loading the skill three times: once itself, then again for each of the two loops it composes.
