@@ -120,11 +120,13 @@ req=<requested timeout s, default 30>; T=$(( req > 570 ? 570 : req )); I=<interv
 [ "$req" -gt 570 ] && echo "timeout capped: asked ${req}s, used 570s (Bash tool limit 600s)"
 start_s=$SECONDS; sessions=(<name1> <name2>)
 while :; do
-  declare -A v=(); same=1; first=
+  declare -A v=(); same=1; firstiter=1; first=
   for s in "${sessions[@]}"; do
-    v[$s]=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>&1 | grep -v -e '^###' -e '^[[:space:]]*$' | head -n 1)
-    [ -z "$first" ] && first=${v[$s]}
-    [ "${v[$s]}" != "$first" ] && same=0
+    raw=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>&1); rc=$?
+    v[$s]=$(printf '%s\n' "$raw" | grep -v -e '^###' -e '^[[:space:]]*$' | head -n 1)
+    [ "$rc" -ne 0 ] || [ -z "${v[$s]}" ] && same=0
+    if [ "$firstiter" = 1 ]; then first=${v[$s]}; firstiter=0
+    elif [ "${v[$s]}" != "$first" ]; then same=0; fi
   done
   [ -n "$expected" ] && [ "$first" != "\"$expected\"" ] && same=0
   el=$((SECONDS - start_s))
@@ -135,6 +137,7 @@ done
 for s in "${sessions[@]}"; do echo "last-seen $s: ${v[$s]}"; done
 ```
 
+An eval error is never agreement: a nonzero exit or no output from any session makes that iteration diverge, even when every session prints the same error.
 `--raw eval` prints each value as one JSON-encoded line (a string arrives quoted, `"hello"`), which is why `expected` is compared with quotes added; keep expected values to plain text without quotes or backslashes.
 A timeout is divergence, never success: `converged: no, timed out at <n>s; last-seen <session>: <state>` with one `last-seen` per session.
 If a poll value is a dead-session error, re-open per Sessions (outside the loop) and re-run the poll once with the time remaining.
@@ -161,7 +164,7 @@ Truncated: none | <what was omitted>; see: <path>
   The state is always exactly one of `opened`, `reused`, `reopened`.
 - `Sessions` lines: `opened` = not live at dispatch start, or closed first because fresh sessions were asked for; `reused` = live at dispatch start; `reopened` = died during this dispatch and was re-opened empty.
   A session that was re-opened is `reopened` even if it started as `opened` or `reused`.
-- `Facts` always include `cli: <abs command> (<version from --version>, global | project-local)` (which Setup rule resolved it), `config: <abs path> | none`, and `scratch: <$out>`.
+- `Facts` always include `cli: <abs command> (<version>, global | project-local)`, literally that shape with no narration, `config: <abs path> | none`, and `scratch: <$out>`.
   Include a `converged` line only when a poll-until was asked for.
 - Never add a field, and never put a verdict, opinion, or recommendation in any field ("looks correct", "matches the design", "the bug is fixed" are all out of bounds).
 - `Truncated`: when a value is too long to quote (a large eval result, a long error), put the full text in a file under `$out` and name it here.
