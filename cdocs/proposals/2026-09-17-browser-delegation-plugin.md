@@ -8,10 +8,10 @@ state: live
 status: review_ready
 tags: [architecture, browser, delegation, mcp, model_tiering, testing]
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-5-5"
-  at: 2026-10-07T18:42:06-07:00
-  round: 5
+  at: 2026-10-07T20:43:06-07:00
+  round: 6
 ---
 
 # Browser Delegation Plugin: a sonnet-tier delegate for browser driving, UI capture, and multi-client sync testing
