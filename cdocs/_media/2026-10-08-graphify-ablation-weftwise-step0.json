@@ -1,0 +1,9 @@
+{
+  "base_commit": "99475534ce561b04eabbff362367e7c867d799da",
+  "task_prompt": "A change alters the value type of the most-imported atom exported by packages/weft/src/lib/mounts/atoms.ts. In ANSWER.md, list every file and symbol that must change or be re-verified (direct importers, consumers reached through hooks and re-exports, tests, and runtime subscribers), one line of reason each.",
+  "arm_model": "sonnet",
+  "evaluator_model": "opus",
+  "tool": "cli:(^|[ /])(cdocs-)?graphify (query|explain|path|affected|update) ",
+  "tool_set_diff": "Prompt-level, not allowlist (CLI on shared PATH cannot be withheld). Assisted adds: 'graphify_base_query: \"how do mount atoms flow through hooks and tabs, palette, and editor settings consumers\"' + 'Run it via /cdocs:graphify first.' Unassisted adds: 'Do not run graphify or cdocs-graphify.' Withhold verified post-hoc by detect-usage=unused on unassisted transcript.",
+  "graphify_graph_mtime_before": "2026-10-08 10:46:05.603399155 -0700"
+}

@@ -1,0 +1,40 @@
+{
+  "context_gap": 1,
+  "qualitative": "Both arms identified currentDocumentRefAtom and recovered essentially the same grep-derived core (about 27 code importers, the layout facade source, the store.sub mirror, derived tab/selection/metadata atoms, and the same test and e2e set), so the core blast radius was driven by grep in both arms, not graphify. A's graphify base query (truncated to 51 of 942 nodes, 3 of them _archive/) contributed only marginal tail entries: lib/tabs/list_ops.ts, lib/tabs/types.ts/TabDescriptor, and the atoms.ts:350 runtime-coupling line appear in A's transcript only via the graphify output; tab_strip.tsx, active_pane.ts, and tabs/index.ts A got from its own activeTabAtom grep. Graphify also surfaced use_editor_view_pool.ts, document_editor_pane.tsx, and use_palette_results.ts, which A did not use; A instead asserted palette is unaffected, missing the real currentMountIdAtom -> wireLastVisitedMountMirror -> resolvedTargetMountAtom -> palette/create_document.ts chain (B listed that file, though with a wrong reason). A is the more precise answer (0 grep-refuted entries vs 8 for B), while B has slightly broader coverage of pane-slice readers, the DocumentRef type file, and the README. Token cost was near-identical (64.4K vs 65.9K), so graphify neither materially helped nor cost context: a small positive effect.",
+  "per_arm_read": {
+    "A": "Tight, well-structured, line-anchored answer (46 entries) organized by definition/derived atoms/writers/tests, with an explicit 'not affected' section; every entry grep-verifies as a code importer or real semantic coupling. Weaknesses: it omits the DocumentRef type file (mounts/types.ts), the README, and the pane-scoped readers of the same slice (document_editor_pane, avatars, backlink_panel), and it over-confidently declares the palette unaffected despite the last-visited-mount mirror chain into palette/create_document.ts.",
+    "B": "Broader, more exhaustive answer (54 entries) with a good upstream section (layout slice, ops, DocumentRef type), a runtime-subscriber checklist, and docs, plus pane-slice readers. Precision suffers from padding: vite.config.ts, use_mount_index_status.ts, use_palette_results.ts(+test), routes/join.$linkId.tsx, mount_index_status_atom.test.ts, settings_doc.test.ts, and transclusion tests have no verifiable dependency, and some reasons are wrong (palette 'via setCurrentRef'). It misses the activeTabAtom consumer files (tab_strip.tsx, active_pane.ts, tabs/index.ts) and tab helpers (invalidation.ts, list_ops.ts, types.ts)."
+  },
+  "divergent_paths": false,
+  "recall_precision": {
+    "A": {
+      "true_positives": 46,
+      "false_positives": 0,
+      "missed": [
+        "src/lib/mounts/types.ts (DocumentRef type itself)",
+        "src/lib/mounts/README.md (documents {mountId, guid} shape)",
+        "src/components/document_editor_pane.tsx, src/components/avatars.tsx, src/components/backlink_panel.tsx (paneActiveRefAtom readers of the same slice type)",
+        "src/lib/editor/use_editor_view_pool.ts (resolves mount from currentRef)",
+        "src/lib/palette/create_document.ts (via currentMountIdAtom store.sub mirror -> lastVisitedMountIdAtom -> resolvedTargetMountAtom; A explicitly claimed palette unaffected)"
+      ]
+    },
+    "B": {
+      "true_positives": 46,
+      "false_positives": 8,
+      "missed": [
+        "src/components/tabs/tab_strip.tsx (activeTabAtom consumer)",
+        "src/lib/tabs/active_pane.ts (getActivePaneId reads activeTabAtom)",
+        "src/lib/tabs/index.ts (re-exports activeTabAtom)",
+        "src/lib/tabs/invalidation.ts, src/lib/tabs/list_ops.ts, src/lib/tabs/types.ts (DocumentRef/refKeyOf-keyed helpers)"
+      ]
+    },
+    "ground_truth_note": "Ground truth grep-confirmed at base 99475534 in arm-A worktree: currentDocumentRefAtom appears in 43 files under packages/weft/src and e2e, of which 14 are comment-only references (layout/atoms.ts and layout/ops.ts are still real couplings as the facade's source/writer; e2e specs, open_action.ts, document_creation.ts, use_current_document.ts credited as re-verify). Derived-atom chains verified: isDocumentSelectedAtom -> mount_document_tree.tsx; activeTabAtom -> tab_strip/use_tab_activation/active_pane/tabs index; currentMountIdAtom -> last_visited_atoms.ts store.sub -> resolvedTargetMountAtom -> palette/create_document.ts, document_actions.tsx, daily_notes/host.tsx. currentMountIndexStatusAtom has no non-comment consumer. B FPs: vite.config.ts, use_mount_index_status.ts, use_palette_results.ts, routes/join.$linkId.tsx, mount_index_status_atom.test.ts, use_palette_results.test.tsx (mocks only defaultMountAtom/mountListAtom), settings_doc.test.ts (type-only import), transclusion tests. B's pane-slice readers, use_editor_view_pool, and palette/create_document credited as weak TPs. Counts are approximate (entry granularity differs between arms); neither arm listed graphify depth-2 false positives."
+  },
+  "archive_crowding": {
+    "truncated_line_seen": true,
+    "archive_node_lines": 3,
+    "nodes_shown": 51,
+    "note": "Graphify's own ~2000-token budget truncated output to 51 of 942 nodes (BFS depth 2 from 11 start nodes); head -80 did not cut the node list (the '... truncated' footer and RUNTIME COUPLING section were both visible). 3 of 51 NODE lines are _archive/ docs, and 3 of 11 start nodes were _archive/ (Atoms, Consumers of documentListAtom, Flow Diagram), plus other non-code start nodes (docs/style_guide 'Hooks', an e2e editor(), a command-deer test Palette()); crowding by archive was mild, but start-node selection was noisy. No EDGE lines shown, and currentDocumentRefAtom never appeared as a node."
+  },
+  "assisted_extra_graphify_calls": []
+}
