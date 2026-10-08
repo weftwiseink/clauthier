@@ -12,7 +12,8 @@
 # Records are cdocs/_chat/YYYY-MM-DD-<name>-<session_id>.md, or YYYY-MM-DD-<session_id>.md
 # for an unnamed session; <name> is the slug of the transcript's last custom-title.
 #
-# Spec: cdocs/proposals/2026-09-22-chat-record-devlog-management.md ("Script").
+# Spec: cdocs/proposals/2026-09-22-chat-record-devlog-management.md ("Script"), with
+# naming and free-form notes from cdocs/proposals/2026-10-08-chat-record-flexible.md.
 # Hook modes always exit 0, write errors to stderr only, and print nothing to stdout
 # except the Stop block JSON. Agent modes fail loudly (non-zero, one-line stderr).
 # Every write is one `printf >>` of a whole block or line. No state beyond the record.
@@ -82,7 +83,7 @@ session_name() {
 # the payload), or empty.
 transcript_for() {
   local f
-  for f in "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$1".jsonl; do
+  for f in "${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}"/projects/*/"$1".jsonl; do
     [ -f "$f" ] && { printf '%s' "$f"; return 0; }
   done
   return 0
