@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: impl-1 round 2 (rebase over interfacer, F1-F5), then fresh rev-impl-2; stamp decision after perf audit; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: branch at `31cb617` (rebased, F1-F5 fixed); after the perf audit, stamp decision, then one fresh rev-impl-2; weftwise ablation after the container rebuild; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -89,6 +89,7 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | perf-audit (general-purpose, opus) | `cdocs/reports/2026-10-08-graphify-update-performance-audit.md` | 2026-10-08T14:06 | why no-op `update` takes ~11 s at weftwise scale: source read, profile, existing cheaper paths, stamp vs upstream fix |
 | return | rev-impl-1 | `28becc9` (branch) | 2026-10-08T14:25 | revise, `review_proof: confirmed` (floor re-run; stub run from a `git archive` copy of `293f449`; container: copy+update writes only worktree index, `/cdocs/` = 0 cdocs nodes, 488 plugin nodes). Blocking F1: coupling filter misses absolute `graphify-out/` path (subdir query scans `graph.json`). F2 init guard vs wrapper hint; F3 proposal `/cdocs/` NOTE; F4 ablation signature misses `timeout 60 cdocs-graphify`; F5 cut README coupling example. Stamp: none until ablation decides; ~2-line content stamp sketched. Reviewers ran only the handed base query, never loaded the skill |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T14:27 | rebase over interfacer (`70e48fc`), F1-F5; no stamp until perf audit returns |
+| return | impl-1 | `main..31cb617` | 2026-10-08T14:40 | rebased onto main `ebccbcc` cleanly (disjoint hunks; interfacer text and Base query both present); F1-F5 fixed (`a7db3b3`, `19332cb`, `137f8e9`, `f003b09`, `31cb617`); cdocs-graphify 22/22, unit 97, edit-path 17, rules 11, opencode 9, greps 0; wrapper 49 lines. Correction: its Phase 2 smoke test (pre-`bcd1491`) touched the `/var/cache/graphify` dir. Holding rev-impl-2 until the perf audit's stamp decision, to review once |
 
 ## Steering Log
 
