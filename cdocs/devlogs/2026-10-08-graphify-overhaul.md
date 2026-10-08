@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: rev-impl-2 reviewing `a435f16`; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: impl-1 accept-round nits; then maintainer acceptance, land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -50,6 +50,7 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | blocking: per-agent `graphify update` writes the shared index; runtime-coupling guard regressed to caveat-only; overseer-clean check vacuous (dispatcher is a subagent) |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | CLI claims checked in devcontainer; F1-F5 trims |
 | r3 | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | post-acceptance maintainer revision; ablate placement and rfp condition open |
+| impl-2 | impl-1 (warm) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r2.md` (branch) | stamp + ablation (VALID, +1, single trial) |
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r1.md` (branch) | blocking: absolute-path coupling filter; ablation pending weftwise container |
 
 ## Judge Log
@@ -95,6 +96,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | impl-1 (warm, SendMessage) | branch, weftwise container | 2026-10-08T15:07 | Phase 5 ablation on weftwise (`currentDocumentRefAtom`), then the audit's stamp + tests + D4 |
 | return | impl-1 | `31cb617..a435f16` | 2026-10-08T15:35 | Ablation (weftwise, base `99475534`, headless overseer in container, branch plugin copied onto PATH): VALID, context_gap +1, single trial (not a gate); tokens 64,362 vs 65,870; assisted loaded `/cdocs:graphify` (first time) and ran base query 2nd call, never explain/path/affected; assisted wrongly excluded palette chain the unassisted arm found; base query never surfaced `currentDocumentRefAtom` (3 of 11 seeds `_archive/`); shared graph mtime unchanged; overseer transcript graphify `unused`. Decision map literally row 3, adjacent to row 2. Stamp: wrapper 57 lines, 4 new tests (26/26), 4 mutations caught; real graphify skip ~150 ms vs ~700 ms update. Floor green. impl-1 context ~304K |
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r2.md` (branch) | 2026-10-08T15:37 | F1-F5, stamp correctness, rebase survival, ablation reading; re-run floor |
+| return | rev-impl-2 | `f33d939` (branch) | 2026-10-08T16:00 | accept, `review_proof: confirmed`: floor re-run (26/97/17/11/9, greps 0, shellcheck); real graphify skip 168-193 ms clauthier, ~750 ms weftwise; shared cache mtimes unchanged; rebase clean. Non-blocking: HEAD-keyed stamp rebuilds on every commit (~11 s weftwise), option (b) base-commit diff is one line; non-ASCII quotePath; stale text. Ablation: between rows 2 and 3, closer to 2; multi-trial run as follow-up, not a gate (name atom in task, ignore `_archive/`, >=3 trials) |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T16:02 | accept-round: stamp option (b) (overseer call: commit-often rule makes HEAD-keyed stamp rebuild ~every commit), quotePath, stale text, ablation follow-up recorded as future work |
 
 ## Steering Log
 
