@@ -5,12 +5,12 @@ first_authored:
 task_list: cdocs/rules-references
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-10-07T22:03:47-07:00
-  round: 3
+  at: 2026-10-07T22:07:58-07:00
+  round: 4
 tags: [rules, rules_delivery, init, testing, architecture]
 ---
 
