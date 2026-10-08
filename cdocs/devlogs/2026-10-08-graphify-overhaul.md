@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: maintainer to confirm the ablate deferral to weftwise (`1da4f80`), then `implementation_ready`; `/cdocs:iterate` after the interfacer branch lands (shared `reviewer.md`, `iterate/SKILL.md`), in its own worktree; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: prop-1 final pass (drop rfp step, ablate prerequisite on rebuilt `weftwise` container, parallel ordering, `implementation_ready`), then `/cdocs:iterate` in worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -72,6 +72,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | return | rev-3 | `4dffb5d` | 2026-10-08T12:00 | proposal_accepted; renames complete. Non-blocking: F3 ablate task can't discriminate on clauthier (answer greppable in 11 md files; graphify graphs only md headings) so run on weftwise; F5 stub run would miss `cdocs-graphify` (PATH has main checkout's bin, not the branch's); F6 rfp step condition should be "main graph exists"; F4/F7/F1 small. 3 maintainer questions (ablate location, ablate intent, rfp step keep/drop) |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T12:15 | maintainer ablate direction (reuse earlier ablate if it transfers) + r3 F1/F4-F7 |
 | return | prop-1 | `1da4f80` | 2026-10-08T12:25 | earlier ablate = Probe A (`2026-09-18-ablate-e2e-probeA-inject-rules.md`): setup transfers (single-shot, 2 detached worktrees at a pinned commit, sonnet arms, opus evaluator, prompt-withheld arm + `detect-usage`, `ANSWER.md`); task does not (one small file, no clauthier task discriminates). Ablate moved to weftwise: blast radius of the most-imported atom in `packages/weft/src/lib/mounts/atoms.ts` (33 importers); deferred until weftwise's devcontainer has graphify + `.graphifyignore` + main graph. F1/F4-F7 applied; status left `review_ready` |
+| dispatch | weftwise-fs (claude, opus) | weftwise repo devcontainer, `.graphifyignore`, own devlog | 2026-10-08T12:52 | `/cdocs:full-send`: graphify lace feature + rebuild `weftwise` container + verify main graph |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T12:52 | drop rfp step; ablate prerequisite check on weftwise container; parallel ordering; `implementation_ready` |
 
 ## Steering Log
 
@@ -80,5 +82,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 - 2026-10-08T10:25: maintainer: "make sure we aren't including cdocs in any graphify operations as it's quite large." Relayed to the reviser mid-revision.
 - 2026-10-08T11:45: maintainer: "lets go with cdocs:graphify over code-query after all as we're using it for more subcommands than just query"; use "graphify_base_query" instead of seed query and replace `graphify_query` in the Scratchpoint template/docs; "I'm not clear on how cdocs path is being ignored, an ablate seems like a good idea"; "graph-refresh outside our skills is left to consumer for now, except maybe /rfp 'make sure main graphify graph is up to date'". Post-acceptance revision dispatched; fresh review follows.
 - 2026-10-08T12:15: maintainer on r3's ablate questions: "We already did an ablate earlier in the initial workstream. See if that approach transfers to the new usage and use that if so." rfp step: unanswered; overseer default is r3's narrower condition (main graph exists). Dispatched to the warm proposer with r3 F1/F4-F7.
+
+- 2026-10-08T12:50: maintainer: "Have a subagent /full-send addition of graphify lace feature to the weftwise container and have it rebuilt - nothing running there. Kick off the graphify /iterate as well there. The rfp is just an rf we can forget it for now." Weftwise full-send dispatched as its own top-level workstream (devlog in weftwise); rfp refresh step dropped; iterate starts after the proposer's final pass.
 
 - 2026-10-08: maintainer: "Recursive symbol search removes all subtlety graphify could supply. We should probably delete the graphify-scope script entirely"; workstream seed query for `graphify query`, possibly wrapped by a new `/cdocs:code-query` since graphify's skill.md seems bloated; fresh contexts run it themselves.
