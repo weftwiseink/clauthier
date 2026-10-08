@@ -37,6 +37,8 @@ Key skills for workflow composition:
 Formal agents in `plugins/cdocs/agents/` with explicit tool allowlists:
 
 - `reviewer`: structured document reviews (opus).
+- `proposer`: authors or revises a cdocs design proposal with structured sections and implementation phases (no model pin; all tools).
+- `implementer`: implements an accepted cdocs proposal with structured execution and frequent commits (no model pin; all tools).
 - `judge`: meta-assessment of `/cdocs:iterate` loop health (opus; no Edit, Bash, or Task).
 - `triage`: frontmatter analysis, mechanical fixes, and iterate-devlog log-state mapping (sonnet).
 - `nit-fix`: writing-convention enforcement (haiku).
