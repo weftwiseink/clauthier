@@ -77,6 +77,8 @@ has "observe site appended" "$OUT" "RUNTIME COUPLING \(not in the graph\):"
 has "hit is path:line: text" "$OUT" "src/a.ts:1:a.observe\(cb\)"
 CGENV=(env GSTUB_OUT="NODE b [src=src/b.ts loc=L1]"); run query q
 hasnt "no coupling section without a hit" "$OUT" "RUNTIME COUPLING"
+printf '"label": ".observe()",\n' >"$WT/graphify-out/graph.json"; CGENV=(env GSTUB_OUT="Graph: $WT/graphify-out/graph.json"); run query q
+hasnt "absolute index path is not scanned" "$OUT" "RUNTIME COUPLING"
 
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

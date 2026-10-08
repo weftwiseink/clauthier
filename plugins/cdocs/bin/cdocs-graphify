@@ -41,7 +41,7 @@ GRAPHIFY_OUT="$wt_out" graphify "$@" --graph "$wt_out/graph.json" >"$res"
 rc=$?
 cat "$res"
 # TODO(claude-opus-5-5/cdocs/graphify-overhaul): take the pattern list from the consuming repo.
-hits=$(cd "$top" && grep -oE '[A-Za-z0-9_./@+-]+\.[A-Za-z0-9]+' "$res" | grep -v '^graphify-out/' |
+hits=$(cd "$top" && grep -oE '[A-Za-z0-9_./@+-]+\.[A-Za-z0-9]+' "$res" | grep -v 'graphify-out/' |
   sort -u | while IFS= read -r f; do
     [ -f "$f" ] && grep -nE '\.(observe|subscribe)\(' "$f" /dev/null
   done | head -n 30)
