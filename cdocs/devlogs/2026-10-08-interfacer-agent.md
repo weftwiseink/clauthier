@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: impl-2 revising agent + proposal per the context-preservation report (fresh dispatch per check naming the instance dir, `notes.md`, no SendMessage or sleeps), canary re-run headless in container; then fresh impl review, then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
+- next_steps: rev-impl-2 reviewing `15eabe6`; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -78,6 +78,8 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | report (general-purpose, opus) | `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` | 2026-10-08T12:12 | maintainer-requested options report |
 | return | report | `2136ce9` | 2026-10-08T13:05 | on 2.1.293 a caller that ends its turn misses its child's reply only headless (`-p`/SDK); interactive callers are woken (2 probes). SendMessage resumes always async; foreground dispatch (`run_in_background: false`) exists for headless callers. Warm agent saves ~1-2 tool rounds per check. Recommendation: drop the warm agent; instance dir + `notes.md` persists, fresh dispatch per check incl. tear down |
 | dispatch | impl-2 (cdocs:implementer, opus, fresh) | branch | 2026-10-08T13:08 | apply report recommendation to agent, reviewer/iterate/skills/README text, proposal D5/D6/durable; re-run canary headless in container |
+| return | impl-2 | `7759b07..15eabe6` | 2026-10-08T13:25 | agent 70 lines; fresh dispatch per check (tear down too) naming the instance dir, `notes.md` read first, `run_in_background: false` led in description; one-clause edits to reviewer/iterate/implement/AGENTS; proposal D5/D6/durable rewritten, one NOTE to report. Container headless canary run 6 failed ("foreground where offered, else end turn" read as optional; checks 02/03 never ran), reworded `7be77de`; run 7 all criteria pass except screenshots (no browser). Interactive-equivalent host run passes (general-purpose stand-in, async + woken). rules 11/11, opencode 9/9. Unverified: browser path under revision, real agent type interactive, SDK |
+| dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r2.md` (branch) | 2026-10-08T13:27 | must re-run container floor; host browser screenshot if feasible |
 
 ## Steering Log
 
