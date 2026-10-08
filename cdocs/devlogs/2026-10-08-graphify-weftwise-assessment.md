@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: rev-impl-1 reviewing the assessment (re-runs the floor).
+- next_steps: impl-1 revising per impl r1 (warm, ~255K); then fresh rev-impl-2.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -34,13 +34,15 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): fresh-worktree stamp derived from the copied graph's `built_at_commit`; scratch prototype.
   - decision (overseer call): apply r2 candidate trims (graph-identity check for non-graph flags, one output-stage row, `.claude/`+`AGENTS.md` folded into all-md-out).
   - decision (overseer call): drop `graphify watch` rather than install watchdog; audit shows it is the same full rebuild.
+  - decision (overseer call): `source` export condition measured fully but kept a report recommendation, not committed to weftwise main (changes package metadata the app build reads).
+  - decision (overseer call): upstream `dist/` resolution note drafted in the report, filing held for the maintainer.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment-impl.md` | assessment execution | review_ready | per-phase commands, raw numbers, deviations |
+| `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment-impl.md` | assessment execution | revising (impl r1) | per-phase commands, raw numbers, deviations |
 
 ## Iterate Brief (Turn 0)
 
@@ -54,6 +56,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment.md` | md scope inverted, `GRAPHIFY_OUT` hazard, `--force` wrong, post-edit shape, background refresh missing |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 3 pre-dispatch fixes + trims |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | `dist/` resolution gap + `source` condition fix; 39-edge misattribution; Q12 regrade |
 
 ## Judge Log
 
@@ -78,6 +81,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | impl-1 (cdocs:implementer, opus) | clauthier report + impl sub-devlog on main; weftwise `.graphifyignore` on main; throwaway `gfy-assess` worktree | 2026-10-08T20:35 | iterate round 1, all phases |
 | return | impl-1 | clauthier `88b959f..af3d6d8`; weftwise `2791713d` (unpushed) | 2026-10-08T21:15 | floor passes. Verdict: startup agents and reviewers use now; implementers mid-edit wait (blocking refresh 11.84 s > 10 s bar) unless disciplined or background refresh (0.5 s, stale for just-edited code, missed new edge 3/3). Nodes/edges 16,129/31,272 to 9,731/25,121, no kept-code edge lost, no `--force`. Cleaned: full 9.60 s, structural post-edit 11.84 s, body-only 9.03 s, no-op 0.63 s, commit-only 0.54 s, fresh worktree 11.88 s, queries 0.23-0.50 s. Candidates: md out 0.1-0.3 s; tests out 6.27 s but loses test blast radius; `--no-cluster` 8.18 s but writes raw extraction (fails identity, Q8 miss to misleading); workers no gain; `extract --code-only` 3.63 s but -56 `calls`; kept stamp fresh worktree 11.88 to 0.93 s. Usefulness 7 hit / 4 partial / 2 miss / 1 misleading of 14; ~half the commands and tokens of grep. Deviations: stray `explain --help` wrote `cache/last_query_stamp` to main cache; `*.scss.d.ts` ignore; fresh worktree +39 `imports_from` edges forces topology change; JSON candidate degenerate; `.rebuild.lock` check. Unverified: 3 startup questions, single judge, background refresh during editor writes, kept stamp vs dirty-tree main build; host load 0.9-4.3. Maintainer worktree HEADs unchanged |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | 2026-10-08T21:17 | impl round 1; must re-run floor; spot-check grading |
+| return | rev-impl-1 | `57a6f66` | 2026-10-08T21:35 | revise, `review_proof: confirmed` (floor within 2%, counts exact, collateral clean). Blocking: 39-edge diff is `packages/loro-repo/dist/` presence (gitignored, main only), not build path, kept stamp safe; graph has 0 edges weft to `loro-repo/src` (31 importers) because import resolves via `exports` to unextracted `dist/`, adding `"source": "./src/index.ts"` export condition added 204 edges and turned Q7 misleading to hit; Q12 miss to partial (7/5/1/1). Non-blocking: `--no-cluster` raw write is documented, lock-file existence check breaks after a killed update, stray write was an expired freshness marker, build-path text repeated 5x. 2 maintainer questions (`source` disposition, upstream note timing) |
+| dispatch | impl-1 (warm, SendMessage) | report, impl devlog; throwaway weftwise worktree | 2026-10-08T21:37 | r1 revisions; measure `source` condition fully (deltas, re-grade, timing, other packages, toolchain honouring `source`); report recommendation only; upstream note drafted not filed; re-run floor |
 
 ## Steering Log
 
