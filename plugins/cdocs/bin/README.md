@@ -55,7 +55,7 @@ chat-record: no cdocs/_chat/ between /some/dir and the git toplevel (run /cdocs:
 A real `Stop` block, from a turn with no note yet:
 
 ```json
-{"decision":"block","reason":"No chat-record entry for this turn (record: cdocs/_chat/2026-10-07-7f3a9c21-....md). Run, then finish:\nchat-record note --as <your model id> <<'EOF'\n- <the most important thing you are telling the user>\nEOF"}
+{"decision":"block","reason":"No chat-record entry for this turn (record: cdocs/_chat/2026-10-07-7f3a9c21-....md). See /cdocs:chat-record. Run, then finish:\nchat-record note --as <your model id> <<'EOF'\n- <the most important thing you are telling the user>\nEOF"}
 ```
 
 ### More
