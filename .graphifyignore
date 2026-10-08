@@ -1,2 +1,3 @@
-# graphify exclusions (gitignore syntax). cdocs/ is prose agents read directly.
-cdocs/
+# graphify exclusions (gitignore syntax). /cdocs/ is prose agents read directly; the leading
+# slash keeps plugins/cdocs/ in the graph.
+/cdocs/
