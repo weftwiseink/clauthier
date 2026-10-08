@@ -63,6 +63,54 @@ no-graphify
 
 Weftwise `main` at `2791713d`, clean.
 
+### Setup
+
+Container scratch `/tmp/gfy-value/`: the wrapper (copied from clauthier `main`), `gcount.py` and `srcpatch.py` (extracted verbatim from the report floor), and `src-graph/`, a plain copy of `/var/cache/graphify-weftwise` used as `-e GRAPHIFY_OUT` (the safety net, per review r4 N5; no separate scratch `source` build).
+
+Worktree pair `gfy-value-graph` / `gfy-value-grep`, both `git worktree add --detach` at `2791713d` from the container; `srcpatch.py` on `loro-repo`, `loro-multiplex`, `command-deer` (3 files, +16 lines); main's `.graphifyignore` copied (identical to the committed one); `cdocs/` and `_archive/` deleted (3,825 tracked files deleted, 0 untracked).
+
+Warm-up (`cdocs-graphify explain mergeBranch` with `-e GRAPHIFY_OUT=/tmp/gfy-value/src-graph`): 11.79 s, full `update` in the worktree.
+
+```
+nodes 9744 edges 25774
+prefix _archive/ 0 / cdocs/ 0 / docs/references/ 0; md_nodes 654
+imports=6858 imports_from=3873 calls=4812 re_exports=1358 dynamic_import=36 references=485 method=1244 implements=33
+xpkg {'loro-repo->loro-multiplex': 72, 'weft->loro-multiplex': 347, 'weft->loro-repo': 204}
+GRAPH_REPORT.md 1,697 lines
+```
+
+Matches the proposal's 9,744 / 25,774 and the report's floor step 6.
+
+> WARN(claude-opus-5-5/cdocs/graphify-weftwise-assessment): wrapper finding, not fixed (clauthier code is out of scope).
+> The worktree's `.stamp` is `2791713d... 8b137891...`, the hash of an empty change set, although three `package.json` files are modified.
+> Cause: the wrapper filters ignored paths with `grep -vxF -e "$ign"`; with 3,825 ignored deletions, `$ign` exceeds the kernel's single-argument limit (`Argument list too long`), the error is swallowed by `2>/dev/null`, and the change list comes out empty.
+> Effect: in a worktree whose ignored changes against the stamp base run to roughly 128 KB of path names, every later edit hashes to the same stamp, so the wrapper never refreshes: silent staleness.
+> Harmless for Phase 4 (arms do not edit, and the warm-up built from the real tree, verified by the 9,744 count).
+> Realistic trigger: a branch with thousands of `cdocs/` or other ignored-path changes since its stamp base. Fix: feed the ignore list through a file (`grep -vxF -f`).
+
+### Feature inventory
+
+From `graphify --help` (subcommand `--help` is not supported: `query --help` runs a query for "--help") and probes on the `gfy-value-graph` index.
+
+| Feature | Arm use | Notes |
+|---|---|---|
+| `explain X` (wrapper or raw) | definition, every in/out neighbour with relation and line | ambiguous names list ids; `path::symbol` works; path suffixes do not |
+| `affected X --depth N --relation R` | reverse dependents, transitive | default depth 2, 14 default relations; works on files and symbols |
+| `path A B [--undirected]` | shortest edge path | "No directed path" suggests `--undirected` |
+| `query "..." --dfs --context C --budget N` | BFS from best-matching names | contexts in this graph: `import` 10,732, `call` 4,813, `re-export` 1,096, `export` 262, `parameter_type` 212, `return_type` 97, `field` 94, `generic_arg` 78, `collection` 76, `argument` 59, `type` 34 |
+| raw `god-nodes --top N` | hubs | wrapper rejects it |
+| `GRAPH_REPORT.md` God Nodes, Surprising Connections | orientation | 10 hubs, 5 surprising edges |
+| `GRAPH_REPORT.md` Import Cycles | cycles lookup | 14 cycles of 3-5 files, all in `packages/weft/src` |
+| `GRAPH_REPORT.md` Communities (376, 45 thin omitted) | clusters | labels are hub file/symbol names (`geometry.ts`, `loadCanvasLoroDoc`) |
+| `GRAPH_REPORT.md` Knowledge Gaps | dead-code hint | 2,494 isolated nodes, led by `package.json` keys: noisy |
+| `GRAPH_REPORT.md` Suggested Questions | none | generic betweenness/cohesion prompts |
+| `graph.json` scripting (host `python3`/`jq`/`node`) | in-degree, custom traversals | flagged when used |
+| `tree`, `export callflow-html` | unavailable | HTML only |
+| `serve.py` MCP tools | unavailable | `mcp` not installed |
+| `graphify label`, `extract --backend` (LLM) | out of scope | no-LLM config (overseer call) |
+
+Card: `scratchpad/p4/card.md` (about 800 words), copied verbatim into each graph arm prompt with `{WT}` filled in.
+
 ## Changes Made
 
 | File | Description |
