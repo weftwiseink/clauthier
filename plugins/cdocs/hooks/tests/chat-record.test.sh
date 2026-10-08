@@ -93,10 +93,11 @@ payload() { # payload <cwd> [jq-args...] <filter-extension>
   local cwd="$1"; shift
   jq -cn --arg sid "$SID" --arg cwd "$cwd" "$@"
 }
-ups() { # ups <cwd> <prompt> [transcript] [extra-env...] -> stdout of the hook
+ups() { # ups <cwd> <prompt> [transcript] [extra-env...] -> stdout of the hook; UPS_TITLE sets session_title
   local cwd="$1" prompt="$2" tr="${3:-/nonexistent}"; shift 3 2>/dev/null || shift $#
-  jq -cn --arg sid "$SID" --arg cwd "$cwd" --arg p "$prompt" --arg tr "$tr" \
-    '{session_id: $sid, cwd: $cwd, prompt: $p, transcript_path: $tr, hook_event_name: "UserPromptSubmit"}' \
+  jq -cn --arg sid "$SID" --arg cwd "$cwd" --arg p "$prompt" --arg tr "$tr" --arg st "${UPS_TITLE:-}" \
+    '{session_id: $sid, cwd: $cwd, prompt: $p, transcript_path: $tr, hook_event_name: "UserPromptSubmit"}
+     + (if $st == "" then {} else {session_title: $st} end)' \
     | env "$@" "$CR" UserPromptSubmit
 }
 stop() { # stop <cwd> <stop_hook_active> [permission_mode] [transcript] [extra-env...]
@@ -223,6 +224,20 @@ unit_suite() {
   check "slug: ai-title alone -> unnamed" "$(name_of '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" ""
   P="$U/name/missing"; newproj "$P"; ups "$P" "x" "$U/name/missing.jsonl" >/dev/null
   has "no transcript: unnamed record <date>-<sid>.md" "$(ls "$P/cdocs/_chat")" "^$D-$SID\.md\$"
+
+  section "unit: first prompt of a named session (transcript not yet written)"
+  P="$U/firstname"; newproj "$P"
+  local FC="$U/cfg-first"; mkdir -p "$FC/projects/p"; local FT="$FC/projects/p/$SID.jsonl"
+  UPS_TITLE="First Name" ups "$P" "one" "$FT" >/dev/null
+  check "no transcript yet: UPS names the record from session_title" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" \
+    "$D-first-name-$SID.md"
+  titles "$FT" "First Name"
+  echo "- one" | CLAUDE_CONFIG_DIR="$FC" note "$P" --as tester; stop "$P" false default "$FT" >/dev/null
+  check "note and Stop join the same record" "$(markers "$P/cdocs/_chat/$D-first-name-$SID.md")|$(ls "$P/cdocs/_chat" | wc -l | tr -d ' ')" \
+    "U A:tester S:first-name|1"
+  P="$U/firstname2"; newproj "$P"; : > "$U/firstname2.jsonl"
+  UPS_TITLE="Auto Title" ups "$P" "one" "$U/firstname2.jsonl" >/dev/null
+  check "transcript exists: session_title ignored, transcript decides" "$(ls "$P/cdocs/_chat" | paste -sd' ' -)" "$D-$SID.md"
 
   section "unit: rename starts a new record; renaming back resumes"
   local RC="$U/cfg-rename" TR

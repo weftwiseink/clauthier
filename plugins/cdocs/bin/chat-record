@@ -71,12 +71,17 @@ activate() {
   done
 }
 
+# slug <title>: lowercase, runs outside [a-z0-9] to one '-', trimmed, at most 64 characters.
+slug() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' \
+    | sed -E 's/^-+//; s/-+$//' | cut -c1-64 | sed -E 's/-+$//'
+}
+
 # session_name <transcript>: slug of the last custom-title (/rename, --name), or empty.
 # ai-title lines are auto-generated, not the session name, and are ignored.
 session_name() {
   [ -n "$1" ] && [ -r "$1" ] || return 0
-  grep '"type":"custom-title"' "$1" 2>/dev/null | tail -n 1 | jq -r '.customTitle // ""' 2>/dev/null \
-    | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed -E 's/^-+//; s/-+$//' | cut -c1-64 | sed -E 's/-+$//'
+  slug "$(grep '"type":"custom-title"' "$1" 2>/dev/null | tail -n 1 | jq -r '.customTitle // ""' 2>/dev/null)"
 }
 
 # transcript_for <sid>: the session's transcript, for agent modes (the hooks get theirs in
@@ -114,7 +119,7 @@ die() { echo "chat-record: $*" >&2; exit 1; }
 # --- hook modes ------------------------------------------------------------------------
 
 hook_main() {
-  local input meta agent_id session_id cwd stop_hook_active permission_mode transcript_path
+  local input meta agent_id session_id cwd stop_hook_active permission_mode transcript_path title
   input="$(cat)" # drain stdin first, so an early exit never breaks the harness's pipe
   [ "${CDOCS_CHAT_RECORD:-}" = "off" ] && return 0
   command -v jq >/dev/null 2>&1 || return 0
@@ -123,26 +128,26 @@ hook_main() {
   meta="$(printf '%s' "$input" | jq -r '[
       (.agent_id // ""), (.session_id // ""), (.cwd // ""),
       ((.stop_hook_active // false) | tostring), (.permission_mode // ""),
-      (.transcript_path // "")
+      (.transcript_path // ""), (.session_title // "")
     ] | @sh' 2>/dev/null)" || { echo "chat-record: unparseable $MODE payload" >&2; return 0; }
   [ -n "$meta" ] || { echo "chat-record: empty $MODE payload" >&2; return 0; } # set -u below
   local -a f
   eval "f=($meta)"
   agent_id="${f[0]}"; session_id="${f[1]}"; cwd="${f[2]}"; stop_hook_active="${f[3]}"
-  permission_mode="${f[4]}"; transcript_path="${f[5]}"
+  permission_mode="${f[4]}"; transcript_path="${f[5]}"; title="${f[6]}"
 
   [ -n "$agent_id" ] && return 0
   valid_sid "$session_id" || { echo "chat-record: missing or invalid session_id" >&2; return 0; }
   activate "${cwd:-$PWD}" || return 0
 
   case "$MODE" in
-    UserPromptSubmit) hook_prompt "$input" "$session_id" "$transcript_path" ;;
+    UserPromptSubmit) hook_prompt "$input" "$session_id" "$transcript_path" "$title" ;;
     Stop) hook_stop "$session_id" "$stop_hook_active" "$permission_mode" "$transcript_path" ;;
   esac
 }
 
 hook_prompt() {
-  local input="$1" sid="$2" transcript="$3" prompt trimmed body file
+  local input="$1" sid="$2" transcript="$3" title="$4" prompt trimmed body name file
   prompt="$(printf '%s' "$input" | jq -r '.prompt // ""')"
   # Harness envelopes (a background agent's completion, injected reminders) are not
   # human input: skip when the first non-blank token is a known harness tag.
@@ -151,7 +156,11 @@ hook_prompt() {
     '<task-notification'* | '<system-reminder'*) return 0 ;;
   esac
   body="$(printf '%s\n' "$prompt" | escape_body)"
-  file="$(record_for "$sid" "$(session_name "$transcript")")"
+  # A new session's first prompt fires before its transcript is written, so a name set at
+  # launch (--name) is only in the payload's session_title; once the transcript exists, it
+  # alone decides, as for note, path, and Stop.
+  if [ -f "$transcript" ]; then name="$(session_name "$transcript")"; else name="$(slug "$title")"; fi
+  file="$(record_for "$sid" "$name")"
   printf '@user: %s\n%s\n\n' "$(now_ts)" "$body" >> "$file" \
     || echo "chat-record: cannot append to $file" >&2
   return 0
