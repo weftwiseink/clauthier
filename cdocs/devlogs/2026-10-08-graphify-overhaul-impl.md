@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-overhaul
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-graphify-overhaul.md
 tags: [graphify, claude_skills]
 ---
@@ -13,7 +13,8 @@ tags: [graphify, claude_skills]
 # Graphify Overhaul Implementation: Devlog
 
 > BLUF: Implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md) in worktree `graphify-overhaul`, rebased on `main`: Phases 1-5 done, the host stub run passes every check, and the weftwise ablation is VALID with `context_gap` +1 (single-shot, not gate-admissible).
-> The wrapper gains the audit's staleness stamp (57 lines): a no-op query skips the about 10 s full rebuild, but the first query after a code edit still costs about 14 s until graphify fixes `update` upstream.
+> The wrapper gains a staleness stamp keyed to a recorded base commit (58 lines): a no-op query or a commit of already-graphed code skips the about 10 s full rebuild, but the first query after a code edit still costs about 14 s until graphify fixes `update` upstream.
+> impl-r2 accepted (`f33d939`); its accept-round items are applied (Round 4).
 > Deviations: the ignore line is `/cdocs/` (an unanchored `cdocs/` drops `plugins/cdocs/`); the stub run and the ablation used headless branch-plugin overseers rather than subagent dispatchers.
 
 ## Objective
@@ -22,13 +23,13 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: overseer's post-accept clauthier devcontainer live run and exclusion check; maintainer reads the ablation's decision-map row (Phase 5, "Weftwise ablation"); upstream graphify issues (Future work).
+- next_steps: none for the implementer; the overseer's post-accept clauthier devcontainer live run and exclusion check; maintainer decisions: `implementation_accepted` and the ablation follow-up (Future work).
 - graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index, stamp the graphed tree, run graphify update, and pass query explain path affected through to graphify"
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`, `plugins/cdocs/skills/graphify/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/SKILL.md` "Base query", `.graphifyignore`, `cdocs/_media/2026-10-08-graphify-ablation-weftwise-scorecard.md`
 - callouts:
   - decision: dispatched mode; the overseer owns the top-level devlog.
   - decision: ignore line is `/cdocs/` (root-anchored), not `cdocs/`; see Phase 2.
-  - decision: staleness stamp added per the coordinator after the perf audit (Round 3).
+  - decision: staleness stamp added per the coordinator after the perf audit (Round 3); keyed to a recorded base commit by the overseer's choice (Round 4).
   - todo: upstream graphify issues for a manifest-gated no-op `update` and cached JS/TS work (Future work).
   - todo: the base query never matched `currentDocumentRefAtom` in the ablation; a refined query naming the atom is the implementer-refinement path the design relies on.
 
@@ -153,6 +154,19 @@ Review: [`2026-10-08-review-of-graphify-overhaul-impl-r1.md`](../reviews/2026-10
 > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): impl-r1 saw `/var/cache/graphify`'s directory mtime at 10:23.
 > That fits this devlog's Phase 2 container smoke test (10:2x, pre-`bcd1491`), whose passthrough inherited `GRAPHIFY_OUT=/var/cache/graphify`; the Phase 2 note checked only `graph.json`'s mtime, which was unchanged.
 
+Floor after round 2:
+
+```
+cdocs-graphify.test.sh exit=0 22 passed, 0 failed
+chat-record.test.sh --unit exit=0 97 passed, 0 failed
+validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
+removal grep hits: 0
+graphify_query hits: 0
+test:rules exit=0 tests 11 pass 11 fail 0
+test:opencode exit=0 tests 9 pass 9 fail 0   (build/cdocs/opencode/skills/graphify/SKILL.md exists)
+cdocs-graphify 49 lines, test 84 lines, shellcheck clean
+```
+
 ### Round 3: weftwise ablation and the staleness stamp
 
 **Weftwise ablation** (container `weftwise`, base `99475534`, at or after the `.graphifyignore` commit `0268293a`; hand-off read from weftwise `cdocs/devlogs/2026-10-08-graphify-devcontainer-feature.md`).
@@ -202,15 +216,6 @@ Prerequisites, checked first: `graphify --version` = 0.9.61; `$GRAPHIFY_OUT` = `
 > WARN(claude-opus-5-5/cdocs/graphify-overhaul): The first query after a code edit still costs a full rebuild, about 14 s at weftwise scale (13.8-14.3 s in the audit), until graphify fixes `update` upstream.
 > Also from the audit: a graphify upgrade does not change the stamp, so a stale graph survives until the next code edit.
 
-### Future work (upstream graphify, from the perf audit, not filed)
-
-1. Gate `update` on its own AST manifest: call `detect_incremental(kind="ast")`, exit early when nothing changed (expected no-op about 0.7 s); the gate must also cover `tsconfig*.json` and `package.json` workspace maps.
-2. Cache per-file JS/TS extraction and `_SymbolResolutionFacts` by content hash, running only the cross-file join each time (about 5 s of the 10 s); depends on [#3326](https://github.com/Graphify-Labs/graphify/issues/3326) splitting the cache-bypass set from the resolution gate.
-3. Make incremental `changed_paths` rebuilds match full rebuilds for TS (they currently drop external-module nodes and import/call edges), then route `update` through them.
-4. Optional `update --no-report` that skips `suggest_questions`, `GRAPH_REPORT.md`, and `graph.html` (about 2-3 s of an edited update).
-
-Once (1) ships, the wrapper's stamp is redundant and can go.
-
 Floor after round 3 (at `15c14c9`):
 
 ```
@@ -224,25 +229,66 @@ test:opencode exit=0 tests 9 pass 9 fail 0
 cdocs-graphify 57 lines, test 91 lines, shellcheck clean
 ```
 
-Floor after round 2:
+### Round 4: impl-r2 accept-round items
+
+Review: [`2026-10-08-review-of-graphify-overhaul-impl-r2.md`](../reviews/2026-10-08-review-of-graphify-overhaul-impl-r2.md) (accept, `review_proof: confirmed`).
+
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): The base-relative stamp is the overseer's choice (impl-r2 finding 2, option b), over the reviewer's recommended text-only fix (a).
+> Rationale: the workflow rules say commit early and often, and the `HEAD`-keyed stamp rebuilt (about 11 s at weftwise scale) on nearly every commit, including commits of already-graphed code and `cdocs/`-only commits.
+
+- **Stamp (`0679dfd`):** the reviewer's version: the stamp records a base commit (its first field, else `HEAD`) and hashes the diff from it, so it identifies the graphed tree's content, not its history.
+  Wrapper 58 lines.
+  New test: committing the graphed edit skips the update (27 checks); a mutation back to a `HEAD`-keyed base fails exactly that check.
+  Cost grows with distance from the base, which stays fixed until a fresh copy resets it (reviewer, weftwise: 22 ms at the base, 130-180 ms at 100-300 commits, 720 ms at 1000).
+- **Non-ASCII names:** `-c core.quotePath=false` on both listing commands, no added lines; ad hoc stub check with `café.ts`: a second edit while dirty now triggers an update.
+- **Real graphify, `clauthier` container, scratch `git archive` copy of `0679dfd` as a fresh repo with its own scratch main graph** (deleted afterwards; `/var/cache/graphify` dir and `graph.json` mtimes unchanged):
+
+  | Step | Time | `update` |
+  |---|---|---|
+  | first call | 669 ms | ran |
+  | unchanged | 154 ms | skipped |
+  | untracked code edit | 684 ms | ran |
+  | unchanged after edit | 146 ms | skipped |
+  | commit of that graphed edit | 140 ms | skipped |
+  | commit of a `cdocs/`-only change | 161 ms | skipped |
+  | code edit after the commits | 702 ms | ran |
+
+- **Stale text (`c8d1846`):** proposal line 35 and D3 drop "on every call"; D4 and the Stamp step describe the base commit, commit-invariance, and the growing cost; the Test Plan matches the suite.
+  This devlog's closing Verification section no longer carries the `bcd1491` floor and records the ablation as run.
+- Floor after round 4:
 
 ```
-cdocs-graphify.test.sh exit=0 22 passed, 0 failed
-chat-record.test.sh --unit exit=0 97 passed, 0 failed
-validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
-removal grep hits: 0
-graphify_query hits: 0
-test:rules exit=0 tests 11 pass 11 fail 0
-test:opencode exit=0 tests 9 pass 9 fail 0   (build/cdocs/opencode/skills/graphify/SKILL.md exists)
-cdocs-graphify 49 lines, test 84 lines, shellcheck clean
+cdocs-graphify.test.sh exit=0 27 passed, 0 failed
+test:rules exit=0 tests 11 pass 11 fail 0 
+test:opencode exit=0 tests 9 pass 9 fail 0 
+shellcheck: clean; cdocs-graphify 58 lines, test 92 lines
 ```
+
+### Future work: weftwise ablation follow-up (pending the maintainer's decision; not run)
+
+From impl-r2 finding 7, which reads the single run as between decision-map rows 2 and 3, closer to 2:
+
+1. Name the atom (`currentDocumentRefAtom`) in both arms' task, so a base query that names it does not hand arm A part of the answer.
+2. Have weftwise's `.graphifyignore` exclude `_archive/` first (needs `update --force`), since 3 of the base query's 11 start nodes were `_archive/` docs.
+3. Run at least 3 trials per arm, once `/cdocs:ablate` supports `--trials>1` (its deferred Phase 3).
+
+### Future work (upstream graphify, from the perf audit, not filed)
+
+1. Gate `update` on its own AST manifest: call `detect_incremental(kind="ast")`, exit early when nothing changed (expected no-op about 0.7 s); the gate must also cover `tsconfig*.json` and `package.json` workspace maps.
+2. Cache per-file JS/TS extraction and `_SymbolResolutionFacts` by content hash, running only the cross-file join each time (about 5 s of the 10 s); depends on [#3326](https://github.com/Graphify-Labs/graphify/issues/3326) splitting the cache-bypass set from the resolution gate.
+3. Make incremental `changed_paths` rebuilds match full rebuilds for TS (they currently drop external-module nodes and import/call edges), then route `update` through them.
+4. Optional `update --no-report` that skips `suggest_questions`, `GRAPH_REPORT.md`, and `graph.html` (about 2-3 s of an edited update).
+
+Once (1) ships, the wrapper's stamp is redundant and can go.
+
+
 
 ## Changes Made
 
 | File | Description |
 |------|-------------|
-| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper with a staleness stamp (57 lines) |
-| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 26-check suite against a graphify stub, bare-repo fixture |
+| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper with a base-relative staleness stamp (58 lines) |
+| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 27-check suite against a graphify stub, bare-repo fixture |
 | `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | deleted |
 | `.github/workflows/cdocs-hooks.yml` | cdocs-graphify step on Linux and macOS; header comments |
 | `plugins/cdocs/bin/README.md` | `## cdocs-graphify` section replaces `## graphify-scope` |
@@ -263,19 +309,8 @@ cdocs-graphify 49 lines, test 84 lines, shellcheck clean
 
 ## Verification
 
-Final floor at `bcd1491`:
-
-```
-cdocs-graphify.test.sh exit=0 21 passed, 0 failed
-chat-record.test.sh --unit exit=0 chat-record tests: 97 passed, 0 failed
-validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
-removal grep hits: 0
-graphify_query hits: 0
-test:rules exit=0 tests 11 pass 11 fail 0
-test:opencode exit=0 tests 8 pass 8 fail 0   (build/cdocs/opencode/skills/graphify/SKILL.md exists)
-.graphifyignore: 1 line: /cdocs/
-cdocs-graphify 49 lines, test 82 lines, shellcheck clean
-```
+Per-round floors and evidence are in Implementation Notes (Phase 5, Rounds 2-4); the latest is the round 4 floor.
 
 Host stub run: primary, secondary, positive control, overseer-clean, and no-op all pass (Phase 5 table).
-Unverified: macOS/BSD and bash 3.2 (CI covers on push; no macOS host here), the clauthier devcontainer live run and exclusion check (post-accept), and the weftwise ablation (prerequisites unmet).
+Weftwise ablation: run, VALID, `context_gap` +1, single-shot and not gate-admissible (Round 3).
+Unverified: macOS/BSD and bash 3.2 (CI covers on push; no macOS host here), and the clauthier devcontainer live run and exclusion check (post-accept, the overseer's).
