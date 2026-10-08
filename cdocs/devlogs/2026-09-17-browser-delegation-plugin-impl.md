@@ -5,14 +5,17 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-09-17-browser-delegation-plugin.md
 tags: [browser, delegation, playwright, implementation]
 ---
 
 # Browser Delegation Plugin: Implementation (impl-1)
 
-> BLUF: In progress. Implements Phases 1-4 of `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` in worktree `browser-delegate`.
+> BLUF: Phases 1-4 of `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` are built and verified with real `@playwright/cli` 0.1.22 sessions on headless Chromium, dispatched through nested `claude -p --plugin-dir` harnesses; Phase 5 is not built.
+> Phase 1: the CLI shares `@playwright/mcp`'s channel resolution (no SIGTRAP at chrome-for-testing 155 in the weftwise image), sessions are isolated and namespaced by workspace, dead sessions error rather than auto-open, a global CLI plus an explicit `--config` is the resolution, the API browser-use tool is GA but not a Claude Code built-in, and subagents inherit MCP tools.
+> Every post-fix report parses, with existing absolute artifact paths whose screenshots show what the Facts claim; `opened`/`reused`/`reopened`, AE and size-mismatch diffs, missing-CLI `FAILED`, a real reviewer leg with `_media` copy, and 2-3 session convergence/divergence all ran for real.
+> Gaps: convergence ran against a scratch SSE relay, not weftwise; the SIGTRAP spike ran in an ephemeral container from the weftwise image, not the live container; no full `/cdocs:iterate` Iteration Log row; the OpenCode build of the two edited cdocs files was not run.
 
 ## Objective
 
@@ -21,12 +24,17 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T21:10:00-07:00
-- now: Phases 1-2 done and verified through a nested `claude -p` harness (see Verification).
-- next: Phase 3 (iterate `confirmed` clause, two `reviewer.md` bullets), then Phase 4 convergence against a scratch sync fixture.
-- important_files: `plugins/browser-delegate/`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
+- as_of: 2026-10-07T21:25:00-07:00
+- now: Phases 1-4 done; devlog `review_ready` for the iterate reviewer.
+- next: review. To re-run: `S=<scratchpad above>`; `cd $S/site && python3 -m http.server 18731 --bind 127.0.0.1 &`; `cd $S/sync && node relay.mjs &`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt>`; `$S/dispatch/parse_report.py $S/dispatch/<tag>/delegate-return.txt`. Both fixture servers and all CLI sessions are stopped.
+- important_files: `plugins/browser-delegate/agents/browser-delegate.md`, `plugins/browser-delegate/README.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
 - callouts:
   - decision: work only in `/var/home/mjr/code/weft/clauthier/browser-delegate`; never merge; proposal status is the overseer's.
+  - decision: convergence verified against a scratch SSE relay, not weftwise (see Implementation Notes > Phase 4).
+  - blocker (for the iterate reviewer): this plugin is not installed in the overseer's session, so a reviewer dispatched there cannot use `browser-delegate:browser-delegate` directly; it needs a nested `claude -p --plugin-dir <worktree>/plugins/browser-delegate` (as here) or an install.
+  - blocker (environment): no global `playwright-cli` and no system Chrome on this host; every run used a scratch-prefix CLI on `PATH` and a config pinning `~/.cache/ms-playwright/chromium_headless_shell-1208` (revision skew vs the CLI's expected 1247, worked in all runs).
+  - todo: OpenCode build of the edited `iterate/SKILL.md` and `reviewer.md` not run (`tsx` from `main/node_modules` cannot resolve deps from the worktree).
+  - todo: Phase 5 items stay deferred (fixer, A2A, browser-use promotion, dashboard port, R1-R6).
 
 ## Plan
 
@@ -93,6 +101,20 @@ All runs used `@playwright/cli@0.1.22` (bundles `playwright-core 1.64.0-alpha-17
   The `cdocs` plugin is disabled in the nested session only because its top-level chat-record rule made the nested *dispatcher* write `cdocs/_chat/<session>.md` into the worktree on d1 (deleted; not a delegate write).
   Driver, extractor, and report parser: `$S/dispatch/run.sh`, `$S/dispatch/extract.py`, `$S/dispatch/parse_report.py`.
 
+### Phase 3
+
+- `iterate/SKILL.md` `confirmed` row gains one parenthetical: "(an artifact produced by a subagent the reviewer dispatched this round counts as its own)".
+- `reviewer.md` gets the two bullets with the proposal's exact final text.
+- No cdocs version bump and no rules-marker refresh: `plugins/cdocs/.claude-plugin/plugin.json` `version` is bumped only at release (`cdocs--v{version}` tag flow in `plugins/cdocs/README.md`), and the `/cdocs:init` marker hash covers `rules/*.md` only, which this change does not touch.
+- OpenCode: `scripts/build-opencode.ts` transforms these two cdocs files into OC artifacts; the build was not run here (no `node_modules` in the worktree, and the build scripts are on the avoid list), so the OC output for the changed text is unverified.
+
+### Phase 4
+
+- weftwise was not used: `:1355` (portless) is listening but `https://main.weftwise.localhost:1355/` did not answer `curl`, and syncing through the user's live dev server would write documents into their dev data.
+  Convergence is verified against a **scratch fixture**, `$S/sync/relay.mjs`: a Node `http` server holding last-writer-wins text per doc and pushing it to every subscriber over SSE after a 1.5 s delay, so convergence is a real network round-trip between independent browser sessions.
+  `?muted=1` makes a client skip the SSE subscription, which forces non-convergence.
+- Two agent-body fixes came out of this phase: poll values come from the first meaningful output line (the last line on a dead session is the CLI's usage hint), and the script computes the 570 s cap itself (c3 ran with `T=900` and a 960000 ms Bash timeout before the fix).
+
 > NOTE(opus-5-5/browser-delegation): Deviations from the proposal's agent spec, all driven by Phase 1:
 > the description gains one prompt line (`Optional: config ...`), because a config is required wherever system Chrome is absent and the proposal left its source open ("if so pass it with `--config <abs path>`");
 > project-local resolution is `node_modules/.bin/playwright-cli`, not `npx --no-install playwright cli`, because weftwise's pinned Playwright 1.57 has no `cli` subcommand and `npx` resolution risks a different session namespace;
@@ -109,6 +131,8 @@ All runs used `@playwright/cli@0.1.22` (bundles `playwright-core 1.64.0-alpha-17
 | `plugins/browser-delegate/agents/browser-delegate.md` | The agent. |
 | `plugins/browser-delegate/README.md` | Install, pinning, dispatch, report contract, sessions, multi-client, iterate integration, complements. |
 | `README.md` | Plugin list entry. |
+| `plugins/cdocs/skills/iterate/SKILL.md` | `confirmed` row: reviewer-dispatched subagent artifacts count as the reviewer's own. |
+| `plugins/cdocs/agents/reviewer.md` | Commit rule: cited-screenshot `_media` copy; Bash rule: `mkdir -p cdocs/_media` and that copy excepted. |
 | `cdocs/_media/2026-10-07-browser-delegate-*.png` | Cited evidence screenshots. |
 
 ## Verification
@@ -258,3 +282,38 @@ Browser 'browser-delegate-reopen' closed
 
 **Worktree hygiene:** `git status --short --untracked-files=all` in this worktree was empty after d2, d3, d4, d5, d5b, d6, d6b.
 The CLI's `.playwright-cli/` (14 files) is only in `/tmp/claude-1000/browser-delegate/`.
+
+### Phase 3
+
+Scratch repo `$S/iterrepo` (branch `feat/settings`, project config `.playwright/cli.config.json` gitignored, devlog with a browser floor).
+Before the run, the "implementer's" session `feat-settings-preview` was opened on the same route and given `localStorage.implmarker = "impl-was-here"`.
+Nested run p3 (`09623f41`, $0.53): `claude -p --model sonnet --plugin-dir <worktree>/plugins/cdocs --plugin-dir <worktree>/plugins/browser-delegate ...`, prompted as the iterate overseer at Turn 1.b to dispatch `cdocs:reviewer` (opus) and name `browser-delegate:browser-delegate` as the available browser tooling (no session-naming or copy instructions in the prompt).
+
+- Reviewer dispatched the delegate on `feat-settings-review-viewer` (`<branch>-review-<role>`), fresh; inlined report line: `Sessions: feat-settings-review-viewer (role: viewer, route: http://127.0.0.1:18731/, opened)`.
+- The review inlines every report line except `Truncated` (Sessions, Status, both Artifacts, AE score, all Facts) plus its own description of the screenshot and snapshot.
+- Reviewer Bash: `mkdir -p cdocs/_media && cp -n .../feat-settings-review-viewer-full.png cdocs/_media/2026-10-07-review-of-settings-theme-impl-settings-panel.png && cmp ...`; my `cmp` of the committed copy against the scratch source: identical.
+- Embedded as `![...](../_media/2026-10-07-review-of-settings-theme-impl-settings-panel.png)` with caption `Source scratch path: /tmp/claude-1000/browser-delegate/run.xJpiQM/feat-settings-review-viewer-full.png`, a path in the inlined `Artifacts` line.
+- Commit `40e2cb3` (by exact paths): the review, the `_media` PNG, and the devlog's `last_reviewed`; the uncited snapshot was not copied; no pre-existing `_media` file existed or changed; `git status` clean afterwards.
+- Implementer session after the review: `feat-settings-preview` still listed, `implmarker` still `"impl-was-here"`; the review session reads `null` for it.
+- Nested overseer's answer: `review_proof: confirmed` ("re-ran the floor itself in a fresh `feat-settings-review-viewer` session ... cited its own artifacts").
+  The reviewer's verdict was Revise for an unrelated, correct reason (the devlog's `site/index.html` is not tracked in that repo).
+
+Not run: a full `/cdocs:iterate` loop writing an Iteration Log row; the round above is the reviewer leg with a nested overseer stating the row value.
+
+### Phase 4
+
+| Run | Sessions | Setup | Result (parser) | Cost |
+|---|---|---|---|---|
+| c1 (`26e6fee5`) | sharer, sharee | sharer types "converge check one" | both `opened`; `converged: yes after 2s`; only the sharer `fill`ed (transcript), relay state `{"text":"converge check one","rev":1}`: VALID | $0.20 |
+| c2 (`f3d366f5`) | sharer, sharee (`muted=1`), fresh | 12 s timeout | `converged: no, timed out at 12s; last-seen browser-delegate-sharer: "this should not reach the sharee"; last-seen browser-delegate-sharee: ""`: VALID | $0.18 |
+| c3 (`8eacc0fd`) | sharer, sharee, observer | 900 s requested | converged in 3 s but no cap fact and `T=900`, Bash timeout 960000: bug, fixed in `083c98a` | $0.18 |
+| c3b (`0adcdf96`) | same | same | `timeout capped: asked 900s, used 570s (Bash tool limit 600s)`, Bash timeout 600000, `converged: yes after 2s`, three `opened` lines: VALID | $0.19 |
+| wA (`64299b91`) / wB (`70320afe`) | `probe` from this worktree and from `$S/iterrepo`, run concurrently | each sets localStorage + cookie `who=checkout-<X>` | `browser-delegate-probe` reads `"checkout-A\|who=checkout-A"`, `feat-settings-probe` reads `"checkout-B\|who=checkout-B"`; each one's mid-run `list` shows the other's session live: VALID | $0.19 / $0.11 |
+
+![c1: the sharee received the sharer's text through the relay](../_media/2026-10-07-browser-delegate-impl-c1-sharee-converged.png)
+*Source: `/tmp/claude-1000/browser-delegate/run.kB50vP/browser-delegate-sharee-final.png`. The sharee's editor holds "converge check one" at rev 1 with SSE connected, though only the sharer typed.*
+
+![c2: the muted sharee never received the op](../_media/2026-10-07-browser-delegate-impl-c2-sharee-diverged.png)
+*Source: `/tmp/claude-1000/browser-delegate/run.HunUID/browser-delegate-sharee-viewport.png`. Empty editor, rev 0, not connected, matching the reported divergence.*
+
+**Worktree hygiene:** `git status --short --untracked-files=all` empty in this worktree after every Phase 4 run, and in `$S/iterrepo` after wB.
