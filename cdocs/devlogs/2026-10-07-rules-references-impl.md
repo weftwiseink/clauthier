@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-references
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-07-rules-references.md
 tags: [rules, rules_delivery, init, testing]
 ---
@@ -20,10 +20,14 @@ Implement [`cdocs/proposals/2026-10-07-rules-references.md`](../proposals/2026-1
 
 ## Scratchpoint
 
-- next_steps: phase 2, convert references and agents.
-- important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/agents/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
+- next_steps: phases 1-3 complete and self-verified (Verification steps 1-5); awaiting the loop's review. Release note: phases 2 and 3 must ship in one `plugin.json` bump and one push to `main` (proposal section 3).
+- important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/agents/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `.github/workflows/cdocs-hooks.yml`
 - callouts:
-  - decision: headless runs use scratch projects outside the worktree.
+  - decision: headless runs use scratch projects under the session scratchpad with a sandboxed `CLAUDE_CONFIG_DIR`; no `cdocs/_chat/` files were written into the worktree.
+  - decision: canary gate passed 2/2, so phase 3 shipped (import dropped).
+  - deviation: `nit-fix.md` step 3e (apply any other mechanical convention); see Phase 2.
+  - todo: the CI `rules` job is unexercised until the branch is pushed; `npm ci` + `npm run test:rules` pass locally.
+  - todo: the plugin version is not bumped here; the overseer owns the release.
 
 ## Plan
 
@@ -70,10 +74,38 @@ The mutation runs (renamed heading, added filename, misspelled title) need conve
 > NOTE(@claude-opus-5-5/cdocs/rules-references): Deviation: `nit-fix.md` Processing step 3 gains "e. **Any other MECHANICAL convention** in your working set: apply its fix."
 > Step 3 enumerated only four hardcoded mechanical conventions (sentence-per-line, callouts, punctuation, emoji), so a new mechanical rule section, such as Verification step 4's sentinel, had no instruction to be applied, contradicting "A new `##` section ... extends your enforcement surface".
 
+### Phase 3: drop the import
+
+1. Gate: temporary `canary_check` extra (`ef32858`), run twice, then removed (`07f7e14`). Passed 2/2 (Verification step 2).
+2. `rules_check` with the import (baseline), then `init_rules` writes `# Project` only (`7962291`), then without: identical per-assertion pass/fail.
+3. `init/SKILL.md` step 3: no import; remove an exact legacy line. Read-after-write directive and its two explanatory paragraphs drop "@-imported" (`c2cf4ef`).
+4. `init_real`: seeds the import line, asserts it is gone, runs `check-rule-refs.ts --materialized` (`8a6b781`).
+5. README "Rules Integration" (plus two Known Limitations lines that said "@-imported") and root `CLAUDE.md` item 1.
+
+> NOTE(@claude-opus-5-5/cdocs/rules-references): `init_real` invokes the check as `node --import tsx scripts/check-rule-refs.ts`, not the `tsx` CLI (`7a2b348`).
+> The first `init_real` run failed that one assertion: the `tsx` CLI opens an IPC socket under `TMPDIR`, and the suite's scratch path under a long `TMPDIR` exceeded the unix socket path limit (`address: '.../h/tsx-1000/3304585.pipe'`).
+> The check itself passed on that run's kept project; the re-run is green (step 5).
+
+> NOTE(@claude-opus-5-5/cdocs/rules-references): Not done: the hook's directive text ("@-imported rules are stale") is left as the proposal directs; `inject-rules.ts`, the hash, the marker, `postinstall.js`, init step 5, and the step 6 block shape are unchanged.
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| `scripts/check-rule-refs.ts` | Checker module and CLI (`--materialized <project>`) |
+| `scripts/check-rule-refs.test.ts` | `node:test` assertions 1-5 (11 tests) |
+| `package.json` | `test:rules` script |
+| `.github/workflows/cdocs-hooks.yml` | Blocking `rules` job; `paths` widened; header comment |
+| `plugins/cdocs/agents/{reviewer,proposer,implementer,judge,triage,nit-fix}.md` | Startup blocks become Rules sections; rule-read steps removed; nit-fix report and step 3e |
+| `plugins/cdocs/rules/frontmatter-spec.md` | `:85` heading reference (changes the rule hash) |
+| `plugins/cdocs/skills/{ablate,devlog,full-send,implement,iterate,oversee,propose,propose-revise}/SKILL.md`, `skills/devlog/template.md` | Heading references replace filename links |
+| `plugins/cdocs/skills/{nit_fix,triage}/SKILL.md` | "Reads rules at runtime" claims corrected |
+| `plugins/cdocs/skills/init/SKILL.md` | Step 3: no import, remove legacy line; directive wording |
+| `plugins/cdocs/hooks/tests/chat-record.test.sh` | `init_rules` writes no import; `init_real` inverted assertion and `--materialized`; temporary `canary_check` added and removed |
+| `plugins/cdocs/README.md` | Rules Integration, Agents and rules, Referencing rules |
+| `CLAUDE.md` | Rules Delivery items 1 and 3 |
+| `cdocs/reports/2026-09-19-claude-code-subagents-feature-breakdown.md` | Section 13 NOTE |
+| `scripts/build-opencode.ts` | Comment on the `rules` rewrite branch |
 
 ## Verification
 
@@ -120,3 +152,77 @@ Result (`$S/v/out-import/`): `nit-fix` replaced both *utilize* occurrences (fixt
 Subagent tool calls: nit-fix `Read` (the fixture), `Edit` x2; reviewer `Bash` (`cat` the fixture, `ls -R cdocs`, `git log --stat`, `cat` the plugin's `skills/review/template.md`), `Write` (review), `Read`, `Edit`, `Bash` (commit).
 Neither subagent Read, Globbed, or catted a rule path; the only `rules/cdocs.md` strings in either stream are the haiku parent's dispatch prompt text.
 Reviewer verdict: Revise (on the fixture's content; irrelevant to the probe).
+
+### Step 2: canary gate and `rules_check` comparison
+
+Gate: `chat-record.test.sh --headless --only canary_check` (fixture per proposal section 3: `init_rules`, `CLAUDE.md` = `# Project`, `heliotrope` appended, swapped to `marzipan` on disk before `/compact`).
+**Verdict: pass, 2/2.**
+Run 1 (`$S/h/chat-record-test.3Vo0WR/headless/canary_check.jsonl`):
+
+```
+  info: on-disk canary line: The cdocs canary word is `marzipan`.
+  PASS: a compaction happened
+  info: post-compaction assistant text blocks:
+    The cdocs canary word is `marzipan`. It appears in the CDocs Frontmatter Specification in the project rules loaded into this session.
+    The chat-record note for this turn is written. The cdocs canary word is still `marzipan`.
+  PASS: a post-compaction assistant text block contains marzipan
+compact_boundary: {"trigger":"manual","pre_tokens":26787,"post_tokens":2434}
+results: turn 1 "... 2 + 2 = 4."; turn 3 "... The cdocs canary word is still `marzipan`."
+```
+
+Run 2 (`$S/h/chat-record-test.SmjGPu/headless/canary_check.jsonl`):
+
+```
+  info: on-disk canary line: The cdocs canary word is `marzipan`.
+  PASS: a compaction happened
+  info: post-compaction assistant text blocks:
+    The cdocs canary word is **marzipan**. It appears in the CDocs Frontmatter Specification in the project's CDocs rules.
+    The chat-record note for this turn is appended (exit 0). The canary word is still marzipan.
+  PASS: a post-compaction assistant text block contains marzipan
+```
+
+In both runs the only tool calls are the two `chat-record note` Bash calls (turns 1 and 3); no Read of the rules file, so `marzipan` came from re-injection, not a tool.
+`heliotrope` never appears in either stream (the rule text is in the system prompt, not the stream), and `marzipan` appears only after the boundary.
+"Frontmatter Specification" is correct placement: the line was appended after the last rule in the concatenated file.
+
+`rules_check` per-assertion comparison (`--only rules_check`; with import at `ef32858`'s tree, without at `7962291`):
+
+| Assertion | With import (`$S/rc-import1.log`) | Without (`$S/rc-noimport1.log`) |
+|---|---|---|
+| a compaction happened | PASS | PASS |
+| first post-compaction call runs chat-record path | FAIL | FAIL |
+| devlog (Scratchpoint, handoff) read before acting | FAIL | FAIL |
+| record tail read before acting | FAIL | FAIL |
+| no hook emitted additionalContext | PASS | PASS |
+
+Identical (2 pass, 3 fail each, the 3/5 failure the r2 review reported with the import), so no re-run was needed.
+In both, haiku's first post-compaction call edits `greeter.py` directly.
+
+### Step 3: `/context` in a real-init project
+
+`$S/v/v3.sh`: fresh git project, `CLAUDE.md` seeded with `# Project` + `@.claude/rules/cdocs.md`, real `/cdocs:init` (worktree plugin, haiku, sandboxed config), then `claude -p /context < /dev/null`.
+`CLAUDE.md` after init is `# Project` (import removed). `/context` Memory Files:
+
+```
+| Project | .../v/proj-real/CLAUDE.md | 11 |
+| Project | .../v/proj-real/.claude/rules/cdocs.md | 5k |
+```
+
+`rules/cdocs.md` occurs once in the `/context` output.
+
+### Step 4 without the import (real-init project)
+
+`$S/v/v4.sh real $S/v/proj-real` (same sentinel and fixture as above; artifacts `$S/v/out-real/`).
+`nit-fix` replaced both *utilize* occurrences and reported `Rules used: CDocs Writing Conventions, CDocs Frontmatter Specification`, `[line 18] Prefer Use Over Utilize: "utilize" changed to "use"`.
+Subagent tool calls: nit-fix `Read` (fixture), `Edit` x2; reviewer `Bash` (`cat` fixture, `ls -R cdocs`, `ls` and `cat` of the plugin's `skills/review/template.md`), `Write`, `Edit`, `Bash` (commit).
+No subagent tool input names a `rules/` path; the one `rules/` string in either stream's tool inputs is haiku's top-level dispatch prompt ("per the cdocs writing conventions rule in .claude/rules/cdocs.md").
+Also run as a regression check of the `init_rules` change: `--only top_level_only` 8/0 (the dispatched `cdocs:proposer` read only `skills/propose/template.md` and its own files).
+
+### Step 5: `init_real`
+
+`chat-record.test.sh --headless --only init_real` on the final tree (`$S/init_real2.log`): 9 passed, 0 failed, including `CLAUDE.md rules import line is gone` and `check-rule-refs --materialized passes`.
+The materialized marker hash `a0917da7...` equals the hash of the worktree's rules.
+
+### Final tree
+
+`npm run test:rules` 11/0, `chat-record.test.sh --unit` 95/0, `npm run test:opencode` 8/0; `git status` clean, no `cdocs/_chat/` files from headless runs in the worktree.
