@@ -5,7 +5,7 @@ first_authored:
 task_list: build/opencode-build-fixes
 type: devlog
 state: live
-status: wip
+status: review_ready
 tags: [build, opencode, multi-target]
 ---
 
@@ -35,20 +35,23 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: impl-1 applying accept nits (catch wording, CRLF) and setting proposal implementation_accepted; then final report.
+- next_steps: maintainer decisions: (1) accept omit-`model:` policy or switch to a pinned `anthropic/` map; (2) flip proposal to `implementation_accepted`; (3) merge `opencode-build-fixes` into main; (4) README "model mapping" wording in `plugins/cdocs/README.md`.
 - graphify_query:
-- important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
+- important_files: `scripts/build-opencode.ts`, `scripts/build-opencode.test.ts`, `.github/workflows/opencode-build.yml`, `package.json`, `cdocs/proposals/2026-10-07-opencode-build-fixes.md`
 - callouts:
-  - deferred: model policy (omit vs pin) surfaced to maintainer in final report; overseer chose omit (portability across providers, no bumps).
-  - todo: README "model mapping" phrase in plugins/cdocs/README.md left stale (HR: plugins/ untouched); surface to maintainer.
-  - decision: proposer chose to omit OC `model:` (inherit caller) instead of pinning ids; brief's floor said "current model ids". Reviewer asked to weigh this against tier fidelity.
-  - blocker:
+  - deferred: OC `tools:` -> `permission:` migration for explicit-list agents (OC marks `tools` deprecated; OC has no `write` permission key); `@weftwise/cdocs-opencode` republish is manual (0.1.0 still carries unknown model ids).
+  - todo: watch the first GitHub Actions run (Node 22; only verified locally on Node 26).
+  - decision: omit OC `model:` so subagents inherit the caller's model (provider portability, no routine bumps); supersedes the brief's "current model ids" floor. Cost: haiku/sonnet-tier agents run on the caller's model, judge/reviewer lose opus floor when caller is cheap. Maintainer's call.
+  - decision: unparseable agent frontmatter warns and skips that agent; the test fails on a missing agent.
+  - decision: proposal stays `implementation_wip`; `/cdocs:implement` reserves `implementation_accepted` for the human.
+  - blocker: none. CC setup untouched (`git diff main...HEAD -- plugins/` empty).
+  - note: `tools: ""` maps to all tools (CC semantics unchecked, unused today); model inheritance confirmed only by OC docs, not observed.
 
 ## Workstream Devlogs
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | implementation of the proposal (all phases) | review_ready | resuming implementation or reviewing verification evidence |
+| cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | implementation of the proposal (all phases) | done | resuming implementation or reviewing verification evidence |
 
 ## Iteration Log
 
@@ -82,6 +85,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-impl.md | 2026-10-07T19:08 | implementation review r1 |
 | return | rev-1 (cdocs:reviewer) | review + sub-devlog last_reviewed | 2026-10-07T19:13 | f40c605; accept |
 | dispatch | impl-1 (cdocs:implementer, warm) | scripts/build-opencode.ts, scripts/build-opencode.test.ts, sub-devlog, proposal frontmatter | 2026-10-07T19:14 | accept nits 1-2, finalize statuses |
+| return | impl-1 (cdocs:implementer) | (as dispatched) | 2026-10-07T19:20 | 2656a67, 332e5e9, 5851d7c; build 7 agents, test 8/8, CRLF ok; proposal left implementation_wip pending maintainer |
 
 ## Iterate Brief
 
