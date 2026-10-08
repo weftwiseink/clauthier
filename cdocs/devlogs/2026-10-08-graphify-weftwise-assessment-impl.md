@@ -21,6 +21,7 @@ tags: [graphify, performance, evaluation]
 > Round 2 applied impl review r1 (`cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md`): the 39-edge difference is `dist/` presence, the `source`-condition lever is measured (report recommendation only), Q12 is partial (7/5/1/1), and the floor gains two steps and passes.
 > All three phases ran; the deliverable is `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (`review_ready`), and the floor passes verbatim.
 > Weftwise has one commit (`2791713d`, `.graphifyignore`), and all scratch is removed.
+> Round 3 is a docs-only pass on impl review r2 (accept): BLUF leads with the per-role answer, the report is trimmed (process detail moved here), and four factual nits are fixed; no number or verdict changed.
 > Deviations: one implicit-`GRAPHIFY_OUT` call wrote `cache/last_query_stamp` into the main graph dir (graph untouched); the fresh-worktree row and the `--no-cluster` identity expectation did not hold (both findings).
 
 ## Objective
@@ -29,7 +30,7 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
 
 ## Scratchpoint
 
-- next_steps: round 2 done; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
+- next_steps: round 3 (docs-only, accept-round items of impl review r2) done; awaiting the maintainer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
 - graphify_base_query:
 - important_files: proposal above; `plugins/cdocs/bin/cdocs-graphify`; weftwise `.graphifyignore`; container scratch `/tmp/gfy-assess/`
 - callouts:
@@ -42,7 +43,7 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
   - decision: Phase 2 commands fixed before ground truth returned, run blind (status lines only), retries applied mechanically per the skill.
   - deviation: one raw `graphify explain --help` (inspecting an exit code, ~14:10) ran without an explicit `GRAPHIFY_OUT`, so it wrote `/var/cache/graphify-weftwise/cache/last_query_stamp` (18 bytes, 14:10:23). `graph.json` (14:09:35) and `.graphify_root` (14:09:36) are unchanged since Phase 1, so no restore was needed.
   - finding: `--no-cluster` fails the identity check (raw extraction written); the proposal's expectation that it changes only community attributes was wrong for 0.9.61.
-  - finding: the fresh-worktree row lands on "update with topology change" (11.9 s), not the expected about 9 s, because of the 39-edge build-path difference.
+  - finding: the fresh-worktree row lands on "update with topology change" (11.9 s), not the expected about 9 s, because of the 39-edge difference, which round 2 attributes to `dist/` presence (see the corrected finding above).
   - decision: candidate post-edit timings use raw `update` against a raw `update` baseline (11.14 s), not the wrapper (11.84 s), so the rows compare like with like.
   - decision: the JSON candidate is degenerate by inventory (`.mcp.json` only); one extra all-JSON-out build checks the keep-resolution-inputs assumption instead.
 
@@ -90,7 +91,7 @@ Self-heal check: its index was the pre-clean graph with a matching stamp (`5e446
   Dropped: Rust-side `loro` fork questions (code outside this repo).
 - Ground truth (sonnet, grep/read only, before any graphify output was read): 61 commands, ~21k tokens; all premises ok.
 - Graphify commands were fixed per kind before ground truth returned (entity `explain`, blast `affected`, flow `path`, where/base `query`) and run blind; retries applied mechanically: missing node -> file entity (Q1, Q7), ambiguous -> the id the question names (Q3, Q5), "No directed path" -> the tool's own `--undirected` hint (Q7-Q9).
-- Tally (cleaned graph): hit 7 (Q1 Q2 Q3 Q6 Q11 Q13 Q14), partial 4 (Q4 Q5 Q9 Q10), miss 2 (Q8 Q12), misleading 1 (Q7). Output ~10.7k tokens over 30 commands.
+- Tally (cleaned graph, round 1 grade; Q12 regraded partial in round 2): hit 7 (Q1 Q2 Q3 Q6 Q11 Q13 Q14), partial 4 (Q4 Q5 Q9 Q10), miss 2 (Q8 Q12), misleading 1 (Q7). Output ~10.7k tokens over 30 commands.
 - Pre-clean vs cleaned: entity/blast/path outputs identical up to ordering and the `ref_loro_repo` edge; `query` seeds lost both `_archive/` headings (Q13 `Persistence`, Q14 `5. Nested Liveblocks Rooms`); Q13 gained `activeBranchStorageKey()`.
   Q7's misleading undirected path exists only on the fresh-build lineage (it routes through the `ref_loro_repo` stub); the main-lineage graph returns no path.
 - Remaining md seeds on the cleaned graph: `docs/worktree_development.md` heading (Q12, Q14), `.claude/commands/dogfood-wt.md` heading (Q14).
@@ -174,7 +175,7 @@ The 13 new nodes are the `source` keys in `package.json`.
 The report's "551 cross-package edges" is `weft` into both packages' `src/` (204 + 347); with `loro-repo->loro-multiplex` (72) the total is 623, and the graph delta vs main is +653 edges.
 `extract --code-only` on C vs C's `update`: 41 code nodes and 97 code edges missing (`calls` 56, `imports` 37, `rationale_for` 4); the 17 `dynamic_import` losses from round 1 were resolution edges; all 551 `weft` cross-package edges kept.
 
-Spot check, all 14 question commands, A vs C (raw, `qgraph.sh`): Q7 file-entity directed path succeeds (3 hops via `document_store.ts` and `LoroRepo`): misleading -> hit. Q8 undirected path now `AclDoc <- LoroRepo <- server_repo.ts -> AuthoritativeServer -> .onDocUpdate()`: miss -> partial. Q4 `affected` grows from 6 to 34 entries (still partial: no reason for the guard). Q1 and Q3 gain one cross-package neighbour each; Q14 swaps a test seed for `AclDoc`; seeds otherwise unchanged. Tally on C: 8 hit, 6 partial.
+Spot check, all 14 question commands, A vs C (raw, `qgraph.sh`): Q7 file-entity directed path succeeds (3 hops via `document_store.ts` and `LoroRepo`): misleading -> hit. Q8 undirected path now `AclDoc <- LoroRepo <- server_repo.ts -> AuthoritativeServer -> .onDocUpdate()`: miss -> partial. Q4 `affected` grows from 6 to 35 entries (still partial: no reason for the guard; recorded here as 34, corrected to 35 per impl review r2's count). Q1 and Q3 gain one cross-package neighbour each; Q14 swaps a test seed for `AclDoc`; seeds otherwise unchanged. Tally on C: 8 hit, 6 partial.
 
 ### Report changes
 
@@ -204,3 +205,47 @@ Exit 0.
 - Artifact locations (session scratch, not durable): round 1 container artifacts at `<scratchpad>/gfy/container/gfy-assess-artifacts.tgz` (the host copy survives; only the container copy was removed); round 2 `source.patch`, `timings-src.tsv`, and `src-q/gfy-src-q.tgz` (A and C question outputs) under `<scratchpad>/gfy/`.
   Neither tarball holds the sampler's or the ground-truth agent's raw answers: the report's query table is the only durable record of those.
 
+## Round 3: impl review r2 accept-round items (docs only)
+
+Review: `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` (accept, `review_proof: confirmed`).
+Scope: report and this devlog only; no weftwise change, no measurement, no number or verdict changed; `last_reviewed` kept.
+
+Overseer calls on the review's questions: (1) the BLUF leads with the per-role answer, using the role table's "usable now with discipline" framing for implementers; (2) full trim toward half the pre-floor length.
+
+Report changes:
+- BLUF: per-role answer first (implementers: `explain` before editing, one about-12 s blocking refresh per edit batch, background refresh fast but stale on just-edited code; flexible mid-edit waits for upstream), then the `source` recommendation, then the cleanup result.
+  "No measurable runtime cost" now reads "graphify build cost"; toolchain inertness is qualified "from reading configs (builds/tests not run)".
+- Factual fixes: "all five vite configs, both vitest configs" -> 7 vite and 5 vitest (13 vite/vitest/playwright configs, none sets conditions), per r2's container read; Q4 blast radius 34 -> 35 (table cell and candidate row), per r2's re-run.
+- Each fact stated once: tally (BLUF and Usefulness), `path` scores (reviewer row), background-refresh caveat (BLUF and its subsection; the implementer row and recommendation point to it).
+  The Key Findings usefulness bullet, the `source` paragraph-length Result cell, and "What would change" bullet 4 are gone; Inventory folds into the Key Findings scope bullet.
+- Kept: the floor block (byte-identical), the graded query table (only the Q4 count changed), the upstream draft (verbatim), and every Not Verified item.
+- Words before the floor: 5,265 -> 3,668.
+- `/cdocs:nit_fix` on the trimmed report: clean, no fixes. Not flagged but worth knowing: the report still leans on semicolons (rule: sparingly), left as is to keep this pass from rewording table cells.
+- No-change check: every numeric token in the new report also appears in the pre-trim report, except the corrected Q4 count (35) and the config counts (7, 5, 13); the floor block is byte-identical.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): The roughly-half target (about 2,650 words) was not reached.
+> The kept-verbatim parts (query table about 1,040 words, upstream draft about 180, Not Verified about 130, frontmatter and BLUF about 220) already total about 1,570, so half would leave about 1,100 words for every finding, data table, and recommendation.
+> The remaining prose was cut by about 40%; the next cut would drop data rows (Runtime Matrix, Candidates) rather than repetition.
+
+### Moved from the report
+
+Process detail and supporting counts the trimmed report no longer carries:
+- Stray write (report Context NOTE, also the deviation callout above): it wrote `cache/last_query_stamp`, the freshness marker for graphify's strict hook guard (`GRAPHIFY_HOOK_STRICT_TTL`, default 1800 s), so at most it suppressed a strict-hook block against the main out dir until about 14:40; it has expired.
+- Totals: graphify 30 commands and about 10.7k output tokens; grep 61 commands and about 21k tokens (Phase 2).
+- Pre-clean `built_at_commit` `ab8edd6e` differs from `5e446a84` only under `cdocs/`.
+- Per-source inventory, pre-clean -> cleaned nodes: `packages/` 9,106 -> 9,022 (`*.scss.d.ts` -84); `_archive/` 6,058 -> 0; `docs/` 553 -> 297 (`docs/references/` -256); root files 169; `scripts/` 118; `.claude/` 117; external module stubs 8; total 16,129 / 31,272 -> 9,731 / 25,121 nodes / edges; md 6,913 -> 654.
+- Per extension (cleaned): ts 7,327, tsx 732, json 671, md 654, mjs 152, sh 104, js 66.
+  Largest `packages/*` subtrees: `weft/src` 5,893, `command-deer/src` 557, `weft/e2e` 367, `loro-repo/src` 315, `weft/package.json` 293.
+- Relation counts per relation (Phase 1 above); no edge joins an `.md` node to a non-`.md` node, before or after.
+- Full-build counts on every run: pre-clean 16,129 / 31,311, cleaned 9,731 / 25,160; repeated builds equal as sorted node and edge sets, community attributes included.
+- Pre-clean vs cleaned `query` seeds: Q13 lost `Persistence` (`_archive/`) and gained `activeBranchStorageKey()`; Q14 lost `5. Nested Liveblocks Rooms` (`_archive/`) along with `AclSyncDoc`.
+- `source` candidate: +13 nodes (the `source` keys), +653 edges over main's 25,121; the 623 cross-package edges are `imports` 323, `imports_from` 141, `references` 74, `calls` 71, `re_exports` 13, `implements` 1; timing delta +0.02 s full / +0.14 s post-edit, within load noise.
+  Toolchain detail: Vite defaults `module`, `browser`, `node`, `development|production` plus `import`/`default`; electron builds go through `vite-plugin-electron`; ESLint's node resolver is used for `import/no-default-export` only.
+- md out: Q12's md seed becomes `mapPointBetweenBboxes()` (noise either way); Q14 drops its 2 md seeds.
+- Tests out: 7,045 nodes; Q7's stray path ran through a test file; Q5 resolves without the ambiguity retry.
+- Output stages off: `GRAPHIFY_VIZ_NODE_LIMIT=0` and `GRAPHIFY_NO_BACKUP=1` measure 0.0 s each; `--no-cluster` output lacks `norm_label` and has 27,312 edges; Q8's misleading path is 6 hops through `ref_loro_crdt`.
+- `MAX_WORKERS`: parse parallelism is not the bottleneck past 10 workers.
+- `extract --code-only`: the 59 missing nodes are mostly `package.json` dependency nodes, no extras, the edit itself is captured; with `source`, all 551 `weft` cross-package edges are kept.
+- Background refresh: the prototype prints a one-line staleness note; `update` blocks on `.rebuild.lock` rather than skipping; queries during the refresh are unslowed by the 20-worker update; after the revert `explain gfyProbeSnap` finds a phantom node; graphify unlinks the lock only on a clean release (the kernel drops the flock); `graphify watch` adds a long-lived process per worktree.
+- Kept stamp: format `<built_at_commit> <git hash-object of a single newline>`; the prototype reads `built_at_commit` with `tail -c 300 | grep`; the non-ancestor case rebuilt against its own older ignore, regrowing `_archive/`.
+- `update` log prints only a Gemini tip; labels from `label_communities_by_hub` (`watch.py`).
