@@ -5,15 +5,20 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-graphify-weftwise-assessment.md
 tags: [graphify, evaluation]
 ---
 
 # Graphify Value Beyond Grep: Devlog
 
-> BLUF: Phase 4 implementer sub-devlog for `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md`: two-arm (graph-assisted vs grep-only) sonnet runs on discovery tasks, blind opus judges, scenario map and `/cdocs:graphify` guidance in the report.
-> In progress.
+> BLUF: Phase 4 of `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` is done; the result is the report's "Value Beyond Grep" section.
+> On 8 tallied discovery tasks (plus 2 synthetic-class tasks), a graph-assisted and a grep-only sonnet agent each answered, and a blind opus judge graded them: graph better 0, grep better (reach) 2, mixed 5, tie 1, no efficiency win; unique important items graph 13, grep 19.
+> The graph's own reach is real but narrow: `explain` neighbour lists on blast radius and `god-nodes` on orientation (8 of its 13 unique items came from graph output); it also caused two errors (repo-wide hubs, type-only edges).
+> The cycles row, expected to be a graph win by construction, went to grep (Import Cycles caps at 5 files and counts `import type`).
+> Verdicts stand; the BLUF now says "alongside grep", and the report carries proposed `/cdocs:graphify` guidance (not landed).
+> Floor passes: 9,744 / 25,774 reproduced, two blind re-judges reproduce their outcomes, no collateral; all worktrees and scratch removed.
+> Deviations: older-commit `source` patch widened to every `./dist/`-exporting package, prompts and card delivered as files, y1's grep arm started 70 s late, d1's graph arm used only `graph.json` scripting; wrapper stamp bug found (not fixed).
 
 ## Objective
 
@@ -23,11 +28,16 @@ Seek graphify's best case honestly, keep reach and efficiency apart, and write t
 
 ## Scratchpoint
 
-- next_steps: setup (worktree pair at `2791713d`, warm-up build, counts), feature inventory and card, pilot.
+- next_steps: Phase 4 complete, `review_ready`; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
 - graphify_base_query:
-- important_files: proposal (Phase 4); report; `plugins/cdocs/bin/cdocs-graphify`; scratch `/tmp/gfy-value/` (container and host), `/tmp/gfy-arm-*` (host)
+- important_files: `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (Value Beyond Grep, BLUF, Verdict per Role, Not Verified, floor); this devlog's Judges, Attribution, and Appendix (card, judge prompt, judged answers for re-judging)
 - callouts:
-  - decision: container scratch root `/tmp/gfy-value/` (wrapper copy, scratch copy of the main graph as `-e GRAPHIFY_OUT`); removed at the end.
+  - finding: wrapper stamp bug: `grep -vxF -e "$ign"` hits the kernel argument limit with thousands of ignored changed paths, the error is swallowed, and the stamp hashes an empty change set, so the worktree never refreshes (Setup WARN). Not fixed (clauthier code out of scope).
+  - finding: the wrapper rejects `god-nodes`, the graph's best orientation feature.
+  - decision: d1's graph arm (only `graph.json` scripting, no CLI call) counted as using the graph, not rerun.
+  - decision: at older commits every `./dist/`-exporting workspace package got the `source` condition (Leak check NOTE).
+  - decision: scratch scripts (`tcheck.py`, `norm.py`, `mkprompt.py`) lived in the session scratchpad and are gone; the transcript check is reproduced in the Appendix.
+  - question (maintainer): land the proposed `/cdocs:graphify` guidance and the two wrapper fixes (`god-nodes`, stamp filter)?
 
 ## Plan
 
@@ -284,8 +294,48 @@ Serendipity (graph output relevant to the task that the arm did not use):
 
 | File | Description |
 |------|-------------|
+| `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` | BLUF paragraph; Usefulness NOTE; new "Value Beyond Grep" section (method, task table, tally, scenario map, serendipity, reading, guidance); Verdict per Role note; two verdict-changers; Not Verified bullet; Value Beyond Grep floor |
+| `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` | `status: implementation_wip` |
+| `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md` | this devlog |
+
+Nothing was committed in weftwise; no clauthier code changed.
 
 ## Verification
+
+Phase 4 floor, run 2026-10-08T16:29-16:31.
+
+1. **Graph reproducible**: a fresh raw `update` of `gfy-value-graph` into an empty scratch dir:
+   ```
+   [graphify watch] Rebuilt: 9744 nodes, 25774 edges, 376 communities
+   nodes 9744 edges 25774
+   xpkg {'loro-repo->loro-multiplex': 72, 'weft->loro-multiplex': 347, 'weft->loro-repo': 204}
+   ```
+   Older-commit counts (10,327 / 27,153 at `3fbd7251`; 8,287 / 20,647 at `41b30188`) are from the warm-up builds, one each, not rebuilt.
+2. **Records present**: report (tasks with provenance and code state, outcomes, grades, tally, map); leak-check results here (Leak check) and code state in the report table; per-arm summaries, flags, A/B mapping, pilot card fixes, judge grades, judged answers here.
+3. **Grades reproducible**: c1 and b2 re-judged by fresh opus agents with A/B swapped: same outcomes (Judges › Re-judge).
+4. **No collateral** (16:31):
+   ```
+   no-graphify
+   bocsync-bailout 44d92d40170fe7c98d35f899b4fd3f04f26c68a7 7
+   df-to-mount f8ff8ac33a9c8ceb693e7a2e5aee480565e028b4 0
+   dogfood-sept 558bdb180f87e7dde7e1263c4403e280bfa0bddb 55
+   logical-core a14919805d3833ac173a2806eb2db565efc37369 0
+   loro-branching 1ad160dbcc21c48bf082262d3bca0b3fdaede23a 0
+   loro-repo-package bcb0711702c22a97710b75f0d4abd4570dd09715 1
+   loro 48198d48a0825b8792f8766721537fb8c793d0a5 0
+   main 2791713d dirty=0; branches matching gfy: 0
+   /var/cache/graphify-weftwise/graph.json 2026-10-08 14:09:35.882274364 -0700
+   /var/cache/graphify-weftwise/.graphify_root 2026-10-08 14:09:36.365156753 -0700
+   /var/cache/graphify-weftwise/cache/last_query_stamp 2026-10-08 15:38:55.814093662 -0700
+   ```
+   Identical to the baseline; `git worktree list` shows `.bare`, `main`, and the six maintainer worktrees only; container `/tmp/gfy-value` and host `/tmp/gfy-arm-*`, `/tmp/gfy-judge-*`, `/tmp/gfy-rejudge-*` removed.
+
+**Not verified.**
+- One run per arm; per-class conclusions rest on 1-2 tasks.
+- One judge per task except c1 and b2; item-level counts moved by one or two items on re-judging c1.
+- The proposed skill guidance was not tested with an arm.
+- The older-commit graphs were built once each.
+- Wall times are relative within a pair only (up to 20 arms ran at once; y1 not even that).
 ## Appendix
 
 ### Capability card
@@ -874,3 +924,69 @@ Confidence: high
 
 </details>
 
+
+### Transcript check
+
+The mechanical check run over each arm's subagent `.jsonl` (`tcheck.py <agentId> <graph|grep> <worktree> <scratch dir>`).
+
+```python
+#!/usr/bin/env python3
+"""Mechanical transcript check for a Phase 4 arm.
+usage: tcheck.py <agentId> <arm graph|grep> <worktree name> <scratch dir>
+Prints tool counts by kind, graphify features used, and rule-break flags."""
+import json, re, sys, collections, os
+aid, arm, wt, scratch = sys.argv[1:5]
+f = os.path.expanduser(f"~/.claude/projects/-var-home-mjr-code-weft-clauthier-main/63ac45de-462d-4f43-ae1c-4ab6d59049b8/subagents/agent-{aid}.jsonl")
+calls = []
+for line in open(f):
+    d = json.loads(line)
+    if d.get("type") != "assistant": continue
+    for c in d["message"].get("content", []) or []:
+        if isinstance(c, dict) and c.get("type") == "tool_use":
+            calls.append((c["name"], c.get("input", {})))
+allow = [f"/var/home/mjr/code/weft/weftwise/{wt}", scratch.rstrip("/"),
+         "/var/home/mjr/code/weft/weftwise/main/node_modules/.bin", "/dev/null", "/dev/stdin"]
+if arm == "graph": allow += [f"/workspaces/weftwise/{wt}", "/tmp/gfy-value"]
+ok = lambda p: any(p == a or p.startswith(a + "/") for a in allow)
+kinds = collections.Counter(); feats = collections.Counter(); flags = []
+gitre = re.compile(r"(^|[^A-Za-z0-9_./-])git(\s|$)")
+for name, inp in calls:
+    if name in ("Agent", "Task"): flags.append(f"SUBAGENT {name}"); kinds["agent"] += 1; continue
+    if name in ("Read", "Grep", "Glob"):
+        kinds[name.lower()] += 1
+        p = inp.get("file_path") or inp.get("path")
+        if not p: flags.append(f"{name} without path (cwd = clauthier main): {json.dumps(inp)[:120]}")
+        elif not ok(os.path.normpath(p)): flags.append(f"{name} outside: {p}")
+        if arm == "grep" and re.search(r"graphify|graph\.json", json.dumps(inp)): flags.append(f"GREP-ARM graph artefact: {name} {json.dumps(inp)[:160]}")
+        if arm == "graph" and p and "graphify-out" in p:
+            feats["GRAPH_REPORT.md" if "GRAPH_REPORT" in p else "graph.json read"] += 1
+        continue
+    if name != "Bash": kinds[name] += 1; continue
+    cmd = inp.get("command", "")
+    if "podman exec" in cmd and "weftwise" in cmd:
+        kinds["graphify"] += 1
+        m = re.search(r"(cdocs-graphify|graphify)\s+([a-z-]+)", cmd.split("bash -c", 1)[-1])
+        feats[(("wrapper " if m and m.group(1) == "cdocs-graphify" else "raw ") + m.group(2)) if m else "podman other"] += 1
+        flagopts = re.findall(r"--(depth|relation|context|dfs|budget|undirected|top)\b", cmd)
+        for o in flagopts: feats[f"--{o}"] += 1
+    elif re.search(r"\btsc\b", cmd): kinds["tsc"] += 1
+    elif re.search(r"\b(python3?|node|jq)\b", cmd): kinds["script"] += 1
+    elif re.search(r"\b(rg|grep)\b", cmd): kinds["grep"] += 1
+    elif re.search(r"\b(find|ls|tree|wc)\b", cmd): kinds["find/ls"] += 1
+    elif re.search(r"\b(cat|sed|head|tail|awk)\b", cmd): kinds["read(bash)"] += 1
+    else: kinds["bash other"] += 1
+    if arm == "graph" and "podman" not in cmd and re.search(r"graphify-out|graph\.json", cmd):
+        feats["GRAPH_REPORT.md" if "GRAPH_REPORT" in cmd else "graph.json script"] += 1
+    if gitre.search(cmd): flags.append(f"GIT: {cmd[:160]}")
+    if arm == "grep" and re.search(r"graphify|graph\.json", cmd): flags.append(f"GREP-ARM graph artefact: {cmd[:160]}")
+    for p in re.findall(r"(?<![\w.-])(/[A-Za-z0-9_.@+/-]+)", cmd.split("bash -c", 1)[0] if "podman exec" in cmd else cmd):
+        if p.startswith(("/usr/", "/bin/", "/proc/")) or p in ("/",) or len(p) < 3: continue
+        if not ok(os.path.normpath(p)): flags.append(f"path outside: {p} in: {cmd[:120]}")
+if arm == "graph" and kinds["graphify"] == 0 and not feats: flags.append("GRAPH ARM WITHOUT GRAPHIFY CALL")
+if arm == "graph" and not any(n == "Read" and str(i.get("file_path","")).endswith("CARD.md") for n, i in calls): flags.append("CARD.md never Read")
+print(f"agent {aid} arm={arm} wt={wt} tool_calls={len(calls)}")
+print("kinds:", dict(kinds))
+if arm == "graph": print("graph features:", dict(feats))
+print("flags:", len(flags))
+for x in flags: print("  -", x)
+```
