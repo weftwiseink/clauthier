@@ -49,6 +49,8 @@ The record should carry the most important things the agent tells the user each 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-chat-record-flexible.md` | 2026-10-08T09:52 | initial proposal |
+| return | prop-1 | `9502d95` | 2026-10-08T10:20 | `review_ready`. Word limits guidance only; filename `YYYY-MM-DD-<name>-<sid>.md` (unnamed keeps today's form); name from transcript `custom-title` only (ignores `ai-title`); `note`/`path` glob `${CLAUDE_CONFIG_DIR:-~/.claude}/projects/*/<sid>.jsonl`; record found by sid + exact name, no state; rename-back resumes that record. Verified `--name`, `--resume --name`, stream-json `/rename` write titles. Extra touch points: plugin README 148/153/160, devlog SKILL 31 |
+| dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible.md` | 2026-10-08T10:22 | round 1 |
 
 ## Steering Log
 
