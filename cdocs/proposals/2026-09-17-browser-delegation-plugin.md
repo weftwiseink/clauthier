@@ -4,8 +4,8 @@ first_authored:
   at: 2026-09-17T13:30:00-07:00
 task_list: cdocs/browser-delegation
 type: proposal
-state: live
-status: implementation_accepted
+state: archived
+status: evolved
 tags: [architecture, browser, delegation, mcp, model_tiering, testing]
 last_reviewed:
   status: accepted
@@ -15,6 +15,8 @@ last_reviewed:
 ---
 
 # Browser Delegation Plugin: a sonnet-tier delegate for browser driving, UI capture, and multi-client sync testing
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): Superseded by [the interfacer agent](2026-10-08-interfacer-agent.md); the plugin is removed.
 
 > BLUF: A Claude Code-only plugin, `browser-delegate`, ships one `bash-runner`-shaped agent: a sonnet leaf that drives `@playwright/cli` named sessions and returns a fixed report of artifact paths and mechanical facts.
 > It never renders verdicts or writes devlogs.
