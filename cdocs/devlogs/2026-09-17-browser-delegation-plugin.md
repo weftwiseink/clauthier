@@ -13,6 +13,14 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 
 > BLUF: New clauthier plugin to let high-judgment models (opus, fable) delegate browser work, UI verification, and minor tweaks to a cheaper/specialized delegate agent/harness/process (MCP or A2A), plus streamlined skills/MCPs to reduce friction vs the raw playwright MCP used in weftwise. Two Sonnet `/report`s first (delegation approaches; isolation/parallelization sidecar), then `/propose-revise` the plugin.
 
+## Scratchpoint
+
+- next_steps: re-review loop on the proposal (see "Re-review loop"); r3 = proposer revision addressing all r2 items, then fresh opus reviewer rounds to `proposal_accepted`.
+- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r2.md`
+- callouts:
+  - decision: maintainer defaults applied to r2 choices: drop R1-R6 claims (plain reviewer + iterate `review_proof`); bash-runner shape, no `drive` skill or plugin rules files; v1 Claude Code-only, no OpenCode dependency; driving stays Claude/sonnet, pluggable model left open; one delegate drives N named sessions by default.
+  - todo: original proposal `status: accepted` is invalid; set `implementation_ready` on re-accept.
+
 ## Plan / arc
 
 1. **Report A — delegation approaches** (Sonnet): architectures for delegating browser/UI work off the lead model (subagent, MCP, A2A, separate harness), and streamlined skills/MCPs vs the current playwright MCP. Builds on the 2026-08 visual-verification prior art.
@@ -68,3 +76,16 @@ Central conclusion (rigorous, honest): **Claude is the safer default across all 
 - **Model-comparison artifact** (sonnet-prepared, opus-reviewed source, published by overseer): sortable table of 19 non-specialist models (Size/Cost/Speed/Visual-judgment A/Driving B/Coding-perf estimate), per-model detail cards, and a `claude → gemini_subagent_tool` SVG with 7 challenge cards. Source HTML in scratchpad (`model-comparison-artifact.html`); published at https://claude.ai/artifact/8CdrbiWVYHrksbwU88TMD7 . Every figure traced to the accepted model-comparison report; coding-perf column flagged as pure estimate; N/A never fabricated. Maintainer's current lean: Gemini Pro vs Sonnet (opus→sonnet/pro efficiency worth it, not down to flash); binding constraint corrected to recall (Pro surfaces ~41% of visual diffs), not the ~1% precision gap.
 - **Artifact v2** (same URL, sonnet-reworked per maintainer): collapsed to 8 current SKUs (Opus 5, Sonnet 5, GPT-5.4, Gemini 3.1 Pro, Gemini 3.8 Flash, Qwen3.5-397B-A17B, GLM-4.6V, Kimi K2.5); deleted Haiku/GPT-4o/Pixtral/InternVL/older Gemini tiers; earlier-version scores carried forward with † (tested version named in card); Recall %/Precision % promoted to sortable columns; all pricing searched+cited (no cost N/A); closed-model size/speed as flagged ordinal estimates. Two flags: † = measured-on-earlier-version, * = estimate.
 - **Artifact v3** (same URL): replaced Size with capability-class **Model tier** (Frontier: Opus 5; Balanced: Sonnet 5 / Gemini 3.1 Pro / GPT-5.4 / Qwen / Kimi; Efficient: Flash / GLM) per maintainer (Pro≈Sonnet, Opus above, Flash below); **Speed** → qualitative Instant/Fast/Good/Slow buckets (raw TTFT demoted to sub-note); added a **Medium/High reasoning-effort toggle** recomputing Recall/Precision/A/Driving/Coding + Speed (High=measured anchor; Medium=modeled penalty −10 reasoning-heavy, −6 recall, −3 precision, −5 driving, always flagged; Gemini Flash flips Slow→Fast at Medium since 15.7s is thinking-mode). Motivates the effort-curve question for the delegate: does cheap/low-effort stay good enough.
+
+## Re-review loop (2026-10-07)
+
+A fresh opus staleness assessment found the round-1 (sonnet) acceptance stale: D2's MCP-inheritance premise is contradicted by later subagent evidence, the R1-R6 verdict layer is not in code, the verdict handoff conflicts with `/cdocs:iterate`'s proof rule, and the delegate-writes-devlog design violates one-writer-per-file.
+Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) runs `/cdocs:propose-revise` from there.
+
+### Iteration Log
+
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
+| 1 | proposer (sonnet) | sonnet cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-09-17-review-of-browser-delegation-plugin.md | original loop; superseded by r2 staleness |
+| 2 | - | opus cdocs:reviewer (staleness, read-only) | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r2.md | 4 blocking, 3 high, 3 medium, 1 low |
+
