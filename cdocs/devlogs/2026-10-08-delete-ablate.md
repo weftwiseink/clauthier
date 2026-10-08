@@ -22,7 +22,7 @@ On `detect-usage`: "Lets keep it around as a script for internal use. With that 
 
 ## Scratchpoint
 
-- next_steps: impl-1 running iterate round 1 in `../delete-ablate`; then a fresh implementation reviewer.
+- next_steps: rev-impl-1 reviewing `a9b0e57`; then maintainer acceptance and landing.
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/ablate/`, `scripts/`, `CLAUDE.md`, `plugins/cdocs/README.md`, `plugins/cdocs/skills/oversee-workstream/SKILL.md` (after landing), `cdocs/proposals/2026-10-08-graphify-overhaul.md` (detect-usage references)
 - callouts:
@@ -47,6 +47,8 @@ Failure picture: `detect-usage` behavior drift, stale `/cdocs:ablate` reference,
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-delete-ablate-rfp.md` | 2026-10-08T18:00 | elaborate RFP; detect-usage to `scripts/`; `implementation_ready` |
 | return | prop-1 | `19981a8` | 2026-10-08T18:12 | `implementation_ready`; Phase 1 moves `detect-usage` unchanged to `scripts/detect-usage.sh` (11 tests to `scripts/detect-usage.test.sh`); Phase 2 deletes the skill, removes ablate from the `oversee-workstream` loop list, `CLAUDE.md`, README table; NOTEs on graphify-overhaul and improvement-verification proposals; `graphify-scope` already gone; no OpenCode code change |
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../delete-ablate`, branch `delete-ablate` | 2026-10-08T18:14 | iterate round 1, phases 1-2 |
+| return | impl-1 | `7e4f104..a9b0e57` | 2026-10-08T18:25 | phases 1-2; detect-usage 11/11 (assertions unchanged; 36 extra cases diffed identical vs old `ablate.sh detect-usage`), rules 18 (planted `/cdocs:ablate` caught), opencode 9 (17 skills, no ablate), unit 98, cdocs-graphify 27, ablate greps empty outside `cdocs/`. Deviations: 8 test comment lines reworded; stricter argument errors with `detect-usage:` prefix; graphify NOTE placement. `detect-usage.test.sh` not wired into CI/npm (by design) |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-delete-ablate-impl-r1.md` (branch) | 2026-10-08T18:27 | must re-run floor incl. a real-transcript run |
 
 ## Steering Log
 
