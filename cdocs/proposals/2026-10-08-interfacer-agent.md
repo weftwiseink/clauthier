@@ -6,6 +6,11 @@ task_list: cdocs/interfacer-agent
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-10-08T09:30:00-07:00
+  round: 1
 tags: [architecture, claude_skills, interfacer, browser_delegation, testing, subagents]
 ---
 
