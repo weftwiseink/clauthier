@@ -197,6 +197,8 @@ function rewriteBodyPaths(body: string): { rewritten: string; warnings: string[]
 
   // Rewrite absolute plugin paths to relative paths from agents/
   // e.g., plugins/cdocs/rules/frontmatter-spec.md -> ../rules/frontmatter-spec.md
+  // The `rules` branch matches nothing in shipped agents (they reference rules by
+  // heading, checked by `npm run test:rules`); it is kept for safety.
   rewritten = rewritten.replace(
     /plugins\/cdocs\/(rules|skills)\//g,
     (_match, subdir) => {
