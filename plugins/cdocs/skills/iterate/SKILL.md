@@ -6,7 +6,7 @@ argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-a
 
 # CDocs Iterate Loop
 
-Run an iterative implement-review loop scoped to a proposal, a phase, or any unit specified using /cdocs:implement and /cdocs:review subagents,
+Run an iterative implement-review loop scoped to a proposal, a phase, or any unit specified using /cdocs:implement and /cdocs:review subagents.
 The invoking session agent enters *overseer mode* and restricts itself to orchestration:
 it dispatches fresh subagents in alternation, judges their output, periodically dispatches a judge subagent to assess loop health, and terminates on accept-or-escalate.
 
@@ -59,7 +59,7 @@ Flag off = no helper call at all.
 ## Roles
 
 - **Overseer**: top-level agent, restricted to orchestration; owns dispatch, freshness, termination.
-- **Implementer**: fresh `cdocs:implementer` subagent dispatched with `/cdocs:implement --dispatched`; executes the proposal and self-verifies before reporting done.
+- **Implementer**: a `cdocs:implementer` subagent, kept warm across rounds unless rotated, dispatched with `/cdocs:implement --dispatched`; executes the proposal and self-verifies before reporting done.
 - **Reviewer**: fresh `cdocs:reviewer` subagent each iteration; reads the implementer's output with fresh context, inspects the live system, produces a review document with a verdict.
 - **Judge**: fresh `cdocs:judge` subagent invoked to assess loop *meta-health*; reads the iteration log and recent reviews, not source. Returns `{continue, rotate-implementer, escalate}` with a short rationale.
 
@@ -93,7 +93,7 @@ This citation is what makes a `confirmed` row admissible.
 
 Read the review and branch on the verdict:
 
-- **Accept**: terminate. Update proposal frontmatter per `/cdocs:implement` conventions; write the final devlog entry, then run the Checkpoint (below).
+- **Accept**: terminate. Update proposal frontmatter per `/cdocs:implement` conventions; write the final devlog entry, then run "Checkpoints and handoffs" (below).
 - **Reject**: escalate immediately. Reject pre-empts the judge path even if `review_count >= --judge-after`.
 - **Revise**, `review_count < --judge-after`: loop to Turn (N+1).a with the same implementer.
 - **Revise**, `review_count >= --judge-after`: dispatch the judge before the next implementer turn.
@@ -104,11 +104,11 @@ The overseer may invoke the judge earlier on suspicion of trouble (high uncertai
 
 Dispatch a fresh judge with the iteration log and the recent review paths to evaluate if the workstream is stuck or going in circles.
 The judge returns `continue`, `rotate-implementer`, or `escalate` with a rationale in its final message.
-Append a Judge Log row, and when the reasoning matters (typically `rotate-implementer` or `escalate`) add a short note beneath the row, then run the Checkpoint (below).
+Append a Judge Log row, and when the reasoning matters (typically `rotate-implementer` or `escalate`) add a short note beneath the row, then run "Checkpoints and handoffs" (below).
 
 ### Checkpoints and handoffs
 
-Keep your Scratchpoint current and write handoffs per the `/devlog` skill's guidance.
+Keep your Scratchpoint current and write handoffs per the `/cdocs:devlog` skill's guidance.
 When a finished concern's writer did not mark its sub-devlog `done` (the next concern went to another implementer), mark it.
 
 ## Termination
