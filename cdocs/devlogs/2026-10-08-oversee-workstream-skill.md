@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: branch ready at `4439781`; maintainer acceptance, then land; `rules_check` question open; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: maintainer accepted; impl-1 applying final edits; then land; `rules_check` question open; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -70,8 +70,11 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 | return | rev-impl-1 | `1688560` (branch) | 2026-10-08T17:05 | accept, `review_proof: confirmed`: rules 18, unit 98, opencode 9, init_real 12, top_level_only 14 (only parent calls chat-record, no subagent loads the skill), grep clean bar test fixtures; live-run evidence confirmed. `rules_check` fails 3/5 on haiku on base and branch alike (pre-existing; haiku skips post-compaction steps); `multi_turn` passes, fallback-block counts noisy. All 5 deviations accepted. F1-F4 wording nits. Maintainer question: `rules_check` keep-as-known-failure / move to sonnet / delete (reviewer: delete). Conflicts with graphify in `CLAUDE.md`, `tool-use-safeguards.md` as predicted |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T17:07 | rebase over graphify, F1-F4; `rules_check` left for maintainer |
 | return | impl-1 | `23dcf18..4439781` | 2026-10-08T17:35 | rebased over graphify: `CLAUDE.md` skills list keeps graphify + adds chat-record/oversee-many/oversee-workstream; Tools and Skills keeps graphify bullet + top-level chat-record bullet; `.gitignore`, `iterate/SKILL.md` clean. F1-F4 applied. rules 18, unit 98, opencode 9, skill refs resolve (incl. `/cdocs:graphify`), grep = 5 exceptions. Headless not re-run post-rebase (main touched no chat-record code) |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T17:46 | drop "with the Skill tool", delete `rules_check`, `implementation_accepted` |
 
 ## Steering Log
+
+- 2026-10-08T17:45: maintainer: "'with the Skill tool' unnecessary in all cases. Other than that the oversee-workstream skill is accepted. Delete rules_check." Dispatched to impl-1 with `implementation_accepted`; land after.
 
 - 2026-10-08T16:12: maintainer: "they shouldn't even load the skill to begin with. 'Only load this skill if you're top level' should be fine. If not concisely say why not." Answered: sufficient for dispatched agents; forks inherit the parent's loaded skill text, which the skill's one-line guard covers; offered to drop it.
 

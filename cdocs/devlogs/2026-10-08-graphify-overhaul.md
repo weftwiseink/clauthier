@@ -109,6 +109,7 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | land | overseer | main | 2026-10-08T16:46 | proposal `implementation_accepted`; rebased (43 commits) onto main, ff-merged at `21bdaaf`; on main rules 11, build + opencode 9, cdocs-graphify 27, chat-record unit 97, edit-path 17, removal and `graphify_query` greps 0; worktree and branch removed |
 | dispatch | post-accept (cdocs:bash-runner, sonnet) | clauthier container `$GRAPHIFY_OUT` | 2026-10-08T16:47 | rebuild main graph with `/cdocs/` ignore; exclusion check; one wrapper query from main (worktree index, mtime) |
 | return | post-accept | container | 2026-10-08T16:52 | shared `/var/cache/graphify` was the stale 73-node fixture; rebuilt in 0.56 s to 787 nodes; 0 `cdocs/` source_file matches, 1103 `plugins/cdocs/`. Wrapper query from main (full path; plugin bin not on the container's PATH outside Claude) created a gitignored `graphify-out/` (`git status` clean), shared `graph.json` mtime unchanged. Unexplained: worktree index reports 714 nodes vs the main graph's 787 on the same tree |
+| dispatch | health (fork) | `cdocs/reports/2026-10-08-graphify-upstream-health.md` | 2026-10-08T17:46 | maintainer: upstream repo health, code quality, TS efficiency/consistency outlook, implications |
 
 ## Steering Log
 
