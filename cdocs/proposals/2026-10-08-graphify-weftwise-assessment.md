@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -110,7 +110,7 @@ Markdown therefore never adds to `affected` or `path` results; its only effect o
   `query`, `explain`, and `path` write `cache/last_query_stamp` next to whatever `--graph` points at, whatever `GRAPHIFY_OUT` says.
   Only the Phase 1 main rebuild targets `/var/cache/graphify-weftwise`.
   No-collateral checks therefore look at the mtimes of `graph.json` and `.graphify_root`.
-  The `last_query_stamp` marker is harmless: a read-only probe that points at the main graph changes it, so it is not part of the check.
+  The `last_query_stamp` marker is excluded from no-collateral checks: it is an 18-byte TTL marker that no installed hook reads, and any read-only probe pointed at the main graph changes it.
   Wrapper runs set `GRAPHIFY_OUT` to a scratch copy of the main graph, so that what the wrapper copies is under the implementer's control.
 - **Worktrees**: one long-lived detached throwaway, `/workspaces/weftwise/gfy-assess`, plus short-lived detached ones for the fresh-worktree row. All are created with `git worktree add --detach` and removed at the end.
 - **What gets written outside scratch**: only the weftwise `.graphifyignore` commit on `main` and the main-graph rebuild.
@@ -299,10 +299,12 @@ Phase 2's named-entity rows stand as the part of the map that favours grep.
   - apply the report floor's `srcpatch.py` to both worktrees, uncommitted;
   - copy in main's current `.graphifyignore`;
   - delete `cdocs/` and `_archive/`.
-- **Graph**: build the `source`-conditions graph (the report's recommended config) for each graph worktree, with a full `update` into a scratch `GRAPHIFY_OUT`, so that `GRAPH_REPORT.md` and communities exist.
-  At `2791713d` expect 9,744 nodes and 25,774 edges; record the counts for any older-commit build.
-  Mention the current main graph, which has no cross-package edges, only where it would change a conclusion.
-  Warm the wrapper once per graph worktree before dispatch, so the one-time copy and refresh stay out of the arm timings.
+- **Graph**: each graph worktree gets the `source`-conditions graph (the report's recommended config) from one wrapper warm-up call, made before dispatch with `-e GRAPHIFY_OUT=<scratch copy of the main graph>`.
+  - **How the build happens**: the wrapper copies that graph without `.stamp`, so the warm-up runs a full `update` in the worktree. That update produces the worktree's index, including `GRAPH_REPORT.md` and communities.
+  - **Why the scratch copy stays**: it is the safety net for any raw call that forgets its inner `env`.
+  - **Counts**: read them from the worktree index. At `2791713d` expect 9,744 nodes and 25,774 edges; record the counts for any older-commit build.
+  - **Timing**: the warm-up keeps the one-time copy and refresh out of the arm timings.
+  - Mention the current main graph, which has no cross-package edges, only where it would change a conclusion.
 - **Feature inventory**: the implementer does this before sampling. Each item records what the arm can use it for:
   - **Commands**: `god-nodes`, `query --dfs/--context/--budget` (edge contexts such as `import`, `call`, `re-export`, `parameter_type`), and `affected --relation/--depth`.
   - **`GRAPH_REPORT.md` sections**: God Nodes, Surprising Connections, Communities, Suggested Questions, **Import Cycles** (precomputed, cycles of 5 files or fewer), and **Knowledge Gaps** (about 2,488 isolated nodes, many of them `package.json` keys, so noisy for dead code).
@@ -319,7 +321,8 @@ Phase 2's named-entity rows stand as the part of the map that favours grep.
   - **Two warnings**:
     - the wrapper accepts only `query|explain|path|affected`;
     - a "skipping" line means the call was wrong, not that the graph is unavailable.
-  - **Where scratch goes**: scripts and scratch output go under container `/tmp/gfy-arm-<task>/`, never in the worktree, because an untracked file there changes the stamp and triggers a 10 s refresh.
+  - **Where scratch goes**: scripts and scratch output go in the arm's scratch dir (see Arms), never in the worktree, because an untracked file there changes the stamp and triggers a 10 s refresh.
+    Container `/tmp` is only for a script that needs graphify's Python. The host has `python3`, `node`, `rg`, and `jq`, which is enough for scripting over `graph.json`.
   - The ambiguous-id retry, and how to read `affected` and `path` output.
 - **Pilot**: before any task, one sonnet graph arm runs a held-out Phase 2 question (for example Q5, which needs the ambiguous-id retry, or Q7 for `path`).
   The implementer fixes the card wherever the pilot stumbles.
@@ -370,15 +373,21 @@ Both arms work under the same rules:
 - No subagents: an `Explore` or `cdocs:bash-runner` call would hide tool calls and tokens.
 - No devlog, no commits, and no writes inside the worktree.
 - No installs.
-- No reading outside the task's worktree.
-  The one exception is running executables from `/var/home/mjr/code/weft/weftwise/main/node_modules/.bin` (for example `tsc`) by absolute path, because fresh worktrees have no `node_modules`.
+- **Scratch dir**: each arm has a host scratch dir, `/tmp/gfy-arm-<task>-<arm>/`, outside its worktree, for scripts and scratch output.
+- **Reads stay inside allowed paths**:
+  - the task's worktree;
+  - the arm's scratch dir;
+  - the card's fixed container paths (graph arm only);
+  - executables in `/var/home/mjr/code/weft/weftwise/main/node_modules/.bin`, run by absolute path (fresh worktrees have no `node_modules`).
+- **`tsc`**: pass `--incremental false`, and point any `tsbuildinfo` output at the scratch dir, never the worktree.
+  Expect TS2307 for external packages, because the worktree has no `node_modules`; relative imports still resolve.
 
 The arms differ only in their tools:
 - **Graph arm**: has the capability card, plus everything the grep arm has.
   Guideline: graph first. Start with the graph command that fits the task, then grep as needed.
   The graph arm may script over `graph.json`; such scripting is flagged, because the skill could only recommend it through a new wrapper subcommand.
   A graph arm that ran no graphify command is rerun once.
-- **Grep arm**: everything except graphify. That covers Bash, grep and find, reading files, ad hoc scripts (for example an import scanner for cycles or unused exports), and the installed tools above.
+- **Grep arm**: everything except graphify. That covers Bash, grep and find, reading files, ad hoc scripts in its scratch dir (for example an import scanner for cycles or unused exports), and the installed tools above.
   It may not touch graphify, `graphify-out/`, or any `graph.json`.
 
 Shared prompt:
@@ -392,7 +401,8 @@ Record per arm:
 - tool calls by kind;
 - total tokens, from the Agent result's usage, or output bytes / 4 if usage is missing (state which);
 - wall time;
-- for the graph arm, the graphify features it used.
+- for the graph arm, the graphify features it used, including whether any item came only from the wrapper's RUNTIME COUPLING appendix.
+  That appendix is a grep the wrapper ships, so an item found only there does not count as graph reach.
 
 The report states in one line that graph-arm tokens include the card and that graph-arm wall time includes `podman exec` (about 0.5 s per call): both are real costs.
 
@@ -400,7 +410,7 @@ The report states in one line that graph-arm tokens include the card and that gr
 It extracts tool names, `file_path`/`path`/`pattern` inputs, and Bash commands, and flags:
 - any `git` call;
 - any `Agent`/`Task` call;
-- paths outside the worktree, beyond the allowed `.bin`;
+- read targets outside the allowed paths: Read/Grep/Glob paths, and file arguments to `cat`/`rg`/`sed`. Write and exec paths are not checked;
 - graphify artefacts touched by the grep arm;
 - a graph arm with no graphify call.
 
@@ -419,10 +429,11 @@ Graph outputs are read in full only for the serendipity pass.
   - wrong items;
   - whether an agent acting on the answer would be misled or miss something important (yes or no, with one line why).
 
-  The judge also notes any important item only one answer found.
-- **Outcome per task**: one of graph better (reach), graph better (efficiency), tie, grep better (reach), or grep better (efficiency).
-  Reach means an important item the other answer missed.
-  Efficiency means equal completeness on the important items at half the tokens or wall time or less.
+  The judge also lists the important items only one answer found. The count of these per arm is each arm's **reach**.
+- **Outcome per task**: one of graph better (reach), graph better (efficiency), mixed, tie, grep better (reach), or grep better (efficiency).
+  - Better (reach): only that answer has unique important items.
+  - Mixed: each answer has at least one.
+  - Better (efficiency): equal completeness on the important items at half the tokens or wall time or less.
 
 After unblinding, the implementer reads the graph arm's transcript for serendipity: graph output that surfaced something relevant the agent had not asked for, and whether the agent used it.
 Serendipity is commentary only and never changes an outcome.
@@ -430,9 +441,12 @@ Serendipity is commentary only and never changes an outcome.
 **Deliverable**: a "Value Beyond Grep" section in the existing report, after Usefulness, rather than a companion report.
 The maintainer's question deserves one verdict in one place, and a separate report would leave Phase 2's tie standing as the existing report's headline.
 The section contains:
-- **Task table**: class, task with provenance and code state, outcome, and for both arms completeness, tokens, and wall time, plus important items unique to one arm and the graphify features used.
+- **Task table**: class, task with provenance and code state, outcome, and for both arms completeness, unique important items, tokens, and wall time, plus the graphify features used.
   Synthetic rows are marked and kept outside the tally.
-- **Scenario map**: per class, wins for reach, wins for efficiency, ties, and losses, and why, merged with Phase 2's named-entity rows.
+- **Scenario map**: per class, unique important items per arm (the reach headline), then the outcome labels and why, merged with Phase 2's named-entity rows.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Overseer call (maintainer may override): reach is reported as unique important items per arm, and the winner labels are secondary.
+> A mixed task would otherwise hide one side's reach.
 - **Guidance for `/cdocs:graphify`**: which command for which shape of question, and when to skip graphify.
   Proposed skill text goes in as a recommendation, not landed.
 - **The report's BLUF, Verdict per Role, and "what would change the verdict"**, updated as the map requires, including the LLM-labelling note above.
@@ -453,7 +467,6 @@ If graphify wins nowhere, the section says so plainly, with the evidence that it
 - **Phase 4: questions from problem statements, no ground truth first.** This removes the leak from conclusions and lets either arm find what the other misses; the judge's reference is the verified union of both answers.
 - **Phase 4: two working arms and a blind judge.** It compares the outcomes of real agent work, not graph output against a reference. The graph arm may also grep, so a graph win measures value added on top of grep.
 - **Phase 4: the grep arm has everything except graphify.** A real agent without the graph writes a scanner or runs `tsc`. Limiting it to grep would manufacture graph wins on cycles and dead code, while the graph arm's pilot and graph-first rule stop it degenerating into a second grep arm.
-- **Phase 4: run leaked tasks at their pre-investigation commit.** This keeps the task, which may be a good one, rather than rephrasing it until it is weak.
 - **Phase 4: a capability card, not the current skill text.** The phase tests what graphify can do, so that the skill can be steered by the result; the features that won are recorded.
 - **Few phases, serialized timing.** Timing runs must not overlap graphify builds or tests in the container. Query judging may overlap only with work that is not being timed.
 
@@ -468,16 +481,7 @@ If graphify wins nowhere, the section says so plainly, with the evidence that it
   If the main graph's mtime or `.graphify_root` changes outside the Phase 1 rebuild, restore it from the Phase 1 output and flag the change.
 - **Background refresh races**: a query issued during a refresh should read the old `graph.json`. Confirm, from the source or by running queries during a refresh, that graphify replaces the file atomically and that no query ever sees a partial file. If it does not, the prototype queries a snapshot copy.
 - **Stale sampled questions**: drop or rephrase questions about code that has moved, and note it in the provenance.
-- **Phase 4 leaks**, all covered by the leak check or the transcript checks:
-  - reading outside the worktree, since another worktree's or main's `cdocs/` holds the source devlogs;
-  - git history (`git show HEAD:cdocs/...`, fix-commit subjects), which is why git is forbidden;
-  - fix-era comments and test names, which is the lexical-trace step;
-  - the grep arm touching graphify output.
-
-  A voided run is rerun once.
-- **Phase 4 graph arm degenerating**: on the host, `graphify` is not on `PATH`, so the plugin's wrapper prints "skipping" and the skill says to continue without the graph.
-  Three things guard against this: the card's single container command, the pilot, and the no-graphify-call rerun.
-- **Phase 4 arm scratch files**: an untracked file in the graph worktree changes the wrapper's stamp and triggers a refresh mid-run, which is why scratch lives in container `/tmp`.
+- **Phase 4 leaks and degeneration**: the Leak check, the Arms rules, the card, and the Transcript checks cover these.
 - **Phase 4 variance**: one run per arm, so a one-item difference is a tie unless the item is important.
   Both arms of a task run concurrently, so host contention is symmetric; wall time supports only relative claims.
 - **Maintainer checkouts**: also leave `/var/home/mjr/code/weft/weftwise/loro/`, a separate checkout, untouched.
@@ -493,11 +497,7 @@ The tests here check that the assessment's numbers are real:
 - The all-markdown-out variant has zero `.md` nodes.
 - Every timing row records its runs and load. A row whose range exceeds 50% of its median is re-run once and flagged.
 - Each spot-checked candidate either shows no verdict regression, or the report weighs the regression against the speed gained; each identity-checked candidate has node and edge sets equal to the baseline's.
-- Phase 4:
-  - every class has at least one task;
-  - each task logs its leak-check result;
-  - the A/B mapping is recorded;
-  - the mechanical transcript checks show no git call, no subagent, no path outside the worktree (beyond the allowed `.bin`), and no graphify artefact in the grep arm, and every graph arm made at least one graphify call.
+- Phase 4: every class has at least one task, and every arm run passes the transcript checks (see Arms).
 - The `extract --code-only` fidelity diff is recorded as nodes and edges missing or extra compared with a full `update`.
 - Cleanup: no `graphify` process (background `update`) is left running (`pgrep -af graphify` empty) before worktrees are removed; `git worktree list` then shows only `main` and the six maintainer worktrees, all with HEADs unchanged, and the scratch dirs are removed.
 
@@ -537,7 +537,7 @@ Pass criteria:
 The implementer runs this floor itself before handing off and records the result in its devlog.
 
 **Phase 4 floor**, run by the Phase 4 implementer and re-runnable by a reviewer:
-1. **Graph reproducible**: rebuilding the `source` graph (report floor step 6) gives 9,744 nodes and 25,774 edges at `2791713d`; any older-commit build matches the counts its task row records.
+1. **Graph reproducible**: rebuilding the `source` graph (a wrapper warm-up, or report floor step 6) gives 9,744 nodes and 25,774 edges at `2791713d`; any older-commit build matches the counts its task row records.
 2. **Records present**:
    - the report holds the task set with provenance, leak-check results, and judge grades;
    - the devlog holds the per-arm summaries (commands by kind, tokens, wall time, transcript-check flags), the A/B mapping, and the pilot's card fixes.
@@ -547,9 +547,6 @@ The implementer runs this floor itself before handing off and records the result
    - the main `graph.json` mtime is still `2026-10-08 14:09:35.88 -0700`, and `.graphify_root` is unchanged; `cache/last_query_stamp` is excluded (see Operating rules);
    - no `gfy-value-*` worktree remains;
    - `pgrep -af "[g]raphify (update|extract|watch)"` is empty.
-
-> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): The report's Phases 1-3 floor block does not have the `last_query_stamp` problem.
-> All of its raw calls point `--graph` at scratch builds (`$S/out`, `$S/outC`), its wrapper calls use the worktree index, and its no-collateral step checks `graph.json`'s mtime only.
 
 ## Implementation Phases
 
@@ -587,7 +584,7 @@ Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and
 ### Phase 4: value beyond grep
 
 - Record the state of the maintainer worktrees and `loro/`.
-- Create the `2791713d` worktree pair (apply `srcpatch.py`, copy `.graphifyignore`, delete `cdocs/` and `_archive/`), build the `source` graph, and warm the wrapper.
+- Create the `2791713d` worktree pair (apply `srcpatch.py`, copy `.graphifyignore`, delete `cdocs/` and `_archive/`). Warm the wrapper, which builds the `source` graph, and check the counts.
 - Write the feature inventory and capability card. Run the pilot graph arm and fix the card.
 - Dispatch the sonnet sampler (class names and shapes only). Run the leak check, including the lexical-trace step, and create pre-investigation worktree pairs and builds for the tasks that need them. Log the task set with provenance and code state.
 - For each task, dispatch both arms in parallel. Run the `jq` transcript checks and rerun any voided arm once, then dispatch the blind judge. Log the per-arm summaries and the grades.
