@@ -200,7 +200,7 @@ unit_suite() {
     OUT="$(stop "$d" "$3" "$4")"; R="$(cat "$d/cdocs/_chat/2026-10-05-$SID.md")"
   }
   local U1=$'@user: 2026-10-05T12:00:00-07:00\nq\n\n'
-  local A1=$'@opus-5-5: 2026-10-05T12:00:01-07:00\n- gist: x\n\n'
+  local A1=$'@opus-5-5: 2026-10-05T12:00:01-07:00\n- x\n\n'
   local S1=$'-- s at 2026-10-05T12:00:02-07:00\n\n'
   stop_case agent "$U1$A1" false default
   check "last=agent header: no output" "$OUT" ""
@@ -212,6 +212,8 @@ unit_suite() {
   has "block reason carries the heredoc note command" "$(printf '%s' "$OUT" | jq -r .reason)" \
     "chat-record note --as <your model id> <<'EOF'"
   r="$(printf '%s' "$OUT" | jq -r .reason)"
+  has "block reason carries the free-form note template" "$r" '^- <the most important thing you are telling the user>$'
+  hasnt "block reason carries no note type" "$r" '(gist|query|read|follow-up):'
   [ "${#r}" -lt 300 ] && ok "block reason under 300 bytes (${#r})" || bad "block reason ${#r} bytes"
   check "block JSON has exactly decision and reason" "$(printf '%s' "$OUT" | jq -c 'keys')" '["decision","reason"]'
   stop_case active "$U1" true default
@@ -259,11 +261,11 @@ unit_suite() {
 
   section "unit: agent-mode exit codes"
   P="$U/exit"; newproj "$P"
-  (cd "$P" && echo "- gist: x" | env -u CLAUDE_CODE_SESSION_ID "$CR" note 2>/dev/null); rc=$?
+  (cd "$P" && echo "- x" | env -u CLAUDE_CODE_SESSION_ID "$CR" note 2>/dev/null); rc=$?
   [ "$rc" -ne 0 ] && ok "note without session id exits non-zero ($rc)" || bad "note without session id exit 0"
   (cd "$P" && env -u CLAUDE_CODE_SESSION_ID "$CR" path >/dev/null 2>&1); rc=$?
   [ "$rc" -ne 0 ] && ok "path without session id exits non-zero ($rc)" || bad "path without session id exit 0"
-  out="$(cd "$P" && echo "- gist: x" | CDOCS_CHAT_RECORD=off CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>&1)"; rc=$?
+  out="$(cd "$P" && echo "- x" | CDOCS_CHAT_RECORD=off CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>&1)"; rc=$?
   check "note with CDOCS_CHAT_RECORD=off exits 0 silently" "$rc:$out" "0:"
   out="$(cd "$P" && CDOCS_CHAT_RECORD=off CLAUDE_CODE_SESSION_ID="$SID" "$CR" path 2>&1)"; rc=$?
   check "path with CDOCS_CHAT_RECORD=off exits 0 silently" "$rc:$out" "0:"
@@ -280,7 +282,7 @@ unit_suite() {
   out="$(jq -cn --arg sid "$SID" --arg cwd "$P" '{session_id:$sid,cwd:$cwd,prompt:"x"}' \
     | PATH="$NOJQ" "$CR" UserPromptSubmit 2>&1)"; rc=$?
   check "hook without jq exits 0 silently" "$rc:$out" "0:"
-  (cd "$P" && echo "- gist: x" | PATH="$NOJQ" CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>/dev/null); rc=$?
+  (cd "$P" && echo "- x" | PATH="$NOJQ" CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>/dev/null); rc=$?
   [ "$rc" -ne 0 ] && ok "note without jq exits non-zero" || bad "note without jq exit 0"
 
   section "unit: speaker"
@@ -288,14 +290,14 @@ unit_suite() {
   local as
   for as in 'opus-4-6[1m]' 'Opus 5.5' Haiku-4.5 haiku-4-5 claude-haiku-4-5-20251001 'Sonnet 4 6' \
     'Claude Opus 4.6' 'opus-4-6 [1m]'; do
-    echo "- gist: $as" | note "$P" --as "$as"
+    echo "- $as" | note "$P" --as "$as"
   done
-  echo "- gist: c" | note "$P"
+  echo "- c" | note "$P"
   local spk="A:opus-4-6 A:opus-5-5 A:haiku-4-5 A:haiku-4-5 A:haiku-4-5 A:sonnet-4-6 A:opus-4-6 A:opus-4-6 A:assistant"
   check "speakers normalized to one short id per model; default assistant" "$(markers "$(rec "$P")")" "$spk"
   local bad_as
   for bad_as in user User claude-user 'Claude user' '' claude- -x _x; do
-    (echo "- gist: z" | note "$P" --as "$bad_as" 2>/dev/null); rc=$?
+    (echo "- z" | note "$P" --as "$bad_as" 2>/dev/null); rc=$?
     [ "$rc" -ne 0 ] && ok "--as '$bad_as' rejected ($rc)" || bad "--as '$bad_as' accepted"
   done
   check "rejected speakers wrote nothing" "$(markers "$(rec "$P")")" "$spk"
@@ -306,7 +308,7 @@ unit_suite() {
   ups "$A/repo/sub" "x" >/dev/null
   stop "$A/repo/sub" false >/dev/null
   check "cdocs/_chat above the git toplevel is not used" "$(ls "$A/cdocs/_chat" | wc -l | tr -d ' ')" "0"
-  (cd "$A/repo" && echo "- gist: x" | CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>/dev/null); rc=$?
+  (cd "$A/repo" && echo "- x" | CLAUDE_CODE_SESSION_ID="$SID" "$CR" note 2>/dev/null); rc=$?
   [ "$rc" -ne 0 ] && ok "note fails when only an above-toplevel cdocs/_chat exists" || bad "note succeeded above toplevel"
   mkdir -p "$A/repo/cdocs"
   out="$(ups "$A/repo/sub" "x")$(stop "$A/repo/sub" false)"
@@ -327,7 +329,7 @@ unit_suite() {
   P="$U/multi"; newproj "$P"
   printf '%s' "$U1" > "$P/cdocs/_chat/2026-01-01-$SID.md"
   printf '%s' "$U1" > "$P/cdocs/_chat/2026-02-01-$SID.md"
-  echo "- gist: m" | note "$P" --as tester
+  echo "- m" | note "$P" --as tester
   stop "$P" false >/dev/null
   check "note and Stop use the earliest-dated record" \
     "$(markers "$P/cdocs/_chat/2026-01-01-$SID.md")|$(markers "$P/cdocs/_chat/2026-02-01-$SID.md")" \
@@ -347,7 +349,7 @@ merge_suite() {
   turn() { # turn <repo> <tag>: one full recorded turn
     sleep 1
     ups "$1" "prompt $2" >/dev/null
-    echo "- gist: turn $2" | note "$1" --as tester
+    echo "- turn $2" | note "$1" --as tester
     stop "$1" false >/dev/null
   }
   setup_repo() {
@@ -502,22 +504,22 @@ headless_suite() {
 
   if hs cmdv "command -v chat-record resolves into the plugin under test"; then
     P="$(hproj cmdv)"
-    claude_run cmdv "$P" -- -p "$(note_prompt 'Run `command -v chat-record` with the Bash tool.' '- gist: checked chat-record on PATH')" --permission-mode bypassPermissions
+    claude_run cmdv "$P" -- -p "$(note_prompt 'Run `command -v chat-record` with the Bash tool.' '- checked chat-record on PATH')" --permission-mode bypassPermissions
     has "command -v output is the plugin's bin" "$(tool_results "$SB/cmdv.jsonl")" "^$PLUGIN/bin/chat-record"
   fi
 
   if hs read_note "read a file, then note"; then
     P="$(hproj read_note)"
-    claude_run read_note "$P" -- -p "$(note_prompt 'Read the file a.txt with the Read tool.' '- read: a.txt: canary fixture')" --permission-mode bypassPermissions
+    claude_run read_note "$P" -- -p "$(note_prompt 'Read the file a.txt with the Read tool.' '- Read a.txt: canary fixture')" --permission-mode bypassPermissions
     J="$SB/read_note.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "markers" "$(markers "$F")" "U A:haiku-4-5 S:${sid:0:8}"
-    check "entry body" "$(entry_body "$F" 1)" "- read: a.txt: canary fixture"
+    check "entry body" "$(entry_body "$F" 1)" "- Read a.txt: canary fixture"
     check "one Stop, no decision" "$(stop_count "$J"):$(stop_blocks "$J")" "1:0"
   fi
 
   if hs byte_exact "note body with shell metacharacters is byte-exact"; then
     P="$(hproj byte_exact)"
-    b='- gist: `rg -n "x"` keeps $HOME and $(date) literal; it'"'"'s a \back\slash "test"'
+    b='- `rg -n "x"` keeps $HOME and $(date) literal; it'"'"'s a \back\slash "test"'
     claude_run byte_exact "$P" -- -p "$(note_prompt 'No other task.' "$b")" --permission-mode bypassPermissions
     F="$(the_rec "$P")"
     check "body byte-exact" "$(entry_body "$F" 1)" "$b"
@@ -525,7 +527,7 @@ headless_suite() {
 
   if [ "$RUN_OPTIONAL" = 1 ] && hs default_allowed "(optional) default mode with Bash(chat-record:*) allowed"; then
     P="$(hproj default_allowed)"
-    claude_run default_allowed "$P" -- -p "$(note_prompt 'No other task.' '- gist: default mode allowed')" \
+    claude_run default_allowed "$P" -- -p "$(note_prompt 'No other task.' '- default mode allowed')" \
       --permission-mode default --allowedTools 'Bash(chat-record:*)'
     J="$SB/default_allowed.jsonl"
     check "no permission_denials" "$(jq -c 'select(.type == "result") | .permission_denials' "$J")" "[]"
@@ -534,7 +536,7 @@ headless_suite() {
 
   if [ "$RUN_OPTIONAL" = 1 ] && hs default_denied "(optional) default mode, no allow rule"; then
     P="$(hproj default_denied)"
-    claude_run default_denied "$P" -- -p "$(note_prompt 'No other task.' '- gist: default mode denied')" --permission-mode default
+    claude_run default_denied "$P" -- -p "$(note_prompt 'No other task.' '- default mode denied')" --permission-mode default
     J="$SB/default_denied.jsonl"; sid="$(stream_sid "$J")"
     has "note in permission_denials" "$(jq -c 'select(.type == "result") | .permission_denials' "$J")" "chat-record"
     check "first Stop blocks, second silent" "$(stop_count "$J"):$(stop_blocks "$J")" "2:1"
@@ -562,14 +564,14 @@ headless_suite() {
 
   if hs minimal "minimal turn: reply ok, then note"; then
     P="$(hproj minimal)"
-    claude_run minimal "$P" -- -p "$(note_prompt 'Reply ok.' '- gist: replied ok')" --permission-mode bypassPermissions
+    claude_run minimal "$P" -- -p "$(note_prompt 'Reply ok.' '- replied ok')" --permission-mode bypassPermissions
     J="$SB/minimal.jsonl"; sid="$(stream_sid "$J")"
     check "one entry, one Stop, no block" "$(markers "$(the_rec "$P")")|$(stop_count "$J"):$(stop_blocks "$J")" "U A:haiku-4-5 S:${sid:0:8}|1:0"
   fi
 
   if hs two_prompts "two stream-json prompts, each noted"; then
     P="$(hproj two_prompts)"
-    drive two_prompts "$P" "$(note_prompt 'Reply one.' '- gist: turn one')" "$(note_prompt 'Reply two.' '- gist: turn two')"
+    drive two_prompts "$P" "$(note_prompt 'Reply one.' '- turn one')" "$(note_prompt 'Reply two.' '- turn two')"
     J="$SB/two_prompts.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "U A S twice" "$(markers "$F")" "U A:haiku-4-5 S:${sid:0:8} U A:haiku-4-5 S:${sid:0:8}"
     out="$(grep -oE "$TS_RE" "$F")"
@@ -580,8 +582,8 @@ headless_suite() {
     P="$(hproj note_twice)"
     claude_run note_twice "$P" -- -p "$(note_prompt 'Run this Bash command first, exactly:
 chat-record note --as haiku-4-5 <<'"'"'EOF'"'"'
-- gist: first note
-EOF' '- gist: second note')" --permission-mode bypassPermissions
+- first note
+EOF' '- second note')" --permission-mode bypassPermissions
     J="$SB/note_twice.jsonl"; sid="$(stream_sid "$J")"
     check "two entries, one sign-off" "$(markers "$(the_rec "$P")")" "U A:haiku-4-5 A:haiku-4-5 S:${sid:0:8}"
     check "one Stop, no block" "$(stop_count "$J"):$(stop_blocks "$J")" "1:0"
@@ -589,14 +591,14 @@ EOF' '- gist: second note')" --permission-mode bypassPermissions
 
   if hs no_as "note without --as"; then
     P="$(hproj no_as)"
-    claude_run no_as "$P" -- -p $'Run exactly this Bash command, byte for byte:\nchat-record note <<\'EOF\'\n- gist: no speaker given\nEOF\nThen reply done.' --permission-mode bypassPermissions
+    claude_run no_as "$P" -- -p $'Run exactly this Bash command, byte for byte:\nchat-record note <<\'EOF\'\n- no speaker given\nEOF\nThen reply done.' --permission-mode bypassPermissions
     sid="$(stream_sid "$SB/no_as.jsonl")"
     check "speaker assistant" "$(markers "$(the_rec "$P")")" "U A:assistant S:${sid:0:8}"
   fi
 
   if hs session_env "CLAUDE_CODE_SESSION_ID equals the stream session_id and the file suffix"; then
     P="$(hproj session_env)"
-    claude_run session_env "$P" -- -p "$(note_prompt 'Run `echo SID=$CLAUDE_CODE_SESSION_ID` with the Bash tool.' '- gist: echoed the session id')" --permission-mode bypassPermissions
+    claude_run session_env "$P" -- -p "$(note_prompt 'Run `echo SID=$CLAUDE_CODE_SESSION_ID` with the Bash tool.' '- echoed the session id')" --permission-mode bypassPermissions
     J="$SB/session_env.jsonl"; sid="$(stream_sid "$J")"
     has "Bash env carries the stream session_id" "$(tool_results "$J")" "SID=$sid"
     check "record suffix is the session_id" "$(basename "$(the_rec "$P")")" "$(date +%Y-%m-%d)-$sid.md"
@@ -604,7 +606,7 @@ EOF' '- gist: second note')" --permission-mode bypassPermissions
 
   if hs path_mode "chat-record path prints the path, creates nothing"; then
     P="$(hproj path_mode)"
-    claude_run path_mode "$P" -- -p "$(note_prompt 'Run `chat-record path` with the Bash tool.' '- gist: printed the record path')" --permission-mode bypassPermissions
+    claude_run path_mode "$P" -- -p "$(note_prompt 'Run `chat-record path` with the Bash tool.' '- printed the record path')" --permission-mode bypassPermissions
     J="$SB/path_mode.jsonl"
     has "printed path is the record" "$(tool_results "$J")" "^cdocs/_chat/$(basename "$(the_rec "$P")")"
     check "exactly one record" "$(nrec "$P")" "1"
@@ -613,7 +615,7 @@ EOF' '- gist: second note')" --permission-mode bypassPermissions
   if hs background "background Agent: notification turn not recorded, told not to note"; then
     P="$(hproj background)"
     claude_run background "$P" -- -p "Use the Agent tool with run_in_background set to true to dispatch a general-purpose agent whose task is: run \`echo bg-done\` with Bash and report the output. Do not wait for it. Then run exactly this Bash command, byte for byte:
-$(printf "$NOTE_FMT" '- gist: dispatched a background agent')
+$(printf "$NOTE_FMT" '- dispatched a background agent')
 Then end your turn. Later, when the background agent's completion notification arrives, reply with the single word received and do NOT run chat-record or any tool." --permission-mode bypassPermissions
     J="$SB/background.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     has "a harness prompt was delivered" "$(jq -c 'select(.event == "UserPromptSubmit") | .stdin.prompt' "$SB/background.canary.jsonl")" "task-notification"
@@ -626,9 +628,9 @@ Then end your turn. Later, when the background agent's completion notification a
   if hs background_note "background Agent: notification turn told to note"; then
     P="$(hproj background_note)"
     claude_run background_note "$P" -- -p "Use the Agent tool with run_in_background set to true to dispatch a general-purpose agent whose task is: run \`echo bg-done\` with Bash and report the output. Do not wait for it. Then run exactly this Bash command, byte for byte:
-$(printf "$NOTE_FMT" '- gist: dispatched a background agent')
+$(printf "$NOTE_FMT" '- dispatched a background agent')
 Then end your turn. Later, when the background agent's completion notification arrives, run exactly this Bash command, byte for byte:
-$(printf "$NOTE_FMT" '- gist: background agent reported bg-done')
+$(printf "$NOTE_FMT" '- background agent reported bg-done')
 and then reply received." --permission-mode bypassPermissions
     J="$SB/background_note.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "notification entry follows the sign-off and gets its own" "$(markers "$F")" \
@@ -639,7 +641,7 @@ and then reply received." --permission-mode bypassPermissions
   if hs foreground_agent "foreground Agent reading a file: nothing written for agent_id events"; then
     P="$(hproj foreground_agent)"
     # Agents run in the background by default in 2.1.289; this forces a foreground run.
-    claude_run foreground_agent "$P" CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p "$(note_prompt 'Use the Agent tool (foreground, general-purpose) to dispatch an agent whose task is: read the file a.txt and report its contents. Wait for its result.' '- gist: subagent read a.txt')" --permission-mode bypassPermissions
+    claude_run foreground_agent "$P" CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p "$(note_prompt 'Use the Agent tool (foreground, general-purpose) to dispatch an agent whose task is: read the file a.txt and report its contents. Wait for its result.' '- subagent read a.txt')" --permission-mode bypassPermissions
     J="$SB/foreground_agent.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "one @user, one entry, one sign-off" "$(markers "$F")" "U A:haiku-4-5 S:${sid:0:8}"
     check "UserPromptSubmit/Stop payloads with agent_id" \
@@ -678,7 +680,7 @@ and then reply received." --permission-mode bypassPermissions
   if hs slash_command "user slash command recorded as the raw invocation"; then
     P="$(hproj slash_command)"
     mkdir -p "$P/.claude/commands"
-    printf '%s\n' 'Reply with: $ARGUMENTS' 'Then run exactly this Bash command, byte for byte:' "$(printf "$NOTE_FMT" '- gist: echoed the argument')" > "$P/.claude/commands/echo.md"
+    printf '%s\n' 'Reply with: $ARGUMENTS' 'Then run exactly this Bash command, byte for byte:' "$(printf "$NOTE_FMT" '- echoed the argument')" > "$P/.claude/commands/echo.md"
     claude_run slash_command "$P" -- -p '/echo hello-world' --permission-mode bypassPermissions
     F="$(the_rec "$P")"
     check "@user body is the invocation" "$(split_record "$F" | sed -n '2p')" "/echo hello-world"
@@ -687,7 +689,7 @@ and then reply received." --permission-mode bypassPermissions
 
   if hs compact "stream-json /compact between two prompts leaves no trace"; then
     P="$(hproj compact)"
-    drive compact "$P" "$(note_prompt 'Reply one.' '- gist: turn one')" "/compact" "$(note_prompt 'Reply two.' '- gist: turn two')"
+    drive compact "$P" "$(note_prompt 'Reply one.' '- turn one')" "/compact" "$(note_prompt 'Reply two.' '- turn two')"
     J="$SB/compact.jsonl"; F="$(the_rec "$P")"; sid="$(stream_sid "$J")"
     check "two turns, nothing between" "$(markers "$F")" "U A:haiku-4-5 S:${sid:0:8} U A:haiku-4-5 S:${sid:0:8}"
     hasnt "no line mentions compaction" "$(cat "$F")" "[Cc]ompact"
@@ -696,8 +698,8 @@ and then reply received." --permission-mode bypassPermissions
 
   if hs clear "stream-json /clear then a prompt: new file for the new session"; then
     P="$(hproj clear)"
-    drive clear "$P" "$(note_prompt 'Reply one.' '- gist: turn one')" "/clear" \
-      "$(note_prompt 'Run `echo SID=$CLAUDE_CODE_SESSION_ID` with the Bash tool.' '- gist: after clear')"
+    drive clear "$P" "$(note_prompt 'Reply one.' '- turn one')" "/clear" \
+      "$(note_prompt 'Run `echo SID=$CLAUDE_CODE_SESSION_ID` with the Bash tool.' '- after clear')"
     J="$SB/clear.jsonl"; sid="$(stream_sid "$J")"
     check "two records" "$(nrec "$P")" "2"
     sid2="$(tool_results "$J" | sed -n 's/^SID=//p' | tail -n 1)"
@@ -708,23 +710,23 @@ and then reply received." --permission-mode bypassPermissions
 
   if hs resume "--resume and --continue append; --fork-session starts a new file"; then
     P="$(hproj resume)"
-    claude_run resume "$P" -- -p "$(note_prompt 'Reply one.' '- gist: turn one')" --permission-mode bypassPermissions
+    claude_run resume "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --permission-mode bypassPermissions
     sid="$(stream_sid "$SB/resume.jsonl")"
-    claude_run resume "$P" -- -p "$(note_prompt 'Reply two.' '- gist: resumed')" --resume "$sid" --permission-mode bypassPermissions
-    claude_run resume "$P" -- -p "$(note_prompt 'Reply three.' '- gist: continued')" --continue --permission-mode bypassPermissions
+    claude_run resume "$P" -- -p "$(note_prompt 'Reply two.' '- resumed')" --resume "$sid" --permission-mode bypassPermissions
+    claude_run resume "$P" -- -p "$(note_prompt 'Reply three.' '- continued')" --continue --permission-mode bypassPermissions
     check "resume and continue append to the same file" "$(nrec "$P"):$(markers "$P/cdocs/_chat/$(date +%Y-%m-%d)-$sid.md" | tr ' ' '\n' | grep -c '^U$')" "1:3"
-    claude_run resume "$P" -- -p "$(note_prompt 'Reply four.' '- gist: forked')" --resume "$sid" --fork-session --permission-mode bypassPermissions
+    claude_run resume "$P" -- -p "$(note_prompt 'Reply four.' '- forked')" --resume "$sid" --fork-session --permission-mode bypassPermissions
     check "fork-session starts a new file" "$(nrec "$P")" "2"
   fi
 
   if hs rename "custom-title in the transcript names the sign-off"; then
     P="$(hproj rename)"
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply one.' '- gist: turn one')" --permission-mode bypassPermissions
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --permission-mode bypassPermissions
     sid="$(stream_sid "$SB/rename.jsonl")"
     local tr; tr="$(find "$CFG/projects" -name "$sid.jsonl" | head -n 1)"
     printf '{"type":"custom-title","customTitle":"my-canary","sessionId":"%s"}\n' "$sid" >> "$tr"
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply two.' '- gist: turn two')" --resume "$sid" --permission-mode bypassPermissions
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply three.' '- gist: turn three')" --resume "$sid" --permission-mode bypassPermissions
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply two.' '- turn two')" --resume "$sid" --permission-mode bypassPermissions
+    claude_run rename "$P" -- -p "$(note_prompt 'Reply three.' '- turn three')" --resume "$sid" --permission-mode bypassPermissions
     out="$(markers "$(the_rec "$P")")"
     has "a later sign-off carries the title" "$out" "S:my-canary\$"
     echo "  info: markers: $out"
@@ -741,7 +743,7 @@ and then reply received." --permission-mode bypassPermissions
   if hs cd_sibling "cd into a sibling project with its own cdocs/_chat"; then
     P="$(hproj cd_sibling)"; local SIB; SIB="$(hproj cd_sibling_sib)"
     claude_run cd_sibling "$P" -- -p "Run the Bash command \`cd $SIB\` on its own. Then, as a separate Bash command, run exactly this, byte for byte:
-$(printf "$NOTE_FMT" '- gist: noted from the sibling')
+$(printf "$NOTE_FMT" '- noted from the sibling')
 Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
     J="$SB/cd_sibling.jsonl"; sid="$(stream_sid "$J")"
     check "original record holds only the unsigned @user" "$(markers "$(the_rec "$P")")" "U"
@@ -771,7 +773,7 @@ Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
     local C="$SB/read_note.canary.jsonl"
     if [ ! -s "$C" ]; then
       P="$(hproj payload_shape)"
-      claude_run payload_shape "$P" -- -p "$(note_prompt 'No other task.' '- gist: payload shape')" --permission-mode bypassPermissions
+      claude_run payload_shape "$P" -- -p "$(note_prompt 'No other task.' '- payload shape')" --permission-mode bypassPermissions
       C="$SB/payload_shape.canary.jsonl"
     fi
     check "UserPromptSubmit has prompt, session_id, cwd, transcript_path" \
