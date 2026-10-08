@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-05T14:30:00-07:00
 task_list: cdocs/post-compaction-resumption-reliability
 type: proposal
-state: live
+state: deferred
 status: request_for_proposal
 tags: [rules, resumption, compaction, chat_record, testing, future_work, blocked]
 ---
