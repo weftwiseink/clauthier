@@ -1,7 +1,7 @@
 # CI workflow for OpenCode build artifacts.
 # Builds from source, validates the output, and optionally publishes.
 #
-# Triggers on changes to plugin source files or the build script.
+# Triggers on changes to plugin source files, the build script or its test, or root package files.
 # Uses continue-on-error so CC-only PRs are not blocked by OC build failures.
 
 name: OpenCode Build
@@ -12,11 +12,17 @@ on:
     paths:
       - "plugins/cdocs/**"
       - "scripts/build-opencode.ts"
+      - "scripts/build-opencode.test.ts"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/opencode-build.yml"
   pull_request:
     paths:
       - "plugins/cdocs/**"
       - "scripts/build-opencode.ts"
+      - "scripts/build-opencode.test.ts"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/opencode-build.yml"
 
 jobs:
@@ -32,33 +38,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Build OC artifacts
-        run: npm run build:cdocs
-
-      - name: Validate generated agent frontmatter (YAML lint)
-        run: |
-          for agent in build/cdocs/opencode/agents/*.md; do
-            echo "Validating: $agent"
-            # Check frontmatter delimiters exist
-            head_line=$(head -1 "$agent")
-            if [ "$head_line" != "---" ]; then
-              echo "::error::$agent missing opening frontmatter delimiter"
-              exit 1
-            fi
-            # Check closing delimiter exists (line 2+)
-            if ! tail -n +2 "$agent" | grep -qm1 '^---$'; then
-              echo "::error::$agent missing closing frontmatter delimiter"
-              exit 1
-            fi
-            # Check required OC fields
-            for field in description mode model tools; do
-              if ! head -20 "$agent" | grep -q "^${field}:"; then
-                echo "::error::$agent missing required field: $field"
-                exit 1
-              fi
-            done
-            echo "  OK"
-          done
+      - name: Build OC artifacts and run regression test
+        run: npm run test:opencode
 
       - name: Validate npm package
         working-directory: build/cdocs/opencode
