@@ -15,11 +15,13 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 
 ## Scratchpoint
 
-- next_steps: re-review loop on the proposal (see "Re-review loop"); r3 = proposer revision addressing all r2 items, then fresh opus reviewer rounds to `proposal_accepted`.
-- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r2.md`
+- next_steps: proposal is `implementation_ready` (re-accepted r5, nits resolved `4218982`); next is `/cdocs:implement` or `/cdocs:iterate` when the maintainer greenlights, starting with the Phase 1 spikes. A later `/cdocs:iterate` continues the Iteration Log below.
+- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r{2,3,4,5}.md`
 - callouts:
-  - decision: maintainer defaults applied to r2 choices: drop R1-R6 claims (plain reviewer + iterate `review_proof`); bash-runner shape, no `drive` skill or plugin rules files; v1 Claude Code-only, no OpenCode dependency; driving stays Claude/sonnet, pluggable model left open; one delegate drives N named sessions by default.
-  - todo: original proposal `status: accepted` is invalid; set `implementation_ready` on re-accept.
+  - decision: maintainer defaults applied: no R1-R6 dependency (plain reviewer + iterate `review_proof`); agent-only bash-runner-shaped plugin (no `drive`/`sync` skills, no plugin rules files); v1 Claude Code-only, no OpenCode dependency; driving stays Claude/sonnet; one delegate drives N named sessions by default.
+  - decision: overseer picked minimal options on reviewer-offered choices: durable iterate evidence = scratch path + quoted report lines (no `reviewer.md` change); session states report only what one dispatch observes (no resume field); reviewer uses `<branch>-review-<role>` names plus the fresh-sessions option.
+  - open: maintainer questions: (1) pluggable/non-Claude visual or driving model path, (2) acceptance of the one-clause iterate `confirmed` edit (Phase 3) vs leaving cdocs untouched, (3) committed `_media/` iterate evidence (Phase 5 future work).
+  - deferred: Phase 1 spikes still unrun: `@playwright/cli` SIGTRAP/pinning, named-session isolation and cwd scoping, session liveness semantics, CLI resolution (project-local vs global, `cli.config.json`), browser-use GA; Healer integration gates the Phase 5 fixer.
 
 ## Plan / arc
 
@@ -98,3 +100,9 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 | 5 | proposer r5 (opus, warm, `b26403b`) | fresh opus cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r5.md | r4 blockers resolved; 6 non-blocking nits handed to warm proposer for resolution |
 
 - r5 overseer decision: nit 2 resolved as option A (fresh-sessions option plus `<branch>-review-<role>` suffix, so implementer and reviewer never share a session either direction).
+
+### Re-review outcome
+
+Accepted at r5 (`7623a52`); accepting-round nits resolved and `status: implementation_ready` set (`4218982`).
+Design delta vs the r1-accepted version: D2 re-grounded (MCP inheritance premise dropped; named sessions, version-pin class, lead-not-invited-to-drive); R1-R6 verdict layer removed in favor of the plain reviewer under iterate's `review_proof`, with reviewer-dispatched delegate artifacts counting as reviewer-produced (one-clause iterate edit); surface collapsed to a single bash-runner-shaped agent with a fixed `BROWSER DELEGATE REPORT` and no `drive`/`sync` skills or rules files; delegate never writes devlogs; v1 Claude Code-only; explicit session-state contract (`opened`/`reused`/`reopened`) and reviewer fresh-session rule; CLI runs from a scratch root so the worktree stays clean.
+
