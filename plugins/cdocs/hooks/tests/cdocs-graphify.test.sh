@@ -69,6 +69,7 @@ ups() { grep -c '^<update>' "$GLOG"; }
 : >"$GLOG"; run query q; check "unchanged tree: update skipped" "$(ups)" "0"
 echo x >"$WT/cdocs/note.md"; run query q; check "edit under ignored /cdocs/: update skipped" "$(ups)" "0"
 echo "export const c = 2" >>"$WT/src/b.ts"; run query q; check "code edit: update runs" "$(ups)" "1"
+G add src/b.ts && G commit -qm c; run query q; check "commit of the graphed edit: update skipped" "$(ups)" "1"
 
 echo "== passthrough and update failure"
 CGENV=(env GSTUB_OUT="hello out" GSTUB_RC=3); run path "A B" C

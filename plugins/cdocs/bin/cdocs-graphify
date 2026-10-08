@@ -31,11 +31,12 @@ if [ ! -f "$wt_out/graph.json" ]; then
 fi
 [ -d "$top/cdocs" ] && ! grep -qxE '/cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
   note "hint: .graphifyignore lacks a /cdocs/ line; run /cdocs:init"
-# Skip the refresh when HEAD and the graphed working-tree changes match the last successful update.
-stamp=$(cd "$top" && {
-  chg=$({ git diff HEAD --name-only; git ls-files -o --exclude-standard; } | sort -u)
+# Skip the refresh when the graphed tree, as a diff from the base commit the stamp records, is unchanged.
+base=$(git rev-parse -q --verify "$(cut -d' ' -f1 "$wt_out/.stamp" 2>/dev/null)^{commit}" || git rev-parse HEAD)
+stamp="$base "$(cd "$top" && {
+  chg=$({ git -c core.quotePath=false diff "$base" --name-only; git -c core.quotePath=false ls-files -o --exclude-standard; } | sort -u)
   ign=$(printf '%s\n' "$chg" | git -c core.excludesFile="$top/.graphifyignore" check-ignore --no-index --stdin)
-  chg=$(printf '%s\n' "$chg" | grep -vxF -e "${ign:-//}"); git rev-parse HEAD; printf '%s\n' "$chg"
+  chg=$(printf '%s\n' "$chg" | grep -vxF -e "${ign:-//}"); printf '%s\n' "$chg"
   printf '%s\n' "$chg" | while IFS= read -r f; do [ -f "$f" ] && echo "$f"; done | git hash-object --stdin-paths
 } 2>/dev/null | git hash-object --stdin)
 [ "$stamp" = "$(cat "$wt_out/.stamp" 2>/dev/null)" ] ||
