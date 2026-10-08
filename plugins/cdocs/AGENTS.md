@@ -43,4 +43,4 @@ Formal agents in `plugins/cdocs/agents/` with explicit tool allowlists:
 - `triage`: frontmatter analysis, mechanical fixes, and iterate-devlog log-state mapping (sonnet).
 - `nit-fix`: writing-convention enforcement (haiku).
 - `bash-runner`: runs one expected-verbose command, captures its output to a file, and returns a fixed-format report (sonnet; Bash only). See "Bash: Avoid context bloat from careless bash commands" in `rules/tool-use-safeguards.md`.
-- `interfacer`: testing assistant that drives the app or interface under test with the project's own tooling, captures media, and writes a brief report; kept warm by `agentId` across follow-up checks (sonnet; inherits all tools, including the project's MCP servers).
+- `interfacer`: testing assistant that drives the app or interface under test with the project's own tooling, captures media, and writes a brief report; each follow-up check is a fresh dispatch naming its instance directory (sonnet; inherits all tools, including the project's MCP servers).
