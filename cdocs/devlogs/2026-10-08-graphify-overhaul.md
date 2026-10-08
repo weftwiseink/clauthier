@@ -57,6 +57,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | 2026-10-08T09:02 | round 1, with sonnet history explore |
 | return | rev-1 | `1c0d71a` | 2026-10-08T09:10 | revise; premise confirmed by history (bleed real, pipeline never chosen over `query`, old design skipped every round in-container, nothing measured); 3 blocking; 3 maintainer questions |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T10:10 | r1 revision with maintainer direction (thin wrapper: copy main graph to worktree path, incremental code-only update, pass-through; no lock; keep observe/subscribe with TODO) |
+| return | prop-1 | `abb75ba` | 2026-10-08T10:40 | `bin/code-query` ≤~80 lines: seed copy of main graph to `<toplevel>/graphify-out/` (self-gitignored), purge rebuild if cdocs nodes present, stamped incremental code-only update, pass-through with `--graph`, observe/subscribe hits appended with TODO; `.graphifyignore` (only exclusion mechanism) committed by consuming repo, init adds `cdocs/` line; skip-scope dropped. Unconfirmed on 0.9.61: relative node paths (copy viability), code-only update form |
+| dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | 2026-10-08T10:42 | round 2; may check CLI claims against graphify 0.9.61 in the devcontainer |
 
 ## Steering Log
 
