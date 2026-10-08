@@ -89,3 +89,6 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 | 1 | proposer (sonnet) | sonnet cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-09-17-review-of-browser-delegation-plugin.md | original loop; superseded by r2 staleness |
 | 2 | - | opus cdocs:reviewer (staleness, read-only) | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r2.md | 4 blocking, 3 high, 3 medium, 1 low |
 
+| 3 | proposer r3 (opus, `7d89533`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r3.md | all 11 r2 items resolved; 2 new blocking (reviewer delegate reuses implementer session; `cdocs/_media/` durability conflicts with reviewer.md); 11 non-blocking. Reviser deviations (drop `sync`, one-clause iterate `confirmed` edit) judged sound |
+
+- r3 overseer decision: durable-screenshot question resolved as option A (scratch path + quoted report facts, no `reviewer.md` change) per minimal-design default; maintainer can override.
