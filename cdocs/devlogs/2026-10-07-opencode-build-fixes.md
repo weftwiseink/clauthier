@@ -35,12 +35,12 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: proposal review r2 in flight.
+- next_steps: accept nits in flight; then iterate Turn 1.a (implementer).
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
   - deferred: model policy (omit vs pin) surfaced to maintainer in final report; overseer chose omit (portability across providers, no bumps).
-  - todo:
+  - todo: README "model mapping" phrase in plugins/cdocs/README.md left stale (HR: plugins/ untouched); surface to maintainer.
   - decision: proposer chose to omit OC `model:` (inherit caller) instead of pinning ids; brief's floor said "current model ids". Reviewer asked to weigh this against tier fidelity.
   - blocker:
 
@@ -54,6 +54,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | p1 | prop-1 (cdocs:proposer) | rev-p1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | blockers: parse error must warn+skip (HR2); NOTE that omit-model supersedes brief's "current model ids" floor |
+| p2 | prop-1 (cdocs:proposer) | rev-p2 (cdocs:reviewer) | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-r2.md | 7 non-blocking nits sent to warm proposer; reviewer loaded output in OpenCode 1.17.5 (`opencode agent list --pure`) |
 
 ## Judge Log
 
@@ -71,5 +72,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:35 | revision r1 |
 | return | prop-1 (cdocs:proposer) | proposal | 2026-10-07T18:45 | be140f5; review_ready |
 | dispatch | rev-p2 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-r2.md | 2026-10-07T18:46 | proposal review r2 |
+| return | rev-p2 (cdocs:reviewer) | review r2 + proposal frontmatter | 2026-10-07T18:52 | 121875d; proposal_accepted |
+| dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:53 | accept nits |
 
 ## Steering Log
