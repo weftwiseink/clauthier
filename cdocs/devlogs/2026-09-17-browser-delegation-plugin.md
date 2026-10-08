@@ -97,6 +97,7 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 | 6 | proposer r6 (opus, warm, `2372ad0`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r6.md | answers 1-2 folded correctly; 2 blocking on answer 3 (copy instruction never reaches reviewer at runtime and reviewer Bash is read-only; embedded `_media` image not tied to this round's delegate `Artifacts`, collision with implementer media) |
 | 7 | proposer r7 (opus, warm, `a6e886d`) | fresh opus cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r7.md | r6 blockers resolved; delegate-description quoting clause judged sound; 5 non-blocking nits handed to warm proposer |
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (fresh opus cdocs:reviewer) | revise | confirmed | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r1.md | floor re-run via nested `claude -p --plugin-dir`, fresh `browser-delegate-review-viewer` session `opened`, AE 402 recomputed; embedded `_media` copies (`c302d5a`). 1 blocking: poll loop reports convergence when every eval errors identically (ignores exit status, empty-value agreement); 5 non-blocking |
+| impl-2 | impl-1 (resumed, opus) | rev-impl-2 (fresh opus cdocs:reviewer) | accept | confirmed | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md | floor re-run with stale review session pre-seeded: fresh `opened`, stale marker null, implementer stand-in untouched; missing-selector poll timed out, real convergence passed; poll template probed against fake CLIs. 6 non-blocking (stderr merged into poll value is a residual false-pass path) resolved in accepting round, no new review |
 
 ### Overseer decisions
 
@@ -106,6 +107,7 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 - r6 overseer decisions (implementation details inside maintainer answer 3, not new maintainer questions): Q1 option A (copy instruction + Bash exception live in `reviewer.md` only); Q2 option A (reviewer copies named `YYYY-MM-DD-<review-doc-name>-<description>.png`, never overwrite).
 - Environment probe (bash-runner, read-only): `npx -y @playwright/cli@latest` runs (0.1.22), Playwright-managed `chromium-1208` + headless shell cached in `~/.cache/ms-playwright`, ImageMagick `compare` present, no global CLI install, bare Fedora Kinoite host (no toolbox). Phase 1 spikes look feasible for real.
 - impl-1 overseer decisions: convergence fix lands in impl-2 (reviewer option a; a false pass in an evidence tool). OpenCode build check: impl-2 runs `npm run build:cdocs` in the worktree (gitignored `node_modules`/`build`, clean status), and the coordinator should re-run after landing since opencode-build-fixes changes the build script.
+- impl-2 overseer decisions: stderr fix lands as a small commit on the branch before merge, no new round (reviewer Q1 a); a timed-out poll keeps `Status: OK` when capture worked, with `converged: no` carrying the outcome (Q2 a). Proposal set `implementation_wip` on main; `implementation_accepted` waits for the human per `/cdocs:implement`.
 - Round cap: the 6-round escalation cap is counted from the post-answers reopen (r6 = reopened round 1), since the coordinator explicitly reopened the loop.
 
 ### Re-review outcome
@@ -158,6 +160,8 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 | dispatch | impl-1 (resumed for impl-2) | worktree: plugins/browser-delegate/**, cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md | 2026-10-07 | fix poll loop + nits; build:cdocs check |
 | return | impl-2 | branch `browser-delegate` `9b16cdb..01c37e0` | 2026-10-07 | poll fix (exit status + firstiter) re-verified via nested dispatches e1 (missing selector -> timed out) and e2 (genuine converge); build:cdocs + test:opencode + pack dry-run green in worktree (node 26, not CI node 22); nits 2-5 done |
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | main: cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md + `_media` copies | 2026-10-07 | |
+| return | rev-impl-2 | main: review + 2 `_media` copies (`cfbb06e`) | 2026-10-07 | accept, review_proof confirmed |
+| dispatch | impl-1 (resumed for accept-round nits) | worktree: plugins/browser-delegate/**, sub-devlog | 2026-10-07 | 6 nits |
 
 ## Steering Log
 
