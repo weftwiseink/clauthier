@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: iterate round 1 implementer running in `../interfacer-agent`; then fresh reviewer. This lands first; the graphify overhaul rebases onto it (shared `reviewer.md`, `iterate/SKILL.md`), overriding the proposal's "serializes after graphify" line.
+- next_steps: implementation accepted by reviewer (`confirmed`), branch ready at `7759b07`; on maintainer acceptance set `implementation_accepted`, rebase, ff-merge, remove worktree. This lands first; the graphify overhaul rebases onto it (shared `reviewer.md`, `iterate/SKILL.md`), overriding the proposal's "serializes after graphify" line.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -74,6 +74,7 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | 2026-10-08T11:22 | implementation round 1; must re-run floor for `confirmed` |
 | return | rev-impl-1 | `34a2c45` (branch) | 2026-10-08T11:30 | accept, `review_proof: confirmed`: own fixtures in container (curl) and host (playwright-cli, 4 screenshots viewed); all criteria pass both. Keep all 3 canary clauses. Async replies apply to first dispatch too on 2.1.293; harness refuses `sleep 30`; proposal needs NOTEs (D5 async, lifetime WARN resolved, ordering). Wrapper-PID misrecord seen 3x, recovered by port; no clause |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T11:32 | pre-landing: reviewer's async-reply sentence, 3 proposal NOTEs, devlog gap fixes, statuses |
+| return | impl-1 | `131bb84`, `940674c`, `55d5e4a` | 2026-10-08T11:38 | applied; rules 11/11, opencode 9/9. Overseer reverted the premature `implementation_accepted` (`7759b07`); awaiting maintainer acceptance to land |
 
 ## Steering Log
 
