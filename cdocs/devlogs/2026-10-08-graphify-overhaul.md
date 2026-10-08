@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: rev-impl-1 reviewing `293f449`; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: impl-1 round 2 (rebase over interfacer, F1-F5), then fresh rev-impl-2; stamp decision after perf audit; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -50,6 +50,7 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | blocking: per-agent `graphify update` writes the shared index; runtime-coupling guard regressed to caveat-only; overseer-clean check vacuous (dispatcher is a subagent) |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | CLI claims checked in devcontainer; F1-F5 trims |
 | r3 | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | post-acceptance maintainer revision; ablate placement and rfp condition open |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r1.md` (branch) | blocking: absolute-path coupling filter; ablation pending weftwise container |
 
 ## Judge Log
 
@@ -86,6 +87,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | steer | weftwise-fs (SendMessage) | weftwise `.graphifyignore` | 2026-10-08T13:47 | anchor as `/cdocs/`; report node counts by top-level dir incl. `docs/` |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r1.md` (branch) | 2026-10-08T13:48 | must re-run floor incl. stub primary/overseer-clean and container `/cdocs/` exclusion; stamp recommendation |
 | dispatch | perf-audit (general-purpose, opus) | `cdocs/reports/2026-10-08-graphify-update-performance-audit.md` | 2026-10-08T14:06 | why no-op `update` takes ~11 s at weftwise scale: source read, profile, existing cheaper paths, stamp vs upstream fix |
+| return | rev-impl-1 | `28becc9` (branch) | 2026-10-08T14:25 | revise, `review_proof: confirmed` (floor re-run; stub run from a `git archive` copy of `293f449`; container: copy+update writes only worktree index, `/cdocs/` = 0 cdocs nodes, 488 plugin nodes). Blocking F1: coupling filter misses absolute `graphify-out/` path (subdir query scans `graph.json`). F2 init guard vs wrapper hint; F3 proposal `/cdocs/` NOTE; F4 ablation signature misses `timeout 60 cdocs-graphify`; F5 cut README coupling example. Stamp: none until ablation decides; ~2-line content stamp sketched. Reviewers ran only the handed base query, never loaded the skill |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T14:27 | rebase over interfacer (`70e48fc`), F1-F5; no stamp until perf audit returns |
 
 ## Steering Log
 
