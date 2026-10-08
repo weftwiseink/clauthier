@@ -56,6 +56,8 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T22:37 dispatch: fresh opus `cdocs:reviewer`, round 3.
 - 2026-10-07T22:42 return: r3 revise (`e64eac7`); reviewer ran the probe on v2.1.293 haiku: summary carried canary in 2/2; A->B swap variant passed 1/1.
 - 2026-10-07T22:43 dispatch: warm proposer for r3 revision.
+- 2026-10-07T22:50 return: r3 revision `7bd91b1`: heliotrope->marzipan on-disk swap after turn 1, temporary `--only canary_check` scenario, match all post-`compact_boundary` assistant blocks, with-import `rules_check` baseline before editing `init_rules`, release = one `plugin.json` bump and one push.
+- 2026-10-07T22:51 dispatch: fresh opus `cdocs:reviewer`, round 4.
 
 ## Steering Log
 
