@@ -15,13 +15,14 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 
 ## Scratchpoint
 
-- next_steps: reopened propose-revise loop after maintainer answers; r7 proposer revision (r6 blockers on `_media/` evidence), then fresh opus reviewer; on accept set `implementation_ready` and run `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`; do not merge to main, coordinator lands it).
-- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r{2..6}.md`
+- next_steps: `/cdocs:iterate` impl-1 in flight: implementer (opus) executes Phases 1-4 in worktree `/var/home/mjr/code/weft/clauthier/browser-delegate` (branch `browser-delegate`, base `8089d2b`), then fresh opus reviewer. Never merge to main: coordinator lands it.
+- important_files: proposal `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` (main); sub-devlog `cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md` (branch `browser-delegate`); reviews `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-*` (main).
 - callouts:
-  - decision: maintainer answers (see "Maintainer answers"): no non-Claude model path; iterate `confirmed` clause approved; cited screenshots copied to `cdocs/_media/` in v1 via one `reviewer.md` clause.
-  - decision: earlier defaults stand: no R1-R6 dependency; agent-only bash-runner-shaped plugin; v1 Claude Code-only; one delegate drives N named sessions; session states report single-dispatch observations; reviewer uses `<branch>-review-<role>` fresh sessions.
-  - blocker: Phase 1 spikes need a real `@playwright/cli` and browser; if unavailable, record and escalate rather than simulate.
-  - todo: avoid paths the top-level is landing (scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs); iterate `SKILL.md` / `reviewer.md` edits happen in the implementation worktree.
+  - decision: proposal accepted r7 (`4175e12`), nits + `implementation_ready` in `6af0fff`/`8089d2b`. Maintainer answers folded (no non-Claude path; iterate `confirmed` clause approved; cited screenshots to `cdocs/_media/`).
+  - decision: delegate dispatch for verification goes through a real nested harness (`claude -p --plugin-dir <worktree>/plugins/browser-delegate`), since this session cannot load the new plugin's agent into its own Agent tool; the in-session installed path is a post-landing follow-up.
+  - decision: the running reviewer agent is the installed (pre-Phase-3) `reviewer.md`, so the overseer passes the Phase 3 `_media` copy clause in each reviewer prompt.
+  - todo: avoid scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs on main; cdocs `SKILL.md`/`reviewer.md` edits happen only in the worktree.
+  - todo: proposal status stays `implementation_ready` on main during the loop; overseer sets the final status on accept (frontmatter on main only, never in the worktree copy).
 
 ## Plan / arc
 
@@ -117,3 +118,39 @@ Design delta vs the r1-accepted version: D2 re-grounded (MCP inheritance premise
 3. Screenshot evidence moves into v1 under `cdocs/_media/` (`YYYY-MM-DD-description.ext`, embedded in the relevant doc) with the one-clause `reviewer.md` change; delegate still writes only to scratch, the dispatcher or reviewer copies cited evidence into `_media/`. Supersedes the r3 option-A "scratch path + quoted lines only" decision (quoted report lines stay as the textual audit trail).
 
 Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), then `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`, not merged by this overseer).
+
+## Iterate (2026-10-07)
+
+### Brief (Turn 0)
+
+- Proposal: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` (`implementation_ready`, r7 accept).
+- Scope: Phases 1-4 in full. Phase 5 is deferred by design and is not built.
+- Worktree: `/var/home/mjr/code/weft/clauthier/browser-delegate`, branch `browser-delegate` from `8089d2b`. Implementers commit there, and proposal/review docs stay on main.
+- Verification floor: a `browser-delegate` dispatch through a real Claude Code harness that loads the worktree plugin drives a real `@playwright/cli` headless Chromium session against a local route. It returns a parseable `BROWSER DELEGATE REPORT` whose absolute artifact paths exist and whose screenshot visibly shows what its Facts claim.
+  Failure pictures:
+  - `loaded: yes` with a missing, blank, or wrong-page screenshot;
+  - a `reused` session backing the review;
+  - untracked `.playwright-cli/` or other files left in a worktree.
+- Environment (probe, see Overseer decisions): the host can run the CLI via `npx` and has a cached Playwright Chromium. If a spike needs something the host lacks (for example the weftwise devcontainer), it is recorded and escalated, not simulated.
+- `--judge-after`: 3 (default).
+
+## Workstream Devlogs
+
+| devlog | concern | status | read this when |
+|---|---|---|---|
+| [-impl](2026-09-17-browser-delegation-plugin-impl.md) (branch `browser-delegate`) | Phases 1-4 implementation | wip | you need spike results or implementation detail |
+
+## Judge Log
+
+| judge_iteration | trigger | verdict | rationale |
+|---|---|---|---|
+
+## Dispatch/Return Events
+
+| event | agent_handle | target_files | at | notes |
+|---|---|---|---|---|
+
+## Steering Log
+
+- 2026-10-07, coordinator: implement in sibling worktree `../browser-delegate` and never merge to main. Keep proposal/review docs on main. Avoid the paths being landed (scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs); cdocs `SKILL.md`/`reviewer.md` edits go in the worktree. Phase 1 spikes must be real or escalated. Applied in the Brief and in the impl-1 dispatch.
+
