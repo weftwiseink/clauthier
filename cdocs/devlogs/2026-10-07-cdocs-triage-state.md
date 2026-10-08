@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: await the OpenCode full-send; merge `opencode-build-fixes` into main with `--ff-only` once accepted (or relay its escalation). Browser delegation awaits maintainer answers (below) before `/cdocs:iterate`.
+- next_steps: on maintainer acceptance of OpenCode fixes (model policy decision), flip `2026-10-07-opencode-build-fixes.md` to `implementation_accepted` and land `opencode-build-fixes` (27 commits, main has diverged so rebase then `--ff-only`; merge-tree clean). Browser delegation awaits maintainer answers (below) before `/cdocs:iterate`.
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
@@ -53,6 +53,11 @@ Now a single bash-runner-shaped sonnet leaf agent with a fixed `BROWSER DELEGATE
 Sub-overseer deviations: it wrote the r2 review copy and devlog entries itself; r2/r3 review timestamps are wrong (placeholder / out of order).
 Open maintainer questions: non-Claude model path in the plugin; one-clause edit to iterate's `confirmed` row (Phase 3); committing screenshot evidence under `cdocs/_media/` (Phase 5).
 Phase 1 spikes (SIGTRAP, session isolation, browser-use tool availability) still unrun.
+
+**OpenCode build fixes full-send** (worktree `../opencode-build-fixes`): proposal accepted r2, implementation accepted r1; proposal `implementation_wip` pending maintainer.
+`yaml` dev-dep for frontmatter; `tools: "*"`/absent emits no tools/permission block; `model:` dropped entirely (inherit caller) instead of a refreshed map, a deviation from the stated floor.
+Verified: diff touches only `scripts/build-opencode{,.test}.ts`, `package{,-lock}.json`, CI workflow; zero `plugins/` diff (rechecked from main).
+Open: model-policy decision (tier fidelity loss vs. provider-agnostic), `plugins/cdocs/README.md` still says "model mapping", CI unrun on GH Actions/Node 22, published `@weftwise/cdocs-opencode` 0.1.0 still stale.
 
 ## Changes Made
 
