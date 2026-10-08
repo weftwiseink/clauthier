@@ -71,4 +71,6 @@ Failure picture: rename appends to the old record, `ai-title` changes the filena
 
 ## Steering Log
 
+- 2026-10-08T12:10: maintainer: "yes, revert the naming decision. Retrieval/interpretability can be handled later. Then once that's all reviewed one last time in the context of the rest of the plugin it can be accepted." Reason (overseer's recommendation): nearly all new machinery (transcript lookup for note/path, `session_title` fallback, record splits, two `chat_record:` paths) existed only for the filename; sign-offs already carry the session name.
+
 - 2026-10-08: maintainer: "we'll remove the 'schema' entirely in favor of flexible records: Before ending a turn that began with a human prompt, call chat-record briefly summarizing the most salient information from the turn. It should be the most important info you are about to share with the user, condensed to at most 300 words, with bullet points no more than 100 words long." "The goal is for the chat record to represent the most important bits about the actual chat, which we assume the agent is communicating to the user." "Session name should also be added to the file name, and a new session name should start a new chat record." "Forget the stuff about user headers - if it's an issue after reload we'll address it."
