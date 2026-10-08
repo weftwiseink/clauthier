@@ -20,8 +20,8 @@ Implement `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` (accepted r3)
 
 ## Scratchpoint
 
-- next_steps: Phase 3 (skills, rule bullet, loop-skill lines, delete `overseers.md`, sweep, `Stop` reason, `top_level_only` scenario).
-- important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/`, `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
+- next_steps: Verification 3 (`init_real`) result; Phase 4 live run (`/cdocs:propose-revise` toy topic, opus lead, `/compact`).
+- important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/skills/{oversee-workstream,chat-record,oversee-many}/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
 - callouts:
   - decision: this implementer is a subagent and never calls `chat-record`.
   - todo: Phase 4 says "record transcript evidence in the overseer's devlog"; the overseer owns that devlog, so evidence lands here and the overseer copies it.
@@ -54,6 +54,20 @@ Live gates (headless `top_level_only`, materialization, propose-revise transcrip
 
 > NOTE(opus/oversee-workstream-skill): A failed `git add` (pathspec on the moved-away directory) let the staged rename slip into the README-NOTE commit. Both commits were local and unpushed; I soft-reset them and recommitted as `6ad47c5`, `c24e5ff`, `1237009`.
 
+### Phase 3: skills, rule bullet, sweep
+
+- Skill bodies are the worktree's current `overseers.md` text verbatim, which is newer than the proposal's quoted Chat record wording (the per-turn note is "the most important things you are about to tell the user, in at most 300 words of bullets", not the `gist:`/`query:` types).
+  The `chat-record` guard is split onto two lines (sentence-per-line); wording is §2's.
+- `propose/SKILL.md` wording: "Top-level mode: as a thin lead, invoke `/cdocs:oversee-workstream` with the Skill tool before dispatching, ..." (§4 says "same wording as implement"; implement's "a thin lead: invoke" reads as a double colon after "Top-level mode:", so the propose line uses a comma).
+- Deleting `overseers.md` before the sweep made `check-rule-refs.ts` report exactly the 3 predicted references (`frontmatter-spec.md:85`, `devlog/SKILL.md:31`, `devlog/template.md:10`); deletion and sweep landed in one commit (`7732031`).
+- `Stop` reason: `... (record: <path>). See /cdocs:chat-record. Run, then finish: ...`; 254 bytes in the unit suite.
+- `top_level_only`: the parent invokes `/cdocs:chat-record`, then dispatches `cdocs:proposer`, `general-purpose`, `fork`.
+  New assertions: no subagent `Skill(chat-record)`; the parent invoked it; the parent's note landed; the record's agent-entry count equals the agent_id-free `chat-record note` PreToolUse count (so a subagent block in the record fails it).
+  The fork's foreground assertion did not need relaxing on 2.1.294.
+- `init_real` (beyond §6's list, needed for Verification 3): seeds `opencode.json` and a stale `.opencode/rules/cdocs/overseers.md`; its two assertions on overseer text in the rules file ("Top-level agents must use ...", "After a compaction") are replaced by the top-level bullet in both rules file and `AGENTS.md`, no "CDocs Overseer Rules" in either, and the stale copy pruned.
+
+> WARN(opus/oversee-workstream-skill): The `rules_check` and `multi_turn` extras assume the post-compaction resumption steps are in the always-loaded rules; they now live in `chat-record`, which compaction re-attaches as a skill. Those extras are not run in this round and may need their expectations revisited.
+
 ## Changes Made
 
 | File | Description |
@@ -62,9 +76,48 @@ Live gates (headless `top_level_only`, materialization, propose-revise transcrip
 | `scripts/check-rule-refs.test.ts` | test 6 (real tree) and 6a-6f fixtures |
 | `plugins/cdocs/README.md` | "Referencing rules" describes the skill-reference check; skills-table rename; OpenCode leftover-dir NOTE |
 | `plugins/cdocs/skills/oversee-many/` | renamed from `oversee/`; name, H1, usage |
-| `plugins/cdocs/AGENTS.md`, `CLAUDE.md`, `.gitignore`, `rules/overseers.md` | rename-only edits |
+| `plugins/cdocs/AGENTS.md`, `CLAUDE.md`, `.gitignore`, `rules/overseers.md` | rename-only edits (Phase 2) |
+| `plugins/cdocs/skills/oversee-workstream/SKILL.md`, `plugins/cdocs/skills/chat-record/SKILL.md` | new skills (§1, §2) |
+| `plugins/cdocs/rules/tool-use-safeguards.md` | top-level-only `chat-record` bullet (§3) |
+| `plugins/cdocs/skills/{iterate,propose-revise,full-send,oversee-many,ablate,implement,propose}/SKILL.md` | load `oversee-workstream` (§4) |
+| `plugins/cdocs/rules/overseers.md` | deleted |
+| `rules/frontmatter-spec.md`, `skills/devlog/{SKILL,template}.md`, `skills/init/SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `bin/README.md`, `scripts/check-rule-refs.ts` | §6 sweep |
+| `plugins/cdocs/bin/chat-record` | `Stop` reason names `/cdocs:chat-record` |
+| `plugins/cdocs/hooks/tests/chat-record.test.sh` | unit assertion; `top_level_only` and `init_real` extended |
 
 ## Verification
 
 - Phase 1: `npm run test:rules` 18 pass / 0 fail.
 - Phase 2: `npm run test:rules` 18/0; `npm run test:opencode` 9/0 (build emits `oversee-many`, no `oversee`).
+- Phase 3, `npm run test:rules`: 18 pass / 0 fail. `chat-record.test.sh --unit`: 98 passed, 0 failed (`block reason names the /cdocs:chat-record skill`, `block reason under 300 bytes (254)`). `npm run test:opencode`: 9/0; the build emits `chat-record`, `oversee-many`, `oversee-workstream` and rules without `overseers.md`.
+- Verification 1 grep (`CDocs Overseer Rules|overseers\.md|/oversee([^-a-z]|$)` over `plugins scripts .github CLAUDE.md README.md .gitignore`): only `.claude/oversee/` paths (`.gitignore:17`, `oversee-many/SKILL.md:51,58`, `oversee-many/template.md:3`), the README OpenCode NOTE (`README.md:194`), `check-rule-refs.test.ts` fixtures, and the `check-rule-refs.ts:149` comment.
+
+### Headless `top_level_only` (haiku, 2.1.294)
+
+```
+== headless: top_level_only - rules loaded; parent loads /cdocs:chat-record; proposer, general-purpose and fork dispatched; no subagent chat-record call
+  PASS: no chat-record call with an agent_id
+  PASS: no subagent invoked the chat-record skill
+  PASS: the parent invoked the chat-record skill
+  info: record markers: U A:haiku-5-5 S:95f80c14
+  PASS: the parent's note landed in the record
+  PASS: every agent entry is a top-level note call
+  info: Agent subagent_types dispatched: cdocs:proposer,general-purpose,fork
+  PASS: a cdocs:proposer was dispatched
+  PASS: a general-purpose agent was dispatched
+  PASS: a fork was dispatched
+  PASS: the fork dispatch was not refused
+  PASS: all dispatches ran in the foreground
+  PASS: the fork reported a.txt's first line
+  PASS: the proposer wrote its proposal
+  info: subagent tool calls: Bash=3,Edit=1,Read=2,Write=1
+  PASS: the subagents made tool calls under the rules
+  PASS: the general-purpose agent ran Bash
+
+chat-record tests: 14 passed, 0 failed
+```
+
+Parent tool sequence: `Skill cdocs:chat-record`, `Agent cdocs:proposer`, `Agent general-purpose`, `Agent fork`, `Bash chat-record note ...`.
+The only chat-record `PreToolUse` in the canary log has `agent_id: null`; one `Stop`, no block.
+The fork's single tool call was a `Read` of `a.txt`.
+
