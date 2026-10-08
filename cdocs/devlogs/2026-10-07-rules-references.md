@@ -36,6 +36,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 |---|---|---|---|---|---|---|
 | r1 | proposer (opus) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references.md` | blocking: per-file delivery not worth migration (drop `@`-import instead); drop simulated init from check |
 | r2 | proposer (opus, warm) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r2.md` | blocking: phase 3 `rules_check` gate can never pass (fails 3/5 with import); use canary compaction probe |
+| r3 | proposer (opus, warm) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r3.md` | blocking (empirical, 2/2 runs): compaction summary carries canary; fix = swap canary A->B on disk after turn 1, pass only on B |
 
 ## Judge Log
 
@@ -53,6 +54,8 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T22:31 dispatch: warm proposer for r2 revision.
 - 2026-10-07T22:36 return: r2 revision `5db40f8`: canary compaction probe replaces `rules_check` gate (kept as no-regression comparison); alphabetical-order change and `${CLAUDE_PLUGIN_ROOT}` exception dropped; nits fixed.
 - 2026-10-07T22:37 dispatch: fresh opus `cdocs:reviewer`, round 3.
+- 2026-10-07T22:42 return: r3 revise (`e64eac7`); reviewer ran the probe on v2.1.293 haiku: summary carried canary in 2/2; A->B swap variant passed 1/1.
+- 2026-10-07T22:43 dispatch: warm proposer for r3 revision.
 
 ## Steering Log
 
