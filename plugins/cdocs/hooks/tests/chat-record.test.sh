@@ -600,7 +600,7 @@ hs() { # hs <name> <description>: scenario header; returns 1 when filtered out
 
 headless_suite() {
   headless_setup
-  local P F J out sid sid2 b
+  local P F J out sid sid2 b day
 
   if hs cmdv "command -v chat-record resolves into the plugin under test"; then
     P="$(hproj cmdv)"
@@ -819,17 +819,30 @@ and then reply received." --permission-mode bypassPermissions
     check "fork-session starts a new file" "$(nrec "$P")" "2"
   fi
 
-  if hs rename "custom-title in the transcript names the sign-off"; then
-    P="$(hproj rename)"
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --permission-mode bypassPermissions
-    sid="$(stream_sid "$SB/rename.jsonl")"
-    local tr; tr="$(find "$CFG/projects" -name "$sid.jsonl" | head -n 1)"
-    printf '{"type":"custom-title","customTitle":"my-canary","sessionId":"%s"}\n' "$sid" >> "$tr"
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply two.' '- turn two')" --resume "$sid" --permission-mode bypassPermissions
-    claude_run rename "$P" -- -p "$(note_prompt 'Reply three.' '- turn three')" --resume "$sid" --permission-mode bypassPermissions
-    out="$(markers "$(the_rec "$P")")"
-    has "a later sign-off carries the title" "$out" "S:my-canary\$"
-    echo "  info: markers: $out"
+  if hs rename_record "stream-json /rename between two prompts starts a new record; the old one stays"; then
+    P="$(hproj rename_record)"
+    drive rename_record "$P" "$(note_prompt 'Reply one.' '- turn one')" "/rename Second Name" \
+      "$(note_prompt 'Reply two.' '- turn two')"
+    J="$SB/rename_record.jsonl"; sid="$(stream_sid "$J")"; day="$(date +%Y-%m-%d)"
+    echo "  info: records: $(ls "$P/cdocs/_chat" | paste -sd' ' -)"
+    check "two records" "$(nrec "$P")" "2"
+    check "unnamed record: turn one only" "$(markers "$P/cdocs/_chat/$day-$sid.md")" "U A:haiku-4-5 S:${sid:0:8}"
+    check "named record: turn two only" "$(markers "$P/cdocs/_chat/$day-second-name-$sid.md")" "U A:haiku-4-5 S:second-name"
+    hasnt "no @user block for /rename" "$(cat "$P"/cdocs/_chat/[0-9]*.md)" "/rename"
+    check "two Stops, no block" "$(stop_count "$J"):$(stop_blocks "$J")" "2:0"
+  fi
+
+  if hs rename_record_name "--name names the first record; --resume with another --name starts a new one"; then
+    P="$(hproj rename_record_name)"
+    claude_run rename_record_name "$P" -- -p "$(note_prompt 'Reply one.' '- turn one')" --name "First Name" \
+      --permission-mode bypassPermissions
+    sid="$(stream_sid "$SB/rename_record_name.jsonl")"; day="$(date +%Y-%m-%d)"
+    claude_run rename_record_name "$P" -- -p "$(note_prompt 'Reply two.' '- turn two')" --resume "$sid" --name "Other" \
+      --permission-mode bypassPermissions
+    echo "  info: records: $(ls "$P/cdocs/_chat" | paste -sd' ' -)"
+    check "two records, none unnamed" "$(nrec "$P"):$([ -e "$P/cdocs/_chat/$day-$sid.md" ] && echo unnamed)" "2:"
+    check "first turn in first-name" "$(markers "$P/cdocs/_chat/$day-first-name-$sid.md")" "U A:haiku-4-5 S:first-name"
+    check "resumed turn in other" "$(markers "$P/cdocs/_chat/$day-other-$sid.md")" "U A:haiku-4-5 S:other"
   fi
 
   if hs plan_mode "plan mode: one Stop, no decision, @user then sign-off"; then
