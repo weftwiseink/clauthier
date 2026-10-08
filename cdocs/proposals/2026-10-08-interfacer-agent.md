@@ -16,7 +16,7 @@ tags: [architecture, claude_skills, interfacer, browser_delegation, testing, sub
 
 # Interfacer Agent: a general sonnet testing assistant replacing `browser-delegate`
 
-> BLUF: Delete the `browser-delegate` plugin and add one ~65-line sonnet agent, `cdocs:interfacer`, shaped like `bash-runner`.
+> BLUF: Delete the `browser-delegate` plugin and add one ~70-line sonnet agent, `cdocs:interfacer`, shaped like `bash-runner`.
 > Any agent dispatches it as a testing assistant: it learns how to drive the target from the dispatch prompt and the project's own docs and scripts, writes media and a brief `report.md` under `${TMPDIR:-/tmp}/claude-<uid>/interfacer/<instance>/NN-<check>/`, and replies with the path and a short summary.
 > Durable by default: the dispatcher keeps the returned `agentId` and resumes it with `SendMessage` for follow-up checks, and tells it to tear down its tooling before the dispatcher itself returns.
 
@@ -67,7 +67,7 @@ Historical cdocs (devlogs, reviews, reports, chat records) stay as written.
 
 ### The agent: `plugins/cdocs/agents/interfacer.md`
 
-The implementer may polish wording, but the shape, the rule set, and the length (about `bash-runner`'s) are the spec.
+The implementer may polish wording, but the shape, the rule set, and the length (~70 lines) are the spec.
 
 ````markdown
 ---
@@ -113,7 +113,7 @@ The first dispatch and each follow-up message is one check, in `<instance>/NN-<s
 - Use the project's setup as documented: don't install tools, change config, or swap in a different tool when it fails, but report what is missing.
 - Write only under your instance directory, by absolute path, and never create or edit files in the project tree (if a tool writes into its cwd anyway, say so in the report).
 - Never close, kill, restart, or reuse sessions and processes you did not start, unless the prompt names them.
-- Start long-lived things (servers, apps, browser sessions) so they outlive the Bash call, and leave them running until told to tear down.
+- Start long-lived things (servers, apps, browser sessions) detached (the tool's own daemon, or `setsid`/`nohup`) so they outlive the Bash call, and leave them running until told to tear down.
 - An error is never a pass: report every failed command, timeout, missing element, or blank capture, including ones a retry got past, and never read a piped command's exit status as the tool's.
 - Describe what you observed and point at the media that shows it ("the Save button rendered, disabled"), but leave whether the change is correct or acceptable to the dispatcher.
 - On "tear down", stop everything you started and list what you stopped.
@@ -175,7 +175,7 @@ sequenceDiagram
 
 - **Warm agent.** The dispatcher keeps the `agentId` from the Agent tool result; it passes no `name`, which nested Agent tools lack and which, with agent teams enabled, spawns a teammate instead of a subagent.
   A resume keeps the agent's history, so a follow-up is one sentence ("now submit the form and screenshot the result"), and it hits the prompt cache.
-- **Live tooling.** The interfacer starts servers and apps so they outlive its Bash calls (Bash `run_in_background`, or a tool's own daemon such as a browser CLI's session).
+- **Live tooling.** The interfacer starts servers and apps so they outlive its Bash calls: detached (the tool's own daemon, such as a browser CLI's session, or `setsid`/`nohup`), not Bash `run_in_background`, which nested callers lack.
   Its `Left running` line is the dispatcher's inventory of what to tear down.
 - **Ending.** A dispatcher sends "tear down" before it returns; a warm implementer resumes the same interfacer next round, which restarts what it needs.
   This keeps single-instance targets (fixed ports, one app per simulator, desktop apps) free for the reviewer's fresh run and avoids stale servers across the implementer's edits.
@@ -204,7 +204,7 @@ The interfacer never writes `cdocs/_media/`: the dispatcher copies only what its
 | `CLAUDE.md` | No change: it lists skills, not agents. |
 | `scripts/build-opencode.ts`, its test | No change. With `tools` omitted the build emits no `tools`/`permission` block (OpenCode: all tools), drops `model`, and round-trips the description; the test loops over every agent file. |
 
-The CC-specific words in the description (`SendMessage`, `run_in_background`) pass through to OpenCode as text; an OpenCode caller resumes subagents its own way.
+The CC-specific word in the description (`SendMessage`) passes through to OpenCode as text; an OpenCode caller resumes subagents its own way.
 
 ## Important Design Decisions
 
@@ -235,7 +235,6 @@ Acceptability ("the fix works", "matches the design") needs the proposal's crite
 
 Re-dispatching for each follow-up pays a fresh briefing, a fresh setup discovery, and a cold app start.
 `SendMessage` resume and long-lived processes are native mechanics, so durability costs keeping an `agentId` and a "tear down" before each return, with no state file.
-The agent's warmth carries most of the value (briefing, setup discovery, cache); a cold app start once per dispatcher turn is cheap, and avoids collisions with other agents' runs of the same target.
 
 ### D6: Fresh per reviewer, warm per implementer
 
@@ -252,9 +251,8 @@ The dispatcher gets a few lines in context and reads `report.md` or the media on
 - **A tool writes into its cwd** (some browser CLIs write a state dir there). The interfacer notes it in the report, and if the project's docs give a cwd or output flag, it uses that.
 - **Two agents told to reuse the same named session.** Not prevented: the rule against touching unnamed sessions covers the default case, and naming a shared session is the dispatcher's explicit choice.
 - **A dispatcher returns without tearing down.** `Left running` in the last report names what is up; processes started under Claude Code's Bash may die with the session, and daemons idle out on the tool's own timeout.
-- **Process lifetime after a foreground interfacer returns.** Documented for background subagents only. WARN(opus-5-5/cdocs/interfacer-agent): unverified for foreground, though it only has to span the gap between a check's return and the dispatcher's next `SendMessage`, which Phase 4 tests, and if it fails, the agent's description tells dispatchers to run it in the background for durable checks.
+- **Process lifetime after a foreground interfacer returns.** Documented for background subagents only. WARN(opus-5-5/cdocs/interfacer-agent): unverified for foreground, though it only has to span the gap between a check's return and the dispatcher's next `SendMessage`, which Phase 4 tests; starting processes detached is what makes it hold.
 - **`maxTurns` across resumes.** Whether the 40-turn cap is per resume or cumulative is unverified; a capped result is marked partial and resumable, so the dispatcher can continue it either way.
-- **Reviewer's media in a review.** The reviewer copies, compares with `cmp`, and embeds, as today; only the media type (`<ext>`) is generalized.
 
 ## Test Plan
 
@@ -262,7 +260,7 @@ The dispatcher gets a few lines in context and reads `report.md` or the media on
 - `npm run test:opencode`: `interfacer.md` builds, its description round-trips, it has no `model`, `tools`, or `permission` key.
 - `jq . .claude-plugin/marketplace.json` parses and lists only `cdocs`.
 - `grep -rn -i 'browser-delegate' --exclude-dir=cdocs --exclude-dir=.git --exclude-dir=build --exclude-dir=node_modules .` returns nothing.
-- `wc -l plugins/cdocs/agents/interfacer.md` is about `bash-runner`'s 65 (under ~70).
+- `wc -l plugins/cdocs/agents/interfacer.md` is ~70 lines.
 
 ## Verification Methodology
 
@@ -297,7 +295,7 @@ Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook al
 
 - Write `plugins/cdocs/agents/interfacer.md` per "The agent".
 - Update `plugins/cdocs/AGENTS.md` and `plugins/cdocs/README.md` per "Listings and OpenCode".
-- Success: `npm run test:rules` and `npm run test:opencode` pass; the file is under ~80 lines.
+- Success: `npm run test:rules` and `npm run test:opencode` pass; the file is ~70 lines.
 
 ### Phase 2: Callers
 
@@ -313,7 +311,7 @@ Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook al
 ### Phase 4: Live canary
 
 - Run the Verification Methodology and record stream excerpts, report paths, and pass/fail per criterion in the sub-devlog.
-- If foreground process lifetime fails, add the background-dispatch sentence to the description and re-run.
+- If a process does not survive between checks, fix how the agent detaches it and re-run.
 - Success: every pass criterion met, or each miss flagged with its cause.
 
 ## Maintainer Overrides
@@ -321,5 +319,4 @@ Do not touch `scripts/build-opencode.ts`, the rules files, the edit-path hook al
 > NOTE(opus-5-5/cdocs/interfacer-agent): These are settled as decisions (D3, D5, D6) but the maintainer has not answered them yet, so the maintainer may override any of them.
 > 1. "Durable by default" means a warm agent resumed by `agentId`, with tooling scoped to one dispatcher turn.
 >    Rejected readings: (a) media persisted to a project path (writes into the project tree, duplicates the `_media` decision); (b) re-opening and retrying (retries hide errors); (c) `background: true` (forces every caller async, strips `Agent`, and changes process lifetime unasked).
-> 2. The agent inherits all tools, so MCP-driven projects and the `bash-runner` hand-off work; the write boundary is a rule.
-> 3. Reviewers always tear down, with no hand-off of running tooling to the overseer.
+> 2. All tools are inherited (D3), and reviewers always tear down (D6).
