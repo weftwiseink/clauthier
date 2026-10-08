@@ -29,11 +29,11 @@
 A `note` call and the record it produces:
 
 ```console
-$ echo "- gist: drafting bin/README.md" | CLAUDE_CODE_SESSION_ID=7f3a9c21-... chat-record note --as opus-5-5
+$ echo "- Drafting bin/README.md: examples for each mode." | CLAUDE_CODE_SESSION_ID=7f3a9c21-... chat-record note --as opus-5-5
 ```
 ```
 @opus-5-5: 2026-10-07T12:33:06-07:00
-- gist: drafting bin/README.md
+- Drafting bin/README.md: examples for each mode.
 
 -- 7f3a9c21 at 2026-10-07T12:33:06-07:00
 ```
@@ -55,7 +55,7 @@ chat-record: no cdocs/_chat/ between /some/dir and the git toplevel (run /cdocs:
 A real `Stop` block, from a turn with no note yet:
 
 ```json
-{"decision":"block","reason":"No chat-record entry for this turn (record: cdocs/_chat/2026-10-07-7f3a9c21-....md). Run, then finish:\nchat-record note --as <your model id> <<'EOF'\n- gist: <what a successor should know from this turn>\nEOF"}
+{"decision":"block","reason":"No chat-record entry for this turn (record: cdocs/_chat/2026-10-07-7f3a9c21-....md). Run, then finish:\nchat-record note --as <your model id> <<'EOF'\n- <the most important thing you are telling the user>\nEOF"}
 ```
 
 ### More
