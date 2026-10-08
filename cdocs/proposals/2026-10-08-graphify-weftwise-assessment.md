@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: implementation_wip
+status: review_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -28,6 +28,16 @@ tags: [graphify, performance, evaluation]
 > On 10-12 tasks phrased as they stood before investigation, a graph-assisted sonnet agent and a grep-only sonnet agent each answer every task, and a blind opus judge grades the two answers against the verified union of both.
 > The tasks span the classes where graphify should do best.
 > The result is a scenario map of where graphify adds value beyond grep, separating reach (finds what grep misses) from efficiency, plus concrete guidance for `/cdocs:graphify`.
+>
+> Phase 5 decides whether to keep graphify or drop it.
+> It reruns Phase 4's tasks, plus one new concept task and one new orientation task, under real cdocs 0.2.0 conditioning: headless opus sessions inside the weftwise container, with the plugin, rules, and wrapper loaded.
+> Each task gets three arms:
+> - **grep-only**: graphify absent;
+> - **realistic**: conditioned, and given an overseer-written base query;
+> - **ceiling**: a graph-expert prompt.
+>
+> Two blind judges grade each task, and their agreement is reported.
+> Each arm's peak context and the tokens entering its context are measured alongside reach.
 
 ## Summary
 
@@ -40,6 +50,7 @@ The assessment has three phases:
 3. **Runtime and config**: measure the runtime cases on the cleaned graph against a pre-clean baseline taken in the same session. Try the scope variants, the config flags, and two scratch wrapper prototypes (a background refresh and a stamp kept across the copy). Then write the report.
 
 4. **Value beyond grep**: two independent agent arms per task, one with the graph and one with grep only, across the scenario classes that favour a graph. A blind judge grades them, and the results become a scenario map and steering guidance.
+5. **Conditioned re-measurement**: Phase 4's arms were sonnet subagents with an ad hoc card, not cdocs-conditioned opus agents, and they used the graph lightly. Phase 5 reruns the tasks in a real cdocs 0.2.0 environment with three opus arms (grep-only, realistic, ceiling) and two blind judges per task. It measures context alongside reach and diagnoses why agents stop using the graph. Its result replaces Phase 4's where they conflict, and it gives the per-role keep/drop recommendation.
 
 This is not a statistics exercise: timings take three runs, and each question or task gets one judgment.
 
@@ -56,6 +67,7 @@ Decide whether `/cdocs:graphify`, on a cleaned weftwise graph, is fast and usefu
 Also decide which config, if any, buys build or update time without hurting the core use case.
 That core use case is `query`/`explain` of code entities, plus blast radius (`affected`, `path`).
 Finally, map the scenarios in which graphify gives agents value beyond grep, and say how `/cdocs:graphify` should steer them.
+Then decide, per role, whether to keep graphify or drop it, judged on what conditioned agents actually get (reach and context) and on an upper bound of what graphify could give.
 
 ## Background
 
@@ -455,6 +467,127 @@ The section contains:
 Per-arm transcript summaries (commands by kind, tokens, wall time, flags) and the A/B mapping go in the Phase 4 devlog.
 If graphify wins nowhere, the section says so plainly, with the evidence that its best case was tried.
 
+### Phase 5: conditioned re-measurement
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): The maintainer is leaning toward dropping graphify on the Phase 4 result.
+> He asked that any weakness in that result be challenged all the more rigorously, and asked whether agents avoid the tool because they are not running a properly set-up, current cdocs.
+> Phase 4's arms were not real cdocs agents:
+> - the weftwise `.claude/rules/cdocs.md` is v0.1.0, with no mention of graphify;
+> - the container's installed cdocs plugin is 0.1.0, with no `/cdocs:graphify` skill;
+> - `cdocs-graphify` is not on the container's `PATH`;
+> - the arms were sonnet host subagents using an ad hoc card, while real implementers and reviewers are opus with the skill, the rule line, and an overseer-written `graphify_base_query`.
+>
+> Phase 4 also used the graph lightly (4 of 8 graph arms made two graph calls, and b1 and t2 never ran `affected`), one of its four re-judges flipped, and concept discovery and orientation each rest on one task.
+
+**Goal**: a keep/drop decision per role, based on two comparisons:
+- **Realistic against grep**: what a conditioned cdocs agent actually gets from graphify.
+- **Ceiling against grep**: the most graphify could give.
+
+The original motivator, context bloat, is measured alongside reach.
+
+**Decision rule**, fixed before any arm runs:
+
+| Realistic vs grep | Ceiling vs grep | Recommendation for the role |
+|---|---|---|
+| net reach, or lower peak context at equal completeness | any | keep |
+| no gain | net reach or lower context | keep only with changed steering: the gap is conditioning, and the report names the change (skill text, base query, prompt line) |
+| no gain | no gain | drop |
+
+"Net reach" means more unique important items than grep across the tallied tasks, on judge-agreed grades, and not resting on one task.
+State the search share from `cdocs/reports/2026-10-08-search-subagent-context-prep.md` alongside: grep, find, and git-log output is about 4-14% of implementer and reviewer tool-result tokens. That bounds what any search tool can save in context.
+
+**Environment**: a real cdocs session, built and verified per arm.
+
+- **Plugin**: copy clauthier `main`'s `plugins/cdocs` (0.2.0) into a container scratch dir with `git archive`.
+  Its `bin/` goes first on the graph arms' `PATH`, so `cdocs-graphify` resolves there.
+- **Sessions**: run each arm as a headless `claude -p --model opus --plugin-dir <scratch plugin> --output-format stream-json` session inside the container. This follows the overhaul ablation (`cdocs/devlogs/2026-10-08-graphify-overhaul-impl.md`, ablation NOTE).
+  - Environment:
+    - a sandbox `CLAUDE_CONFIG_DIR` holding credential copies, so the container's installed 0.1.0 plugin and the real `~/.claude` are untouched;
+    - `CDOCS_CHAT_RECORD=off`;
+    - `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
+  - Same permission setup as the ablation, plus `--disallowedTools 'Bash(git:*)'`.
+  - Record the exact model id from the init event.
+- **Worktrees**: one throwaway detached worktree per arm per code state, prepared as in Phase 4.
+  - Apply `srcpatch.py`, copy in main's `.graphifyignore`, and delete `cdocs/` and `_archive/`.
+  - Install cdocs 0.2.0 rules: run `/cdocs:init` once in a scratch worktree, then copy its `.claude/rules/cdocs.md` and `AGENTS.md` block into each arm worktree.
+- **Graph arms**: each graph worktree is warmed with one wrapper call, using `GRAPHIFY_OUT` set to a scratch copy of the main graph. Check the counts as in Phase 4.
+- **Grep arm**:
+  - Its `PATH` swaps `/usr/local/bin` for a sandbox dir of symlinks to every entry except `graphify` and `graphify-mcp`, so `cdocs-graphify` prints "graphify not installed; skipping", as it would in a cdocs project without graphify.
+  - `GRAPHIFY_OUT` is unset, and the worktree has no `graphify-out/`.
+  - Its plugin and rules are the same as the other arms', so the only difference is graphify.
+- **Conditioning check**: a mechanical check per arm, run before the run is counted. All of these must hold:
+  - the init event lists the scratch plugin and `cdocs:graphify` among the skills, and no 0.1.0 plugin;
+  - the worktree's rules carry the v0.2.0 marker and the `/cdocs:graphify` line;
+  - for graph arms, `command -v cdocs-graphify` resolves to the scratch plugin and the warm-up's index exists;
+  - for the grep arm, `command -v graphify` fails.
+
+  A run that fails the check is fixed and rerun, and the failure is logged.
+
+**Arms**: three per task, all opus, launched together so that contention is symmetric.
+- **grep-only**: the conditioned session, without graphify.
+- **realistic**: the conditioned session, plus a `graphify_base_query:` line in its prompt.
+  Phase 5's implementer writes that line in the overseer's role, from the task text only, before any arm runs, following the iterate skill's base-query guidance.
+  There is no further push toward the graph.
+- **ceiling**: the realistic arm's conditioning and base query, plus a graph-expert block. It must:
+  - `explain` every candidate entity and follow its neighbours;
+  - run `affected` on each subject;
+  - run `god-nodes`, filtered to the task's package, for orientation.
+
+  `god-nodes` goes through the raw form, because the wrapper rejects it.
+
+Shared prompt, phrased like an overseer's dispatch:
+- the task;
+- the worktree;
+- the answer format from Phase 4: at most 15 ranked `file:entity` items, confidence, and what to check next;
+- no git, no writes inside the worktree, and no devlog (the task is an investigation answered in the final message);
+- no reads outside the allowed paths from Phase 4, with the container paths substituted.
+
+Subagents are allowed, as in a real session. What they return counts as context entering the session, and their own tokens count as cost.
+
+**Tasks**: the 8 tallied Phase 4 tasks, at their Phase 4 code states and with their leak checks, plus one new concept task and one new orientation task.
+The new tasks follow Phase 4's sampling and leak-check rules.
+That gives 10 tallied tasks, and two tasks each for concept and orientation.
+The synthetic d1 and y1 are not rerun: they sit outside the tally, and Phase 4 found the graph and grep methods equivalent on them.
+A **pilot** runs all three arms on a held-out Phase 2 question, ungraded, to check the mechanics before any task.
+
+**Judging**:
+- **Two judges**: two independent fresh opus judges per task. Each gets the three answers, normalized as in Phase 4, labelled A, B, and C in an order randomized separately for each judge.
+- **The item matrix**: each judge builds a matrix over the verified union of the three answers plus its own check.
+  Every item is rated important, true but not relevant, or wrong, and marked with which answers have it.
+  Pairwise unique important items (realistic against grep, ceiling against grep), completeness, and outcomes all come from the matrix mechanically.
+  Outcomes use Phase 4's labels per pair, including mixed.
+- **Agreement**: two judges agree on a pair when they give the same outcome label and their per-arm unique-important counts are within 1.
+  Report the agreement rate.
+  A disagreement goes to a third fresh blind judge, and the majority stands. A three-way split is reported as unsettled and left out of the tally.
+
+**Context and cost**, measured per arm from the stream-json and subagent transcripts:
+- **Peak context**: the maximum over the session's turns of input plus cache-read plus cache-creation tokens.
+- **Tokens entering context**: tool-result tokens, as bytes / 4, by source: graph output (wrapper or raw graphify), search (`rg`/`grep`/`find`/Glob/Grep), reads (Read/`cat`/`sed`), subagent returns, and other.
+- **Cost**: total tokens including subagents, plus wall time.
+
+**Usage diagnosis**, for the realistic arm:
+- **Mechanical classification** from each transcript:
+  - whether it loaded the skill and ran the base query;
+  - graph calls by subcommand;
+  - the position of its last graph call among all calls, and what it called after that;
+  - a stop class:
+    - never used the graph;
+    - ran the base query only;
+    - output judged unhelpful (the next calls grep the same terms);
+    - error or "skipping" line;
+    - used through to the end.
+- **A short read** of the decision points around the last graph call in 2-3 transcripts, quoting the agent's stated reason where there is one.
+
+**Deliverable**: a "Conditioned Re-measurement" section in the report, after Value Beyond Grep. It contains:
+- **Per-task table**: three arms, with completeness, unique important items against grep, peak context, tokens entering context by source, cost, judge agreement, and the realistic arm's stop class.
+- **The decision-rule result per role**: startup, reviewers, and implementers mid-edit, with the search-share bound stated alongside.
+- **The usage diagnosis**, and what in the conditioning (skill text, rule line, base query) explains it.
+- **Updates elsewhere in the report**:
+  - the BLUF, Verdict per Role, and "When the graph helps / When to skip it" guidance change wherever Phase 5 conflicts with Phase 4;
+  - Phase 4's section stays as the record, with a NOTE pointing to Phase 5.
+
+Per-arm transcript summaries, the conditioning-check records, the judge matrices, and the A/B/C mappings go in the Phase 5 devlog.
+
 ## Important Design Decisions
 
 - **Cruft out, markdown in unless shown harmful.** This follows maintainer direction. Markdown is an island in the graph, so its only cost is seed competition and build time, and the all-markdown-out variant measures both.
@@ -468,6 +601,9 @@ If graphify wins nowhere, the section says so plainly, with the evidence that it
 - **Phase 4: two working arms and a blind judge.** It compares the outcomes of real agent work, not graph output against a reference. The graph arm may also grep, so a graph win measures value added on top of grep.
 - **Phase 4: the grep arm has everything except graphify.** A real agent without the graph writes a scanner or runs `tsc`. Limiting it to grep would manufacture graph wins on cycles and dead code, while the graph arm's pilot and graph-first rule stop it degenerating into a second grep arm.
 - **Phase 4: a capability card, not the current skill text.** The phase tests what graphify can do, so that the skill can be steered by the result; the features that won are recorded.
+- **Phase 5: real conditioning, checked per arm.** The question is what cdocs agents get, so the arms run as cdocs sessions run. A run whose conditioning cannot be shown mechanically does not count.
+- **Phase 5: realistic and ceiling arms.** Together they separate "graphify cannot help" from "our steering does not get agents to use it", which is the maintainer's question about conditioning.
+- **Phase 5: decision rule fixed in advance, two judges.** The result decides keep or drop against a stated lean, so the bar and the noise level are set before any data comes in.
 - **Few phases, serialized timing.** Timing runs must not overlap graphify builds or tests in the container. Query judging may overlap only with work that is not being timed.
 
 ## Edge Cases / Challenging Scenarios
@@ -484,6 +620,8 @@ If graphify wins nowhere, the section says so plainly, with the evidence that it
 - **Phase 4 leaks and degeneration**: the Leak check, the Arms rules, the card, and the Transcript checks cover these.
 - **Phase 4 variance**: one run per arm, so a one-item difference is a tie unless the item is important.
   Both arms of a task run concurrently, so host contention is symmetric; wall time supports only relative claims.
+- **Phase 5 sandbox credentials**: the sandbox `CLAUDE_CONFIG_DIR`s hold credential copies. Delete them at cleanup and check they are gone.
+- **Phase 5 conditioning drift**: project hooks or `CLAUDE.md` imports in the weftwise worktree may load other context. Record the init event, and treat any difference between arms as a failed conditioning check.
 - **Maintainer checkouts**: also leave `/var/home/mjr/code/weft/weftwise/loro/`, a separate checkout, untouched.
 - **Nondeterminism**: if repeated full builds of one commit differ in node or edge counts, record the range. The floor uses that range.
 
@@ -548,6 +686,17 @@ The implementer runs this floor itself before handing off and records the result
    - no `gfy-value-*` worktree remains;
    - `pgrep -af "[g]raphify (update|extract|watch)"` is empty.
 
+**Phase 5 floor**, run by the Phase 5 implementer and re-runnable by a reviewer:
+1. **Conditioning**: every counted arm has a passing conditioning-check record. A reviewer re-runs the check for one arm's environment and gets the same result.
+2. **Records present**:
+   - the report holds the per-task table and the decision-rule result;
+   - the devlog holds the transcript summaries, the judge matrices, the mappings, and the base queries.
+3. **Agreement reproducible**: a reviewer runs one more blind judge on two tasks and lands within the reported agreement.
+4. **No collateral**:
+   - as in the Phase 4 floor;
+   - the container's `~/.claude` is unchanged;
+   - no sandbox config dir with credentials remains.
+
 ## Implementation Phases
 
 **Execution**: Phases 1-3 are done (report accepted at implementation review round 2).
@@ -591,6 +740,21 @@ Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and
 - Write the report section, the guidance, and any updates to the verdict or BLUF.
 - Run the Phase 4 floor. Remove the worktrees and scratch dirs. Set the report to `review_ready`.
 - Done when: 10-12 graded tasks cover every class, the high-prior classes have two tasks each, the scenario map (reach and efficiency kept apart) and guidance are written, and the floor passes.
+
+Commits: the report and sub-devlog in clauthier `main`, by exact path. Nothing is committed in weftwise.
+
+### Phase 5: conditioned re-measurement
+
+Phase 5 goes to a fresh opus implementer with its own sub-devlog, `cdocs/devlogs/2026-10-08-graphify-conditioned-remeasure.md`, which sets `part_of` the top-level devlog.
+
+- Record the state of the maintainer worktrees, `loro/`, and the container's `~/.claude`.
+- Build the scratch plugin, the 0.2.0 rules, the sandbox config dirs, and the grep arm's `PATH`. Write the conditioning check.
+- Run the pilot (three arms, held-out question) and fix the mechanics.
+- Sample and leak-check the two new tasks. Write a base query per task.
+- For each task: create three worktrees, warm the graph worktrees, run the conditioning checks, launch the three arms, run the transcript checks, then run two judges (a third on disagreement). Log as you go.
+- Compute the context and usage measures, then write the report section and its updates.
+- Run the Phase 5 floor. Remove the worktrees, scratch dirs, and sandbox config dirs. Set the report to `review_ready`.
+- Done when: 10 tallied tasks have three counted arms and agreed or adjudicated grades, the decision rule is applied per role, and the floor passes.
 
 Commits: the report and sub-devlog in clauthier `main`, by exact path. Nothing is committed in weftwise.
 
