@@ -1,24 +1,24 @@
 ---
-name: oversee
+name: oversee-many
 description: Drive an ARC of proposals through their full lifecycle as the arc overseer, composing /cdocs:full-send, /cdocs:iterate, and /cdocs:propose-revise per proposal, with a durable resumable arc-state file and AFK autonomous continuation
 argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]]"
 ---
 
-# CDocs Oversee
+# CDocs Oversee Many
 
-`/oversee` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by running an existing loop skill per proposal.
+`/cdocs:oversee-many` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by running an existing loop skill per proposal.
 Loops should be run concurrently when practical unless otherwise specified (see Concurrency).
 
 The arc overseer runs in *overseer mode* per "CDocs Overseer Rules".
 
-> NOTE: `/oversee` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/oversee` declines or runs advisory only, and says so.
+> NOTE: `/cdocs:oversee-many` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/cdocs:oversee-many` declines or runs advisory only, and says so.
 
 ## Invocation
 
 ```
-/oversee chain [p1, p2, ...]        # run an explicit list of proposals
-/oversee full <topic>               # scope a proposal set for a topic, then chain it
-/oversee resume [arc-id]            # resume an interrupted arc from its arc file
+/cdocs:oversee-many chain [p1, p2, ...]   # run an explicit list of proposals
+/cdocs:oversee-many full <topic>          # scope a proposal set for a topic, then chain it
+/cdocs:oversee-many resume [arc-id]       # resume an interrupted arc from its arc file
 ```
 
 - `chain`: a list of proposal paths, ordered where one depends on another, each routed per its readiness when it starts (see Composition).

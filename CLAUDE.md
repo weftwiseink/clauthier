@@ -48,7 +48,7 @@ The rules below are real `@`-imports (no code span), so sessions in this repo lo
 - **Overseers** (stay thin, chat record): @plugins/cdocs/rules/overseers.md
 - **Tool use guidance** (tools and skills, one writer per file, Bash output): @plugins/cdocs/rules/tool-use-safeguards.md
 - **Frontmatter spec**: @plugins/cdocs/rules/frontmatter-spec.md
-- **Skills**: `plugins/cdocs/skills/<name>/SKILL.md` (ablate, devlog, full-send, graphify, implement, init, iterate, nit_fix, oversee, propose, propose-revise, report, review, rfp, status, triage)
+- **Skills**: `plugins/cdocs/skills/<name>/SKILL.md` (ablate, devlog, full-send, graphify, implement, init, iterate, nit_fix, oversee-many, propose, propose-revise, report, review, rfp, status, triage)
 
 Test the marketplace locally: `/plugin marketplace add .` then `/plugin install cdocs@clauthier`
 

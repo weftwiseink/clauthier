@@ -1,4 +1,4 @@
-# Oversee Skill: Arc-State Template
+# Oversee-Many Skill: Arc-State Template
 
 Write the arc file to `.claude/oversee/<arc-id>.json` on Turn 0 and rewrite it at each proposal start, end, and escalation.
 Add whatever fields a cold resume needs (scope, gates, notes).

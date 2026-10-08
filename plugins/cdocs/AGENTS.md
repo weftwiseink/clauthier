@@ -30,7 +30,7 @@ Key skills for workflow composition:
 - `/cdocs:implement`: implement a single proposal.
 - `/cdocs:review`: review a cdocs document.
 - `/cdocs:iterate`: run an implement-review loop on a proposal with overseer-mode orchestration and periodic judge meta-assessment.
-- `/cdocs:oversee`: drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file.
+- `/cdocs:oversee-many`: drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file.
 
 ## Formal Agents
 

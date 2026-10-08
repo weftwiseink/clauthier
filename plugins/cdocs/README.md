@@ -44,7 +44,7 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:implement` | Implement an accepted proposal with structured execution, devlog tracking, and frequent commits |
 | `/cdocs:iterate` | Run an implement-review loop on a proposal with periodic judge meta-assessment |
 | `/cdocs:full-send` | Author a proposal via `/cdocs:propose-revise`, then run it to completion via `/cdocs:iterate` |
-| `/cdocs:oversee` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and AFK continuation |
+| `/cdocs:oversee-many` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and AFK continuation |
 | `/cdocs:ablate` | Prove whether an MCP tool helps a cdocs task via a metered, honesty-gated A/B scorecard |
 | `/cdocs:graphify` | Load code context from a graphify graph via `cdocs-graphify`: the workstream's base query, entities, and paths |
 
@@ -190,6 +190,7 @@ npm install @weftwise/cdocs-opencode
 
 The postinstall script copies skills and rules to project paths automatically.
 Set `CDOCS_SKIP_POSTINSTALL=1` to skip the copy step.
+
 
 Then add the plugin to your `opencode.json`:
 

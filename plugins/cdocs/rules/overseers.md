@@ -1,9 +1,9 @@
 # CDocs Overseer Rules
 
-A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee`) is the *overseer*: a router and judgment layer, not a workhorse.
+A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee-many`) is the *overseer*: a router and judgment layer, not a workhorse.
 
 Overseers should currently not be nested, and maintain the "top-level" devlog for a workstream.
-If asked to oversee multiple workstreams, load `/cdocs:oversee`.
+If asked to oversee multiple workstreams, load `/cdocs:oversee-many`.
 
 ## Stay thin
 
