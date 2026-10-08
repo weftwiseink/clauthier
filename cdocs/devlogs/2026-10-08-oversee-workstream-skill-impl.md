@@ -20,7 +20,7 @@ Implement `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` (accepted r3)
 
 ## Scratchpoint
 
-- next_steps: Verification 3 (`init_real`) result; Phase 4 live run (`/cdocs:propose-revise` toy topic, opus lead, `/compact`).
+- next_steps: Phase 4 live run in flight (`scratchpad/p4-run.sh`: sandboxed config, opus lead, `/cdocs:propose-revise` toy topic, `/compact`, one follow-up prompt); then extract Skill/Agent order and the post-compaction skills attachment.
 - important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/skills/{oversee-workstream,chat-record,oversee-many}/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
 - callouts:
   - decision: this implementer is a subagent and never calls `chat-record`.
@@ -120,4 +120,27 @@ chat-record tests: 14 passed, 0 failed
 Parent tool sequence: `Skill cdocs:chat-record`, `Agent cdocs:proposer`, `Agent general-purpose`, `Agent fork`, `Bash chat-record note ...`.
 The only chat-record `PreToolUse` in the canary log has `agent_id: null`; one `Stop`, no block.
 The fork's single tool call was a `Read` of `a.txt`.
+
+### Verification 3: materialization (`chat-record.test.sh --headless --only '^init_real$'`, haiku)
+
+```
+== headless: init_real - /cdocs:init scaffolds cdocs/_chat and rules; --minimal does not
+  PASS: .gitattributes is the union rule
+  PASS: _chat/README.md written
+  PASS: rules file carries the top-level chat-record bullet
+  PASS: AGENTS.md block carries the top-level chat-record bullet
+  PASS: rules file has no overseer rule
+  PASS: AGENTS.md has no overseer rule
+  PASS: stale .opencode/rules/cdocs/overseers.md pruned
+  PASS: CLAUDE.md rules import line is gone
+  PASS: check-rule-refs --materialized passes
+  PASS: init turn: no record, no Stop decision
+  PASS: --minimal created the doc directories
+  PASS: --minimal creates no cdocs/_chat
+
+chat-record tests: 12 passed, 0 failed
+```
+
+`.opencode/rules/cdocs/` afterwards: `frontmatter-spec.md`, `tool-use-safeguards.md`, `workflow-patterns.md`, `writing-conventions.md`; the `AGENTS.md` block's sections are Writing Conventions, Workflow Patterns, Tool Use Guidance, Frontmatter Specification.
+Sandboxes (including credential copies) were deleted after each headless run.
 
