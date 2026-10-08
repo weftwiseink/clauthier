@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: proposal
 state: live
-status: implementation_ready
+status: review_ready
 tags: [architecture, browser, delegation, mcp, model_tiering, testing]
 last_reviewed:
   status: accepted
@@ -18,7 +18,7 @@ last_reviewed:
 
 > BLUF: A Claude Code-only plugin, `browser-delegate`, ships one `bash-runner`-shaped agent: a sonnet leaf that drives `@playwright/cli` named sessions and returns a fixed report of artifact paths and mechanical facts.
 > It never renders verdicts or writes devlogs.
-> Under `/cdocs:iterate` the reviewer dispatches it, so its artifacts count as reviewer-produced.
+> Under `/cdocs:iterate` the reviewer dispatches it, so its artifacts count as reviewer-produced, and the reviewer copies the screenshots it cites into `cdocs/_media/` and embeds them.
 > One delegate drives N sessions for sync tests, and Phase 1 spikes settle pinning guidance and session isolation.
 
 ## Summary
@@ -35,7 +35,8 @@ This proposal commits to:
    The report has no verdict field.
    Within `/cdocs:iterate`, the reviewer dispatches the delegate and cites its artifacts as its own.
 4. **The dispatcher owns all durable state.**
-   The delegate reports session facts (names, routes, re-opens), and the dispatcher records them if it wants them.
+   The delegate writes only to scratch and reports session facts (names, routes, re-opens).
+   The dispatcher (in iterate, the reviewer) records what it wants, and copies only the screenshots it cites into `cdocs/_media/`, embeds them in its review or devlog, and commits them by exact path with that doc.
 5. **Claude Code only.**
    No OpenCode build changes, and nothing in the design depends on OpenCode.
 
@@ -50,6 +51,7 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
 - Multi-client driving: one delegate drives N named sessions in one dispatch.
 - Usage guidance (dispatch shape, toolset complements, iterate integration) in the plugin README and the agent's description.
 - A one-clause clarification to `/cdocs:iterate`'s `confirmed` row so reviewer-dispatched artifacts unambiguously count.
+- A one-clause `reviewer.md` change so the reviewer commits the `cdocs/_media/` evidence it embeds alongside its review.
 
 ### Non-Goals (v1)
 
@@ -61,8 +63,8 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
 - **No OpenCode target.**
   `scripts/build-opencode.ts` builds one named plugin (`npm run build:cdocs`), and this plugin is not added to it.
   No part of the design assumes OpenCode exists.
-- **No non-Claude driving model.**
-  Claude Code's `model:` field is Anthropic-only (see Open Questions).
+- **No non-Claude model path.**
+  Model choice stays entirely with the dispatcher and the reviewer: the delegate runs as `model: sonnet`, and the plugin hosts no gateway or direct-API path to another provider.
 - **No fixer/auto-patch persona.**
   "Minor UI tweaking" stays in the existing implement/review loop (D3).
 - **No A2A surface** (D4).
@@ -186,8 +188,13 @@ The fresh-sessions option closes any review-suffixed session left live by a prev
 Its report must list each session as `opened`, and a `reused` session never backs a `confirmed` row.
 The reviewer learns this from the option's line in the agent description, which is in its Agent tool listing, so the rule reaches it at runtime without the README.
 
-Scratch artifacts are ephemeral, so the reviewer follows iterate's existing rule for them: it cites the scratch path and inlines the report's `Sessions`, `Facts`, and `AE score` lines (so the `opened` requirement stays auditable) plus its own description of what the artifact shows.
-`reviewer.md` needs no change.
+Evidence has two parts, so it outlives scratch and survives worktrees:
+- **Textual audit trail.** The review inlines the report's `Sessions`, `Facts`, and `AE score` lines (so the `opened` requirement stays auditable) plus the reviewer's own description of what the artifact shows.
+- **Cited screenshots.** The reviewer copies each screenshot its verdict relies on from scratch to `cdocs/_media/YYYY-MM-DD-<description>.png` (the cdocs media convention, `frontmatter-spec.md` "Media"), embeds it in the review, and commits it with the review by exact path.
+  Uncited captures stay in scratch.
+
+One writer per file holds: the delegate writes only to scratch, and the reviewer alone writes the `_media/` copies and the review that embeds them.
+Phase 3 adds the one clause `reviewer.md` needs for this to its commit rule.
 
 Depth: under a top-level overseer the reviewer is layer 1 and the delegate layer 2, and a nested overseer ([nest-overseers RFP](2026-10-06-nest-overseers-rfp.md)) puts the delegate at layer 3, the default limit, which is fine for a leaf.
 Under a nested overseer, any wrapper agent between the reviewer and the delegate pushes the delegate past the limit, so fan-out to multiple delegates is always done by the dispatcher directly, never by an intermediate agent.
@@ -231,8 +238,9 @@ Long flows pass `--idle-timeout=<ms>` at open, and `--persistent` stays out of t
 | `.claude-plugin/marketplace.json` | Add a `browser-delegate` entry (`source: ./plugins/browser-delegate`). |
 | `plugins/browser-delegate/.claude-plugin/plugin.json` | Plugin manifest. |
 | `plugins/browser-delegate/agents/browser-delegate.md` | The agent: frontmatter above, with a body holding workflow, session naming, convergence, report format. |
-| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines), multi-client guidance. |
+| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines, copies cited screenshots to `cdocs/_media/` and embeds them), multi-client guidance. |
 | `plugins/cdocs/skills/iterate/SKILL.md` | One clause on the `confirmed` row: an artifact produced by a subagent the reviewer dispatched this round counts as its own. |
+| `plugins/cdocs/agents/reviewer.md` | One clause on the commit rule: the review commit also includes the `cdocs/_media/` evidence the review embeds. |
 
 Example dispatch (Agent tool, `subagent_type: "browser-delegate:browser-delegate"`):
 
@@ -328,8 +336,8 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
 - **Session states.** A second dispatch on a live name reports `reused`, and the same dispatch with the fresh-sessions option reports `opened`.
   `playwright-cli -s=<name> close` between dispatches, then re-dispatch: `opened`.
   `playwright-cli -s=<name> close` from another shell during a dispatch's `wait-for`: `reopened` (not `kill-all`, which ends every session on the host).
-- **Worktree hygiene.** After a dispatch, the dispatcher's worktree has no new `.playwright-cli/` or other untracked files.
-- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches on `<branch>-review-<role>` names with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review cites the scratch path with the report's `Sessions`, `Facts`, and `AE score` lines inlined, the implementer's sessions are still live and untouched, and the overseer records `confirmed`.
+- **Worktree hygiene.** After a dispatch, the dispatcher's worktree has no new `.playwright-cli/` or other untracked files: the delegate writes only to scratch.
+- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches on `<branch>-review-<role>` names with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review inlines the report's `Sessions`, `Facts`, and `AE score` lines and embeds the cited screenshot from `cdocs/_media/YYYY-MM-DD-<description>.png`, committed with the review by exact path (uncited captures are not copied), the implementer's sessions are still live and untouched, and the overseer records `confirmed`.
 - **Multi-client convergence.** One delegate, two sessions (sharer/sharee) on a real sync-capable route: convergence detected by polling within the timeout, and a forced non-convergence reports divergence, not a pass.
 - **Missing CLI.** Make neither the global nor the project-local CLI resolve: the delegate reports `FAILED` and does not fall back.
 
@@ -364,7 +372,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 
 - Add the marketplace entry, `plugin.json`, `agents/browser-delegate.md`, and `README.md` per the file table.
 - Agent body: CLI resolution and availability check, scratch root and `--filename` captures, session naming and sanitization, the fresh-sessions option, re-open handling, action vocabulary, single-pair AE diff, bounded poll loop, report format.
-- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines), multi-client guidance.
+- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines, copies cited screenshots to `cdocs/_media/` and embeds them), multi-client guidance.
 - Success: a dispatch from a session with no Playwright MCP server produces a named session, a saved screenshot, an `AE score` against a supplied baseline, and a report matching the format, verified by opening the artifacts.
 - Constraints: no skills, no `rules/`, no changes to `scripts/build-opencode.ts` or any OpenCode artifact.
 - Depends on: Phase 1 for README pinning wording and CLI resolution, and for session naming if the isolation spike fails.
@@ -372,8 +380,9 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 ### Phase 3: Iterate integration
 
 - Add the one-clause `confirmed` clarification to `plugins/cdocs/skills/iterate/SKILL.md`.
-- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched on `<branch>-review-<role>` names with the fresh-sessions option, whose inlined `Sessions` line reports `opened`.
-- Constraints: no other cdocs agent or skill changes (`reviewer.md` already has `tools: "*"`).
+- Add the one-clause commit-rule change to `plugins/cdocs/agents/reviewer.md`: "Commit your review file, plus the `cdocs/_media/` evidence it embeds (and the reviewed doc's `last_reviewed` ...), by explicit path".
+- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched on `<branch>-review-<role>` names with the fresh-sessions option, whose inlined `Sessions` line reports `opened`, and whose cited screenshot is embedded from `cdocs/_media/` in the committed review.
+- Constraints: no cdocs agent or skill changes beyond these two clauses (`reviewer.md` already has `tools: "*"`).
 - Depends on: Phase 2.
 
 ### Phase 4: Multi-client driving and convergence
@@ -389,7 +398,6 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 - **A2A surface**, gated on a real cross-harness delegation need (D4).
 - **First-party browser-use tool as default**, if Phase 1 confirms availability, as a follow-up proposal.
 - **Host-visible `playwright-cli show` dashboard port** (D5).
-- **Committed iterate evidence**: the reviewer commits screenshots to `cdocs/_media/` beside its review, which needs a one-clause `reviewer.md` amendment (v1 evidence is scratch-only).
 - **R1-R6 visual-review discipline** from the [pixel-grounding handoff report](../reports/2026-08-04-visual-review-gaps-and-pixel-grounding-handoff.md) would sharpen how reviewers judge delegate artifacts; it is a cdocs reviewer change, independent of this plugin.
 
 ## Assumptions Needing Confirmation
@@ -405,9 +413,6 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 
 ## Open Questions
 
-- **Pluggable models (maintainer).** The model comparison report recommends a narrowly scoped non-Claude pilot (the CSS-fix leg first), which Claude Code's `model:` cannot express.
-  Should this plugin ever host a non-Claude path (for example, a direct API call from the delegate's Bash for a grounding helper), or does model choice stay entirely with the dispatcher and reviewer?
-  v1 assumes the latter and is not designed around either answer.
 - What dispatch round-trip count makes an exploratory loop (a lead refining actions across several dispatches) costlier than the lead driving directly?
   v1 dispatches are bounded and single-shot, but an iterative loop re-approaches lead-holds-the-loop at dispatch granularity.
 - Should Phase 2's scaffold wait for Phase 1, or is parallel work (as planned) worth the risk of README rework?
