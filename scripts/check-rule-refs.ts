@@ -6,6 +6,10 @@
  * Downstream, `/cdocs:init` concatenates the rules into `.claude/rules/cdocs.md`
  * and inlines them into `AGENTS.md`, so only the H1 survives every form.
  *
+ * It also checks that every `/cdocs:<name>` resolves to a skill
+ * (`skills/<name>/SKILL.md`) or an agent (`agents/<name>.md`), over its own
+ * file list that includes the init skill and the top-level docs.
+ *
  * Usage:
  *   node --import tsx scripts/check-rule-refs.ts           check the source tree
  *   node --import tsx scripts/check-rule-refs.ts --materialized <proj>  resolve against a
@@ -251,6 +255,71 @@ export function omitClaudeMdProblems(): string[] {
     .map((p) => `${rel(p)}: sets omitClaudeMd; cdocs agents rely on rules arriving with the CLAUDE.md hierarchy`);
 }
 
+// ---------------------------------------------------------------------------
+// Skill references: `/cdocs:<name>` must name a skill or an agent.
+
+const PLUGIN_DIR = join(REPO_ROOT, "plugins", "cdocs");
+const SKILL_REF = /\/cdocs:([A-Za-z0-9][A-Za-z0-9_-]*)/g;
+
+export interface SkillRef {
+  path: string;
+  line: number;
+  name: string;
+}
+
+/** Every `/cdocs:<name>`, fenced code included; `/cdocs:<type>` and `/cdocs:*` do not match. */
+export function findSkillRefs(path: string, text: string): SkillRef[] {
+  const refs: SkillRef[] = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    for (const m of line.matchAll(SKILL_REF)) refs.push({ path, line: i + 1, name: m[1] });
+  });
+  return refs;
+}
+
+/** Skill directory names with a `SKILL.md`, plus agent file basenames. */
+export function skillNames(): Set<string> {
+  const skillsDir = join(PLUGIN_DIR, "skills");
+  const skills = readdirSync(skillsDir).filter((d) => existsSync(join(skillsDir, d, "SKILL.md")));
+  const agents = readdirSync(join(PLUGIN_DIR, "agents"))
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.slice(0, -3));
+  return new Set([...skills, ...agents]);
+}
+
+/**
+ * The skill-reference check's own file list: every `.md` under
+ * `plugins/cdocs/{rules,skills,agents}` (the init skill included), the plugin's
+ * README, AGENTS.md and bin/README.md, and the repo's CLAUDE.md and README.md.
+ */
+export function skillRefFiles(): string[] {
+  const docs = [
+    join(PLUGIN_DIR, "README.md"),
+    join(PLUGIN_DIR, "AGENTS.md"),
+    join(PLUGIN_DIR, "bin", "README.md"),
+    join(REPO_ROOT, "CLAUDE.md"),
+    join(REPO_ROOT, "README.md"),
+  ].filter((p) => existsSync(p));
+  return [...SCAN_DIRS.flatMap(walk).filter((p) => p.endsWith(".md")), ...docs].sort();
+}
+
+/** Problems for `[path, text]` entries against a set of known names. */
+export function skillRefProblemsIn(entries: Array<[string, string]>, names: Set<string>): string[] {
+  const known = [...names].sort().join(", ");
+  return entries.flatMap(([path, text]) =>
+    findSkillRefs(path, text)
+      .filter((r) => !names.has(r.name))
+      .map((r) => `${r.path}:${r.line}: /cdocs:${r.name}: no skill or agent named "${r.name}"; known: ${known}`),
+  );
+}
+
+/** Assertion 6: every `/cdocs:<name>` in the check's files resolves. */
+export function skillRefProblems(): string[] {
+  return skillRefProblemsIn(
+    skillRefFiles().map((p) => [rel(p), readFileSync(p, "utf-8")]),
+    skillNames(),
+  );
+}
+
 /** The text between the `AGENTS.md` cdocs delimiters, or null. */
 export function agentsBlock(text: string): string | null {
   const m = text.match(/<!-- cdocs-rules-start -->([\s\S]*?)<!-- cdocs-rules-end -->/);
@@ -298,6 +367,7 @@ function main(argv: string[]): number {
       ...resolutionProblems(rules),
       ...filenameProblems(),
       ...omitClaudeMdProblems(),
+      ...skillRefProblems(),
     ];
   }
   for (const p of problems) console.error(p);

@@ -6,6 +6,7 @@
  * (plugins/cdocs/{rules,skills,agents}/**\/*.md minus skills/init/SKILL.md):
  *   1. rule invariants   2. resolution   3. no filename references
  *   4. no omitClaudeMd   5. extractor fixtures
+ *   6. every `/cdocs:<name>` resolves to a skill or agent (own file list)
  */
 
 import { test } from "node:test";
@@ -22,7 +23,14 @@ import {
   resolutionProblems,
   filenameProblems,
   omitClaudeMdProblems,
+  findSkillRefs,
+  skillRefProblemsIn,
+  skillRefProblems,
+  skillRefFiles,
+  skillNames,
+  REPO_ROOT,
 } from "./check-rule-refs.ts";
+import { join } from "path";
 
 function report(problems: string[]): string {
   return `\n${problems.join("\n")}\n`;
@@ -144,4 +152,60 @@ test("5g. filename references are found; the literal .claude/rules/cdocs.md is n
   assert.equal(hits("written to `.opencode/rules/cdocs.md`").length, 1);
   assert.equal(hits("copied to `.opencode/rules/cdocs/overseers-x.md`").length, 0);
   assert.equal(hits("my-overseers.md and overseers.mdx").length, 0);
+});
+
+// 6. Skill references: every `/cdocs:<name>` resolves to a skill or an agent.
+
+test("6. skill references: every /cdocs:<name> in checked files resolves to a skill or agent", () => {
+  const problems = skillRefProblems();
+  assert.equal(problems.length, 0, report(problems));
+});
+
+const NAMES = new Set(["oversee-many", "iterate", "bash-runner"]);
+
+function skillProblems(text: string, path = "fixture.md"): string[] {
+  return skillRefProblemsIn([[path, text]], NAMES);
+}
+
+test("6a. a /cdocs:<name> missing from the skill set fails, naming the file and line", () => {
+  const problems = skillProblems("intro\nrun `/cdocs:oversee resume` to continue");
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^fixture\.md:2: \/cdocs:oversee: no skill or agent named "oversee"/);
+});
+
+test("6b. an existing skill name resolves, without partial matches", () => {
+  assert.deepEqual(skillProblems("run `/cdocs:oversee-many resume`."), []);
+  assert.deepEqual(findSkillRefs("f.md", "/cdocs:oversee-many").map((r) => r.name), ["oversee-many"]);
+});
+
+test("6c. an agent name resolves through agents/", () => {
+  assert.deepEqual(skillProblems("use `/cdocs:bash-runner` for verbose commands"), []);
+  assert.ok(skillNames().has("bash-runner"), "real tree: bash-runner agent not indexed");
+  assert.ok(skillNames().has("iterate"), "real tree: iterate skill not indexed");
+});
+
+test("6d. placeholders /cdocs:<type> and /cdocs:* yield no references", () => {
+  assert.deepEqual(findSkillRefs("f.md", "`/cdocs:<type>` and `/cdocs:*` and /cdocs: alone"), []);
+});
+
+test("6e. a reference inside fenced code is checked", () => {
+  const problems = skillProblems("```\n/cdocs:oversee my-arc\n```\n");
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^fixture\.md:2: /);
+});
+
+test("6f. the check's file list includes init/SKILL.md and the top-level docs", () => {
+  const files = skillRefFiles();
+  for (const f of [
+    join("plugins", "cdocs", "skills", "init", "SKILL.md"),
+    join("plugins", "cdocs", "README.md"),
+    join("plugins", "cdocs", "AGENTS.md"),
+    join("plugins", "cdocs", "bin", "README.md"),
+    "CLAUDE.md",
+    "README.md",
+  ]) {
+    assert.ok(files.includes(join(REPO_ROOT, f)), `skill-ref file list lacks ${f}`);
+  }
+  assert.ok(files.some((f) => f.endsWith(join("rules", "writing-conventions.md"))), "rules not in file list");
+  assert.ok(files.some((f) => f.endsWith(join("agents", "implementer.md"))), "agents not in file list");
 });
