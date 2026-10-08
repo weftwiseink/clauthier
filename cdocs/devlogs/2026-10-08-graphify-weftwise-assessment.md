@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 adding Phase 4 (value beyond grep); then fresh review, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: rev-3 reviewing Phase 4; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -93,6 +93,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | trim-1 (cdocs:implementer, opus, fresh) | report, impl devlog | 2026-10-08T22:17 | accept-round items: BLUF per-role first, full trim to ~half, wording/count fixes; docs only, no number or verdict change |
 | return | trim-1 | `72fc23c`, `f962f61` | 2026-10-08T22:35 | accept-round items applied; BLUF per-role first; 5,265 to 3,668 words before floor (~30%, not half: kept sections ~1,570 words; further cuts would drop Runtime Matrix/Candidates rows); process detail moved to impl devlog; floor byte-identical; only new values Q4 35 and config counts 7/5/13; nit_fix clean (semicolons left) |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T22:45 | add Phase 4 "Value beyond grep": scenario classes, pre-investigation questions, two-arm (graph-assisted vs grep-only) sonnet runs, blind opus judge, `source` scratch graph, scenario map + skill guidance |
+| return | prop-1 | `0931be5` | 2026-10-08T22:52 | Phase 4 added (Phase 2 NOTE: measured efficiency, not discovery). Two throwaway worktrees at `2791713d` with `cdocs/` + `_archive/` deleted (no devlog leakage), `source` scratch graph (9,744/25,774); capability inventory + one-page card for graph arm; 10-12 tasks from objectives/problem statements, leak check; sonnet arms independent, ~40-call soft cap, tool-neutral answer format; fresh opus judge per task, A/B blind, scrubbed, own check, "materially better" defined; post-unblind serendipity check; deliverable a "Value Beyond Grep" report section + skill guidance as recommendation; floor re-judges 2 tasks blind. Choices: capability card not current skill text; delete dirs not sparse-checkout; `loro/` added to do-not-touch |
+| dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | 2026-10-08T22:54 | Phase 4 design: best-case seeking vs grep bias, manufactured-win risk, capability claims, ceremony |
 
 ## Steering Log
 
