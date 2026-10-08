@@ -42,7 +42,8 @@ Do all of this in one Bash call, before any `cd`:
    It is needed because the CLI's project-config lookup is cwd-relative and you run from scratch.
 4. **Branch.** `git -C "$start" symbolic-ref --short -q HEAD`; if that fails, `detached-$(git -C "$start" rev-parse --short HEAD)`; if not a git repo, `nogit`.
    Sanitize: replace every character outside `[A-Za-z0-9_-]` with `-` (`feature/foo` becomes `feature-foo`).
-   Session name per role: a prompt-supplied name wins, else `<sanitized-branch>-<role>`.
+   Each entry under `Sessions:` is a **role**, and its session name is `<sanitized-branch>-<role>` (role `preview` on branch `feature/foo` is `feature-foo-preview`).
+   Only an entry that names a session explicitly (`role (name: <name>)`, `name=<name>`, or a sentence saying "session named <name>") uses that name instead.
 5. **Scratch.** `d="${TMPDIR:-/tmp}/claude-$(id -u)/browser-delegate"; mkdir -p "$d"; out=$(mktemp -d "$d/run.XXXXXX")`.
    Run every later CLI command from `cd "$d"`, so the CLI's auto-written `.playwright-cli/` and its workspace lookup stay in scratch.
 6. **Baseline tooling.** Only if a baseline was given: `command -v compare identify`. If absent: `Status: WARNINGS`, fact `compare: not found`, and no diff.
@@ -151,6 +152,8 @@ Facts:
 Truncated: none | <what was omitted>; see: <path>
 ```
 
+- Repeat the key on every line, so each line parses alone: one `Sessions:` line per session, one `Artifacts:` line per artifact, and no bullets or indented continuation lines under them (only `Facts:` has `- ` items).
+  With no artifacts, write `Artifacts: none`.
 - `Sessions` lines: `opened` = not live at dispatch start, or closed first because fresh sessions were asked for; `reused` = live at dispatch start; `reopened` = died during this dispatch and was re-opened empty.
   A session that was re-opened is `reopened` even if it started as `opened` or `reused`.
 - `Facts` always include `cli: <abs command> (<version from --version>)`, `config: <abs path> | none`, and `scratch: <$out>`.
