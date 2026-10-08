@@ -67,6 +67,8 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 
 ## Steering Log
 
+- 2026-10-08T16:12: maintainer: "they shouldn't even load the skill to begin with. 'Only load this skill if you're top level' should be fine. If not concisely say why not." Answered: sufficient for dispatched agents; forks inherit the parent's loaded skill text, which the skill's one-line guard covers; offered to drop it.
+
 - 2026-10-08T14:45: maintainer on open questions 1-2: "Make chat-record a skill and make the rule to load the skill iff the agent is top-level. It's about avoiding confusion for sub agents like what we saw here, not a strict security boundary." So: `cdocs:chat-record` skill, universal top-level-only load line, no deny hook. Relayed to rev-1 mid-review; the proposer revises after.
 
 - 2026-10-08T13:28: maintainer request above; "IMO the solution to that chat-record issue is something I've been thinking on for a bit."

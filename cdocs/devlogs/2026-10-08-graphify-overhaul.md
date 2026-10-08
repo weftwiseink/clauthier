@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: impl-1 accept-round nits; then maintainer acceptance, land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: branch at `b808867`; maintainer to decide row-2 opt-in change, then acceptance, land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -98,6 +98,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r2.md` (branch) | 2026-10-08T15:37 | F1-F5, stamp correctness, rebase survival, ablation reading; re-run floor |
 | return | rev-impl-2 | `f33d939` (branch) | 2026-10-08T16:00 | accept, `review_proof: confirmed`: floor re-run (26/97/17/11/9, greps 0, shellcheck); real graphify skip 168-193 ms clauthier, ~750 ms weftwise; shared cache mtimes unchanged; rebase clean. Non-blocking: HEAD-keyed stamp rebuilds on every commit (~11 s weftwise), option (b) base-commit diff is one line; non-ASCII quotePath; stale text. Ablation: between rows 2 and 3, closer to 2; multi-trial run as follow-up, not a gate (name atom in task, ignore `_archive/`, >=3 trials) |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T16:02 | accept-round: stamp option (b) (overseer call: commit-often rule makes HEAD-keyed stamp rebuild ~every commit), quotePath, stale text, ablation follow-up recorded as future work |
+| return | impl-1 | `f33d939..52768a9` | 2026-10-08T16:10 | base-commit stamp (commit-only and cdocs-only commits skip, ~150 ms), quotePath, stale text, ablation follow-up recorded; 27/27, rules 11, opencode 9; wrapper 58 lines |
+| return | impl-1 | `52768a9..b808867` | 2026-10-08T16:15 | maintainer item: TODO to remove the stamp once upstream `update` is incremental, D4 states the upstream cause; wrapper 59 lines |
 
 ## Steering Log
 
@@ -106,6 +108,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 - 2026-10-08T10:25: maintainer: "make sure we aren't including cdocs in any graphify operations as it's quite large." Relayed to the reviser mid-revision.
 - 2026-10-08T11:45: maintainer: "lets go with cdocs:graphify over code-query after all as we're using it for more subcommands than just query"; use "graphify_base_query" instead of seed query and replace `graphify_query` in the Scratchpoint template/docs; "I'm not clear on how cdocs path is being ignored, an ablate seems like a good idea"; "graph-refresh outside our skills is left to consumer for now, except maybe /rfp 'make sure main graphify graph is up to date'". Post-acceptance revision dispatched; fresh review follows.
 - 2026-10-08T12:15: maintainer on r3's ablate questions: "We already did an ablate earlier in the initial workstream. See if that approach transfers to the new usage and use that if so." rfp step: unanswered; overseer default is r3's narrower condition (main graph exists). Dispatched to the warm proposer with r3 F1/F4-F7.
+
+- 2026-10-08T16:12: maintainer: the stamp should carry a TODO to remove it once graphify incremental updates are fixed, with the reason stated (applied `1014d50`, `13af055`). Asked what the ablate result means. Overseer recommendation: apply decision-map row 2 (base query opt-in, not default) before landing; awaiting answer.
 
 - 2026-10-08T14:05: maintainer: "I didn't say to drop any marker I don't think." Correct: the stamp was dropped as an overseer default at 10:57 ("defaults for 2 maintainer questions"), not maintainer direction. "Have a subagent audit the graphify codebase as 11s is an insane period of time for a graph refresh on an incremental update esp if it's a no-op." Audit report dispatched; interfacer landed at `70e48fc`, so this branch rebases over it after rev-impl-1.
 
