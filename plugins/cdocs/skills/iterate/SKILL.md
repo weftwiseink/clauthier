@@ -1,7 +1,7 @@
 ---
 name: iterate
 description: Run an implement-review loop on a proposal as the overseer, dispatching fresh implementer, reviewer, and judge subagents until accept-or-escalate
-argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]] [--graphify-scope]"
+argument-hint: "[proposal_path] [--verification-floor \"<sentence>\"] [--judge-after N] [-m | --model \"<model_description>\"] [-f | --first-round [\"<model_description>\"]]"
 ---
 
 # CDocs Iterate Loop
@@ -32,29 +32,13 @@ Code and cdocs should be committed early and often.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
   For default tiers, see "CDocs Workflow Patterns › Model Tiering".
-- `--graphify-scope`: opt into priming a graphify-resolved dependent-set brief into the reviewer's dispatch (see "Graphify scoping" below).
-  DEFAULT OFF: with the flag absent the loop behaves exactly as today and makes zero graphify calls.
 
-## Graphify scoping
+## Base query
 
-When `--graphify-scope` is passed, the overseer preps a compact graph-resolved dependent-set brief into the reviewer's dispatch prompt up front, so the reviewer starts from the change's true MULTI-FILE dependent set instead of a speculative read sweep.
-This is deliberately minimal: prime a brief + point the reviewer at the graphify CLI. It is currently wired for the REVIEWER role only (the RFP's original consumer); implementer and judge are out of scope for this increment.
-
-At **Turn N.b (Review)**, before dispatching the reviewer, and ONLY when the flag is on, the overseer runs the helper (on `PATH` from the plugin's `bin/`) against the round's changed files:
-
-```
-graphify-scope brief --enable --diff-base <base-ref>
-```
-
-The default pipeline derives symbols from the changed files (`explain` a file to get its `[contains]` symbols, then `affected` each symbol for its dependent set). Pass `--symbols "<label> <label>"` to bypass the `explain` step and run `affected` directly on known symbol labels instead.
-When a changed file's `explain` output is truncated at graphify's connection cap, the brief carries a `SCOPE-TRUNCATED: <file> ...` marker (its dependents may be under-listed): the reviewer should widen on that file's symbols rather than trust the set as broad.
-
-- If the first line is `SCOPE-STATUS: scoped`, the overseer pastes the brief VERBATIM into the reviewer's dispatch prompt under a "Graphify scoped-context brief" heading, and the reviewer treats it per [`reviewer.md`](../../agents/reviewer.md) (an AID, never a completeness guarantee).
-- If the first line is `SCOPE-STATUS: skip-scope` or `disabled` (missing/stale index, missing graphify binary, engine error, or an empty/near-empty set), or the `graphify-scope` command itself is missing or fails (OpenCode, a non-CLI install without `bin/`, or bash 3.2 on macOS; log it as `[graphify: skip-scope no-command]` or `[graphify: skip-scope helper-error]`), the round is a fallback round: the overseer primes NO brief and the reviewer runs today's unscoped sweep. Note the labeled status in the Iteration Log `notes` (e.g. `[graphify: skip-scope missing-index]`) so instrumentation can tell scoped rounds from fallback rounds.
-
-The helper is ADDITIVE ONLY: it can only ever ADD context to a round, never narrow it, so its absence or any fallback never lowers recall below the current baseline.
-The overseer never blocks a round on scoping.
-Flag off = no helper call at all.
+On Turn 0, when `command -v graphify` succeeds, write the Scratchpoint's `graphify_base_query:` as one question naming the subsystem and behavior in entity names the graph can match, for example `how does the iterate overseer dispatch implementer and reviewer subagents and record their returns in the devlog`; otherwise leave it empty.
+Between rounds, adopt the refined `graphify_base_query: "<refined>"` an implementer's report ends with, or rewrite it when the Steering Log or the phase moves scope.
+Tag each Iteration Log row's `notes` with `[base_query: set]` or `[base_query: empty]`.
+Passing it in prompts, and never running graph queries yourself, are in "CDocs Tool Use Guidance › Tools and Skills".
 
 ## Roles
 
