@@ -22,7 +22,7 @@ The record should carry the most important things the agent tells the user each 
 
 ## Scratchpoint
 
-- next_steps: dispatch proposer.
+- next_steps: iterate round 1 implementer running in `../chat-record-flexible`; then fresh reviewer. After landing, add the session-named record path to this and the other live devlogs' `chat_record:`.
 - graphify_query:
 - important_files: `plugins/cdocs/rules/overseers.md` "Chat record", `plugins/cdocs/bin/chat-record`, `plugins/cdocs/bin/README.md`, `plugins/cdocs/hooks/tests/` (chat-record tests), `plugins/cdocs/skills/init/SKILL.md` (`_chat/README.md` template), `plugins/cdocs/rules/frontmatter-spec.md` (`_chat` naming), `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`
 - callouts:
@@ -33,6 +33,12 @@ The record should carry the most important things the agent tells the user each 
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-chat-record-flexible.md` (`implementation_ready`, `13edf08`), overseer: this top-level session; worktree `../chat-record-flexible`, branch `chat-record-flexible`.
+Verification floor: naming unit tests, `--unit` and `init_real` green, `test:rules` green, `rename_record` headless run kept and pasted.
+Failure picture: rename appends to the old record, `ai-title` changes the filename, `path` disagrees with the hooks, free-form note rejected, typed bullets left in shipped text.
 
 ## Iteration Log
 
@@ -54,6 +60,8 @@ The record should carry the most important things the agent tells the user each 
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible.md` | 2026-10-08T10:22 | round 1 |
 | return | rev-1 | `a3dba97` | 2026-10-08T10:45 | proposal_accepted, `implementation_ready`; `custom-title` re-emitted ~every 20 lines so last-wins is current; `CLAUDE_CONFIG_DIR` reaches Bash; unit 95/0, rules green; 6 nits (add "briefly", cuts). This session is named, so the first post-change turn starts a new record to add to `chat_record:` |
 | dispatch | prop-1 (warm) | proposal | 2026-10-08T10:46 | accept-round nits |
+| return | prop-1 | `13edf08` | 2026-10-08T10:48 | nits resolved |
+| dispatch | impl-1 (cdocs:implementer, opus) | worktree `../chat-record-flexible`, branch `chat-record-flexible` | 2026-10-08T10:50 | iterate round 1, phases 1-4 |
 
 ## Steering Log
 
