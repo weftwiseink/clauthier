@@ -155,6 +155,8 @@ API errors mid-stream: foreground with partial text returns text plus a cut-off 
 
 This is the contract `rules/orchestration-discipline.md` builds on: the overseer records the summary and does not re-read the child's files (lines 35-38), and a dispatched subagent cannot dispatch its own workers at the top-level overseer layer (line 4).
 
+> NOTE(opus-5-5/cdocs/triage-state): `orchestration-discipline.md` no longer exists, and subagents can dispatch subagents (three layers by default); see `cdocs/proposals/2026-10-06-nested-subagent-workflows.md`.
+
 ### 4. Parallelism and background execution
 
 - Default concurrency cap: 20 (`CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`); the 21st spawn fails with `Concurrent subagent limit reached`. Resume of a finished agent takes a fresh slot without a check. Ultracode sessions bypass the cap.
