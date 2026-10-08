@@ -5,15 +5,16 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: devlog
 state: live
-status: done
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-chat-record-flexible.md
 tags: [chat_record, hooks, implementation]
 ---
 
 # Flexible Chat Records: Implementation (Round 1)
 
-> BLUF: Phases 1-4 of `cdocs/proposals/2026-10-08-chat-record-flexible.md` are implemented on branch `chat-record-flexible` (base `13edf08`); unit 126/0, rules 11/0, `--only init_real` 132/0, headless `rename_record|clear|resume|two_prompts` 16/0.
-> One deviation: a new session's first `UserPromptSubmit` fires before its transcript exists, so `--name` split the first turn across two records; the hook now falls back to the payload's `session_title` when the transcript file does not exist yet.
+> BLUF: Free-form chat-record notes are implemented on branch `chat-record-flexible` (base `13edf08`).
+> The session-named filename design (Phases 2-4 below) was implemented and accepted in r1, then reverted on the maintainer's decision (`39478f7`, `57ec91b`, `0b9dfaf`, `f01404c`): `plugins/cdocs/bin/chat-record` differs from main only by the Stop template line.
+> After the revert: unit 97/0, rules 11/0, `--only init_real` 106/0, headless `two_prompts|clear|resume` 8/0.
 
 ## Objective
 
@@ -22,12 +23,11 @@ Dispatched by the `/cdocs:iterate` overseer, round 1; scope Phases 1-4.
 
 ## Scratchpoint
 
-- next_steps: none; accepted in r1 (`cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md`), review items 1-4 applied; overseer lands the branch and regenerates `cdocs/_chat/README.md` on main (item 5).
-- important_files: `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/bin/README.md`
+- next_steps: overseer review of the revert (`39478f7..HEAD`) and landing.
+- important_files: `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `plugins/cdocs/rules/overseers.md`, `cdocs/proposals/2026-10-08-chat-record-flexible.md`
 - callouts:
-  - decision: `UserPromptSubmit` slugs `session_title` only when the transcript file does not exist (a new session's first prompt); see Phase 4. Deviation from "the transcript is the only name source".
-  - todo(overseer): regenerate this repo's `cdocs/_chat/README.md` from the new init template on main after the merge.
-  - todo: on reload of the upgraded plugin, a session already named (the overseer's is `clauth-opt-context`) starts a named record; the unnamed record stops growing (proposal edge case "Session already named").
+  - decision: maintainer dropped session-named records ("Retrieval/interpretability can be handled later"); free-form notes stay. Proposal keeps `status: implementation_wip`.
+  - todo(overseer): this repo's `cdocs/_chat/README.md` still says "the agent's gist bullets"; regenerate it from the init template on main after the merge.
   - decision: `node_modules` in the worktree is an untracked symlink to `../main/node_modules` (read-only use) so `npm run test:rules` runs; never committed.
 
 ## Plan
@@ -105,6 +105,33 @@ Accepted in r1; non-blocking items 1-4 applied on the branch:
 
 After: unit 123 passed / 0 failed; rules 11 passed.
 
+### Revert of session-named records
+
+> NOTE(opus-5-5/chat-record-flexible): Phases 2-4 and the r1 follow-ups 3-4 above describe the naming design as built; all of it is reverted below.
+
+Maintainer decision (relayed by the overseer after r1 acceptance): keep free-form notes, drop the session name in the filename.
+- `39478f7`: `bin/chat-record` and `chat-record.test.sh` restored from `13edf08` (identical to main for `plugins/`), then the free-form edits reapplied: the Stop template line; untyped fixtures; the `read_note` body; the two block-reason assertions.
+  This was simpler and less error-prone than reverting the five interleaved script/test commits one by one.
+  Dropped with it: `session_name`, `slug`, `transcript_for`, name-aware `find_record`/`record_for`, the `session_title` fallback, the unset-`HOME` guard (only `transcript_for` used `HOME`), the naming unit tests, and the `rename_record`/`rename_record_name` scenarios; main's `rename` sign-off scenario and `session_token` return.
+- `57ec91b`: rule, frontmatter spec, devlog skill, plugin README, `bin/README.md`, init template restored to main plus free-form wording.
+  The rule example's bullet was rewritten so it no longer describes the naming design.
+- `0b9dfaf`: proposal narrowed to free-form notes; the naming design is a NOTE under the BLUF (implemented, dropped, why).
+- `f01404c`: the 2026-09-22 proposal's NOTE now cites free-form notes only.
+
+`git diff main --stat -- plugins/` after the revert:
+
+```
+ plugins/cdocs/README.md                       |  4 +-
+ plugins/cdocs/bin/README.md                   |  6 +-
+ plugins/cdocs/bin/chat-record                 |  2 +-
+ plugins/cdocs/hooks/tests/chat-record.test.sh | 82 ++++++++++++++-------------
+ plugins/cdocs/rules/overseers.md              |  5 +-
+ plugins/cdocs/skills/init/SKILL.md            |  2 +-
+ 6 files changed, 52 insertions(+), 49 deletions(-)
+```
+
+`git diff main -- plugins/cdocs/bin/chat-record` is one line: `- gist: <what a successor should know from this turn>` to `- <the most important thing you are telling the user>`.
+
 ## Changes Made
 
 | file | change |
@@ -118,6 +145,10 @@ After: unit 123 passed / 0 failed; rules 11 passed.
 | `cdocs/proposals/2026-10-08-chat-record-flexible.md` | `status: implementation_wip`; NOTE on the `session_title` fallback |
 
 ## Verification
+
+**After the revert** (code at `57ec91b`, unchanged since): unit 97 passed / 0 failed; `npm run test:rules` 11 passed / 0 failed; `--only init_real` 106 passed / 0 failed (97 unit + 9); headless `--only 'two_prompts|clear|resume'` 8 passed / 0 failed; `grep -rnE 'gist:|follow-up:' plugins/cdocs` empty.
+The pre-revert evidence below documents the naming design as built.
+
 
 | criterion | result | evidence |
 |---|---|---|
