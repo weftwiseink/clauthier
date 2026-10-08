@@ -19,16 +19,17 @@ main_out="${GRAPHIFY_OUT:-}"
   /^worktree / { w = substr($0, 10) }
   $0 == "branch refs/heads/main" { print w "/graphify-out"; exit }')
 
-# Copy the main graph once, without its absolute scan root, self-gitignored.
+# Copy the main graph once, without its absolute scan root or dated backups, self-gitignored.
 if [ ! -f "$wt_out/graph.json" ]; then
   [ -f "$main_out/graph.json" ] || skip "no graph index"
   tmp=$(mktemp -d "$top/graphify-out.tmp.XXXXXX") && cp -R "$main_out/." "$tmp/" &&
-    rm -f "$tmp/.graphify_root" && echo '*' >"$tmp/.gitignore" &&
-    { [ -e "$wt_out" ] || mv "$tmp" "$wt_out"; }
-  rm -rf "$tmp" 2>/dev/null
-  [ -f "$wt_out/graph.json" ] || skip "could not copy $main_out"
+    rm -rf "$tmp/.graphify_root" "$tmp"/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
+    echo '*' >"$tmp/.gitignore" && { [ -e "$wt_out" ] || mv "$tmp" "$wt_out"; }
+  # shellcheck disable=SC2115 # guarded: a lost race nests tmp inside wt_out
+  [ -n "$tmp" ] && rm -rf "$tmp" "$wt_out/${tmp##*/}"
+  [ -f "$wt_out/graph.json" ] || skip "could not copy $main_out (remove a partial $wt_out)"
 fi
-[ -d "$top/cdocs" ] && ! grep -qxE '/?cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
+[ -d "$top/cdocs" ] && ! grep -qxE '/cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
   note "hint: .graphifyignore lacks a /cdocs/ line; run /cdocs:init"
 GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
   note "update failed (graphify-out/update.log); querying existing index"

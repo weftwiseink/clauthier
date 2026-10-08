@@ -41,10 +41,10 @@ check "no index: exit 0, one stderr line, stub never queried" "$RC $(grep -c . "
 (cd "$T" && "$CG" query q 2>"$T/err"); check "not in git: exit 0, one line" "$? $(grep -c . "$T/err")" "0 1"
 
 echo "== copy from the main worktree's graph (found by branch, not list order)"
-mkdir -p "$MG" && echo '{}' >"$MG/graph.json" && echo "$T/main" >"$MG/.graphify_root" && echo m1 >"$MG/sentinel"
+mkdir -p "$MG/2026-01-02" && echo '{}' >"$MG/graph.json" && echo "$T/main" >"$MG/.graphify_root" && echo m1 >"$MG/sentinel"
 sum0=$(cksum <"$MG/graph.json"); : >"$GLOG"; run query "how does b work"
 check "copied graph and sentinel" "$(cat "$WT/graphify-out/graph.json") $(cat "$WT/graphify-out/sentinel")" "{} m1"
-check "copied .graphify_root dropped, .gitignore is *" "$([ -e "$WT/graphify-out/.graphify_root" ] && echo y || echo n) $(cat "$WT/graphify-out/.gitignore")" "n *"
+check "copied .graphify_root and dated backups dropped, .gitignore is *" "$(ls -d "$WT/graphify-out/.graphify_root" "$WT/graphify-out/2026-01-02" 2>/dev/null)$(cat "$WT/graphify-out/.gitignore")" "*"
 check "git status clean, no temp dir left" "$(git status --porcelain)$(ls -d "$WT"/graphify-out.tmp.* 2>/dev/null)" ""
 check "update into the worktree index, then query" "$(sed 's/ PWD=.*//' "$GLOG")" \
   "<update><$WT> OUT=$WT/graphify-out
@@ -61,7 +61,8 @@ check "shared graph untouched" "$(cksum <"$T/shared/graph.json") $([ -e "$T/shar
 echo "== ignore hint"
 CGENV=(env); mkdir "$WT/cdocs"; run query q
 check "cdocs/ without ignore line: one hint, query runs" "$(grep -c 'hint' "$T/err") $(grep -c '^<query>' "$GLOG")" "1 2"
-echo "/cdocs/" >"$WT/.graphifyignore"; run query q; check "with ignore line: no stderr" "$ERR" ""
+echo "cdocs/" >"$WT/.graphifyignore"; run query q; check "unanchored cdocs/ line: hint" "$(grep -c 'hint' "$T/err")" "1"
+echo "/cdocs/" >"$WT/.graphifyignore"; run query q; check "with /cdocs/ line: no stderr" "$ERR" ""
 
 echo "== passthrough and update failure"
 CGENV=(env GSTUB_OUT="hello out" GSTUB_RC=3); run path "A B" C
