@@ -11,12 +11,14 @@ Have a proposal written by a subagent using `/cdocs:propose`,
 then run an iterative propose-review loop on that proposal until the reviewer accepts it.
 Any minor issues or nits that come along with the accepting round should still be resolved.
 
-The invoking session agent enters *overseer mode* and restricts itself to orchestration: it dispatches subagents in alternation,
-terminates on accept-or-escalate, and should AskUserQuestion if the proposal hasn't been accepted after 6 rounds.
+The invoking session agent enters *overseer mode* documented in the cdocs rules, restricting itself to orchestration:
+it dispatches subagents in alternation, terminates on accept-or-escalate, and should AskUserQuestion as appropriate or if the proposal hasn't been accepted after 6 rounds.
 
-The overseer discipline is defined canonically in [`overseers.md`](../../rules/overseers.md); this skill references it rather than restating it.
-Dispatch subagents for all tasks, even trivial ones (a stricter bar than the rule's trivial-task carve-out).
-The loop devlog is the workstream's top-level devlog: the overseer owns it and a later `/cdocs:iterate` on the proposal continues it. When logging a review round to the devlog's Iteration Log (shared with a later `/cdocs:iterate`, per its `template.md`), an accepted round is `review_verdict: proposal_accepted`, not `accept` — `accept` is reserved for an implementation-review Accept, so a reader (including `/cdocs:triage`) never mistakes a proposal accept for an implementation accept.
+Overseers should follow rules layed out in the cdocs rules, and should dispatch subagents for all tasks.
+
+Propose-revise loop state should be tracked in the workstream's top-level devlog by the overseer.
+When logging a review round to the devlog's Iteration Log, an accepted round is `review_verdict: proposal_accepted` for specificity.
+
 The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
 The human user is the supervisor: they invoke the skill and receive escalations; the agent runs the loop.
 
