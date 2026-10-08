@@ -22,12 +22,14 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: Phase 4: read the devcontainer canary stream (`/tmp/ifx-canary.jsonl` in container `clauthier`), score criteria; then a secondary host canary for the browser path.
+- next_steps: score the secondary host (browser) canary, copy one screenshot to `cdocs/_media/`, final test runs.
 - important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`.
 - callouts:
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
   - decision: per maintainer steering, the canary that counts runs in the `clauthier` lace devcontainer (claude 2.1.285); a host run is secondary.
   - blocker: the devcontainer cannot launch headless Chromium (missing system libraries), so its canary drives the fixture with `curl` and the browser path there is unverified.
+  - decision: canary-driven agent fixes (status on probed errors, final-message-only replies, in-turn wait for resumes, tear down by PID); see the run table.
+  - deviation: `SendMessage` resumes run in the background, so dispatchers must stay in-turn; the proposal's D5 and sequence diagram do not say so (overseer may want a proposal NOTE).
   - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run (first `test:rules` failed only for that reason).
 
 ## Plan
@@ -91,3 +93,108 @@ wc -l plugins/cdocs/agents/interfacer.md -> 69
 jq -r '.plugins[].name' .claude-plugin/marketplace.json -> cdocs
 grep -rn -i 'browser-delegate' --exclude-dir={cdocs,.git,build,node_modules} . -> no output, exit 1
 ```
+
+### Phase 4: devcontainer canary (the run that counts)
+
+Command, from the fixture in container `clauthier`:
+
+```sh
+CLAUDE_CONFIG_DIR=/tmp/ifx-ccsb.xHos6j CDOCS_CHAT_RECORD=off claude -p \
+  --plugin-dir /workspace/clauthier/interfacer-agent/plugins/cdocs \
+  --permission-mode bypassPermissions --model sonnet \
+  --output-format stream-json --verbose "$(cat /tmp/ifx-prompt.txt)"
+```
+
+The prompt has the top level dispatch a `general-purpose` stand-in, which dispatches `cdocs:interfacer` with "Check that the home page of this project's site renders and that its link reaches page two." (what, not how), then resumes it with `SendMessage` three times: "Now follow the link from the home page and capture page two.", the error probe "Fetch /missing.html, and check whether page two has an element with id `delete`.", and "tear down".
+
+Five runs; all evidence is container-local and ephemeral (`/tmp/ifx-canary-runN.jsonl`, `/tmp/ifx-psmon-runN.log`, `/tmp/claude-1000/interfacer/<instance>/`), so the excerpts below are inlined.
+
+| Run | Agent at | Instance | Outcome |
+|---|---|---|---|
+| 1 | `65e0fc5` (spec text) | `jzWzSX` | All steps ran, but check 03 reported `Status: OK` with a 404 and a missing element in its steps; resumed turns also `SendMessage`d free-form replies to the stand-in. |
+| 2 | `2f829ee` (error-status + final-message-only fix) | `x3OAam` | Stand-in ended its turn after step 2's `SendMessage` and was never re-woken; steps 3-4 never sent; server PID 545727 left running (verifier killed it). |
+| 3 | `2f829ee`, prompt adds an explicit in-turn wait | `YOacek` | All steps; each resumed reply reached the stand-in "as a task-notification after sleep 1"; check 03 `WARNINGS`. |
+| 4 | `1c20ce0` (in-turn wait in the description), original prompt | `IZhswX` | All steps; stand-in waited with `sleep 20` unprompted; tear down used `pkill -f "http.server 8799"`, which matched its own shell (exit 144). |
+| 5 | `47da807` (tear down by PID), original prompt | `uAlIdy` | All steps, every criterion below. Run of record. |
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): Three agent fixes came out of the canary; each is one clause, and the agent is 70 lines.
+> 1. Status rule: a 404, missing element, or other error makes `Status:` `WARNINGS`/`FAILED` "even when the check was probing for it" (run 1).
+> 2. Final message only, never `SendMessage` (run 1's resumed turns sent headerless replies).
+> 3. Description: "A resumed check runs in the background and its reply arrives at your next tool call: stay in your turn (e.g. Bash `sleep 10`) until it does." (runs 2-3).
+> 4. Tear down "by the PID or session name you recorded (never a pattern like `pkill -f`)" (run 4).
+
+#### Resume mechanics (deviation from the proposal's model)
+
+The proposal's D5 and sequence diagram assume a `SendMessage` follow-up returns its reply to the dispatcher like a call.
+In claude 2.1.285 it does not: the stream's `task_started` events show the first dispatch at `spawn_depth: 2, is_backgrounded: false`, and every `SendMessage` resume at `spawn_depth: 2, is_backgrounded: true`, with the `SendMessage` tool result only `{"success":true,"message":"Resuming agent ..."}`.
+The resumed reply is delivered as a task-notification at the dispatcher's next tool call; a nested dispatcher that ends its turn instead never receives it (run 2), and the notification surfaces at the root session.
+Run 1 only progressed because the interfacer itself `SendMessage`d the stand-in, which re-woke it.
+The description sentence (fix 3) is the whole remedy; run 4 and run 5 show a stand-in following it from the description alone.
+
+Run 5 `task_started`/`task_notification` excerpt (`jq` over `/tmp/ifx-canary-run5.jsonl`):
+
+```
+{"s":"task_started","task":"a49687c7","depth":1,"bg":false,"type":"general-purpose"}
+{"s":"task_started","task":"a69ee1ef","tu":"toolu_014W8hoE","depth":2,"bg":false,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a69ee1ef","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/uAlIdy/01-home-t"}
+{"s":"task_started","task":"a69ee1ef","tu":"toolu_01HrM6uE","depth":2,"bg":true,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a69ee1ef","tu":"toolu_01HrM6uE","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/uAlIdy/02-follow"}
+{"s":"task_started","task":"a69ee1ef","tu":"toolu_01ULNeDy","depth":2,"bg":true,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a69ee1ef","tu":"toolu_01ULNeDy","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/uAlIdy/03-missin"}
+{"s":"task_started","task":"a69ee1ef","tu":"toolu_01142d9c","depth":2,"bg":true,"type":"cdocs:interfacer"}
+[stand-in] Agent: {"subagent_type":"cdocs:interfacer","prompt":"Check that the home page of this project's site renders and that its link reaches page two.","run_in_background":false}
+[stand-in] SendMessage: {"to":"a69ee1ef15ce073b0","message":"Now follow the link from the home page and capture page two."}   then Bash: sleep 20
+[stand-in] SendMessage: {"to":"a69ee1ef15ce073b0","message":"Fetch /missing.html, and check whether page two has an element with id `delete`."}   then Bash: sleep 20
+[stand-in] SendMessage: {"to":"a69ee1ef15ce073b0","message":"tear down"}   then Bash: sleep 20
+[interfacer] Bash: kill 548444; sleep 1; kill -0 548444 2>&1; curl -sS -m 2 -o /dev/null http://127.0.0.1:8799/ 2>&1
+```
+
+#### Run 5 pass criteria
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| `Agent` with `subagent_type: cdocs:interfacer` at depth 2 | Pass | `task_started` `spawn_depth: 2`, `subagent_type: cdocs:interfacer` |
+| `SendMessage` to the same `agentId` | Pass | all three `to: a69ee1ef15ce073b0`, the `agentId` of the first dispatch (task `a69ee1ef`) |
+| Foreground or background recorded | Pass, both | first dispatch foreground (`is_backgrounded: false`); resumes background. The server started in foreground check 01 survived into checks 02-03, so the foreground-lifetime WARN holds for the gap it covers. |
+| One instance dir with `01-*/` and `02-*/`, each with `report.md` | Pass | `uAlIdy/{01-home-to-page2,02-follow-link,03-missing-and-delete}/report.md` |
+| Each check has a screenshot matching its description | **Not met (container)** | no browser in the container (see setup); media are saved HTML and headers. Browser path: see the host run below. |
+| Check 1 `Setup:` cites the fixture README | Pass | "README.md says to serve with `python3 -m http.server 8799 ...` and drive via curl" |
+| Check 2 reused check 1's server (same PID) | Pass | reports 02/03 "reused my server (PID 548444)"; monitor `09:40:29`-`09:41:30` shows only `548444` (61 one-second samples); `server.log` in 01 continues with checks 02-03's requests |
+| Error probe not reported `OK` | Pass | 03 `Status: WARNINGS`, step "GET /missing.html -> 404 (expected by the probe, still reported as an error)", and `id="delete"` -> 0 matches |
+| After tear down, server and session gone | Pass | interfacer: "`kill -0` reports no such process, and a request to port 8799 is refused"; monitor empty from `09:41:31`; `ps` shows no `http.server 8799` |
+| Fixture `git status` shows nothing the interfacer created | Pass | `git status --short --ignored` -> `!! node_modules/` only (verifier's install) |
+| Screenshot copied to `cdocs/_media/` and embedded | From the host run | the container produced no screenshot |
+
+Run 5 monitor log (`uniq -c -f1 /tmp/ifx-psmon-run5.log`; `pid<ppid`, the first sample also catches the `setsid` wrapper):
+
+```
+     16 09:40:12 srv=[]
+      1 09:40:28 srv=[548439<548197,548444<1,]
+     61 09:40:29 srv=[548444<1,]
+     30 09:41:31 srv=[]
+```
+
+Run 5 check 03 `report.md`:
+
+```
+# 03-missing-and-delete
+Status: WARNINGS
+Setup: reused my server (PID 548444, 127.0.0.1:8799), curl per README.md.
+## Steps
+1. GET /missing.html -> 404 (expected by the probe, still reported as an error)
+2. GET /page2.html -> 200; grep for id="delete" -> 0 matches. The only id on the page is "save" (disabled button).
+## Media
+- /tmp/claude-1000/interfacer/uAlIdy/03-missing-and-delete/01-missing.html, .../01-missing.headers: 404 response
+- /tmp/claude-1000/interfacer/uAlIdy/03-missing-and-delete/02-page2.html, .../02-page2.headers: page two
+## Left running
+- python3 http.server 127.0.0.1:8799, PID 548444: kill 548444
+## Notes
+No element with id "delete" exists on page two. HTML inspection only, no screenshots.
+```
+
+Other observations:
+
+- The interfacer followed the README's tool choice in every run: curl, no browser install attempt, no tool swap.
+- It started the server with `setsid` each run (parent PID 1 in the monitor), never `run_in_background`.
+- The tear-down reply reuses check 03's report path rather than writing a new check directory; the agent body does not ask for one, so this matches the spec.
+- Run 5's check 01 notes "server.pid initially recorded the wrapper PID; corrected to 548444", a self-corrected slip that the report surfaced rather than hid.
