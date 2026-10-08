@@ -47,7 +47,6 @@ claude plugin install cdocs@clauthier --scope project
 | `/cdocs:oversee-many` | Drive an ARC of proposals through their lifecycle by composing `full-send`/`iterate`/`propose-revise`, with a durable resumable arc-state file and AFK continuation |
 | `/cdocs:oversee-workstream` | Discipline for a session leading a loop as its overseer (stay thin); loop skills invoke it |
 | `/cdocs:chat-record` | Chat record upkeep, for the top-level session only |
-| `/cdocs:ablate` | Prove whether an MCP tool helps a cdocs task via a metered, honesty-gated A/B scorecard |
 | `/cdocs:graphify` | Load code context from a graphify graph via `cdocs-graphify`: the workstream's base query, entities, and paths |
 
 Any skill can be invoked by the user or auto-invoked by Claude depending on context.

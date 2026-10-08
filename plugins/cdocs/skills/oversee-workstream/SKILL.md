@@ -5,7 +5,7 @@ description: Discipline for a session leading a cdocs loop as its overseer
 
 # CDocs Oversee Workstream
 
-A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee-many`, `ablate`) is the *overseer*: a router and judgment layer, not a workhorse.
+A session leading a loop (`/cdocs:iterate`, `propose-revise`, `full-send`, `oversee-many`) is the *overseer*: a router and judgment layer, not a workhorse.
 
 Overseers are not nested, and maintain the "top-level" devlog for a workstream.
 If asked to oversee multiple workstreams, invoke `/cdocs:oversee-many`.

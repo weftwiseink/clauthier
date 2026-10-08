@@ -17,6 +17,8 @@ tags: [verification, efficacy, downstream, graphify, token_efficiency, meta]
 > - [`cdocs/proposals/2026-09-17-mcp-tool-effectiveness-ablation.md`](./2026-09-17-mcp-tool-effectiveness-ablation.md) (`/cdocs:ablate`, the built efficacy harness)
 > - [`cdocs/devlogs/2026-09-23-graphify-cdocs-integration-full-send.md`](../devlogs/2026-09-23-graphify-cdocs-integration-full-send.md) (full-send record; the "efficacy not yet measured" gap this RFP closes)
 
+> NOTE(claude-opus-5-5/cdocs/delete-ablate): `/cdocs:ablate` is deleted per [`2026-10-08-delete-ablate-rfp.md`](./2026-10-08-delete-ablate-rfp.md), so an elaborator picks a different measurement instrument than the `/cdocs:ablate` default named below.
+
 ## Objective
 
 cdocs improvements get built and accepted inside clauthier, but their PAYOFF is realized in DOWNSTREAM consuming repos and tasks (weftwise, lace, and others). Today there is no standing way for a downstream consumer to (a) adopt a shipped improvement cleanly and (b) generate honest, comparable evidence that it actually helps on their real work.
