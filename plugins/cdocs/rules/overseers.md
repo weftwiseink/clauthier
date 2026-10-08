@@ -23,7 +23,6 @@ The quoted heredoc keeps the body byte-exact:
 ```bash
 chat-record note --as opus-5-5 <<'EOF'
 - Proposal ready for review: the session name goes in the record filename, so a rename starts a new record and the old one stays.
-- Open: whether `note` should warn past 300 words; guidance only for now.
 EOF
 ```
 
