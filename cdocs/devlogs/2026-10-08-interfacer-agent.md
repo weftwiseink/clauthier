@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: wip
+status: done
 tags: [interfacer, browser_delegation, oversight]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: branch ready at `7010bec`; on maintainer acceptance set `implementation_accepted`, rebase onto main (fixes report link), ff-merge, remove worktree; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
+- next_steps: none; landed at `70e48fc`. Graphify branch rebases over it after its review; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -84,8 +84,11 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | return | rev-impl-2 | `641b744` (branch) | 2026-10-08T13:55 | accept, `review_proof: confirmed`: own container canary (curl) and host browser canary (playwright-cli, one PID/browser across checks, 3 screenshots viewed, 1 in `_media`); rules 11, opencode 9. Nits: `notes.md` "Update" to "Rewrite" (append-log can leave a dead PID listed, PIDs wrap); 2 proposal cuts; blockquote blank line; report link needs rebase onto main |
 | dispatch | impl-2 (warm, SendMessage) | branch | 2026-10-08T13:56 | accept-round nits 1-4 |
 | return | impl-2 | `641b744..7010bec` | 2026-10-08T14:00 | nits 1-4 applied (`notes.md` "Rewrite"); sub-devlog `done`; rules 11, opencode 9; canary not re-run for the one-word change |
+| land | overseer | main | 2026-10-08T14:08 | maintainer accepted; proposal `implementation_accepted`, rebased onto main, ff-merged at `70e48fc`; on main rules 11/0, build + opencode 9/0, marketplace JSON parses, `plugins/` = cdocs, converser; worktree (ignored `node_modules/`, `build/`) and branch removed |
 
 ## Steering Log
+
+- 2026-10-08T14:05: maintainer: "Accept interfacer."
 
 - 2026-10-08T12:10: maintainer on the caller sleep-polling workaround: "I almost can't believe that, the caller has no way of getting a notification from a subagent? SendMessage may be the wrong tool for the job here in this case, all we want is context preservation for efficiency's sake. Have options explored in a /report and revise if sensible." Report dispatched: `cdocs/reports/2026-10-08-subagent-context-preservation-options.md`. Landing on hold.
 
