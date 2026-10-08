@@ -48,7 +48,7 @@ check "copied .graphify_root and dated backups dropped, .gitignore is *" "$(ls -
 check "git status clean, no temp dir left" "$(git status --porcelain)$(ls -d "$WT"/graphify-out.tmp.* 2>/dev/null)" ""
 check "update into the worktree index, then query" "$(sed 's/ PWD=.*//' "$GLOG")" \
   "<update><$WT> OUT=$WT/graphify-out
-<query><how does b work><--graph><$WT/graphify-out/graph.json> OUT="
+<query><how does b work><--graph><$WT/graphify-out/graph.json> OUT=$WT/graphify-out"
 check "main graph untouched" "$(cksum <"$MG/graph.json") $([ -e "$MG/update.log" ] && echo y || echo n)" "$sum0 n"
 echo m2 >"$MG/sentinel"; run query q
 check "second call: no copy, update again" "$(cat "$WT/graphify-out/sentinel") $(grep -c '^<update>' "$GLOG")" "m1 2"

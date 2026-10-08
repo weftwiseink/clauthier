@@ -37,7 +37,7 @@ GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
 # Pass through unchanged, then surface runtime coupling in files the output names.
 res=$(mktemp "${TMPDIR:-/tmp}/cdocs-graphify.XXXXXX") || exit 1
 trap 'rm -f "$res"' EXIT
-graphify "$@" --graph "$wt_out/graph.json" >"$res"
+GRAPHIFY_OUT="$wt_out" graphify "$@" --graph "$wt_out/graph.json" >"$res"
 rc=$?
 cat "$res"
 # TODO(claude-opus-5-5/cdocs/graphify-overhaul): take the pattern list from the consuming repo.
