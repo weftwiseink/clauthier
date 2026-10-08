@@ -92,3 +92,6 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 | 3 | proposer r3 (opus, `7d89533`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r3.md | all 11 r2 items resolved; 2 new blocking (reviewer delegate reuses implementer session; `cdocs/_media/` durability conflicts with reviewer.md); 11 non-blocking. Reviser deviations (drop `sync`, one-clause iterate `confirmed` edit) judged sound |
 
 - r3 overseer decision: durable-screenshot question resolved as option A (scratch path + quoted report facts, no `reviewer.md` change) per minimal-design default; maintainer can override.
+| 4 | proposer r4 (opus, warm, `ebb6e7a`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r4.md | all 13 r3 items resolved; 2 new blocking in session-state contract (fresh-session rule not delivered via agent description/prompt; `reopened` unobservable across dispatches); 7 non-blocking |
+
+- r4 overseer decision: `reopened` semantics resolved as option A (report only what one dispatch observes; no `resume` prompt field) per minimal-design default.
