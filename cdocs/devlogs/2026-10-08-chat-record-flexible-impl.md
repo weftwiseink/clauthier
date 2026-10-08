@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-chat-record-flexible.md
 tags: [chat_record, hooks, implementation]
 ---
@@ -22,11 +22,11 @@ Dispatched by the `/cdocs:iterate` overseer, round 1; scope Phases 1-4.
 
 ## Scratchpoint
 
-- next_steps: overseer review of commits `c5fe184..HEAD` on `chat-record-flexible`.
+- next_steps: none; accepted in r1 (`cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md`), review items 1-4 applied; overseer lands the branch and regenerates `cdocs/_chat/README.md` on main (item 5).
 - important_files: `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/bin/README.md`
 - callouts:
   - decision: `UserPromptSubmit` slugs `session_title` only when the transcript file does not exist (a new session's first prompt); see Phase 4. Deviation from "the transcript is the only name source".
-  - todo: this repo's `cdocs/_chat/README.md` still carries the old template text (gist bullets, unnamed filename); not edited (overseer-owned `_chat/`).
+  - todo(overseer): regenerate this repo's `cdocs/_chat/README.md` from the new init template on main after the merge.
   - todo: on reload of the upgraded plugin, a session already named (the overseer's is `clauth-opt-context`) starts a named record; the unnamed record stops growing (proposal edge case "Session already named").
   - decision: `node_modules` in the worktree is an untracked symlink to `../main/node_modules` (read-only use) so `npm run test:rules` runs; never committed.
 
@@ -94,6 +94,16 @@ Baselines (2026-10-08, base `13edf08`): unit 95 passed / 0 failed; rules 11 pass
 > NOTE(opus-5-5/chat-record-flexible): Deviation from the proposal's "The transcript is the only name source": `UserPromptSubmit` reads `session_title` for a new session's first prompt.
 > Without it, the proposal's own Verification step 2 fails (a `--name` session's first `@user` is orphaned, unsigned, in the unnamed record), and so would an interactive `claude --name X` session's first turn, if the TUI writes its transcript as lazily (not verified interactively).
 > A NOTE records this in the proposal under "Where the name comes from".
+
+### Review r1 follow-ups
+
+Accepted in r1; non-blocking items 1-4 applied on the branch:
+1. The proposal's `session_title` NOTE moved under the "The transcript is the only name source" decision; "(present on that event only)" became "(`Stop` does not carry it)", since `SessionStart` also carries the field.
+2. The rule example keeps one bullet; the proposal-specific "Open: ..." bullet is gone.
+3. The `bin/README.md` naming bullet is one line (no slug recipe, `ai-title`, or `session_title` detail).
+4. Dropped duplicate unit assertions "slug: empty customTitle -> unnamed", "slug: last custom-title wins", and "no transcript: unnamed record" (covered by the sign-off section's explicit-path checks).
+
+After: unit 123 passed / 0 failed; rules 11 passed.
 
 ## Changes Made
 
