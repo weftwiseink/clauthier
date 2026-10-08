@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-references
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-07-rules-references.md
 tags: [rules, rules_delivery, init, testing]
 ---
@@ -20,12 +20,11 @@ Implement [`cdocs/proposals/2026-10-07-rules-references.md`](../proposals/2026-1
 
 ## Scratchpoint
 
-- next_steps: phases 1-3 complete and self-verified (Verification steps 1-5); awaiting the loop's review. Release note: phases 2 and 3 must ship in one `plugin.json` bump and one push to `main` (proposal section 3).
+- next_steps: none; round 1 accepted (`cdocs/reviews/2026-10-07-review-of-rules-references-impl-r1.md`) and its non-blocking items applied; the overseer lands the branch. Release note: phases 2 and 3 must ship in one `plugin.json` bump and one push to `main` (proposal section 3).
 - important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/agents/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `.github/workflows/cdocs-hooks.yml`
 - callouts:
   - decision: headless runs use scratch projects under the session scratchpad with a sandboxed `CLAUDE_CONFIG_DIR`; no `cdocs/_chat/` files were written into the worktree.
   - decision: canary gate passed 2/2, so phase 3 shipped (import dropped).
-  - deviation: `nit-fix.md` step 3e (apply any other mechanical convention); see Phase 2.
   - todo: the CI `rules` job is unexercised until the branch is pushed; `npm ci` + `npm run test:rules` pass locally.
   - todo: the plugin version is not bumped here; the overseer owns the release.
 
@@ -71,7 +70,8 @@ The mutation runs (renamed heading, added filename, misspelled title) need conve
 - `nit_fix/SKILL.md:48` and `triage/SKILL.md:69`: the "reads rules at runtime" claims now say the agent has the rules in context.
 - CI `rules` job and widened `paths`; README "Agents and rules" and "Referencing rules"; root `CLAUDE.md` item 3; report section 13 NOTE; `build-opencode.ts` comment.
 
-> NOTE(@claude-opus-5-5/cdocs/rules-references): Deviation: `nit-fix.md` Processing step 3 gains "e. **Any other MECHANICAL convention** in your working set: apply its fix."
+> NOTE(@claude-opus-5-5/cdocs/rules-references): Step 3e was dropped after review r1 (see Review r1 follow-ups).
+> Deviation, as first implemented: `nit-fix.md` Processing step 3 gains "e. **Any other MECHANICAL convention** in your working set: apply its fix."
 > Step 3 enumerated only four hardcoded mechanical conventions (sentence-per-line, callouts, punctuation, emoji), so a new mechanical rule section, such as Verification step 4's sentinel, had no instruction to be applied, contradicting "A new `##` section ... extends your enforcement surface".
 
 ### Phase 3: drop the import
@@ -87,6 +87,19 @@ The mutation runs (renamed heading, added filename, misspelled title) need conve
 > The check itself passed on that run's kept project; the re-run is green (step 5).
 
 > NOTE(@claude-opus-5-5/cdocs/rules-references): Not done: the hook's directive text ("@-imported rules are stale") is left as the proposal directs; `inject-rules.ts`, the hash, the marker, `postinstall.js`, init step 5, and the step 6 block shape are unchanged.
+
+### Review r1 follow-ups
+
+Review: `cdocs/reviews/2026-10-07-review-of-rules-references-impl-r1.md` (accept). Non-blocking items, all applied:
+
+| Item | Disposition | Commit |
+|---|---|---|
+| 1. Drop `nit-fix` step 3e | Removed; the reviewer showed the sentinel is applied without it (2/2), with the same edits | `45635a7` |
+| 2. Narrow the `.claude/rules/` / `.opencode/rules/` exemption | Narrowed to the literal `.claude/rules/cdocs.md` (kept, not removed: it is a real downstream path an author may name). Fixture 5g asserts `.claude/rules/other.md` and `.opencode/rules/cdocs.md` are now flagged | `6e0b4b4` |
+| 3. `test:rules` via `node --import tsx --test` | Changed; the README and the script's usage comment use `node --import tsx` too. Reproduced: `TMPDIR=$S/h npx tsx --test ...` exits 1 with `EINVAL`; the new script passes under the same `TMPDIR` | `6828720` |
+| 4. `triage/SKILL.md:52` "reads the frontmatter spec at runtime" | Now "follows "CDocs Frontmatter Specification" from the rules already in its context" | `eac928a` |
+
+Re-runs on `eac928a`: `npm run test:rules` (under the long `TMPDIR`) 11/0; `chat-record.test.sh --unit` 95/0; `--only init_real` 9/0, including `check-rule-refs --materialized passes` (`$S/fu-init_real.log`).
 
 ## Changes Made
 
