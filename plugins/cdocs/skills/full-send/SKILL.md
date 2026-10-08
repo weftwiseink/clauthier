@@ -11,7 +11,7 @@ Full Sending means to take up a described topic, proposal rfp, or full proposal,
 oversee a `/cdocs:propose-revise` loop on it, then oversee a `/cdocs:iterate` loop.
 
 Both composed loop skills run in *overseer mode*.
-Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
+Before dispatching, invoke `/cdocs:oversee-workstream` (skip if its text is already in context).
 
 The first loop should be entered with a `/propose` if it's an RFP, but review-first if already authored.
 If `--first-round` is specified in the latter case, the expensive expert model should also be used for the first revision.

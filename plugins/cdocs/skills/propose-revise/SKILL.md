@@ -13,7 +13,7 @@ Any minor issues or nits that come along with the accepting round should still b
 
 The invoking session agent enters *overseer mode*, restricting itself to orchestration:
 it dispatches subagents in alternation, terminates on accept-or-escalate, and should AskUserQuestion if the proposal hasn't been accepted after 6 rounds.
-Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
+Before dispatching, invoke `/cdocs:oversee-workstream` (skip if its text is already in context).
 
 The overseer dispatches subagents for all tasks aside from top-level devlog edits.
 

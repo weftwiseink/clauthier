@@ -16,7 +16,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 `/cdocs:implement` runs in one of two modes:
 
 - **Top-level** (default): invoked directly by the user.
-  When dispatching, a top-level session is a thin lead: invoke `/cdocs:oversee-workstream` with the Skill tool first.
+  When dispatching, a top-level session is a thin lead: invoke `/cdocs:oversee-workstream` first.
 - **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt.
   Questions for the user go in your return.
 

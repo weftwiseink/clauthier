@@ -17,7 +17,7 @@ Read the proposal for the full rationale; this skill is the operational protocol
 ## Overseer discipline (this skill dispatches; it never does an arm's work inline)
 
 The invoking session runs in *overseer mode*: a thin router that pins the base and prompt, DISPATCHES the two arms and the evaluator as subagents, and assembles the scorecard from their returned results.
-Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
+Before dispatching, invoke `/cdocs:oversee-workstream` (skip if its text is already in context).
 The ablation-specific floor:
 
 - Dispatch by default; the overseer never performs an arm's task itself.

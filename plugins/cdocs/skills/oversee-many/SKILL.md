@@ -10,7 +10,7 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m
 Loops should be run concurrently when practical unless otherwise specified (see Concurrency).
 
 The arc overseer runs in *overseer mode*.
-Before dispatching, invoke `/cdocs:oversee-workstream` with the Skill tool (skip if its text is already in context).
+Before dispatching, invoke `/cdocs:oversee-workstream` (skip if its text is already in context).
 
 > NOTE: `/cdocs:oversee-many` is TOP-LEVEL ONLY. It needs the human for hard gates and escalations, whom only the top-level session reaches, so a dispatched `/cdocs:oversee-many` declines or runs advisory only, and says so.
 
