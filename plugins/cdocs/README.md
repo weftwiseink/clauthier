@@ -126,6 +126,7 @@ Rule filenames name nothing downstream: `/cdocs:init` concatenates the rules int
 This README and `bin/README.md` describe the source tree and may use paths.
 
 `npm run test:rules` ([`scripts/check-rule-refs.ts`](../../scripts/check-rule-refs.ts)) resolves every quoted `"CDocs ..."` string in `plugins/cdocs/{rules,skills,agents}` against the rule headings and rejects rule-filename references; CI runs it as a blocking job.
+It also checks that every `/cdocs:<name>` names a skill (`skills/<name>/SKILL.md`) or an agent (`agents/<name>.md`), in those directories (`init/SKILL.md` and fenced code included), this README, `AGENTS.md`, `bin/README.md`, and the repo's `CLAUDE.md` and `README.md`.
 `node --import tsx scripts/check-rule-refs.ts --materialized <project>` resolves the same references against a project's `.claude/rules/cdocs.md` and `AGENTS.md` block.
 
 ### When CC #14200 Lands
