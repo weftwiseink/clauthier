@@ -32,6 +32,7 @@ fi
 [ -d "$top/cdocs" ] && ! grep -qxE '/cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
   note "hint: .graphifyignore lacks a /cdocs/ line; run /cdocs:init"
 # Skip the refresh when the graphed tree, as a diff from the base commit the stamp records, is unchanged.
+# TODO(claude-opus-5-5/cdocs/graphify-overhaul): remove once graphify update is incremental (see audit report).
 base=$(git rev-parse -q --verify "$(cut -d' ' -f1 "$wt_out/.stamp" 2>/dev/null)^{commit}" || git rev-parse HEAD)
 stamp="$base "$(cd "$top" && {
   chg=$({ git -c core.quotePath=false diff "$base" --name-only; git -c core.quotePath=false ls-files -o --exclude-standard; } | sort -u)
