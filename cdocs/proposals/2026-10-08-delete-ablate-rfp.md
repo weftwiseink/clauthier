@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/delete-ablate
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_wip
 tags: [claude_skills, ablation, minimalism]
 ---
 
