@@ -408,6 +408,8 @@ Check that the implementer's and reviewer's worktrees each gain `graphify-out/`,
   - VALID with a positive `context_gap` or a clear token saving: keep the design; consider passing the base query to the judge too.
   - TASK-FAIL with only the assisted arm failing: read its transcript for misleading graph output before anything else.
 
+  > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): The maintainer keeps `graphify_base_query` written by default ("if it's good we always want it"), so a row-2 outcome does not make it opt-in.
+
 **Exclusion check (devcontainer, with the live run):** after the main-graph rebuild, `grep -o '"source_file": *"cdocs/' /var/cache/graphify/graph.json | wc -l` is `0`, and the same count on each worktree's `graphify-out/graph.json` is `0`.
 The without-the-line count (6637 of 7375 nodes) was already measured by the r2 review and need not be repeated.
 
