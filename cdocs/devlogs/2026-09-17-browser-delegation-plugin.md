@@ -114,3 +114,10 @@ Design delta vs the r1-accepted version: D2 re-grounded (MCP inheritance premise
 3. Screenshot evidence moves into v1 under `cdocs/_media/` (`YYYY-MM-DD-description.ext`, embedded in the relevant doc) with the one-clause `reviewer.md` change; delegate still writes only to scratch, the dispatcher or reviewer copies cited evidence into `_media/`. Supersedes the r3 option-A "scratch path + quoted lines only" decision (quoted report lines stay as the textual audit trail).
 
 Next: proposer revision folding these in, fresh opus reviewer r6, then `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`, not merged by this overseer).
+
+| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
+|---|---|---|---|---|---|---|
+| 6 | proposer r6 (opus, warm, `2372ad0`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r6.md | answers 1-2 folded correctly; 2 blocking on answer 3 (copy instruction never reaches reviewer at runtime and reviewer Bash is read-only; embedded `_media` image not tied to this round's delegate `Artifacts`, collision with implementer media) |
+
+- r6 overseer decisions (implementation details inside maintainer answer 3, not new maintainer questions): Q1 option A (copy instruction + Bash exception live in `reviewer.md` only); Q2 option A (reviewer copies named `YYYY-MM-DD-<review-doc-name>-<description>.png`, never overwrite).
+- Round cap: the 6-round escalation cap is counted from the post-answers reopen (r6 = reopened round 1), since the coordinator explicitly reopened the loop.
