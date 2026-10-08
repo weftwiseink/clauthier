@@ -15,9 +15,7 @@
 - `Stop` hook appends a `-- <token> at <time>` sign-off.
 - `Stop` blocks once, instead, if a human-initiated turn has no agent note yet.
 - The agent runs `chat-record note --as <model>` to append its own `@<model>: <time>` bullet.
-- `<name>` is the slug of the session's last `/rename` or `--name` title (lowercase, runs of other characters to `-`, at most 64 characters); `ai-title` lines are ignored.
-  A rename starts a new record and leaves the old one; renaming back resumes it.
-  A new session's first prompt arrives before its transcript is written, so that one `UserPromptSubmit` takes the name from the payload's `session_title`.
+- `<name>` is the slug of the session's `/rename` or `--name` title; a rename starts a new record, and renaming back resumes the old one.
 - It is top-level-session only (keyed on `CLAUDE_CODE_SESSION_ID`): subagents must never call it.
 - The record lives in `cdocs/_chat/`, found by walking up from the working directory to the git toplevel; `/cdocs:init` creates it.
 
