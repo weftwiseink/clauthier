@@ -20,7 +20,7 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: Phase 1 reconciliation in the `clauthier` container.
+- next_steps: Phase 3 base-query wiring.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh`, `.github/workflows/cdocs-hooks.yml`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`
 - callouts:
@@ -61,6 +61,20 @@ Both items confirmed; scratch dirs removed afterwards.
 
 > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): weftwise's `docs/*.md` headings are graphed and surfaced as query start nodes (`Hooks [src=docs/style_guide.md]`) for the proposal's base query.
 > The weftwise `.graphifyignore` may want more than `cdocs/`; not in this workstream's scope.
+
+### Phase 2: `cdocs-graphify` replaces `graphify-scope`
+
+- Tests first (`48d4a65`, 15 of 20 failing with no script), then the wrapper (`91b3c1a`): 20/20.
+  Mutations each caught (dropping the `.graphify_root` delete, choosing the first worktree instead of branch `main`, zeroing the coupling cap, discarding the passthrough exit code).
+- The fixture mirrors this repo: a bare repo with worktrees `aaa` (listed first), `main`, and `wt`.
+- Passthrough writes to a `mktemp` file and `cat`s it, so stdout is byte-exact and the coupling grep reads the same bytes.
+- Usage errors (subcommand not in `query|explain|path|affected`) exit 2: the proposal does not specify this case.
+- Real graphify smoke test (container, this worktree, `GRAPHIFY_OUT=/var/cache/graphify` holding the stale 73-node fixture): copy + update + query 0.58 s, result identical in size to a fresh build (248 nodes), `/var/cache/graphify/graph.json` mtime unchanged, `git status` clean.
+
+> WARN(claude-opus-5-5/cdocs/graphify-overhaul): Deviation: the ignore line is `/cdocs/`, not the proposal's `cdocs/`.
+> In gitignore syntax an unanchored `cdocs/` matches a `cdocs` directory at any depth, so graphify dropped `plugins/cdocs/` entirely (0 of its nodes; graph 248 nodes).
+> With `/cdocs/`: 732 nodes, 484 under `plugins/cdocs/`, 0 under root `cdocs/`, and a plain `update` on the existing worktree index restored them.
+> The wrapper's hint check accepts either form; init writes `/cdocs/`.
 
 ## Changes Made
 
