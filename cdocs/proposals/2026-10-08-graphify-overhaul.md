@@ -34,7 +34,7 @@ The replacement:
   Implementers return a refined query in their report.
 - **`cdocs-graphify`** gives each worktree its own index, copied once from the main graph and kept current by `graphify update` on every call, so no agent writes a shared index.
 - **`cdocs/` stays out of the graph:** it is large and is prose the agents read directly.
-  graphify's own `.graphifyignore` excludes it from every build and update; on clauthier it is 6637 of 7375 nodes (90%) otherwise.
+  graphify's own `.graphifyignore` excludes it from every build and update.
 - **Delivery.** The rule line reaches every agent (discovery plus the overseer's duty); the skill carries the per-role procedure; iterate gains a short "Base query" section.
 
 Absent graphify or any index, `cdocs-graphify` prints one line and exits 0, and the overseer leaves `graphify_base_query` empty.
@@ -226,7 +226,7 @@ Refreshing the main graph is left to the consumer for now (operator, lace lifecy
 The one exception is `/cdocs:rfp`, which starts new workstreams, so its Invocation gains one conditional step:
 
 ```md
-6. If `graphify` is installed, make sure the main graphify graph is up to date (`graphify update` on the main checkout, output discarded) so new worktrees copy a current graph.
+6. If a main graphify graph exists (`$GRAPHIFY_OUT`, or `graphify-out/` in the main checkout), run `graphify update .` in the main checkout, output discarded, so new worktrees copy a current graph.
 ```
 
 `update` takes graphify's per-output-dir lock, so this cannot corrupt the graph if a worktree copies it at the same moment; the copy may just be one refresh behind, which the copier's own `update` repairs.
@@ -245,6 +245,9 @@ The one exception is `/cdocs:rfp`, which starts new workstreams, so its Invocati
 | `CLAUDE.md` | Skills line gains `graphify` |
 | `.gitignore` | add `graphify-out/` (belt and braces with the self-ignoring directory) |
 | `.graphifyignore` | new, with `cdocs/` |
+| `plugins/cdocs/skills/graphify/SKILL.md` | new skill (draft above) |
+| `plugins/cdocs/rules/tool-use-safeguards.md` | "Tools and Skills" `/graphify` bullet replaced by the rule line above |
+| `plugins/cdocs/skills/devlog/SKILL.md` | "The Scratchpoint Section" defines `graphify_base_query` |
 | `plugins/cdocs/skills/rfp/SKILL.md` | one conditional main-graph refresh step (above) |
 | `plugins/cdocs/skills/devlog/template.md`, `plugins/cdocs/skills/iterate/template.md` | `graphify_query:` becomes `graphify_base_query:` |
 | `plugins/cdocs/skills/init/SKILL.md` | new step: ensure a `cdocs/` line in `.graphifyignore` when it exists or graphify is installed |
@@ -305,7 +308,6 @@ It never touches tracked files, configuration, or the shared index, so `reviewer
 
 ### D9: Exclude `cdocs/` with the repo's `.graphifyignore`
 
-`cdocs/` is large prose that agents read directly, and on clauthier it would be 90% of the graph.
 The ignore lives in the repository, not the wrapper, because the main-graph refresh never passes through `cdocs-graphify` and must honor it too.
 Mechanics are in "How `cdocs/` is kept out of the graph" above.
 
@@ -317,7 +319,7 @@ Mechanics are in "How `cdocs/` is kept out of the graph" above.
 - **Bare-repo layout:** the main graph is found by branch (`main`), not list order; in this repo `git worktree list` lists the bare dir and `interfacer-agent` before `main`.
   `GRAPHIFY_OUT` overrides.
 - **Concurrent callers in one worktree:** safe without a wrapper lock, since `update` takes a per-output-dir lock; across worktrees there is no shared writer.
-- **`.graphifyignore` missing the `cdocs/` line** (repo not re-initialized): `update` graphs `cdocs/` headings; the wrapper prints its one-line hint, and the rule change's freshness prompt to re-run `/cdocs:init` adds the line.
+- **`.graphifyignore` missing the `cdocs/` line** (repo not re-initialized): the rule change's freshness prompt to re-run `/cdocs:init` adds the line.
 - **Update failure or timeout:** query the existing index; agents verify specific edges in code.
 - **Large output:** `query` caps itself at its default `--budget`; `explain` truncates its own connection list; the coupling section is capped at 30 lines.
 - **No match:** retry once with entity names, then proceed without the graph.
@@ -348,7 +350,7 @@ Also:
 graphify is absent on the host, so verification uses a stub there and the real binary in the devcontainer.
 
 **Host stub run (in-loop):**
-1. Install a stub `graphify` in a directory on the Bash tool's `PATH` (for example `~/.local/bin`, after confirming no real `graphify` resolves).
+1. Install a stub `graphify` in a directory on the Bash tool's `PATH` (for example `~/.local/bin`, after confirming no real `graphify` resolves), and symlink the branch's `plugins/cdocs/bin/cdocs-graphify` beside it, removed with the stub; otherwise agents resolve the main checkout's plugin `bin/`, which lacks the wrapper until Phases 2-3 land, and an empty stub log would misread as agents ignoring the base query.
    It appends argv to a scratch log, accepts `update`, and puts a unique `GFY-MARKER-<random>` on every output line, node labels included.
    It is time-boxed: it embeds an expiry 30 minutes out, after which it deletes itself and exits 127, so it cannot leak into concurrent sessions; remove it explicitly when done.
 2. Create a fixture main graph at `graphify-out/graph.json` in the `main` checkout.
@@ -357,7 +359,7 @@ graphify is absent on the host, so verification uses a stub there and the real b
    - **Primary:** the stub log contains `query <q>` with `GRAPHIFY_OUT` under the reviewer's worktree, preceded by one `update`.
    - **Secondary:** `bash plugins/cdocs/skills/ablate/ablate.sh detect-usage --transcript <reviewer transcript> --tool 'cli:cdocs-graphify (query|explain|path)'` reports `used`.
    - **Positive control:** the dispatching agent's own transcript (the newest `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl` whose `Agent` `tool_use` prompt contains the base query) contains the reviewer's returned report as that call's `tool_result`.
-   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:(cdocs-)?graphify '` on it reports `unused`.
+   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:^(cdocs-)?graphify '` on it reports `unused`.
 5. Remove the stub and fixture and dispatch again: the reviewer completes normally, makes no install or build attempt, and mentions the absence in at most one line.
 
 **Devcontainer live run (post-accept, routed to the overseer or user):** a one-round `/cdocs:iterate` on a small real proposal in a `lace up` container with graphify 0.9.61.
@@ -367,21 +369,30 @@ First rebuild the main graph from the repo after `.graphifyignore` lands: `graph
 
 Check that the implementer's and reviewer's worktrees each gain `graphify-out/`, that `/var/cache/graphify/graph.json`'s mtime is unchanged, that the implementer's report carries a refined `graphify_base_query`, and that the overseer's transcript contains no distinctive node label from the real output.
 
-**Ablation run (devcontainer, after Phase 3):** neither the old nor this design has been measured, so run `/cdocs:ablate` once, single-shot (indicative, per that skill), on a multi-file task:
+**Ablation run (post-accept):** reuse the setup of the earlier `/cdocs:ablate` graphify run ([Probe A](../devlogs/2026-09-18-ablate-e2e-probeA-inject-rules.md), summarized in the [mcp-ablation devlog](../devlogs/2026-09-17-mcp-ablation-iterate.md)), changing only the signature, the treatment line, and the task.
+
+- **What transfers unchanged:** single-shot (`trials=1`, indicative); two detached worktrees at one pinned base; sonnet arms and an opus evaluator; the CLI withhold expressed in the unassisted arm's prompt and confirmed by `detect-usage` on its transcript reporting `unused`; answers written to `ANSWER.md`.
+- **Signature:** `cli:^(cdocs-)?graphify ` (Probe A used `cli:graphify `, before `detect-usage` matched per command segment).
+- **Treatment:** the assisted arm's prompt adds `graphify_base_query: "<q>"` and "run it via `/cdocs:graphify` first"; the unassisted arm's adds "do not run graphify or cdocs-graphify".
+  Step 0 records these two prompt lines as the arm difference instead of a tool-allowlist entry, since a CLI on the shared `PATH` cannot be withheld by allowlist.
+- **Task: does not transfer.** Probe A explained one small file (`inject-rules.ts`), and the evaluator scored `context_gap 0` because reading that file answered it.
+  No clauthier task fixes this: its code is about 3,000 lines with almost no import edges, and its references live in markdown bodies, which graphify graphs only as headings, so any multi-file clauthier answer is one `grep` away (the r3 review showed this for a rule-reference task).
+- **Closest viable variant:** Probe A's "what does this change touch" shape, widened to a multi-file blast radius in weftwise (1228 TypeScript files, with the `.observe`/`.subscribe` coupling the wrapper surfaces):
 
 ```
 /cdocs:ablate \
   --tool 'cli:^(cdocs-)?graphify ' \
-  --task "Rule references take the form \"<H1> › <section>\". List every file and symbol that produces, parses, materializes, or tests this format, and what each would need to change if the separator changed." \
-  --base <Phase 3 commit>
+  --task "A change alters the value type of the most-imported atom exported by packages/weft/src/lib/mounts/atoms.ts. In ANSWER.md, list every file and symbol that must change or be re-verified (direct importers, consumers reached through hooks and re-exports, tests, and runtime subscribers), one line of reason each." \
+  --base <pinned weftwise commit>
 ```
 
-- Assisted arm: the prompt also carries `graphify_base_query: "how are rule references parsed, checked, and materialized"`.
-  Unassisted arm: the same task, plus "do not run graphify or cdocs-graphify"; `detect-usage` on its transcript must report `unused` (the rule line still advertises the skill, so the withhold is by instruction and is checked, not assumed).
-- The task spans `scripts/check-rule-refs.ts`, its test, the `inject-rules.ts` hook, the init skill, and many skills and agents, so recall is not reachable from one file.
+  `mounts/atoms.ts` has 33 direct importers across about ten directories; the graph's advantage, if any, is the transitive consumers that no single literal greps to.
+  The base query: `how do mount atoms flow through hooks and tabs, palette, and editor settings consumers`.
+- **Prerequisite:** weftwise's devcontainer does not install graphify; the run needs the `graphify:1` lace feature (or a pinned `graphifyy` 0.9.61), a root `.graphifyignore` with `cdocs/`, a built main graph, and the cdocs plugin from this change on `PATH`.
+  Until then the run is deferred, not moved to clauthier.
 - **What would change the design:**
   - VOID (`available_unused`): agents ignore a base query they were handed; apply D6's fallback (a startup line in agent files) and re-run.
-  - VALID with `context_gap` at or below 0 and no token saving: overseers stop writing `graphify_base_query` by default (the field stays, opt-in), and the wrapper remains for explicit use; repeat on a weftwise task before deciding.
+  - VALID with `context_gap` at or below 0 and no token saving: overseers stop writing `graphify_base_query` by default (the field stays, opt-in), and the wrapper remains for explicit use.
   - VALID with a positive `context_gap` or a clear token saving: keep the design; consider passing the base query to the judge too.
   - TASK-FAIL with only the assisted arm failing: read its transcript for misleading graph output before anything else.
 
@@ -421,7 +432,7 @@ Add a NOTE to the lace proposal's D3: agents now query per-worktree indexes copi
 ### Phase 5: Verification
 
 Run the host stub verification; record the stub log excerpt, the `detect-usage` results, the positive control, and the marker count in the devlog.
-Route the devcontainer live run, the exclusion check, and the ablation run to the overseer as post-accept.
+Route the devcontainer live run and the exclusion check to the overseer as post-accept, and the weftwise ablation run once its prerequisite is met.
 **Done when:** all host checks pass, or a failure picture is recorded with the D6 fallback applied and re-run.
 
 ## Open Questions
