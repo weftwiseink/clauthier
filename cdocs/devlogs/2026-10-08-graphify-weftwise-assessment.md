@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: rev-p4 reviewing Phase 4 (impl-p4 at ~405K: any revision goes to a fresh implementer from its sub-devlog); then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: rev-fix-p4 applying docs-only Phase 4 revisions; rpt-search writing the search-subagent report; then a light re-review; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -43,6 +43,9 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): leaked tasks run on their pre-investigation commit with the `source` patch, not rephrased; replaced only if the patch does not apply.
   - decision (overseer call): grep arm gets everything but graphify (Bash, scripts, `tsc`, no installs); no subagents, no git, both arms.
   - decision (overseer call): Phase 4 headlines reach as per-arm unique important items; Phases 1-3 text left as is.
+  - decision (overseer call): Phase 4 not extended: no second judges, no grep-vs-grep baseline, no b1/t2 reruns with guidance (maintainer leaning to drop graphify); limitation stated in the report.
+  - decision (overseer call): stamp-bug fix deferred pending the maintainer's keep/drop decision on graphify; documented as a known defect.
+  - blocker: shipped `cdocs-graphify` stamp pins at empty-change hash once ignored changed paths exceed ~128 KB; worktree never refreshes. Fix or remove with graphify.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -68,6 +71,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | impl-2 | impl-1 (warm) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | accept-round: BLUF framing, trim, small fixes |
 | r3 (Phase 4) | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | graph arm silent fallback, in-worktree leaks, weak grep arm |
 | r4 (Phase 4) | prop-1 (warm) | rev-4 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r4.md` | N1 mixed outcome, N2 scratch dirs |
+| impl-p4 | impl-p4 (cdocs:implementer, opus) | rev-p4 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` | judge noise, attribution, light graph use, tests guidance, stamp bug |
 
 ## Judge Log
 
@@ -113,6 +117,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | return | impl-p4 | `d0afc30..4ea238d` | 2026-10-09T00:25 | floor passes. Graph never better outright: 8 tallied tasks, grep better 2 (tests t2, concept c1), mixed 5 (blast b1/b2, orientation o1, cross-package x1/x2), tie 1 (t1); unique important items 13 graph / 19 grep; completeness 78/106 vs 84/106; tokens 659k vs 642k; wall 1,260 vs 1,056 s. Graph reach real on blast radius (`explain` neighbours: callers, importing harness) and orientation (`god-nodes`, but repo-wide hubs caused a false claim); 8 of 13 graph-unique items from graph output. Synthetic: dead code mixed, cycles grep better (built-in list stops at 5 files, counts `import type`). Guidance proposed: graph for blast radius + orientation + named entities; skip for tests, importers, concepts, cycles; wrapper allow `god-nodes`. Verdicts stand; BLUF "use alongside grep, not instead". Wrapper bug found: stamp filter exceeds ARG_MAX with 3,825 deleted ignored files, error swallowed, empty-set stamp, worktree never refreshes. Deviations: sampler spawned 7 subagents; 10 tasks/8 tallied; b1 at `3fbd7251`, y1 at `41b30188` with generalized `source` patch; prompts via files; Python not jq check; general-purpose judges. Not verified: one run per arm, mostly one judge, guidance untested. impl-p4 ~405K |
 | dispatch | rev-p4 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` | 2026-10-09T00:27 | re-run Phase 4 floor; blind re-judge a blast task; fairness both ways; wrapper stamp bug repro |
 | dispatch | rpt-search (general-purpose, opus) | `cdocs/reports/<date>-search-subagent-context-prep.md` | 2026-10-09T00:35 | `/cdocs:report`: sonnet search/context-prep subagent vs graphify vs Explore vs status quo; measure implementer/reviewer context breakdown from real transcripts, per-dispatch overhead, accuracy risk |
+| return | rev-p4 | `5492c08` | 2026-10-09T00:45 | revise, `review_proof: confirmed`: index 9,744/25,774 exact; b1 older-commit graph 10,327/27,153 exact (needs main `.graphifyignore` copied, undocumented); no collateral. Blind re-judges: b1 mixed to graph better (reach), o1 mixed held with misled flags swapped; 3 of 4 re-judged outcomes reproduce. Blocking: "never won" and exact counts overstated vs judge noise; line ~101 contradiction (blast 5/4); attribution (`broadcastServerUpdate` named in task and read by grep arm; "8 of 13 from graph output" ignores arm's own grep finds; only o1 cleanly graph-only); graph used lightly (4 of 8 arms 2 graph calls, b1/t2 no `affected`): typical use not best case; "skip graph for tests" contradicts Phase 2 `affected`; stamp bug reproduced: ignored changed paths >~128 KB pin stamp at empty hash `8b137891`, base never advances, weftwise crosses in ~6 weeks: silent permanent staleness in shipped wrapper. 3 maintainer questions |
+| dispatch | rev-fix-p4 (cdocs:implementer, opus, fresh) | report, Phase 4 sub-devlog | 2026-10-09T00:48 | docs-only: soften headline, fix contradiction/attribution, light-use caveat, tests guidance, document stamp bug, trim |
 
 ## Steering Log
 
