@@ -61,7 +61,7 @@ check "shared graph untouched" "$(cksum <"$T/shared/graph.json") $([ -e "$T/shar
 echo "== ignore hint"
 CGENV=(env); mkdir "$WT/cdocs"; run query q
 check "cdocs/ without ignore line: one hint, query runs" "$(grep -c 'hint' "$T/err") $(grep -c '^<query>' "$GLOG")" "1 2"
-echo "cdocs/" >"$WT/.graphifyignore"; run query q; check "with ignore line: no stderr" "$ERR" ""
+echo "/cdocs/" >"$WT/.graphifyignore"; run query q; check "with ignore line: no stderr" "$ERR" ""
 
 echo "== passthrough and update failure"
 CGENV=(env GSTUB_OUT="hello out" GSTUB_RC=3); run path "A B" C

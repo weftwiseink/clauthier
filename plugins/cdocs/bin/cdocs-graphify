@@ -29,7 +29,7 @@ if [ ! -f "$wt_out/graph.json" ]; then
   [ -f "$wt_out/graph.json" ] || skip "could not copy $main_out"
 fi
 [ -d "$top/cdocs" ] && ! grep -qxE '/?cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
-  note "hint: .graphifyignore lacks cdocs/; run /cdocs:init"
+  note "hint: .graphifyignore lacks a /cdocs/ line; run /cdocs:init"
 GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
   note "update failed (graphify-out/update.log); querying existing index"
 

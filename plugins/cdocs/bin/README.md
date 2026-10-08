@@ -77,7 +77,7 @@ Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat rec
 - Passes its arguments to `graphify` with `--graph <worktree index>`, stdout and exit code unchanged.
 - Appends `.observe`/`.subscribe` sites (up to 30) from files the output names, which the graph cannot see.
 - Without `graphify`, a git worktree, or any index: one `skipping` line on stderr, exit 0.
-- When `cdocs/` exists and `.graphifyignore` lacks a `cdocs/` line: a one-line hint to run `/cdocs:init`.
+- When `cdocs/` exists and `.graphifyignore` lacks a `/cdocs/` line: a one-line hint to run `/cdocs:init`.
 
 ### Examples
 
