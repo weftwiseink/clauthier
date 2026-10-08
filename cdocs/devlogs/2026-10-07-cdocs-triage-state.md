@@ -21,13 +21,15 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: on maintainer acceptance of OpenCode fixes (model policy decision), flip `2026-10-07-opencode-build-fixes.md` to `implementation_accepted` and land `opencode-build-fixes` (27 commits, main has diverged so rebase then `--ff-only`; merge-tree clean). Browser delegation awaits maintainer answers (below) before `/cdocs:iterate`.
+- next_steps: await browser-delegation sub-overseer (revise for maintainer answers, then `/cdocs:iterate` in worktree `../browser-delegate`); land that branch when accepted.
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
   - decision: `/cdocs:init` here skips rules materialization: `CLAUDE.md` `@`-imports `plugins/cdocs/rules/` directly, and `4155496` removed a materialized copy on purpose.
   - decision: OpenCode support must stay minimally invasive; if it gets in the CC setup's way the maintainer may drop it entirely.
   - decision: canonical Codex support archived with its round-2 Revise unaddressed.
+  - decision: browser delegation: model choice stays with dispatcher/reviewer; iterate `confirmed`-row clause approved; screenshot evidence goes to `cdocs/_media/` in v1.
+  - todo: reconcile `propose-revise/SKILL.md` "Dispatch subagents for all tasks, even trivial ones" (2026-08-31) with "the overseer owns" the loop devlog (`686b40b`, 2026-10-06), and its role line assuming a top-level overseer while this session dispatched it as a subagent.
 
 ## Plan
 
@@ -57,7 +59,9 @@ Phase 1 spikes (SIGTRAP, session isolation, browser-use tool availability) still
 **OpenCode build fixes full-send** (worktree `../opencode-build-fixes`): proposal accepted r2, implementation accepted r1; proposal `implementation_wip` pending maintainer.
 `yaml` dev-dep for frontmatter; `tools: "*"`/absent emits no tools/permission block; `model:` dropped entirely (inherit caller) instead of a refreshed map, a deviation from the stated floor.
 Verified: diff touches only `scripts/build-opencode{,.test}.ts`, `package{,-lock}.json`, CI workflow; zero `plugins/` diff (rechecked from main).
-Open: model-policy decision (tier fidelity loss vs. provider-agnostic), `plugins/cdocs/README.md` still says "model mapping", CI unrun on GH Actions/Node 22, published `@weftwise/cdocs-opencode` 0.1.0 still stale.
+Maintainer accepted dropping `model:`. Landed: README build note fixed, `CLAUDE.md` Multi-Target section trimmed to a pointer, proposal `implementation_accepted`; rebased onto main and ff-merged at `1372ce3`; worktree and branch removed.
+Post-merge on main: `npm ci && npm run build:cdocs && npm run test:opencode` exit 0, 8/8 pass.
+Still open: CI unrun on GH Actions/Node 22; published `@weftwise/cdocs-opencode` 0.1.0 stale until a manual publish.
 
 ## Changes Made
 
