@@ -15,7 +15,8 @@ tags: [browser, delegation, playwright, implementation]
 > BLUF: Phases 1-4 of `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` are built and verified with real `@playwright/cli` 0.1.22 sessions on headless Chromium, dispatched through nested `claude -p --plugin-dir` harnesses; Phase 5 is not built.
 > Phase 1: the CLI shares `@playwright/mcp`'s channel resolution (no SIGTRAP at chrome-for-testing 155 in the weftwise image), sessions are isolated and namespaced by workspace, dead sessions error rather than auto-open, a global CLI plus an explicit `--config` is the resolution, the API browser-use tool is GA but not a Claude Code built-in, and subagents inherit MCP tools.
 > Every post-fix report parses, with existing absolute artifact paths whose screenshots show what the Facts claim; `opened`/`reused`/`reopened`, AE and size-mismatch diffs, missing-CLI `FAILED`, a real reviewer leg with `_media` copy, and 2-3 session convergence/divergence all ran for real.
-> Gaps: convergence ran against a scratch SSE relay, not weftwise; the SIGTRAP spike ran in an ephemeral container from the weftwise image, not the live container; no full `/cdocs:iterate` Iteration Log row; the OpenCode build of the two edited cdocs files was not run.
+> Gaps: convergence ran against a scratch SSE relay, not weftwise; the SIGTRAP spike ran in an ephemeral container from the weftwise image, not the live container; no full `/cdocs:iterate` Iteration Log row.
+> impl-2 (r1 review) fixed the poll loop's false pass on matching eval errors, re-verified through nested dispatches, and ran `npm run build:cdocs` plus the CI checks green.
 
 ## Objective
 
@@ -24,8 +25,8 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T21:25:00-07:00
-- now: Phases 1-4 done; devlog `review_ready` for the iterate reviewer.
+- as_of: 2026-10-07T21:45:00-07:00
+- now: impl-2 done (r1 review: blocking poll-loop fix plus nits 2-6); devlog `review_ready`.
 - next: review. To re-run: `S=<scratchpad above>`; `cd $S/site && python3 -m http.server 18731 --bind 127.0.0.1 &`; `cd $S/sync && node relay.mjs &`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt>`; `$S/dispatch/parse_report.py $S/dispatch/<tag>/delegate-return.txt`. Both fixture servers and all CLI sessions are stopped.
 - important_files: `plugins/browser-delegate/agents/browser-delegate.md`, `plugins/browser-delegate/README.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
 - callouts:
@@ -33,7 +34,6 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
   - decision: convergence verified against a scratch SSE relay, not weftwise (see Implementation Notes > Phase 4).
   - blocker (for the iterate reviewer): this plugin is not installed in the overseer's session, so a reviewer dispatched there cannot use `browser-delegate:browser-delegate` directly; it needs a nested `claude -p --plugin-dir <worktree>/plugins/browser-delegate` (as here) or an install.
   - blocker (environment): no global `playwright-cli` and no system Chrome on this host; every run used a scratch-prefix CLI on `PATH` and a config pinning `~/.cache/ms-playwright/chromium_headless_shell-1208` (revision skew vs the CLI's expected 1247, worked in all runs).
-  - todo: OpenCode build of the edited `iterate/SKILL.md` and `reviewer.md` not run (`tsx` from `main/node_modules` cannot resolve deps from the worktree).
   - todo: Phase 5 items stay deferred (fixer, A2A, browser-use promotion, dashboard port, R1-R6).
 
 ## Plan
@@ -64,7 +64,7 @@ All runs used `@playwright/cli@0.1.22` (bundles `playwright-core 1.64.0-alpha-17
    Session names are scoped by **workspace**, not cwd: the nearest ancestor (up to 10 levels) holding a `.playwright/` directory, else a hash of the CLI's own package root.
    Consequences: from `cd "$d"` (no `.playwright/` above it) every dispatch using the same CLI install shares one namespace, so reuse-by-name across dispatches works (confirmed: `list` from `/tmp`, from the worktree, and from `$d` shows the same sessions), and two worktrees' delegates are kept apart only by their branch-derived names.
    An `npx -y` copy of the same version has a different package root and sees `(no browsers)`: a CLI resolved through the npx cache does not reliably reuse sessions.
-   The two-worktree case was exercised at the CLI level (distinct names, one namespace), not with two concurrent delegate dispatches from two real worktrees.
+   The two-worktree case was exercised here at the CLI level (distinct names, one namespace); Phase 4's wA/wB runs (Verification > Phase 4) later confirmed it with two concurrent delegate dispatches from two checkouts.
 3. **Session liveness: commands against a non-live name ERROR, they do not auto-open (CONFIRMED).**
    `goto`, `eval`, `screenshot`, `snapshot` on an unknown name all exit 1 with "The browser '<name>' is not open, please run open first".
    A `close` from another shell during an in-flight `eval` makes that `eval` exit 1 with "Target page, context or browser has been closed"; SIGKILL of the browser process ends its daemon too.
@@ -113,13 +113,14 @@ All runs used `@playwright/cli@0.1.22` (bundles `playwright-core 1.64.0-alpha-17
 - weftwise was not used: `:1355` (portless) is listening but `https://main.weftwise.localhost:1355/` did not answer `curl`, and syncing through the user's live dev server would write documents into their dev data.
   Convergence is verified against a **scratch fixture**, `$S/sync/relay.mjs`: a Node `http` server holding last-writer-wins text per doc and pushing it to every subscriber over SSE after a 1.5 s delay, so convergence is a real network round-trip between independent browser sessions.
   `?muted=1` makes a client skip the SSE subscription, which forces non-convergence.
-- Two agent-body fixes came out of this phase: poll values come from the first meaningful output line (the last line on a dead session is the CLI's usage hint), and the script computes the 570 s cap itself (c3 ran with `T=900` and a 960000 ms Bash timeout before the fix).
+- Three agent-body fixes came out of this phase and its review: matching eval errors no longer count as agreement (impl-2, from the r1 review's blocking finding: the loop compared printed values only, so two sessions throwing the same `TypeError` reported `converged`), plus poll values come from the first meaningful output line (the last line on a dead session is the CLI's usage hint), and the script computes the 570 s cap itself (c3 ran with `T=900` and a 960000 ms Bash timeout before the fix).
 
 > NOTE(opus-5-5/browser-delegation): Deviations from the proposal's agent spec, all driven by Phase 1:
 > the description gains one prompt line (`Optional: config ...`), because a config is required wherever system Chrome is absent and the proposal left its source open ("if so pass it with `--config <abs path>`");
 > project-local resolution is `node_modules/.bin/playwright-cli`, not `npx --no-install playwright cli`, because weftwise's pinned Playwright 1.57 has no `cli` subcommand and `npx` resolution risks a different session namespace;
 > the `wait-for` action is implemented with `run-code`, since the CLI has no wait command;
-> the report adds `colors=` facts and `Sessions: none` / `Artifacts: none` forms, which stay inside the proposal's field set.
+> the report adds `colors=` facts and `Sessions: none` / `Artifacts: none` forms, which stay inside the proposal's field set;
+> the frontmatter adds `color: cyan` (display only, matching `bash-runner`'s `color` key).
 > The README also lists the plugin in the root `README.md` (one line, outside the proposal's file table).
 
 ## Changes Made
@@ -317,3 +318,42 @@ Not run: a full `/cdocs:iterate` loop writing an Iteration Log row; the round ab
 *Source: `/tmp/claude-1000/browser-delegate/run.HunUID/browser-delegate-sharee-viewport.png`. Empty editor, rev 0, not connected, matching the reported divergence.*
 
 **Worktree hygiene:** `git status --short --untracked-files=all` empty in this worktree after every Phase 4 run, and in `$S/iterrepo` after wB.
+
+### impl-2 (r1 review follow-ups)
+
+Review: `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r1.md` (on main), Revise with `review_proof: confirmed`.
+
+**Blocking, poll-loop false pass.**
+CLI behavior first: `--raw eval` on a page-side `TypeError` exits 1 (stack on stdout), and `String('')` prints `""` with exit 0, so "no output" never collides with a genuine empty string.
+The loop now captures each eval's exit status (`raw=$(...); rc=$?`), treats a nonzero exit or empty output as non-agreement, and seeds `first` with a `firstiter` flag; the body states that an eval error is never agreement.
+The template, extracted verbatim from the agent body and run by hand on two live sessions (`$S/poll-missing.sh`, `$S/poll-good.sh`):
+```
+== missing
+timed out at 7s
+last-seen man-a: TypeError: Cannot read properties of null (reading 'value')
+last-seen man-b: TypeError: Cannot read properties of null (reading 'value')
+== good
+converged after 2s
+last-seen man-a: "hi"
+last-seen man-b: "hi"
+```
+Nested `claude -p --plugin-dir` dispatches (both delegates' transcripts show the new loop: `rc=$?` and `firstiter` present):
+
+| Run | Poll | Report line | Parser | Cost |
+|---|---|---|---|---|
+| e1 (`400a1214`) | `document.querySelector('#missing-editor').value`, 10 s | `converged: no, timed out at 10s; last-seen browser-delegate-sharer: TypeError: Cannot read properties of null (reading 'value'); last-seen browser-delegate-sharee: TypeError: ...`, `Status: WARNINGS` | VALID | $0.18 |
+| e2 (`bbb15b5c`) | `#editor` value equals "genuine converge", 30 s | `converged: yes after 2s`, both last-seen `"genuine converge"` | VALID | $0.18 |
+
+Both reports' `cli` fact reads `.../playwright-cli (0.1.22, global)`, the literal shape nit 2 asked for.
+
+**Nit 6, OpenCode build** (in this worktree: `npm ci`, then removed `node_modules/` and `build/`; `git status --short --ignored --untracked-files=all` empty afterwards):
+```
+npm ci                       exit 0 (warning: esbuild postinstall not covered by allowScripts)
+npm run build:cdocs          exit 0   Agents converted: 7 (incl. reviewer.md)
+npm run test:opencode        exit 0   ℹ tests 8  ℹ pass 8  ℹ fail 0
+(build/cdocs/opencode) npm pack --dry-run   exit 0   weftwise-cdocs-opencode-0.1.0.tgz, 39 files
+grep -c "counts as its own" build/cdocs/opencode/skills/iterate/SKILL.md   -> 1
+grep -c "mkdir -p cdocs/_media" build/cdocs/opencode/agents/reviewer.md    -> 1
+grep -c "cp -n" build/cdocs/opencode/agents/reviewer.md                    -> 1
+```
+These are the same three steps as `.github/workflows/opencode-build.yml` (`npm ci`, `npm run test:opencode`, `npm pack --dry-run`), run with local node v26 rather than CI's node 22.
