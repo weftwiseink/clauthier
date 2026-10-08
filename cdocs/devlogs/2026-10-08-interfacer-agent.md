@@ -23,12 +23,12 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: implementation accepted by reviewer (`confirmed`), branch ready at `7759b07`; on maintainer acceptance set `implementation_accepted`, rebase, ff-merge, remove worktree. This lands first; the graphify overhaul rebases onto it (shared `reviewer.md`, `iterate/SKILL.md`), overriding the proposal's "serializes after graphify" line.
+- next_steps: impl-2 revising agent + proposal per the context-preservation report (fresh dispatch per check naming the instance dir, `notes.md`, no SendMessage or sleeps), canary re-run headless in container; then fresh impl review, then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
   - decision: overseer is this top-level session; arc file `.claude/oversee/2026-10-08-graphify-interfacer.json` (with the graphify overhaul), arc narrative in `cdocs/devlogs/2026-10-07-cdocs-triage-state.md`.
-  - todo: pin down "durable by default" (working reading: the dispatcher keeps the interfacer warm and resumes it with `SendMessage` for follow-up checks, and its sessions survive between dispatches).
+  - decision: "durable by default" = the instance directory (`notes.md`, per-check reports, running tooling) persists across fresh dispatches; no warm agent (report `2136ce9`).
 
 ## Workstream Devlogs
 
@@ -75,6 +75,9 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | return | rev-impl-1 | `34a2c45` (branch) | 2026-10-08T11:30 | accept, `review_proof: confirmed`: own fixtures in container (curl) and host (playwright-cli, 4 screenshots viewed); all criteria pass both. Keep all 3 canary clauses. Async replies apply to first dispatch too on 2.1.293; harness refuses `sleep 30`; proposal needs NOTEs (D5 async, lifetime WARN resolved, ordering). Wrapper-PID misrecord seen 3x, recovered by port; no clause |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T11:32 | pre-landing: reviewer's async-reply sentence, 3 proposal NOTEs, devlog gap fixes, statuses |
 | return | impl-1 | `131bb84`, `940674c`, `55d5e4a` | 2026-10-08T11:38 | applied; rules 11/11, opencode 9/9. Overseer reverted the premature `implementation_accepted` (`7759b07`); awaiting maintainer acceptance to land |
+| dispatch | report (general-purpose, opus) | `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` | 2026-10-08T12:12 | maintainer-requested options report |
+| return | report | `2136ce9` | 2026-10-08T13:05 | on 2.1.293 a caller that ends its turn misses its child's reply only headless (`-p`/SDK); interactive callers are woken (2 probes). SendMessage resumes always async; foreground dispatch (`run_in_background: false`) exists for headless callers. Warm agent saves ~1-2 tool rounds per check. Recommendation: drop the warm agent; instance dir + `notes.md` persists, fresh dispatch per check incl. tear down |
+| dispatch | impl-2 (cdocs:implementer, opus, fresh) | branch | 2026-10-08T13:08 | apply report recommendation to agent, reviewer/iterate/skills/README text, proposal D5/D6/durable; re-run canary headless in container |
 
 ## Steering Log
 
