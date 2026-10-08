@@ -56,7 +56,7 @@ Replacement for "CDocs Overseer Rules › Chat record" (heading unchanged, so `n
 ## Chat record
 
 Top-level agents must use the `chat-record` command to maintain chat records (subagents should never).
-Before ending a turn that began with a human prompt, note the turn's most salient information: the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words.
+Before ending a turn that began with a human prompt, briefly note the turn's most salient information: the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words.
 The quoted heredoc keeps the body byte-exact:
 
 ```bash
@@ -129,6 +129,7 @@ find_record() { # earliest-dated record for this session id and name, or empty
   for f in "$CHAT_DIR"/$d-"${2:+$2-}$1".md; do
     [ -f "$f" ] && { printf '%s' "$f"; return 0; }
   done
+  return 0
 }
 ```
 
@@ -139,10 +140,7 @@ Every caller (`hook_prompt`, `hook_stop`, `agent_note`, `agent_path`) computes t
 `/rename` fires no hook and happens between turns, so the next `UserPromptSubmit` computes the new name, finds no record for it, and starts one; the old record ends at its last sign-off and is never written again unless the session is renamed back to that name, in which case writes resume in it.
 `chat-record path` prints the current name's record only (one line, as today).
 
-**Effect on readers.**
-- *Devlog `chat_record:` lists:* a renamed session contributes one path per name; the rule's "and after the session is renamed" adds the new one.
-  The rename is visible to the agent on the next turn (live check above).
-- *After a compaction:* `chat-record path` and `tail -n 80` read the current name's record; earlier names' records are reachable through the devlog's `chat_record:` list.
+After a compaction, `chat-record path` and `tail -n 80` read the current name's record; earlier names' records are reachable through the devlog's `chat_record:` list.
 
 ### Touch points
 
@@ -186,8 +184,7 @@ Every caller (`hook_prompt`, `hook_stop`, `agent_note`, `agent_path`) computes t
 - **Two titles with the same slug** (`Foo Bar`, `foo-bar`): one record; same name for practical purposes.
 - **Non-ASCII titles** lose those characters (`Café` to `caf`); a fully non-ASCII title is unnamed.
 - **`/clear` and `--fork-session`** give a new session id, so a new record regardless of name, as today.
-- **Several transcripts for one session id** under different project directories: `transcript_for` takes the first glob match.
-  Not observed; if it occurs, the hooks' `transcript_path` and the glob could disagree, which degrades to the split above.
+- **Several transcripts for one session id** (not observed): `transcript_for` takes the first match, degrading to the split above.
 - **Large transcripts:** one `grep` per hook or agent call, as `Stop` already does.
 - **Downstream `_chat/README.md`:** `/cdocs:init` never overwrites existing files, so projects already initialized keep the old README text until they edit it.
 - **Rule hash change:** the SessionStart freshness hook prompts downstream projects to re-run `/cdocs:init`, as for any rule edit.
@@ -212,8 +209,8 @@ Rules: `npm run test:rules` stays green (baseline 11 passed); the `init_real` as
 
 1. **Headless scenario `rename_record`** (replacing the transcript-editing `rename` scenario at l.720): `drive rename_record "$P" "$(note_prompt 'Reply one.' '- turn one')" "/rename Second Name" "$(note_prompt 'Reply two.' '- turn two')"`, then assert two records, `<date>-<sid>.md` with `U A:haiku-4-5 S:<sid8>` and `<date>-second-name-<sid>.md` with `U A:haiku-4-5 S:second-name`, no `@user` block for `/rename`, and no Stop block.
    `drive` already sends slash commands turn by turn (`/clear`, `/compact` scenarios); `/rename` was confirmed to work this way.
+   Run it once with `CHAT_RECORD_KEEP=1` as the real session check, and paste `ls cdocs/_chat` and both records into the overseer's devlog.
 2. **`--name` variant** in the same scenario or a sibling: `claude_run ... -p --name "First Name"` then `--resume <sid> --name "Other"`, asserting the first turn's record is `first-name` (title written before the first prompt) and the resumed turn's is `other`.
-3. **Real session check** outside the suite, so a reviewer sees real files: in a scratch git repo with `cdocs/_chat/`, run the `drive` sequence above by hand (or `CHAT_RECORD_KEEP=1 bash plugins/cdocs/hooks/tests/chat-record.test.sh --headless --only rename_record`), then `ls cdocs/_chat` and `cat` both records; paste the listing into the overseer's devlog.
 
 ## Implementation Phases
 
@@ -248,5 +245,4 @@ Do not change the record grammar (`HEADER_RE`, `SIGNOFF_RE`), the Stop decision 
 
 ## Open Questions
 
-- Should `note` print a one-line stderr warning past 300 words? Recommended no until records show drift.
 - Plugin version bump for the rule change: left to the repo's release practice, not this proposal.
