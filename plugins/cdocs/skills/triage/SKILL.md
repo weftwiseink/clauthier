@@ -49,7 +49,7 @@ Triage the following cdocs files:
 /absolute/path/to/cdocs/devlogs/2026-01-29-session.md
 ```
 
-The agent reads the frontmatter spec at runtime, applies mechanical fixes (tags, timestamps, missing fields) directly via Edit, and returns a structured report with status and workflow recommendations.
+The agent follows "CDocs Frontmatter Specification" from the rules already in its context, applies mechanical fixes (tags, timestamps, missing fields) directly via Edit, and returns a structured report with status and workflow recommendations.
 
 ## Acting on Workflow Recommendations
 
