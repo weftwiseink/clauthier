@@ -22,12 +22,18 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: prop-1 accept-round nits; then `/cdocs:iterate` in worktree `../oversee-workstream` off main, rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: impl-1 running iterate round 1 in `../oversee-workstream`; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
   - decision: overseer is this top-level session; arc file `.claude/oversee/2026-10-08-graphify-interfacer.json`.
   - risk: footprint overlaps the unlanded interfacer and graphify branches (`iterate/SKILL.md`, rules); implementation lands after or rebases over them.
+
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-oversee-workstream-skill.md` (`implementation_ready`, `8e9fabb`), overseer: this top-level session; worktree `../oversee-workstream`, branch `oversee-workstream` from `8e9fabb`.
+Verification floor: `test:rules` incl. the skill-reference check, `chat-record --unit`, headless `top_level_only` extended with a general-purpose dispatch and a fork (neither calls `chat-record`, parent note lands), `test:opencode`, verification grep returns only listed exceptions.
+Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "CDocs Overseer Rules" reference, phase red on its own check, Stop reason over 300 bytes.
 
 ## Iteration Log
 
@@ -56,6 +62,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r3.md` | 2026-10-08T15:31 | round 3 |
 | return | rev-3 | `52e5bb2` | 2026-10-08T15:45 | proposal_accepted, `implementation_ready`; phases green in order (simulated reference check; Phase 3 turns exactly 3 refs red); no loop-skill contradictions. Non-blocking: F1 delete §1 dispatcher sentence; F2/F3 exception wording; F4 drop oversee-workstream from the rule bullet (loop skills load it; maintainer asked chat-record-only); F5 README:123 two examples |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:46 | accept-round F1-F5 + trivial; F1 and F4 are overseer calls, F4 flagged in a NOTE |
+| return | prop-1 | `8e9fabb` | 2026-10-08T15:48 | F1-F5 applied; dropped pointer leaves a resume+compaction gap for loop leads until they re-read the loop skill, accepted in Edge Cases |
+| dispatch | impl-1 (cdocs:implementer, opus) | worktree `../oversee-workstream`, branch `oversee-workstream` | 2026-10-08T15:50 | iterate round 1, phases 1-4 |
 
 ## Steering Log
 
