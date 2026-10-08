@@ -17,7 +17,8 @@ tags: [graphify, performance, evaluation]
 
 # Graphify Weftwise Assessment, Implementation: Devlog
 
-> BLUF: Implementer sub-devlog (iterate round 1, all phases) for `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md`.
+> BLUF: Implementer sub-devlog (iterate rounds 1-2, all phases) for `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md`.
+> Round 2 applied impl review r1 (`cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md`): the 39-edge difference is `dist/` presence, the `source`-condition lever is measured (report recommendation only), Q12 is partial (7/5/1/1), and the floor gains two steps and passes.
 > All three phases ran; the deliverable is `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (`review_ready`), and the floor passes verbatim.
 > Weftwise has one commit (`2791713d`, `.graphifyignore`), and all scratch is removed.
 > Deviations: one implicit-`GRAPHIFY_OUT` call wrote `cache/last_query_stamp` into the main graph dir (graph untouched); the fresh-worktree row and the `--no-cluster` identity expectation did not hold (both findings).
@@ -28,14 +29,16 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
 
 ## Scratchpoint
 
-- next_steps: done; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
+- next_steps: round 2 done; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
 - graphify_base_query:
 - important_files: proposal above; `plugins/cdocs/bin/cdocs-graphify`; weftwise `.graphifyignore`; container scratch `/tmp/gfy-assess/`
 - callouts:
   - decision: container scratch root is `/tmp/gfy-assess/` (wrapper copy, saved graphs, scratch `GRAPHIFY_OUT`s); all removed at the end.
   - todo: maintainer worktree state recorded below (Verification › Collateral); re-check at the end.
   - decision: `*.scss.d.ts` added as the one non-markdown ignore line (inventory-proven: 28 tracked typed-scss-modules outputs, 84 nodes, 0 edges to other files).
-  - finding: empty-dir builds carry 39 more `imports_from` edges (bare `loro-repo` specifier to the `ref_loro_repo` stub) than updates from the main out dir's cache; node sets equal. Floor counts must come from empty-dir builds.
+  - finding (corrected in round 2): the 39 extra `imports_from` edges onto `ref_loro_repo` come from the absence of the gitignored `packages/loro-repo/dist/`, not the build path: a stub `dist/index.{js,d.ts}` gives the main graph's 25,121 from an empty dir.
+  - decision (overseer call): the `source` export conditions are measured in a throwaway worktree and recommended in the report; not committed to weftwise (package metadata the app build reads; maintainer decides).
+  - decision (overseer call): upstream note on `dist/` resolution is held; a draft is in the report for the maintainer to file.
   - decision: Phase 2 commands fixed before ground truth returned, run blind (status lines only), retries applied mechanically per the skill.
   - deviation: one raw `graphify explain --help` (inspecting an exit code, ~14:10) ran without an explicit `GRAPHIFY_OUT`, so it wrote `/var/cache/graphify-weftwise/cache/last_query_stamp` (18 bytes, 14:10:23). `graph.json` (14:09:35) and `.graphify_root` (14:09:36) are unchanged since Phase 1, so no restore was needed.
   - finding: `--no-cluster` fails the identity check (raw extraction written); the proposal's expectation that it changes only community attributes was wrong for 0.9.61.
@@ -143,4 +146,61 @@ Maintainer worktree HEADs and dirty counts identical to the before record (floor
 Container `/tmp/gfy-assess`, `/tmp/gfy-floor`, and the artifact tarball removed; no `graphify update|extract|watch` process.
 Main graph dir: `graph.json`, `.graphify_root`, labels, report, html, and manifest all from the Phase 1 rebuild (14:09:35-36), plus its dated backup dir `2026-10-08/` (written by that rebuild, since `GRAPHIFY_NO_BACKUP` was unset); `cache/last_query_stamp` 14:10:23 (see the deviation callout).
 The throwaway detached commits made in `gfy-assess` and `gfy-fresh-neg-b` (`gfy probe (throwaway)`) are unreferenced objects in the shared bare repo, left for `git gc`.
+
+## Round 2: impl review r1
+
+Review: `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` (revise, `review_proof: confirmed`, floor reproduced within 2%).
+All throwaway work ran in `/workspaces/weftwise/gfy-src` (detached at `2791713d`) with container scratch `/tmp/gfy-src`; every raw call set `GRAPHIFY_OUT` to scratch.
+
+### Workspace packages and toolchain (host reads, read-only)
+
+- `dist/`-only `exports`: `loro-repo` (consumed by `weft`, 32 importing files), `loro-multiplex` (`weft` 53 files, `loro-repo` 7), `command-deer` (no cross-package importer). `weft` exports nothing.
+- `loro-repo`'s `./index-doc` and `./branch` exports have no `src` file and no importer (stale entries; noted in the report, not acted on).
+- Graphify's `_EXPORT_CONDITION_PRIORITY` starts with `source`, so key order does not matter to it.
+- Toolchain: vite 7.3.0 default conditions `module`/`browser`/`node`/`development|production` (read from `dist/node/chunks/logger.js`), no `resolve.conditions` in any weftwise vite/vitest config; TS 5.9.3, all `moduleResolution: bundler`, no `customConditions`; `tsx` 4.21.0 has no `source` condition; ESLint uses `eslint-import-resolver-node` for `import/no-default-export` only. So `source` is inert for current tools.
+
+### Measurements (`source.patch`: 16 `source` keys across the three packages)
+
+| Build | Runs (s) | Nodes / edges | Cross-package edges into `src/` |
+|---|---|---|---|
+| A: fresh tree | full 9.71 / 9.61 / 9.54; post-edit 11.32 / 11.11 / 11.18 | 9,731 / 25,160 | 0 (`ref_loro_repo` 40 edges) |
+| B: A + stub `loro-repo/dist` | full 9.54 | 9,731 / 25,121 | 0 (`ref_loro_repo` 1) |
+| C: `source` conditions | full 9.63 / 9.63 / 9.62; post-edit 11.32 / 11.20 / 11.42 | 9,744 / 25,774 | 623 (`weft->loro-repo` 204, `weft->loro-multiplex` 347, `loro-repo->loro-multiplex` 72) |
+| C + stub `dist/` in all three | full 9.64 | identical to C | same |
+| C fresh-worktree wrapper (copy of C + update) | 8.99 (8.90-9.06) | no topology change | |
+| A fresh-worktree wrapper from B's graph | 11.87 (11.74-11.93) | 9,731 / 25,160 | |
+
+The 13 new nodes are the `source` keys in `package.json`.
+The report's "551 cross-package edges" is `weft` into both packages' `src/` (204 + 347); with `loro-repo->loro-multiplex` (72) the total is 623, and the graph delta vs main is +653 edges.
+`extract --code-only` on C vs C's `update`: 41 code nodes and 97 code edges missing (`calls` 56, `imports` 37, `rationale_for` 4); the 17 `dynamic_import` losses from round 1 were resolution edges; all 551 `weft` cross-package edges kept.
+
+Spot check, all 14 question commands, A vs C (raw, `qgraph.sh`): Q7 file-entity directed path succeeds (3 hops via `document_store.ts` and `LoroRepo`): misleading -> hit. Q8 undirected path now `AclDoc <- LoroRepo <- server_repo.ts -> AuthoritativeServer -> .onDocUpdate()`: miss -> partial. Q4 `affected` grows from 6 to 34 entries (still partial: no reason for the guard). Q1 and Q3 gain one cross-package neighbour each; Q14 swaps a test seed for `AclDoc`; seeds otherwise unchanged. Tally on C: 8 hit, 6 partial.
+
+### Report changes
+
+- The `dist/` mechanism is stated once in Key Findings; Nondeterminism, the matrix row, the kept-stamp residual risk, and the floor point to it. The Q7 pre-clean note is removed (it was the same mechanism).
+- New candidate row and safety subsection for `source`; a "With `source`" grading column; fresh-worktree `source` matrix row.
+- Q12 regraded partial (seeds 10-11 are the realm-split guard test and `prod_server.ts`); tally 7/5/1/1, base rows 2 hit 1 partial.
+- Holistic: two causes (missing static edges from `dist/` resolution; coupling that is not static), replacing "the misses share one cause".
+- Reviewer verdict: `path` cannot cross workspace packages without `source`; with it, a usable first pass.
+- Upstream: `--no-cluster` dropped (documented), `dist/` resolution added with a held draft (overseer call).
+- WARN on the background-refresh lock probe (`flock -n` or PID liveness; double-launch window); kept-stamp residual risk broadened to main's untracked and ignored state, and "parse the JSON"; NOTE on `last_query_stamp` as an expired strict-hook freshness marker; scope-fix speedup stated once in Key Findings.
+- Floor: gcount prints `xpkg`; new step 5 (stub `dist/` -> 25,121) and step 6 (`source` -> 9,744 / 25,774, `xpkg`, Q7 path).
+
+### Floor re-run (report block extracted verbatim, host, 2026-10-08T15:05)
+
+Exit 0.
+1. `Rebuilt: 9731 nodes, 25160 edges`.
+2. Prefix zeros, `md_nodes 654`, relations exact, `xpkg {}`.
+3. Full build 9.640 / 9.544 / 9.577 s; `explain` 0.471 / 0.447 / 0.450 s; wrapper post-edit 11.654 / 11.665 / 11.770 s: all within ±25% of 9.60 / 0.46 / 11.84.
+4. `0`; Q13 seeds, `.mergeBranch()` L429 with `.buildBranchOps()`, 4 `affected` files: match.
+5. `Rebuilt: 9731 nodes, 25121 edges`.
+6. `nodes 9744 edges 25774`; `xpkg {'loro-repo->loro-multiplex': 72, 'weft->loro-multiplex': 347, 'weft->loro-repo': 204}`; Q7 3-hop path: match.
+7. `no-graphify`; worktrees `.bare`, six maintainer, `gfy-floor`, `gfy-src` (mine, removed right after), `main` `2791713d`; main graph mtime 14:09:35.88; maintainer HEAD and dirty lines identical to the before record.
+
+### Cleanup and records
+
+- `gfy-src` and `gfy-floor` worktrees removed and pruned; `/tmp/gfy-src`, `/tmp/gfy-floor` removed; no `gfy*` worktree, branch, or `/tmp` entry; no graphify process; weftwise `main` still `2791713d`, clean; main `graph.json` 14:09:35.88 and `.graphify_root` 14:09:36.37 unchanged.
+- Artifact locations (session scratch, not durable): round 1 container artifacts at `<scratchpad>/gfy/container/gfy-assess-artifacts.tgz` (the host copy survives; only the container copy was removed); round 2 `source.patch`, `timings-src.tsv`, and `src-q/gfy-src-q.tgz` (A and C question outputs) under `<scratchpad>/gfy/`.
+  Neither tarball holds the sampler's or the ground-truth agent's raw answers: the report's query table is the only durable record of those.
 
