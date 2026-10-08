@@ -150,14 +150,14 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 ### Chat record
 
 `UserPromptSubmit` appends each human prompt verbatim as an `@user` block (harness envelopes such as background-agent notifications are skipped).
-The top-level agent appends its gist bullets with `chat-record note`, per `overseers.md` "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
+The top-level agent appends its note of each turn with `chat-record note`, per `overseers.md` "Chat record"; `bin/` puts `chat-record` on the Bash tool's `PATH` while the plugin is enabled.
 `Stop` then appends a `-- <session> at <time>` sign-off, or, when a human-initiated turn has no entry, blocks once with the record path and the note command; a second `Stop` (`stop_hook_active`) never blocks, and plan mode never blocks, so a turn costs at most one extra short turn.
 Subagent payloads (`agent_id`) are ignored.
 
 - **Activation.** The hooks walk up from the session's working directory to the git toplevel and stop at the first `cdocs/`; they record only if that `cdocs/_chat/` exists, which `/cdocs:init` (not `--minimal`) creates together with the rule text. Outside a git work tree, or without `cdocs/_chat/`, they do nothing.
 - **Default permission mode.** An unallowlisted `chat-record note` prompts every turn (and is denied headless): allow `Bash(chat-record:*)` in settings or with `--allowedTools`. `/cdocs:init` edits no settings; skip-permissions sessions need nothing.
 - **Opt-outs.** `CDOCS_CHAT_RECORD=off` disables the hooks and `note` for a session (set it for one-shot non-cdocs `claude -p` runs); gitignoring `cdocs/_chat/` keeps records local to one checkout; deleting `cdocs/_chat/` stops recording.
-  Records are committed with the devlogs that list them and are not redacted: a secret pasted into a prompt, or echoed into a gist bullet, is committed with them.
+  Records are committed with the devlogs that list them and are not redacted: a secret pasted into a prompt, or echoed into a note, is committed with them.
 - **Installability.** A plugin with `bin/` installs through the Claude Code CLI (and the OpenCode build, which ports no record) but not through claude.ai or Cowork.
 - **Doubled hooks.** Plugin hooks are not deduplicated: running `--plugin-dir plugins/cdocs` beside an enabled `cdocs@clauthier` doubles every `@user` block and sign-off, so disable one.
 
