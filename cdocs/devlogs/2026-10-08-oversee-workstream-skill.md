@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: await the evaluation report; then dispatch the full-send proposer with its recommendation.
+- next_steps: prop-1 drafting; the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -39,6 +39,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | eval (general-purpose, opus) | `cdocs/reports/2026-10-08-skill-load-by-reference-evaluation.md` | 2026-10-08T13:30 | load-by-reference vs rule-references: mechanics, subagent reach, compaction durability, cost/drift (test:rules, init, OpenCode), generalization, prior art; recommendation and outline |
+| return | eval | `4a21867` | 2026-10-08T14:15 | adapt: Skill-tool invocation by reference followed (probed haiku/sonnet, toy skills, once each); invoked skills re-injected post-compaction as load-time text up to 5K tokens (lost on cross-process resume + compaction, so add a one-line re-invoke reminder). Move only intro + "Stay thin" (~140 words); "Chat record" stays universal (Stop hook binds every top-level session). Moving text does not fix the trigger: subagent Bash env is identical to the parent's; PreToolUse payload carries `agent_id`, so a hook can deny `chat-record note|path` in subagents. Tests: `/cdocs:<name>` reference resolution, deny-hook cases. OpenCode leaves a stale `.opencode/skills/oversee/` after rename. Untested: opus in a long loop |
+| dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` | 2026-10-08T14:17 | full-send proposal phase on the report's adapted design; departures from the literal request as open questions |
 
 ## Steering Log
 
