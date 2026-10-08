@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-references
 type: devlog
 state: live
-status: wip
+status: done
 tags: [rules, rules_delivery, oversight]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -22,7 +22,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 ## Scratchpoint
 
-- next_steps: await non-blocking fixes; on maintainer acceptance set `implementation_accepted`, rebase + ff-merge `rules-references`, run suites on main, remove worktree. `plugin.json` bump (phases 2+3 in one bump, one push) is the maintainer's release.
+- next_steps: none in this workstream. Maintainer: `plugin.json` bump to release (phases 2+3 already on `main` together); CI `rules` job unrun on GitHub until push. Open Questions (`.sh` scanning, `ablate/SKILL.md:79` source-repo path) untouched.
 - important_files: `plugins/cdocs/rules/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/inject-rules.ts`, `plugins/cdocs/agents/*.md` Startup blocks, `plugins/cdocs/README.md:112-116`
 - callouts:
   - decision: overseer is this top-level session (not nested), per `overseers.md`.
@@ -81,6 +81,7 @@ If the phase 3 gate fails, phase 3 stops and phases 1-2 land alone (an accepted 
 - 2026-10-07T23:33 return: impl review r1 accept, `review_proof: confirmed` (`f4a7708` on branch).
 - 2026-10-07T23:34 dispatch: same warm implementer for the four non-blocking items before landing.
 - 2026-10-07T23:38 return: non-blocking items applied (`45635a7` drop nit-fix 3e, `6e0b4b4` exemption narrowed to `.claude/rules/cdocs.md`, `6828720` `test:rules` via `node --import tsx --test`, `eac928a` triage:52, `3c0be8b` sub-devlog done); `test:rules` 11/0 under long TMPDIR, `--unit` 95/0, `init_real` 9/0. Not re-reviewed (minimizing edits, self-verified).
+- 2026-10-07T23:45: maintainer accepted; proposal `implementation_accepted` (`e4ce87c` pre-rebase); rebased and ff-merged at `e0d9ec9`; on main `test:rules` 11/0, `test:opencode` 8/0, `chat-record --unit` 95/0, check exit 0 including maintainer's uncommitted `overseers.md`; worktree and branch removed. `plugin.json` not bumped.
 
 ## Steering Log
 

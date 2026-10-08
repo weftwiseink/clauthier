@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: rules-references propose-revise (own devlog `2026-10-07-rules-references.md`).
+- next_steps: maintainer `plugin.json` bump; commit maintainer's `overseers.md` handoff-line edit (typo "scratchpoitn"); remaining outstanding proposals per triage (bash-output-cap usage data, hook-testing v2, tiered chat records, redaction scanning, improvement verification).
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
@@ -74,6 +74,9 @@ Remaining: `workflow-patterns.md:18` and `overseers.md` "Stay thin" read as whol
 
 
 **Browser-delegate landed:** maintainer accepted; proposal `implementation_accepted`, devlog `done`; rebased and ff-merged at `691ae6c`; on main `build:cdocs` + `test:opencode` 8/8 and marketplace/plugin JSON parse; worktree and branch removed.
+
+
+**Rules references** (own top-level devlog `2026-10-07-rules-references.md`): top-level propose-revise (4 rounds) then iterate (impl accepted r1, `review_proof: confirmed`); landed at `e0d9ec9`. Heading references ("CDocs Overseer Rules › Chat record"), `npm run test:rules` blocking CI check, agent Startup rule reads removed, `/cdocs:init` drops the `CLAUDE.md` `@`-import after a swapped-word canary showed compaction re-injects unscoped `.claude/rules/` from disk.
 
 ## Changes Made
 
