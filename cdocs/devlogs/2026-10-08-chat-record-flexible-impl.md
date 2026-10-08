@@ -76,7 +76,7 @@ Baselines (2026-10-08, base `13edf08`): unit 95 passed / 0 failed; rules 11 pass
 > Not edited: the rule says never edit files under `cdocs/_chat/`, and the overseer owns that directory.
 > The overseer may want to regenerate or hand-edit it on main.
 
-### Phase 4: headless verification (`f971c67`, `a10b6d1`, `e847349`)
+### Phase 4: headless verification (`a8c33ba`, `a10b6d1`, `e847349`)
 
 - `rename_record` (stream-json `/rename Second Name` between two prompts) and `rename_record_name` (`-p --name "First Name"`, then `--resume --name "Other"`) replace the transcript-editing `rename` scenario.
 - First run (script at `e2283a1`): `rename_record` 5/5, but `rename_record_name` 2 failures: the first turn's `@user` landed in `<date>-<sid>.md` while its note and sign-off landed in `<date>-first-name-<sid>.md`.
@@ -87,7 +87,7 @@ Baselines (2026-10-08, base `13edf08`): unit 95 passed / 0 failed; rules 11 pass
 - Hypothesis: the transcript file does not exist when a new session's first `UserPromptSubmit` fires.
 - Probe (scratch plugin logging `[ -f transcript_path ]`, claude 2.1.293, `-p --name "Probe Name"` and an unnamed run): `UserPromptSubmit exists=no` in both; `Stop exists=yes`, first line `{"type":"custom-title",...}` for the named run. Confirmed.
 - The probe also showed the `UserPromptSubmit` payload carries `session_title` (`Stop` does not); the canary logs show it is the `/rename`/`--name` title (`null`, `"Second Name"`, `"First Name"`, `"Other"`). The CLI's hook schema marks it optional.
-- Fix (`f971c67`): `hook_prompt` uses `session_name "$transcript"` when the transcript file exists, else `slug "$session_title"`; `slug` is factored out of `session_name`.
+- Fix (`a8c33ba`): `hook_prompt` uses `session_name "$transcript"` when the transcript file exists, else `slug "$session_title"`; `slug` is factored out of `session_name`.
   Restricting the fallback to "no transcript yet" means `session_title` is read only before any `ai-title` can exist, so whether `session_title` ever carries an AI title does not matter.
 - Unit tests (seen red on `e2283a1`): first prompt named from `session_title`, and note and Stop join that record; an existing transcript overrides `session_title`.
 
@@ -170,4 +170,4 @@ The `--name` variant produced `2026-10-08-first-name-<sid>.md` (one full turn, `
 **Not verified:**
 - Interactive TUI `/rename` and `claude --name` (headless stream-json and `-p` only).
 - The full headless suite (only the four named scenarios plus `init_real`); `path_mode`, `background`, `cd_sibling`, and the other scenarios were not re-run.
-- `init_real` was not re-run after `f971c67`; nothing it checks changed.
+- `init_real` was not re-run after `a8c33ba`; nothing it checks changed.
