@@ -56,7 +56,7 @@ Test the marketplace locally: `/plugin marketplace add .` then `/plugin install 
 
 Rule files carry Claude Code guidance only; target-specific guidance is tracked in `cdocs/proposals/2026-10-06-target-specific-guidance-rfp.md`.
 
-1. **`/cdocs:init` materialization** (primary): writes the rules into the consuming project as `.claude/rules/cdocs.md` (loaded by a CLAUDE.md `@`-import), plus `.opencode/rules/cdocs/*.md` and an inlined `AGENTS.md` block for other tools. Each carries a version + sha256 marker.
+1. **`/cdocs:init` materialization** (primary): writes the rules into the consuming project as `.claude/rules/cdocs.md` (auto-loaded by Claude Code, no `@`-import), plus `.opencode/rules/cdocs/*.md` and an inlined `AGENTS.md` block for other tools. Each carries a version + sha256 marker.
 2. **SessionStart freshness hook** (`inject-rules.ts`): on a hash mismatch with the marker, a short directive to re-run `/cdocs:init` and `Read` the result; silent when uninitialized, fresh, or in this source repo. Interim until a plugin-native `rules` field ([#14200](https://github.com/anthropics/claude-code/issues/14200)).
 3. **Agents read rules from context**: subagents receive the rules with the CLAUDE.md hierarchy and read no rule files; shipped content references rules by heading (`"CDocs Overseer Rules › Chat record"`), checked by `npm run test:rules`.
 
