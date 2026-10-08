@@ -25,9 +25,9 @@ Verification floor: a `browser-delegate` dispatch through a real Claude Code har
 
 ## Scratchpoint
 
-- as_of: 2026-10-07T21:45:00-07:00
-- now: impl-2 done (r1 review: blocking poll-loop fix plus nits 2-6); devlog `review_ready`.
-- next: review. To re-run: `S=<scratchpad above>`; `cd $S/site && python3 -m http.server 18731 --bind 127.0.0.1 &`; `cd $S/sync && node relay.mjs &`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt>`; `$S/dispatch/parse_report.py $S/dispatch/<tag>/delegate-return.txt`. Both fixture servers and all CLI sessions are stopped.
+- as_of: 2026-10-07T22:05:00-07:00
+- now: r2 review accepted (`cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md` on main); its six non-blocking items are resolved (Verification > r2 follow-ups); devlog `review_ready`.
+- next: none here; the coordinator lands the branch. To re-run: `S=<scratchpad above>`; `cd $S/site && python3 -m http.server 18731 --bind 127.0.0.1 &`; `cd $S/sync && node relay.mjs &`; `$S/dispatch/run.sh <tag> $S/dispatch/<prompt> [cwd]` (cwd defaults to the scratch repo `$S/iterrepo`, so a nested dispatcher never writes into a worktree); `$S/dispatch/parse_report.py $S/dispatch/<tag>/delegate-return.txt`. Both fixture servers and all CLI sessions are stopped.
 - important_files: `plugins/browser-delegate/agents/browser-delegate.md`, `plugins/browser-delegate/README.md`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`.
 - callouts:
   - decision: work only in `/var/home/mjr/code/weft/clauthier/browser-delegate`; never merge; proposal status is the overseer's.
@@ -357,3 +357,41 @@ grep -c "mkdir -p cdocs/_media" build/cdocs/opencode/agents/reviewer.md    -> 1
 grep -c "cp -n" build/cdocs/opencode/agents/reviewer.md                    -> 1
 ```
 These are the same three steps as `.github/workflows/opencode-build.yml` (`npm ci`, `npm run test:opencode`, `npm pack --dry-run`), run with local node v26 rather than CI's node 22.
+
+### r2 follow-ups (non-blocking items 1-6)
+
+Review: `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md` (main, `cfbb06e`), Accept with `review_proof: confirmed`; commit `ab25061` resolves items 1-5 in the agent body, and item 6 is a scratch-harness change.
+
+1. Poll values come from stdout only (`2>"$errf"`, a `mktemp` file under the scratch root, removed at the end); stderr is read only to explain a nonzero exit with empty stdout. The CLI writes every result and error to stdout (r2's probe), so nothing real is lost.
+2. Actions section: never report the exit status of a piped command; capture first or read `${PIPESTATUS[0]}`.
+3. Convergence prose documents vacuous agreement (`undefined`/`null` on absence, one-session polls) and recommends an expected value or a throwing expression; the script prints `poll expected: none (agreement may be vacuous)`, which goes into `Facts`.
+4. `req_in`/`i_in` are quoted placeholders; the script keeps the leading digits (`10s` becomes 10, empty becomes the default, `10#` avoids octal), prints `timeout parsed: asked '10s', used 10s` when they differ, and floors the interval at 1 s, so a suffix can no longer abort the arithmetic and hang the loop.
+5. A timed-out poll (even with erroring evals) leaves `Status` to capture health, and `converged: no` carries the outcome; the `role:` field is the requested role verbatim.
+6. `$S/dispatch/run.sh` defaults its cwd to the scratch repo `$S/iterrepo` (Scratchpoint updated).
+
+Re-verification: the fenced template extracted verbatim from the agent body (`$S/r3/template.sh`), placeholders filled, `d=/tmp/claude-1000/browser-delegate`, run directly (outputs `$S/r3/*.out`):
+```
+== stub-warn (r2's stub: constant stderr line, stdout "1" vs "2", exit 0), req 3
+poll expected: none (agreement may be vacuous)
+timed out at 4s
+last-seen s-a: "1"
+last-seen s-b: "2"
+== stub-err (stderr only, exit 1), req 2
+poll expected: none (agreement may be vacuous)
+timed out at 2s
+last-seen s-a: exit 1: fatal: stderr only
+last-seen s-b: exit 1: fatal: stderr only
+== real sessions r3-a/r3-b on the SSE relay, missing selector, req '10s'
+timeout parsed: asked '10s', used 10s
+poll expected: none (agreement may be vacuous)
+timed out at 10s
+last-seen r3-a: TypeError: Cannot read properties of null (reading 'value')
+last-seen r3-b: TypeError: Cannot read properties of null (reading 'value')
+== real sessions, r3-a typed "r3 ok", expected "r3 ok", req 15
+converged after 2s
+last-seen r3-a: "r3 ok"
+last-seen r3-b: "r3 ok"
+```
+Before the fix, the same stub converged after 0 s with the warning as last-seen (r2's probe table).
+My first attempt at this run forgot to set `d` (the template takes it from Setup), so every case failed on `cd ""`; the outputs above are the rerun.
+No nested dispatch was run for this change (optional per the overseer).
