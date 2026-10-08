@@ -66,6 +66,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | explainer (general-purpose, opus) | scratch HTML → Artifact | 2026-10-08T11:01 | maintainer-requested explainer with SVG relationship/flow diagrams, 120ch |
 | return | explainer | https://claude.ai/artifact/LcizBdazpin4A5oggdxwgE | 2026-10-08T11:10 | published; diagrams not visually checked |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T11:46 | r3 revision: `/cdocs:graphify` skill (non-colliding script name), `graphify_base_query` rename incl. templates, explicit cdocs-exclusion subsection, ablate run in verification, `/cdocs:rfp` refresh line |
+| return | prop-1 | `924b9f1` | 2026-10-08T11:50 | `review_ready`; wrapper `bin/cdocs-graphify`; tag `[base_query: set|empty]`; index-copy step renamed "Copy"; ablate task on rule-reference format (multi-file), unassisted arm withheld by instruction; exclusion check = 0 `cdocs/` source_file nodes; rfp step 6 |
+| dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | 2026-10-08T11:52 | round 3, delta since r2 |
 
 ## Steering Log
 
