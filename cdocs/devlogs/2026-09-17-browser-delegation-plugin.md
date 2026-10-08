@@ -15,14 +15,12 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 
 ## Scratchpoint
 
-- next_steps: `/cdocs:iterate` impl-1 in flight: implementer (opus) executes Phases 1-4 in worktree `/var/home/mjr/code/weft/clauthier/browser-delegate` (branch `browser-delegate`, base `8089d2b`), then fresh opus reviewer. Never merge to main: coordinator lands it.
-- important_files: proposal `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` (main); sub-devlog `cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md` (branch `browser-delegate`); reviews `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-*` (main).
+- next_steps: iterate accepted at impl-2 (review_proof confirmed). Branch `browser-delegate` (`8089d2b..9fb01c0`) is ready for the coordinator to land; this overseer does not merge. After landing, re-run `npm run build:cdocs` on main (opencode-build-fixes changes the build script); set the proposal to `implementation_accepted` only once the human accepts the implementation (`/cdocs:implement` rule).
+- important_files: proposal (main, `implementation_wip`); sub-devlog `cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md` (branch, `done`); reviews `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r{1,2}.md` + `cdocs/_media/2026-10-07-review-of-browser-delegation-plugin-impl-r{1,2}-*.png` (main).
 - callouts:
-  - decision: proposal accepted r7 (`4175e12`), nits + `implementation_ready` in `6af0fff`/`8089d2b`. Maintainer answers folded (no non-Claude path; iterate `confirmed` clause approved; cited screenshots to `cdocs/_media/`).
-  - decision: delegate dispatch for verification goes through a real nested harness (`claude -p --plugin-dir <worktree>/plugins/browser-delegate`), since this session cannot load the new plugin's agent into its own Agent tool; the in-session installed path is a post-landing follow-up.
-  - decision: the running reviewer agent is the installed (pre-Phase-3) `reviewer.md`, so the overseer passes the Phase 3 `_media` copy clause in each reviewer prompt.
-  - todo: avoid scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs on main; cdocs `SKILL.md`/`reviewer.md` edits happen only in the worktree.
-  - todo: proposal status stays `implementation_ready` on main during the loop; overseer sets the final status on accept (frontmatter on main only, never in the worktree copy).
+  - deferred: real gaps: convergence verified against a scratch SSE relay fixture, not weftwise sync; SIGTRAP spike ran in a throwaway container from the weftwise devcontainer image (CfT 155 clean), older revisions not retested; the in-session installed-plugin dispatch path (Agent tool with `browser-delegate:browser-delegate`) is untested, only nested `claude -p --plugin-dir`; OC build verified on node 26 in the worktree, not CI node 22, and pre-opencode-build-fixes.
+  - decision: host has no global `playwright-cli` or system Chrome; real runs used a scratch-installed CLI on PATH plus `--config` pointing at the cached headless shell 1208 (CLI expects 1247). Users need a global install or a config.
+  - todo: accept-round fix commits `01c37e0..5a59f23` (stderr hardening etc.) were verified by the implementer with direct template runs, not by a fresh reviewer.
 
 ## Plan / arc
 
@@ -142,7 +140,7 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| [-impl](2026-09-17-browser-delegation-plugin-impl.md) (branch `browser-delegate`) | Phases 1-4 implementation | wip | you need spike results or implementation detail |
+| [-impl](2026-09-17-browser-delegation-plugin-impl.md) (branch `browser-delegate`) | Phases 1-4 implementation | done | you need spike results or implementation detail |
 
 ## Judge Log
 
@@ -162,8 +160,14 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | main: cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md + `_media` copies | 2026-10-07 | |
 | return | rev-impl-2 | main: review + 2 `_media` copies (`cfbb06e`) | 2026-10-07 | accept, review_proof confirmed |
 | dispatch | impl-1 (resumed for accept-round nits) | worktree: plugins/browser-delegate/**, sub-devlog | 2026-10-07 | 6 nits |
+| return | impl-1 (accept-round nits) | branch `01c37e0..9fb01c0` | 2026-10-07 | stderr isolated from poll values, unit-suffix timeouts, vacuous-agreement fact, Status semantics; re-verified by direct template runs (fake-CLI constant stderr now times out; real missing-selector times out; real convergence passes); sub-devlog `done` |
 
 ## Steering Log
 
 - 2026-10-07, coordinator: implement in sibling worktree `../browser-delegate` and never merge to main. Keep proposal/review docs on main. Avoid the paths being landed (scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs); cdocs `SKILL.md`/`reviewer.md` edits go in the worktree. Phase 1 spikes must be real or escalated. Applied in the Brief and in the impl-1 dispatch.
+
+### Iterate outcome
+
+Accepted at impl-2 with `review_proof: confirmed` in both rounds (each reviewer dispatched its own delegate via nested `claude -p --plugin-dir`, fresh `<branch>-review-<role>` sessions reported `opened`, screenshots embedded from review-named `_media` copies).
+Branch `browser-delegate`, `8089d2b..9fb01c0`, unmerged by design. One real bug found by review and fixed: the poll loop reported convergence when every eval errored identically (impl-1), plus a residual stderr false-pass path (impl-2 nit).
 
