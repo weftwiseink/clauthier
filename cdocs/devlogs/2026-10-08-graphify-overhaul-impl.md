@@ -13,7 +13,7 @@ tags: [graphify, claude_skills]
 # Graphify Overhaul Implementation: Devlog
 
 > BLUF: Implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md) in worktree `graphify-overhaul`, rebased on `main`: Phases 1-5 done, the host stub run passes every check, and the weftwise ablation is VALID with `context_gap` +1 (single-shot, not gate-admissible).
-> The wrapper gains a staleness stamp keyed to a recorded base commit (58 lines): a no-op query or a commit of already-graphed code skips the about 10 s full rebuild, but the first query after a code edit still costs about 14 s until graphify fixes `update` upstream.
+> The wrapper gains a staleness stamp keyed to a recorded base commit (59 lines): a no-op query or a commit of already-graphed code skips the about 10 s full rebuild, but the first query after a code edit still costs about 14 s until graphify fixes `update` upstream.
 > impl-r2 accepted (`f33d939`); its accept-round items are applied (Round 4).
 > Deviations: the ignore line is `/cdocs/` (an unanchored `cdocs/` drops `plugins/cdocs/`); the stub run and the ablation used headless branch-plugin overseers rather than subagent dispatchers.
 
@@ -264,6 +264,8 @@ test:opencode exit=0 tests 9 pass 9 fail 0
 shellcheck: clean; cdocs-graphify 58 lines, test 92 lines
 ```
 
+Maintainer accept-round item: the stamp carries a `TODO(claude-opus-5-5/cdocs/graphify-overhaul)` to remove it once graphify `update` is incremental (wrapper 59 lines, 27/27, shellcheck clean), and D4 says why it exists (upstream `update` ignores its AST manifest, JS/TS parsed twice, the incremental path is 8.6 s and lossy on TS) and that it goes once upstream fixes this.
+
 ### Future work: weftwise ablation follow-up (pending the maintainer's decision; not run)
 
 From impl-r2 finding 7, which reads the single run as between decision-map rows 2 and 3, closer to 2:
@@ -285,7 +287,7 @@ Once (1) ships, the wrapper's stamp is redundant and can go.
 
 | File | Description |
 |------|-------------|
-| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper with a base-relative staleness stamp (58 lines) |
+| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper with a base-relative staleness stamp (59 lines) |
 | `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 27-check suite against a graphify stub, bare-repo fixture |
 | `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | deleted |
 | `.github/workflows/cdocs-hooks.yml` | cdocs-graphify step on Linux and macOS; header comments |
