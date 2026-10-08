@@ -178,7 +178,7 @@ The job does not go in `opencode-build.yml`: that workflow is `continue-on-error
 The Read-after-write directive drops "@-imported" ("The version loaded at session start is stale").
 The concatenation order, hook, marker, hash, step 5, and step 6 are unchanged.
 
-A project that already has the import keeps it until its next `/cdocs:init`, and the file loads once meanwhile (the probe above).
+A project that already has the import keeps it until its next `/cdocs:init`, and the file loads once meanwhile (the dedup probe in Background).
 The rule edits in this proposal change the hash, so every initialized project is nudged to run `/cdocs:init` once, which removes the line.
 That holds only if phase 3 ships in the same plugin release as phase 2's rule edits: phase 3 changes no rule body, so released alone it triggers no nudge.
 A release is one `plugin.json` version bump; because the nudge follows the rule hash, not the version, and consumers can install from `main` between bumps, phases 2 and 3 also land on `main` in one push.
@@ -192,7 +192,7 @@ It runs as a temporary `--only canary_check` extra in `chat-record.test.sh`, bes
    The hook does not hash the project file, so the appended line triggers no nudge.
 2. One stream-json session, opened as `drive` opens it (`claude_run` on a fifo, each message sent after the previous `result`), with three turns:
    "What is 2 + 2?"; then `sed -i 's/heliotrope/marzipan/' "$P/.claude/rules/cdocs.md"` on disk, then `/compact`; then "Without tools, what is the cdocs canary word? Say UNKNOWN if it is not in your context."
-   `drive` sends its messages back to back, so the extra inlines its send-and-wait loop to run the `sed` between turns one and two.
+   `drive` has no hook between turns, so the extra inlines its send-and-wait loop to run the `sed` between turns one and two.
 3. Pass if any assistant text block after the `compact_boundary` contains `marzipan`.
    Search every block, not only the final `result`: the Stop hook can block once for a `chat-record note`, making the follow-up the final result.
 
@@ -202,6 +202,7 @@ If it fails, init keeps writing the import and phase 3 ends there.
 
 `rules_check` is not the gate: it measures resumption behavior, not rule presence.
 It runs only as a no-regression comparison: run `--only rules_check` with the import before editing `init_rules`, then again without it, and compare which assertions pass and fail, not the transcripts.
+On any mismatch, re-run both sides once; only a difference that repeats counts as a regression.
 
 > NOTE(@claude-opus-5-5/cdocs/rules-references): The hook's directive text says "The current session's @-imported rules are stale until you do".
 > Without the import the wording is inexact, but the instruction (run `/cdocs:init`, then Read) is unchanged, so the hook is left alone.
