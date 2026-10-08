@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 drafting Phase 5 (conditioned re-measurement) then review, fresh implementer, review; rev-search adversarially reviewing the search report; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: rev-5 reviewing Phase 5, then fresh implementer, review; rev-search adversarially reviewing the search report; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -124,6 +124,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | return | rev-fix-p4 | `7a85216`, `0a3cfd9`, `7bb6f11`, `fd89a4a` | 2026-10-09T01:05 | all 6 items: BLUF Phase 4 now 3 sentences (no arm reliably better, only cleanly graph-attributable finds are o1 hub ranking, light use = typical not best case) + known-defect line; recount: 4 graph-only (all o1), 4 in graph output but reachable without, 5 not in graph output (`subscribeRevocations` also excluded); misled counts dropped; tests guidance "run `affected`, read its tests"; stamp defect documented; review_ready. Phase 4 re-review folded into Phase 5 |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-09T01:08 | add Phase 5 "Conditioned re-measurement": in-container cdocs 0.2.0 conditioning verified per arm; opus arms grep-only / realistic / ceiling; +1 concept +1 orientation task; two blind judges; peak-context measurement; usage diagnosis |
 | dispatch | rev-search (cdocs:reviewer, opus, fresh, adversarial) | `cdocs/reviews/2026-10-08-review-of-search-subagent-context-prep.md` | 2026-10-09T01:08 | challenge metric (search share vs context), sample validity, cost-vs-context conflation, Explore non-use reading, confidence |
+| return | prop-1 | `4f4f7b3` | 2026-10-09T01:15 | Phase 5 `review_ready`. Pre-registered rule: keep if realistic arm has net reach or lower peak context at equal completeness; keep-with-steering-change if only ceiling gains; drop if neither. Headless `claude -p --model opus --plugin-dir` (git-archived 0.2.0) in container, sandbox `CLAUDE_CONFIG_DIR` per arm, git disallowed, 0.2.0 rules via scratch `/cdocs:init`; grep arm PATH swap hides graphify; mechanical conditioning check per arm. 3 opus arms concurrent; realistic gets implementer-written base query; ceiling forced deep use; subagents allowed (returns count as context). 8 Phase 4 tasks + 1 concept + 1 orientation; pilot; two blind judges + third on disagreement. Measures peak context, context by source, cost; usage diagnosis. Proposer calls: no synthetic rerun, subagents allowed, arms write no devlog, judge agreement same label + unique counts within 1. Unverified: init event lists skills. 765 lines |
+| dispatch | rev-5 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r5.md` | 2026-10-09T01:17 | Phase 5 design: fixes Phase 4 gaps, decision rule fairness, mechanics probes (headless plugin load, PATH swap, init), ceremony |
 
 ## Steering Log
 
