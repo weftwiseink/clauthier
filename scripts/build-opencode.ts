@@ -52,16 +52,6 @@ const OUT_PLUGINS = join(OUTPUT_DIR, "plugins");
 const OUT_SCRIPTS = join(OUTPUT_DIR, "scripts");
 
 // ---------------------------------------------------------------------------
-// Model mapping: CC short alias -> OC full provider/model path
-// ---------------------------------------------------------------------------
-
-const MODEL_MAP: Record<string, string> = {
-  haiku: "anthropic/claude-3-5-haiku-20241022",
-  sonnet: "anthropic/claude-sonnet-4-20250514",
-  opus: "anthropic/claude-opus-4-20250514",
-};
-
-// ---------------------------------------------------------------------------
 // Tool mapping: CC tool name -> OC tool fields
 // ---------------------------------------------------------------------------
 
@@ -139,7 +129,6 @@ function mapTools(toolNames: string[]): { tools: OCToolConfig; permission: OCPer
 
 interface CCFrontmatter {
   name?: string;
-  model?: string;
   description?: unknown;
   tools?: unknown;
   skills?: string[];
@@ -175,15 +164,6 @@ function generateOCFrontmatter(cc: CCFrontmatter): string {
   // mode: subagent (all cdocs agents are subagents)
   oc.mode = "subagent";
 
-  // model: expand short alias
-  if (cc.model) {
-    const fullModel = MODEL_MAP[cc.model] || cc.model;
-    if (!MODEL_MAP[cc.model]) {
-      console.warn(`  Warning: Unknown model alias "${cc.model}" — passing through as-is`);
-    }
-    oc.model = fullModel;
-  }
-
   // tools: absent, empty, or "*" emits no tools/permission block, which OC
   // documents as all tools enabled (CC "*" = deliberately not narrowed).
   // An explicit list expands to a boolean object.
@@ -198,7 +178,9 @@ function generateOCFrontmatter(cc: CCFrontmatter): string {
     }
   }
 
-  // Dropped fields: name (OC infers from filename), skills (OC has no equivalent)
+  // Dropped fields: name (OC infers from filename), skills (OC has no equivalent),
+  // model (OC subagents inherit the invoking agent's model; any pinned
+  // provider/model id would be provider-specific and go stale).
 
   // lineWidth: 0 disables folding: single-line values stay on one line,
   // multi-line strings become `|` block scalars, unsafe values get quoted.
