@@ -6,8 +6,8 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m
 
 # CDocs Oversee
 
-`/oversee` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by composing the existing loop skills per proposal, never reimplementing a loop.
-Its unit of work is a proposal; which proposals run concurrently is the overseer's call (see Concurrency).
+`/oversee` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by running an existing loop skill per proposal.
+Loops should be run concurrently when practical unless otherwise specified (see Concurrency).
 
 The arc overseer runs in *overseer mode* per [`overseers.md`](../../rules/overseers.md).
 
