@@ -6,7 +6,11 @@
 #                                    turn has no agent entry
 #   chat-record note [--as <model>]  agent: append `@<model>: <ts>` (model id, short form)
 #                                    and the stdin body
-#   chat-record path                 agent: print the record path (repo-root relative)
+#   chat-record path                 agent: print the current session name's record path
+#                                    (repo-root relative)
+#
+# Records are cdocs/_chat/YYYY-MM-DD-<name>-<session_id>.md, or YYYY-MM-DD-<session_id>.md
+# for an unnamed session; <name> is the slug of the transcript's last custom-title.
 #
 # Spec: cdocs/proposals/2026-09-22-chat-record-devlog-management.md ("Script").
 # Hook modes always exit 0, write errors to stderr only, and print nothing to stdout
@@ -66,20 +70,39 @@ activate() {
   done
 }
 
-# find_record <sid>: earliest-dated existing record for the session, or empty.
-find_record() {
+# session_name <transcript>: slug of the last custom-title (/rename, --name), or empty.
+# ai-title lines are auto-generated, not the session name, and are ignored.
+session_name() {
+  [ -n "$1" ] && [ -r "$1" ] || return 0
+  grep '"type":"custom-title"' "$1" 2>/dev/null | tail -n 1 | jq -r '.customTitle // ""' 2>/dev/null \
+    | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed -E 's/^-+//; s/-+$//' | cut -c1-64 | sed -E 's/-+$//'
+}
+
+# transcript_for <sid>: the session's transcript, for agent modes (the hooks get theirs in
+# the payload), or empty.
+transcript_for() {
   local f
-  for f in "$CHAT_DIR"/*-"$1".md; do
+  for f in "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$1".jsonl; do
     [ -f "$f" ] && { printf '%s' "$f"; return 0; }
   done
   return 0
 }
 
-# record_for <sid>: existing record, or the name a new one would take.
+# find_record <sid> <name>: earliest-dated existing record for this session id and name
+# (empty name: the unnamed record), or empty.
+find_record() {
+  local f d='[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+  for f in "$CHAT_DIR"/$d-"${2:+$2-}$1".md; do
+    [ -f "$f" ] && { printf '%s' "$f"; return 0; }
+  done
+  return 0
+}
+
+# record_for <sid> <name>: existing record, or the name a new one would take.
 record_for() {
   local f
-  f="$(find_record "$1")"
-  [ -n "$f" ] || f="$CHAT_DIR/$(date +%Y-%m-%d)-$1.md"
+  f="$(find_record "$1" "$2")"
+  [ -n "$f" ] || f="$CHAT_DIR/$(date +%Y-%m-%d)-${2:+$2-}$1.md"
   printf '%s' "$f"
 }
 
@@ -112,13 +135,13 @@ hook_main() {
   activate "${cwd:-$PWD}" || return 0
 
   case "$MODE" in
-    UserPromptSubmit) hook_prompt "$input" "$session_id" ;;
+    UserPromptSubmit) hook_prompt "$input" "$session_id" "$transcript_path" ;;
     Stop) hook_stop "$session_id" "$stop_hook_active" "$permission_mode" "$transcript_path" ;;
   esac
 }
 
 hook_prompt() {
-  local input="$1" sid="$2" prompt trimmed body file
+  local input="$1" sid="$2" transcript="$3" prompt trimmed body file
   prompt="$(printf '%s' "$input" | jq -r '.prompt // ""')"
   # Harness envelopes (a background agent's completion, injected reminders) are not
   # human input: skip when the first non-blank token is a known harness tag.
@@ -127,28 +150,25 @@ hook_prompt() {
     '<task-notification'* | '<system-reminder'*) return 0 ;;
   esac
   body="$(printf '%s\n' "$prompt" | escape_body)"
-  file="$(record_for "$sid")"
+  file="$(record_for "$sid" "$(session_name "$transcript")")"
   printf '@user: %s\n%s\n\n' "$(now_ts)" "$body" >> "$file" \
     || echo "chat-record: cannot append to $file" >&2
   return 0
 }
 
+# session_token <sid> <name>: the sign-off token: the session name, else the 8-hex id prefix.
 session_token() {
-  local sid="$1" transcript="$2" title=""
-  if [ -n "$transcript" ] && [ -r "$transcript" ]; then
-    title="$(grep '"type":"custom-title"' "$transcript" 2>/dev/null | tail -n 1 \
-      | jq -r '.customTitle // ""' 2>/dev/null)"
-  fi
-  if [ -n "$title" ]; then
-    sanitize "$title"
+  if [ -n "$2" ]; then
+    printf '%s' "$2"
   else
-    printf '%s' "$sid" | tr -cd '0-9A-Fa-f' | cut -c1-8
+    printf '%s' "$1" | tr -cd '0-9A-Fa-f' | cut -c1-8
   fi
 }
 
 hook_stop() {
-  local sid="$1" active="$2" pmode="$3" transcript="$4" file last rel reason
-  file="$(find_record "$sid")"
+  local sid="$1" active="$2" pmode="$3" transcript="$4" name file last rel reason
+  name="$(session_name "$transcript")"
+  file="$(find_record "$sid" "$name")"
   [ -n "$file" ] || return 0
   last="$(grep -E -e "$HEADER_RE" -e "$SIGNOFF_RE" "$file" | tail -n 1)"
   case "$last" in
@@ -165,7 +185,7 @@ hook_stop() {
     '@'*) ;;
     *) return 0 ;; # a sign-off, or no marker: not a human-initiated turn, no note
   esac
-  printf -- '-- %s at %s\n\n' "$(session_token "$sid" "$transcript")" "$(now_ts)" >> "$file" \
+  printf -- '-- %s at %s\n\n' "$(session_token "$sid" "$name")" "$(now_ts)" >> "$file" \
     || echo "chat-record: cannot append to $file" >&2
   return 0
 }
@@ -180,6 +200,7 @@ agent_setup() {
   [ -n "$SID" ] || die "CLAUDE_CODE_SESSION_ID is unset (Claude Code top-level session only)"
   valid_sid "$SID" || die "invalid CLAUDE_CODE_SESSION_ID"
   activate "$PWD" || die "no cdocs/_chat/ between $PWD and the git toplevel (run /cdocs:init)"
+  NAME="$(session_name "$(transcript_for "$SID")")"
 }
 
 agent_note() {
@@ -199,7 +220,7 @@ agent_note() {
   [ -t 0 ] && die "note body goes on stdin: chat-record note --as <model> <<'EOF' ... EOF"
   body="$(escape_body)"
   printf '%s' "$body" | grep -q '[^[:space:]]' || die "empty note body"
-  file="$(record_for "$SID")"
+  file="$(record_for "$SID" "$NAME")"
   printf '@%s: %s\n%s\n\n' "$speaker" "$(now_ts)" "$body" >> "$file" \
     || die "cannot append to $file"
 }
@@ -208,7 +229,7 @@ agent_path() {
   [ $# -eq 0 ] || die "path takes no arguments"
   agent_setup
   local file
-  file="$(record_for "$SID")"
+  file="$(record_for "$SID" "$NAME")"
   printf '%s\n' "${file#"$TOP"/}"
 }
 
