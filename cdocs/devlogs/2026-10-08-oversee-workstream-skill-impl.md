@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-delivery/oversee-workstream-skill
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-oversee-workstream-skill.md
 tags: [claude_skills, rules_delivery]
 ---
@@ -20,11 +20,13 @@ Implement `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` (accepted r3)
 
 ## Scratchpoint
 
-- next_steps: Phase 4 live run in flight (`scratchpad/p4-run.sh`: sandboxed config, opus lead, `/cdocs:propose-revise` toy topic, `/compact`, one follow-up prompt); then extract Skill/Agent order and the post-compaction skills attachment.
+- next_steps: round-1 review. All four phases are done and the floor is green; the proposal stays `implementation_wip`.
 - important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/skills/{oversee-workstream,chat-record,oversee-many}/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
 - callouts:
   - decision: this implementer is a subagent and never calls `chat-record`.
-  - todo: Phase 4 says "record transcript evidence in the overseer's devlog"; the overseer owns that devlog, so evidence lands here and the overseer copies it.
+  - todo: Phase 4 says "record transcript evidence in the overseer's devlog"; the overseer owns that devlog, so the evidence is under Verification here for the overseer to copy.
+  - deviation: the full Verification 1 grep also hits 5 lines in `chat-record.test.sh` (`init_real`'s stale-file fixture and negative assertions), which are not in the listed exceptions; the `/oversee` floor grep returns only the listed exceptions.
+  - todo: the `rules_check` and `multi_turn` extras were not run (see the WARN under Phase 3).
 
 ## Plan
 
@@ -67,6 +69,12 @@ Live gates (headless `top_level_only`, materialization, propose-revise transcrip
 - `init_real` (beyond §6's list, needed for Verification 3): seeds `opencode.json` and a stale `.opencode/rules/cdocs/overseers.md`; its two assertions on overseer text in the rules file ("Top-level agents must use ...", "After a compaction") are replaced by the top-level bullet in both rules file and `AGENTS.md`, no "CDocs Overseer Rules" in either, and the stale copy pruned.
 
 > WARN(opus/oversee-workstream-skill): The `rules_check` and `multi_turn` extras assume the post-compaction resumption steps are in the always-loaded rules; they now live in `chat-record`, which compaction re-attaches as a skill. Those extras are not run in this round and may need their expectations revisited.
+
+### Phase 4: live verification
+
+- `scratchpad/p4-run.sh` (not committed): sandboxed `CLAUDE_CONFIG_DIR` (credentials only), `--plugin-dir` set to this worktree's plugin, a project materialized like `init_rules`, `--model opus`, `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, and three stream-json messages: `/cdocs:propose-revise <toy --dry-run topic, under 40 lines, at most 2 rounds>`, `/compact`, and "name the cdocs skills whose instructions you currently hold".
+- Background tasks were disabled so the driver's per-turn `result` wait is deterministic.
+  This is a departure from a default interactive session.
 
 ## Changes Made
 
@@ -143,4 +151,52 @@ chat-record tests: 12 passed, 0 failed
 
 `.opencode/rules/cdocs/` afterwards: `frontmatter-spec.md`, `tool-use-safeguards.md`, `workflow-patterns.md`, `writing-conventions.md`; the `AGENTS.md` block's sections are Writing Conventions, Workflow Patterns, Tool Use Guidance, Frontmatter Specification.
 Sandboxes (including credential copies) were deleted after each headless run.
+
+### Verification 5: skills load live (opus lead, 2.1.294)
+
+Driver: turn 1 (`/cdocs:propose-revise`) 278s, turn 2 (`/compact`) 20s, turn 3 12s, `claude exit=0`; turn 1 `success turns=19 cost=1.51`.
+The toy proposal reached `implementation_ready` after 2 review rounds.
+
+Top-level tool calls in turn 1, in order:
+```
+Skill cdocs:oversee-workstream
+Skill cdocs:chat-record
+Bash ls -R | head -50; chat-record path; ...
+Write <devlog>
+Bash git add cdocs/devlogs/2026-10-08-greet-dry-run-propose-revise.md ...
+Agent cdocs:proposer
+Agent cdocs:nit-fix
+Agent cdocs:triage
+Bash <devlog edit>
+Agent cdocs:reviewer
+SendMessage
+Bash <devlog edit>
+Agent cdocs:reviewer
+SendMessage
+Bash wc -l cdocs/proposals/2026-10-08-greet-dry-run-flag.md ...
+Bash chat-record note --as opus-5-5 <<'EOF' ...
+```
+- `Skill(cdocs:oversee-workstream)` is call 1 and the first `Agent` is call 6, so the ordering gate passes.
+- `Skill(cdocs:chat-record)` came from the rule bullet, before any `Stop` block.
+- Session transcript: `compact_boundary` at line 107, then at line 114 an attachment `{"type":"invoked_skills","skills":[{"name":"cdocs:chat-record",...},{"name":"cdocs:oversee-workstream",...},{"name":"cdocs:propose-revise",...}]}`.
+  Both skills are restored after compaction.
+- Turn 3's answer: "I currently hold the instructions for `cdocs:chat-record`, `cdocs:oversee-workstream` and `cdocs:propose-revise`."
+- Record markers: `@user`, `@opus-5-5`, sign-off (turn 1, no block), then `@user`, `@opus-5-5`, sign-off (turn 3).
+  Turn 3's first `Stop` blocked once, with the reason `No chat-record entry for this turn (record: cdocs/_chat/2026-10-08-fadc3939-....md). See /cdocs:chat-record. Run, then finish: ...`, and the note then landed.
+  `/compact` makes no record entry.
+- The 5 subagents were `cdocs:proposer`, `cdocs:nit-fix`, `cdocs:triage` and `cdocs:reviewer` x2.
+  None made a `Skill` or `chat-record` call: the stream filter on `parent_tool_use_id != null` and a grep over `subagents/*.jsonl` both came back empty.
+- The toy devlog's `chat_record:` lists the session's record.
+
+> NOTE(opus/oversee-workstream-skill): Turn 3 did not re-invoke `chat-record` after the compaction (the rule bullet says to do so only "when its text is not in context", and the `invoked_skills` attachment had restored it), but the lead still missed the turn-3 note until the `Stop` block. That is the designed fallback, at a cost of one extra short turn.
+
+Evidence files (scratchpad, not committed): `evidence/p4-stream.jsonl`, `evidence/p4-transcript.jsonl`, `evidence/top_level_only{,.canary}.jsonl`.
+Sandbox configs and credential copies were deleted after each run.
+
+### Final floor on HEAD
+
+- `npm run test:rules`: 18 pass, 0 fail.
+- `chat-record.test.sh --unit`: 98 passed, 0 failed.
+- `npm run test:opencode`: 9 pass, 0 fail.
+- `grep -rnE '/oversee([^-a-z]|$)' plugins scripts .github CLAUDE.md README.md .gitignore` returns 5 lines, all listed exceptions: `README.md:194` (OpenCode NOTE), `oversee-many/template.md:3`, `.gitignore:17`, and `oversee-many/SKILL.md:51,58` (`.claude/oversee/`).
 
