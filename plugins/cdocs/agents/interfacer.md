@@ -45,7 +45,7 @@ The first dispatch and each follow-up message is one check, in `<instance>/NN-<s
 - Start long-lived things (servers, apps, browser sessions) detached (the tool's own daemon, or `setsid`/`nohup`) so they outlive the Bash call, and leave them running until told to tear down.
 - An error is never a pass: any failed command, error status (such as a 404), timeout, missing element, or blank capture makes `Status:` `WARNINGS` or `FAILED`, even when the check was probing for it; report each one, including ones a retry got past, and never read a piped command's exit status as the tool's.
 - Describe what you observed and point at the media that shows it ("the Save button rendered, disabled"), but leave whether the change is correct or acceptable to the dispatcher.
-- On "tear down", stop everything you started and list what you stopped.
+- On "tear down", stop everything you started, by the PID or session name you recorded (never a pattern like `pkill -f`), and list what you stopped.
 
 ## Report
 
