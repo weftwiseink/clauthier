@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-interfacer-agent.md
 tags: [interfacer, browser_delegation, subagents, runtime_validated]
 ---
@@ -24,13 +24,15 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: run 6 (headless, container) and the interactive-equivalent check, record results under "Revision: fresh dispatch per check", run `test:rules`/`test:opencode`, set `review_ready`.
+- next_steps: review of the fresh-dispatch revision (sections from "Revision: fresh dispatch per check" on); the proposal stays `implementation_wip` until the maintainer accepts.
 - important_files: `plugins/cdocs/agents/interfacer.md`, `cdocs/proposals/2026-10-08-interfacer-agent.md`, this devlog's last section; container `/tmp/ifx-run.sh`, `/tmp/ifx-prompt6.txt`, `/tmp/ifx-canary-run6.jsonl`.
 - callouts:
   - decision: per maintainer direction and `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` (on `main`), no warm agent and no `SendMessage`: every check is a fresh dispatch naming the instance directory, which holds `notes.md`.
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
   - blocker: the devcontainer cannot launch headless Chromium, so container runs drive the fixture with `curl` (see Phase 4 setup).
   - cleanup: sandboxed `CLAUDE_CONFIG_DIR`s (credential copies) are deleted by `/tmp/ifx-run.sh` after each run.
+  - deviation: run 6 failed on the description's waiting line (stand-in ended its turn instead of passing `run_in_background: false`); reworded at `7be77de`, run 7 passes.
+  - observation: the interactive check used a `general-purpose` agent loaded with the agent body, not the real `cdocs:interfacer` type.
 
 ## Plan
 
@@ -328,3 +330,29 @@ npm run test:rules     -> tests 11, pass 11, fail 0
 npm run test:opencode  -> tests 9, pass 9, fail 0; "✔ OC agent interfacer.md"; built description carries the new run_in_background line
 wc -l plugins/cdocs/agents/interfacer.md -> 70
 ```
+
+### Canary: interactive-equivalent (host)
+
+This implementer is a subagent of an interactive session (claude 2.1.293), and its Agent tool has no `run_in_background` parameter, so every dispatch from it is async (report finding 4): the "end your turn and the report wakes you" path.
+`cdocs:interfacer` is not installed in this session (the installed plugin is `main`'s), so each check was a `general-purpose` sonnet dispatch told to read the agent body (lines 20-70 of `interfacer.md` at `7be77de`, copied to the session scratchpad) as its whole system prompt.
+The fixture is a host copy of the container fixture on port 8797 (`<scratchpad>/ifx-hostfx.XD8uux`, curl driver, one commit).
+
+Sequence: dispatch check 01 (prompt names only the check), end turn; woken by its report; dispatch check 02 naming `/tmp/claude-1000/interfacer/JnhW7N` with the follow-up and error probe, end turn; woken; dispatch "tear down" naming the same directory, end turn; woken.
+No `SendMessage`, `sleep`, or polling in this session.
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| Caller woken by each async report after ending its turn | Pass | three task-notifications, one per dispatch (92 s, 85 s, 45 s; 13, 12, 7 tool uses) |
+| `notes.md` carried over | Pass | 02 `Setup:` "reused the already-running `python3 -m http.server 8797 ...` (PID 4167783, confirmed alive via `ps -p`), started by check `01-home-and-page-two`"; 03 `Setup:` "stopping the server started in check 01, per notes.md" |
+| `01-*/`, `02-*/` reports land; next free `NN` | Pass | `JnhW7N/{01-home-and-page-two,02-follow-link-missing-delete,03-teardown}/report.md` |
+| Error probe not `OK` | Pass | 02 `Status: WARNINGS` for the `/missing.html` 404; no `id="delete"` |
+| Tear down leaves nothing | Pass | 03 `Status: OK`, `Left running: none`; `notes.md` "Running: None"; no `http.server 8797` process, port not listening |
+| Fixture `git status` clean | Pass | `git status --short --ignored` empty |
+
+Unlike run 7's append-style log, this `notes.md` is sectioned current state (Project, How it's driven, Running, Gotchas), with "Running" rewritten at tear down; the agent text allows both.
+
+## Revision summary
+
+- The agent keeps the canary's three clauses and is 70 lines; the description's waiting line took one canary-driven rewording (run 6).
+- Pass on every criterion in run 7 (headless, foreground) and the interactive-equivalent check, except screenshots in the container (no browser there, as in run 5).
+- Not run: the browser path under the revised agent (the host browser run of record predates it), an interactive run with the real `cdocs:interfacer` agent type (the body was loaded as a prompt instead), an SDK-driven caller, and a real iterate round with a runtime floor.
