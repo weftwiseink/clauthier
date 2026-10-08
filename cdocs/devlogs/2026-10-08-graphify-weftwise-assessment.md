@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 applying r2 accept-round fixes; then `/cdocs:iterate` with a fresh implementer.
+- next_steps: impl-1 running the assessment (iterate round 1); then fresh reviewer re-runs the floor.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -40,6 +40,12 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` (`implementation_ready`, `39e8244`), overseer: this top-level session; implementer commits clauthier docs on `main` by exact path and the ignore change on weftwise `main`; throwaway weftwise worktree `gfy-assess`.
+Verification floor: proposal floor block passes as written on the cleaned graph; ignore commit and node counts reproducible; query set, grep ground truth and graded results kept with provenance; maintainer worktree HEADs unchanged; main graph written only by Phase 1.
+Failure picture: `_archive/` silently back in a cleaned build, a raw command overwriting the main graph, timings taken on a busy container, usefulness judged after seeing graphify output.
 
 ## Iteration Log
 
@@ -67,6 +73,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 2026-10-08T20:16 | round 2; r1 resolution + fresh pass, bloat check |
 | return | rev-2 | `9f74a07` | 2026-10-08T20:25 | proposal_accepted; 13/13 r1 items resolved. Pre-dispatch fixes: `gfy-assess` never moves onto cleaned ignore (silent `_archive/` return); container `sh` is dash so floor `time` exits 127; `graphify watch` needs uninstalled watchdog. Bloat: spot checks on non-graph flags meaningless, output-stage flags one row, `.claude/`+`AGENTS.md` variant subsumed. Verified: wrapper scopes `GRAPHIFY_OUT` to worktree, `graph.json` written atomically, default scope keeps 654 md nodes, weftwise main clean. Did not flip status (reviewer may edit only `last_reviewed`) |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T20:27 | accept-round fixes + trims, `implementation_ready` |
+| return | prop-1 | `39e8244` | 2026-10-08T20:33 | `implementation_ready`: worktree move after ignore commit + node count per build; `bash -c` floor; `watch` dropped with report note; trims (6 candidate rows + 2 prototypes); stale-edge yes/no check; pgrep cleanup; floor renumbered with wrapper copy |
+| dispatch | impl-1 (cdocs:implementer, opus) | clauthier report + impl sub-devlog on main; weftwise `.graphifyignore` on main; throwaway `gfy-assess` worktree | 2026-10-08T20:35 | iterate round 1, all phases |
 
 ## Steering Log
 
