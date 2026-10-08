@@ -43,6 +43,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | blocking: per-agent `graphify update` writes the shared index; runtime-coupling guard regressed to caveat-only; overseer-clean check vacuous (dispatcher is a subagent) |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | CLI claims checked in devcontainer; F1-F5 trims |
+| r3 | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | post-acceptance maintainer revision; ablate placement and rfp condition open |
 
 ## Judge Log
 
@@ -68,6 +69,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T11:46 | r3 revision: `/cdocs:graphify` skill (non-colliding script name), `graphify_base_query` rename incl. templates, explicit cdocs-exclusion subsection, ablate run in verification, `/cdocs:rfp` refresh line |
 | return | prop-1 | `924b9f1` | 2026-10-08T11:50 | `review_ready`; wrapper `bin/cdocs-graphify`; tag `[base_query: set|empty]`; index-copy step renamed "Copy"; ablate task on rule-reference format (multi-file), unassisted arm withheld by instruction; exclusion check = 0 `cdocs/` source_file nodes; rfp step 6 |
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r3.md` | 2026-10-08T11:52 | round 3, delta since r2 |
+| return | rev-3 | `4dffb5d` | 2026-10-08T12:00 | proposal_accepted; renames complete. Non-blocking: F3 ablate task can't discriminate on clauthier (answer greppable in 11 md files; graphify graphs only md headings) so run on weftwise; F5 stub run would miss `cdocs-graphify` (PATH has main checkout's bin, not the branch's); F6 rfp step condition should be "main graph exists"; F4/F7/F1 small. 3 maintainer questions (ablate location, ablate intent, rfp step keep/drop) |
 
 ## Steering Log
 
