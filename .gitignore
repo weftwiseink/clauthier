@@ -15,3 +15,5 @@ node_modules/
 .opencode/plugins/
 # /oversee arc state is per-checkout transient runtime state.
 .claude/oversee/
+# Per-worktree graphify index written by cdocs-graphify (it also ignores itself).
+graphify-out/

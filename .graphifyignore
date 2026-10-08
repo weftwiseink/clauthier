@@ -1,0 +1,2 @@
+# graphify exclusions (gitignore syntax). cdocs/ is prose agents read directly.
+cdocs/
