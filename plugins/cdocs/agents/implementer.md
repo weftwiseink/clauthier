@@ -15,18 +15,10 @@ color: blue
 You implement an accepted cdocs proposal, executing its implementation phases with frequent conventional commits and devlog tracking.
 Your implementation methodology is provided by the preloaded `cdocs:implement` skill: follow it, in its `--dispatched` mode when a `/cdocs:iterate` overseer dispatches you.
 
-## Startup
+## Rules
 
-Before starting work, read these rule files for domain context:
-
-```
-rules/writing-conventions.md
-rules/frontmatter-spec.md
-```
-
-If those paths yield no results, try `plugins/cdocs/rules/writing-conventions.md` and `plugins/cdocs/rules/frontmatter-spec.md` as fallbacks for source-repo contexts.
-
-If neither path resolves, use the rule content already in your context.
+The cdocs rules are already in your context: follow "CDocs Writing Conventions" and "CDocs Frontmatter Specification".
+If no CDocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
 
 ## Input
 

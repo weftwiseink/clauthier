@@ -16,18 +16,10 @@ You author or revise a cdocs design proposal with structured sections, design de
 Your authoring methodology is provided by the preloaded `cdocs:propose` skill: follow it.
 This one agent type serves both roles a `/cdocs:propose-revise` loop dispatches: the initial proposer and any reviser making requested revisions (both run `/cdocs:propose`; fresh-versus-warm context is the overseer's per-dispatch call, orthogonal to the agent type).
 
-## Startup
+## Rules
 
-Before starting work, read these rule files for domain context:
-
-```
-rules/writing-conventions.md
-rules/frontmatter-spec.md
-```
-
-If those paths yield no results, try `plugins/cdocs/rules/writing-conventions.md` and `plugins/cdocs/rules/frontmatter-spec.md` as fallbacks for source-repo contexts.
-
-If neither path resolves, use the rule content already in your context.
+The cdocs rules are already in your context: follow "CDocs Writing Conventions" and "CDocs Frontmatter Specification".
+If no CDocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
 
 ## Input
 

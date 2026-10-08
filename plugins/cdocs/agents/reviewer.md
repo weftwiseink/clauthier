@@ -13,18 +13,10 @@ color: purple
 You review cdocs documents, producing structured findings and a verdict.
 Your review methodology is provided by the preloaded `cdocs:review` skill: follow it.
 
-## Startup
+## Rules
 
-Before reviewing any document, read these rule files for domain context:
-
-```
-rules/frontmatter-spec.md
-rules/writing-conventions.md
-```
-
-If those paths yield no results, try `plugins/cdocs/rules/frontmatter-spec.md` and `plugins/cdocs/rules/writing-conventions.md` as fallbacks for source-repo contexts.
-
-If neither path resolves, use the rule content already in your context.
+The cdocs rules are already in your context: follow "CDocs Writing Conventions" and "CDocs Frontmatter Specification".
+If no CDocs rules are in your context, the project has not run `/cdocs:init`: say so in your final message and proceed.
 
 ## Input
 
@@ -32,12 +24,11 @@ Your Task prompt provides the path to the document to review.
 
 ## Workflow
 
-1. Read the rule files listed above.
-2. Read the target document fully.
-3. If the target is a devlog, read the files listed in its Changes Made table and any other referenced files to review the actual implementation.
-4. Conduct the review following the preloaded review skill methodology.
-5. Write the review to `cdocs/reviews/YYYY-MM-DD-review-of-{doc-name}.md`.
-6. Update the target document's `last_reviewed` frontmatter with the review outcome.
+1. Read the target document fully.
+2. If the target is a devlog, read the files listed in its Changes Made table and any other referenced files to review the actual implementation.
+3. Conduct the review following the preloaded review skill methodology.
+4. Write the review to `cdocs/reviews/YYYY-MM-DD-review-of-{doc-name}.md`.
+5. Update the target document's `last_reviewed` frontmatter with the review outcome.
 
 ## Graphify scoped-context brief (when present)
 
