@@ -51,6 +51,8 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T22:13 dispatch: fresh opus `cdocs:reviewer`, round 2.
 - 2026-10-07T22:20 return: r2 revise (`cabe8f9`).
 - 2026-10-07T22:31 dispatch: warm proposer for r2 revision.
+- 2026-10-07T22:36 return: r2 revision `5db40f8`: canary compaction probe replaces `rules_check` gate (kept as no-regression comparison); alphabetical-order change and `${CLAUDE_PLUGIN_ROOT}` exception dropped; nits fixed.
+- 2026-10-07T22:37 dispatch: fresh opus `cdocs:reviewer`, round 3.
 
 ## Steering Log
 
