@@ -71,4 +71,6 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 
 ## Steering Log
 
+- 2026-10-08T10:30: maintainer: "the interfacer-agent should use our lace devcontainer." Relayed to impl-1 at Phase 4: live canary runs in container `clauthier` (`podman exec -u node -w /workspace/clauthier/interfacer-agent clauthier ...`; claude 2.1.285, no playwright-cli or cached browsers), host run secondary at most.
+
 - 2026-10-08: maintainer: "/full-send a proposal wholesale deleting the browser-delegate plugin and replacing it with a general cdocs:interfacer agent that follows the style and verbosity of bash-runner.md, but is generalized to any interfacing tool use, and should be durable by default"; the calling project has playwright-cli, flutter, or whatever; implement or review agents get a sonnet testing assistant; media in an expected tmp dir with a brief markdown report; no project-specific bits in clauthier.
