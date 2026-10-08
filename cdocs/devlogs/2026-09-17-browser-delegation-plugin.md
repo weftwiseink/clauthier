@@ -95,3 +95,6 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 | 4 | proposer r4 (opus, warm, `ebb6e7a`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r4.md | all 13 r3 items resolved; 2 new blocking in session-state contract (fresh-session rule not delivered via agent description/prompt; `reopened` unobservable across dispatches); 7 non-blocking |
 
 - r4 overseer decision: `reopened` semantics resolved as option A (report only what one dispatch observes; no `resume` prompt field) per minimal-design default.
+| 5 | proposer r5 (opus, warm, `b26403b`) | fresh opus cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r5.md | r4 blockers resolved; 6 non-blocking nits handed to warm proposer for resolution |
+
+- r5 overseer decision: nit 2 resolved as option A (fresh-sessions option plus `<branch>-review-<role>` suffix, so implementer and reviewer never share a session either direction).
