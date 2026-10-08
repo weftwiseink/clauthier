@@ -6,6 +6,11 @@ task_list: cdocs/graphify-overhaul
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-10-08T09:01:00-07:00
+  round: 1
 tags: [graphify, claude_skills, architecture, token_efficiency]
 ---
 
