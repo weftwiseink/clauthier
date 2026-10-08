@@ -17,6 +17,7 @@ it dispatches subagents in alternation, terminates on accept-or-escalate, and sh
 Overseers should follow rules laid out in the cdocs rules, and should dispatch subagents for all tasks aside from top-level devlog edits.
 
 Propose-revise loop state should be tracked in the workstream's top-level devlog by the overseer; proposers, revisers, and reviewers write no devlog.
+Add its log sections from [`../iterate/template.md`](../iterate/template.md); a later `/cdocs:iterate` on the proposal continues the same devlog.
 When logging a review round to the devlog's Iteration Log, an accepted round is `review_verdict: proposal_accepted` for specificity.
 
 The overseer should feel empowered to AskUserQuestion for feedback and guidance unless otherwise strongly stated.
