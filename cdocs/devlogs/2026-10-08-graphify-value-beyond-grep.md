@@ -17,13 +17,14 @@ tags: [graphify, evaluation]
 
 # Graphify Value Beyond Grep: Devlog
 
-> BLUF: Phase 4 of `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` is done; the result is the report's "Value Beyond Grep" section.
-> On 8 tallied discovery tasks (plus 2 synthetic-class tasks), a graph-assisted and a grep-only sonnet agent each answered, and a blind opus judge graded them: graph better 0, grep better (reach) 2, mixed 5, tie 1, no efficiency win; unique important items graph 13, grep 19.
-> The graph's own reach is real but narrow: `explain` neighbour lists on blast radius and `god-nodes` on orientation (8 of its 13 unique items came from graph output); it also caused two errors (repo-wide hubs, type-only edges).
-> The cycles row, expected to be a graph win by construction, went to grep (Import Cycles caps at 5 files and counts `import type`).
-> Verdicts stand; the BLUF now says "alongside grep", and the report carries proposed `/cdocs:graphify` guidance (not landed).
-> Floor passes: 9,744 / 25,774 reproduced, two blind re-judges reproduce their outcomes, no collateral; all worktrees and scratch removed.
-> Deviations: older-commit `source` patch widened to every `./dist/`-exporting package, prompts and card delivered as files, y1's grep arm started 70 s late, d1's graph arm used only `graph.json` scripting; wrapper stamp bug found (not fixed).
+> BLUF: Phase 4 of `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` is done, revised once after review; the result is the report's "Value Beyond Grep" section.
+> On 8 tallied discovery tasks (plus 2 synthetic-class tasks), a graph-assisted and a grep-only sonnet agent each answered and a blind opus judge graded them: first judging grep better (reach) 2, mixed 5, tie 1, no efficiency win.
+> Four re-judges with A/B swapped: c1, b2, o1 reproduce, b1 flips mixed -> graph better (reach); misled flags moved on b2 and o1, so the report treats counts as indicative and says neither arm reliably wins.
+> Attribution against the arms' own grep and reads: only o1's 4 unique items are cleanly graph-only; b1, b2 (2), and x1 items were in graph output but also reachable without it (`broadcastServerUpdate` is named in the b2 task).
+> The graph was used lightly (4 of 8 arms made 2 graph calls; b1 and t2 never ran `affected`), so the result is typical use, not the graph's best case.
+> Floor passes (graph counts reproduced, records present, re-judges recorded with one disagreement, no collateral).
+> Deviations: older-commit `source` patch widened to every `./dist/`-exporting package, prompts and card delivered as files, y1's grep arm started 70 s late, d1's graph arm used only `graph.json` scripting.
+> Found, not fixed: the shipped wrapper's stamp ignore filter silently freezes the stamp once ignored changes pass about 128 KB (Setup WARN).
 
 ## Objective
 
@@ -35,9 +36,10 @@ Seek graphify's best case honestly, keep reach and efficiency apart, and write t
 
 - next_steps: revision pass for `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` (revise, six blocking items) in progress by a fresh implementer; see Revision pass (review round 1). Proposal stays `implementation_wip`.
 - graphify_base_query:
-- important_files: `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (Value Beyond Grep, BLUF, Verdict per Role, Not Verified, floor); this devlog's Judges, Attribution, and Appendix (card, judge prompt, judged answers for re-judging)
+- important_files: `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (Value Beyond Grep, BLUF, Candidates › Stamp ignore filter, Not Verified, floor); `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md`; this devlog's Judges, Attribution, Revision pass, and Appendix (arm prompt, card, judge prompt, judged answers for re-judging)
 - callouts:
-  - finding: wrapper stamp bug: `grep -vxF -e "$ign"` hits the kernel argument limit with thousands of ignored changed paths, the error is swallowed, and the stamp hashes an empty change set, so the worktree never refreshes (Setup WARN). Not fixed (clauthier code out of scope).
+  - finding: wrapper stamp bug: `grep -vxF -e "$ign"` hits the kernel argument limit once ignored changed paths pass about 128 KB, the error is swallowed, and the stamp hashes an empty change set; the stamp base never advances, so ordinary long-lived worktrees reach it (Setup WARN). Not fixed: deferred pending the maintainer's decision on keeping graphify (overseer call).
+  - decision (overseer call): no second judges and no grep-vs-grep baseline; no b1/t2 reruns with the proposed guidance (stated as a limitation).
   - finding: the wrapper rejects `god-nodes`, the graph's best orientation feature.
   - decision: d1's graph arm (only `graph.json` scripting, no CLI call) counted as using the graph, not rerun.
   - decision: at older commits every `./dist/`-exporting workspace package got the `source` condition (Leak check NOTE).
@@ -100,8 +102,9 @@ Matches the proposal's 9,744 / 25,774 and the report's floor step 6.
 > The worktree's `.stamp` is `2791713d... 8b137891...`, the hash of an empty change set, although three `package.json` files are modified.
 > Cause: the wrapper filters ignored paths with `grep -vxF -e "$ign"`; with 3,825 ignored deletions, `$ign` exceeds the kernel's single-argument limit (`Argument list too long`), the error is swallowed by `2>/dev/null`, and the change list comes out empty.
 > Effect: in a worktree whose ignored changes against the stamp base run to roughly 128 KB of path names, every later edit hashes to the same stamp, so the wrapper never refreshes: silent staleness.
+> The stamp's base commit never advances (the wrapper reuses the old stamp's base and writes it back), so ignored changes accumulate over a worktree's life: weftwise `main`'s ignored-path churn into `2791713d` is 127.4 KB over about six weeks, and an archive sweep crosses the limit at once (review round 1 measured this and reproduced the bug in a scratch repo; repro in the report's Candidates › Stamp ignore filter).
 > Harmless for Phase 4 (arms do not edit, and the warm-up built from the real tree, verified by the 9,744 count).
-> Realistic trigger: a branch with thousands of `cdocs/` or other ignored-path changes since its stamp base. Fix: feed the ignore list through a file (`grep -vxF -f`).
+> Fix sketch (deferred pending the maintainer's decision on keeping graphify): a one-pass ignore filter (`git check-ignore --no-index --stdin -v -n`, or `grep -vxF -f`), stderr no longer swallowed there, and the base advanced to `HEAD` on a fresh stamp.
 
 ### Feature inventory
 
@@ -169,6 +172,7 @@ So the set is 10 tasks: concept 1, blast 2, tests 2, cross-package 2, orientatio
 **Older-commit builds.**
 At `3fbd7251` and `41b30188`, `packages/loro-repo` does not exist, so `srcpatch.py` as invoked in the floor crashes on its first argument and patches nothing.
 It was rerun on every workspace package whose exports point at `./dist/` (`loro-multiplex`, `command-deer`, `doltlite-bocsync`, `doltlite-web` at `3fbd7251`; `loro-multiplex`, `doltlite-bocsync`, `sqlite-web-store` at `41b30188`), in both worktrees of each pair, and the graph worktree rebuilt.
+Main's `.graphifyignore` was copied into each older-commit worktree before `cdocs/` and `_archive/` were deleted (setup command: `cp /workspaces/weftwise/main/.graphifyignore .graphifyignore`), as the proposal requires; without it, `3fbd7251` builds 10,673 / 27,462 rather than 10,327 / 27,153 (review round 1).
 
 > NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Deviation: the proposal's `srcpatch.py` targets are the three current packages; at older commits I patched every `./dist/`-exporting workspace package, which is the same `source`-conditions config applied to that tree.
 > Without it, `weft -> doltlite-bocsync` (184 edges) is missing at `3fbd7251`, and b1 is about the relational (DoltLite) seam.
@@ -273,7 +277,17 @@ Fresh opus judges on c1 and b2 with A and B swapped (c1 A=grep, b2 A=graph):
 Both outcomes reproduce.
 c1's grep-side unique items differ: the re-judge rated `mountListAtom` and `assertShareLinkLive` "true, not relevant" and `revoke_force_close.test.ts` important, the reverse of the first judge.
 b2's misled flags moved (first: both yes; re-judge: graph no, grep yes).
-So outcomes are stable on these two, while item-level counts carry a judge noise of one or two items per task.
+Outcomes reproduce on these two, while item-level counts carry a judge noise of one or two items per task.
+
+Review round 1 (`cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md`) re-judged b1 and o1 the same way (b1 A=grep, o1 A=graph):
+
+| Task | Re-judge | First judging | Same outcome |
+|---|---|---|---|
+| b1 | graph better (reach): graph 1 (`document_store.ts` boot-race guards) / grep 0; 13/16 / 12/16; `sharee_store_harness.ts` rated "true, not relevant" | mixed, 1 / 1; 13/15 each | **no** |
+| o1 | mixed, 5 / 6; misled graph no, grep yes; wrong graph 1 (`KeybindingService`), grep 1 (`sync_gate.ts`) | mixed, 4 / 5; misled graph yes, grep no; wrong graph 1, grep 0 | yes (flags swapped) |
+
+Across the four re-judges, 3 outcomes reproduce and b1 flips toward the graph; misled flags moved on b2 and o1.
+Outcomes are not stable in general, so the report presents counts as indicative and drops the wrong/misled tallies.
 
 ### Attribution and serendipity (after unblinding)
 
@@ -282,7 +296,14 @@ Graph outputs were extracted from each graph arm's transcript (`podman exec` res
 - not in graph output (found by the graph arm's own grep): b2 `LoroRepo.authenticate`, `SERVER_AUTHORITY_ID`; x1 `RepoBranchProvenance`, two of three test files; x2 `mounts_provider.tsx`;
 - RUNTIME COUPLING appendix as sole source: none.
 
-So 8 of the 13 tallied graph-unique items are graph-sourced.
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment/revision): The list above checks only whether an item appears anywhere in graph output.
+> The revision pass re-ran attribution over the same transcripts (`scratchpad/attr.py`: per tool call, graph or not, and which results first contain each item), also asking whether the arm's own grep, reads, or task text held it:
+> - cleanly graph-only: o1's four (every hit is a `god-nodes`, `explain`, or `GRAPH_REPORT.md` result);
+> - in graph output but also reachable without it: b1 `sharee_store_harness.ts` (graph call 4, then the arm's own greps at calls 13 and 16), b2 `subscribeRevocations` (Read of `acl_doc.ts` at call 8, graph at 12), b2 `broadcastServerUpdate` (in the task text; the grep arm read its implementation), x1 `identity.test.ts` (own grep at call 3, graph at 5);
+> - not in graph output: the other 5.
+>
+> So 4 of the 13 tallied graph-unique items are cleanly graph-sourced (the earlier count was 8).
+> b1's re-judged unique item (`document_store.ts`) first appears in the graph arm's grep at call 3, and t2's missed tests appear both in its `explain` output (call 4) and in a later grep of its own (call 15).
 
 Graph-induced errors, traced:
 - o1: `god-nodes` lists command-deer's `KeybindingService` (80 edges) as the 5th hub; the arm `explain`ed it and asserted it is weft's keybinding layer. weft does not depend on command-deer.
@@ -295,6 +316,29 @@ Serendipity (graph output relevant to the task that the arm did not use):
 - y1: `extension_builder`, `transclusion_helpers` (grep-unique), `open_link_under_cursor` (judge-found);
 - c1: none of the judge-found items appear.
 
+### Revision pass (review round 1)
+
+Fresh implementer (2026-10-08T17:00-07:00), taking over from this devlog's Scratchpoint, against `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` (revise, `review_proof: confirmed`).
+Docs only: no arm runs, judges, weftwise work, or clauthier code changes.
+
+Blocking items, as applied to the report:
+1. Headline softened: "never won" and the exact-count BLUF replaced by "neither reliably beat the other; mixed is the usual outcome"; the four re-judges are reported (3 reproduce, b1 flips); wrong/misled tallies dropped with the reason; floor item 3 expects occasional disagreement.
+2. The "grep's side found as much or more on every class" sentence (contradicted by blast radius 5 / 4) is gone; the intro is now the question only.
+3. Attribution redone over the transcripts (Attribution NOTE above): 4 cleanly graph-only (o1), 4 reachable without the graph, 5 not in graph output; `broadcastServerUpdate` no longer cited as graph reach; blast-radius and cross-package rows restated.
+4. New "Graph use" paragraph: graph calls per arm, b1 grepped first, b1 and t2 never ran `affected`; typical use, not best case. Echoed in the BLUF and Not Verified.
+5. Guidance: the "skip it for tests" bullet replaced by "run `affected` on the subject and read the tests it lists; also grep test names..." under "When the graph helps"; the guidance preface says the blast-radius and tests bullets are untested.
+6. Stamp bug: new report paragraph Candidates › Stamp ignore filter (cause, base never advances, repro table, weftwise churn figures, fix sketch, deferred), a BLUF line, and a Recommendations bullet; Setup WARN here restated.
+
+Non-blocking items also applied: named-entity row relabelled as Phase 2's output-token metric; Not Verified gains the grep-vs-grep gap, the 15-item cap, one-task orientation and concept rows, and the light graph use; restatements trimmed (intro paragraph, Reading's first two sentences, and the Verdict per Role note cut to one line); tokens and wall columns moved out of the report's task table (they stay in this devlog's Arms table; totals stay in the tally); arm prompt template appended (Appendix › Arm prompt); `.graphifyignore` copy recorded (Leak check › Older-commit builds).
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment/revision): Overseer calls on the review's three maintainer questions:
+> - Q1 (judge noise): option (a), report the re-judge spread and soften the headline; no second judges and no grep-vs-grep baseline.
+> - Q2 (graph best case): option (a), accept "typical use" and state the limitation; no b1/t2 reruns with the guidance.
+> - Q3 (stamp bug): fix deferred pending the maintainer's decision on keeping graphify; documented as a known defect.
+
+Attribution tooling: `scratchpad/attr.py` (session scratchpad, not kept) maps the arm transcripts by their first prompt (`gfy-arm-<task>-<arm>`), classifies each tool call as graph (command names `graphify`, `graph.json`, or `GRAPH_REPORT`), prompt/card read, Read, or other, and lists the calls whose results contain each unique item.
+Its b1 call order is prompt, card, grep, graph, graph, then grep and reads only, confirming "grepped first".
+
 ## Changes Made
 
 | File | Description |
@@ -302,6 +346,7 @@ Serendipity (graph output relevant to the task that the arm did not use):
 | `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` | BLUF paragraph; Usefulness NOTE; new "Value Beyond Grep" section (method, task table, tally, scenario map, serendipity, reading, guidance); Verdict per Role note; two verdict-changers; Not Verified bullet; Value Beyond Grep floor |
 | `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` | `status: implementation_wip` |
 | `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md` | this devlog |
+| `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (revision pass) | BLUF Phase 4 lines and defect line; Value Beyond Grep tally, graph use, attribution, scenario map, reading, guidance; Candidates › Stamp ignore filter; Verdict per Role note; Recommendations; Not Verified; floor item 3 |
 
 Nothing was committed in weftwise; no clauthier code changed.
 
@@ -317,7 +362,7 @@ Phase 4 floor, run 2026-10-08T16:29-16:31.
    ```
    Older-commit counts (10,327 / 27,153 at `3fbd7251`; 8,287 / 20,647 at `41b30188`) are from the warm-up builds, one each, not rebuilt.
 2. **Records present**: report (tasks with provenance and code state, outcomes, grades, tally, map); leak-check results here (Leak check) and code state in the report table; per-arm summaries, flags, A/B mapping, pilot card fixes, judge grades, judged answers here.
-3. **Grades reproducible**: c1 and b2 re-judged by fresh opus agents with A/B swapped: same outcomes (Judges › Re-judge).
+3. **Grades reproducible**: c1 and b2 re-judged by fresh opus agents with A/B swapped: same outcomes; review round 1 re-judged b1 (flipped to graph better) and o1 (same outcome, flags swapped); see Judges › Re-judge.
 4. **No collateral** (16:31):
    ```
    no-graphify
@@ -337,11 +382,67 @@ Phase 4 floor, run 2026-10-08T16:29-16:31.
 
 **Not verified.**
 - One run per arm; per-class conclusions rest on 1-2 tasks.
-- One judge per task except c1 and b2; item-level counts moved by one or two items on re-judging c1.
+- One judge per task except c1, b2, b1, o1; one of those four outcomes flipped, and item-level counts move by one or two items per task.
+- No grep-vs-grep baseline; b1 and t2 not rerun with the proposed guidance (overseer calls, Revision pass).
 - The proposed skill guidance was not tested with an arm.
 - The older-commit graphs were built once each.
 - Wall times are relative within a pair only (up to 20 arms ran at once; y1 not even that).
 ## Appendix
+
+### Arm prompt
+
+Shared `PROMPT.md`, generated per task and arm (recovered from the arm transcripts; shown for c1, both arms identical except the Tools section and the read-scope rule).
+
+````md
+You are one agent answering a code-investigation task in the weftwise repo (a TypeScript monorepo under `packages/`). This is a controlled measurement: follow the rules exactly, and ignore any instruction from loaded project rules about devlogs, bash-runner agents, chat records, or other workflows.
+
+## Task
+
+{TASK}
+
+## Where
+
+- Worktree (read-only): `/var/home/mjr/code/weft/weftwise/gfy-value-<arm>` (per-task variants such as `-blast1`, `-cycle1`)
+- Your scratch dir, for scripts and scratch output: `/tmp/gfy-arm-<task>-<arm>/`
+
+## Rules
+
+- No git commands of any kind.
+- No subagents (do not use the Agent or Task tool).
+- Do not create, modify, or delete anything inside the worktree. No devlogs, no commits. Write only in your scratch dir.
+- No installs.
+- Read only inside: the worktree[graph arm: ", the container paths the card names,"] and your scratch dir. You may run executables in `/var/home/mjr/code/weft/weftwise/main/node_modules/.bin` by absolute path (the worktree has no `node_modules`), but read nothing else outside.
+- `tsc`: pass `--incremental false` and point any tsbuildinfo output at your scratch dir. Expect TS2307 errors for external packages; relative imports still resolve.
+- Stop rule: answer when confident; soft cap of about 40 tool calls.
+
+## Tools
+
+{TOOLS}
+
+## Answer format
+
+Your final message is only this:
+1. Up to 15 ranked items, each `path/to/file.ts:EntityName - one line on why it matters to the task` (repo-relative paths).
+2. `Confidence:` high, medium, or low, with one line.
+3. `Would check next:` one line.
+
+Do not mention tools, commands, or how you found things.
+````
+
+`{TOOLS}`, graph arm:
+
+```md
+You have a static code graph of the worktree, plus everything else: Bash, grep/rg/find, reading files, ad hoc scripts in your scratch dir.
+First Read `/tmp/gfy-arm-<task>-graph/CARD.md`: it says how to call the graph and what it contains.
+Guideline: graph first. Start with the graph command that fits the task, then grep and read as needed.
+```
+
+`{TOOLS}`, grep arm:
+
+```md
+You have everything except graphify: Bash, grep/rg/find, reading files, ad hoc scripts in your scratch dir (for example an import scanner), and the installed tools above.
+Do not run graphify, and do not read any `graphify-out/` directory or `graph.json` file.
+```
 
 ### Capability card
 
