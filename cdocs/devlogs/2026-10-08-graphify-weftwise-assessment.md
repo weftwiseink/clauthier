@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 revising per r1; then fresh rev-2.
+- next_steps: proposal review round 2 (rev-2).
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -60,6 +60,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | steer | rev-1 (SendMessage) | review | 2026-10-08T19:55 | maintainer markdown direction relayed + overseer md-node breakdown |
 | return | rev-1 | `2c0c62b` | 2026-10-08T20:05 | revise. Blocking: markdown scope inverted vs maintainer direction (md nodes have no code edges, affect only seed ranking); container-global `GRAPHIFY_OUT` makes raw update/extract/query write the main graph; `--force` unneeded (ignore removal counts as deletion, worktree indexes self-heal on merge); body-only post-edit may skip cluster/report/html (~4 s) so under-measures; background refresh / `graphify watch` missing. Missed levers: `extract --code-only` (incremental; check TS cross-file edges), `GRAPHIFY_NO_BACKUP=1`, `extract --timing`; `--no-cluster` worth a full row (query ignores communities). Non-blocking: speculative ignore lines, graph built at `ab8edd6e`, trim duplicate no-op rows, sampler sort/skip graphify devlogs, copy-pasteable floor block, stamp from `built_at_commit`. 3 maintainer questions |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T20:07 | round-1 revisions + maintainer md direction + overseer calls on the 3 questions |
+| return | prop-1 | `6e4d7e1` | 2026-10-08T20:15 | `review_ready`: all r1 items applied; default ignore `/cdocs/ /_archive/ /docs/references/`; all-md-out and `.claude/`+`AGENTS.md`-out as variants; explicit scratch `GRAPHIFY_OUT` rule (only Phase 1 writes main graph); plain `update`, shrink-guard refusal reported not forced; structural post-edit; background refresh + `graphify watch` rows incl. stale-answer count; stamp from `built_at_commit` (ancestor check); `extract --code-only` parity, `GRAPHIFY_NO_BACKUP`, `--no-cluster`, `--timing`. Rough edge: floor `time` in `sh -c` |
+| dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 2026-10-08T20:16 | round 2; r1 resolution + fresh pass, bloat check |
 
 ## Steering Log
 
