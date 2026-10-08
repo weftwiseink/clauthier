@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-07T14:00:00-07:00
 task_list: meta/rules-simplification
 type: devlog
-state: live
-status: review_ready
+state: archived
+status: done
 tags: [rules, simplification, dead_references, devlog_skill]
 ---
 
@@ -110,3 +110,8 @@ validate-cdocs-edit-path.test.sh     17 passed, 0 failed
 ```
 
 `init_real` and `rules_check` (headless, live `claude`) not run.
+
+## Resolution
+
+The maintainer confirmed the simplification's removals were deliberate (resume from disk dropped, handoffs transient, ~400K cap), which resolves the review's open findings.
+The `overseers.md` resumption sentence is the maintainer's version, with only "latest" changed to "any" handoff (7f91eed); punctuation nits fixed in 8f43764.
