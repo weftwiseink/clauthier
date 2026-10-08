@@ -27,7 +27,7 @@ The build warns only on an unknown alias, never on a stale id.
 
 - Whether OC accepts tier aliases or "latest" ids directly, which would let the build pass the alias through instead of pinning.
 - If pinning is required: a single source of truth for current ids (a config file, `package.json` field, or CI-checked constant) and how it is kept fresh (CI check against a published model list, a release-checklist item, or a documented manual bump).
-- Whether a consumer should be able to override the mapping (e.g. an OC-side config or env var), consistent with [`model-tiering.md`](../../plugins/cdocs/rules/model-tiering.md)'s "consumer floor wins".
+- Whether a consumer should be able to override the mapping (e.g. an OC-side config or env var), consistent with "CDocs Workflow Patterns › Model Tiering".
 - Coverage for aliases not in the map today (`fable`, `inherit`) and what the build should do with them.
 - Whether the CI workflow (`.github/workflows/opencode-build.yml`) should fail on, or warn about, a stale mapping.
 
