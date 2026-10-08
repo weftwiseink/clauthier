@@ -35,11 +35,11 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: proposal review r1 in flight.
+- next_steps: revision r1 in flight (warm proposer), then review r2.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
-  - deferred:
+  - deferred: model policy (omit vs pin) surfaced to maintainer in final report; overseer chose omit (portability across providers, no bumps).
   - todo:
   - decision: proposer chose to omit OC `model:` (inherit caller) instead of pinning ids; brief's floor said "current model ids". Reviewer asked to weigh this against tier fidelity.
   - blocker:
@@ -53,6 +53,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| p1 | prop-1 (cdocs:proposer) | rev-p1 (cdocs:reviewer) | revise | n/a | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | blockers: parse error must warn+skip (HR2); NOTE that omit-model supersedes brief's "current model ids" floor |
 
 ## Judge Log
 
@@ -66,5 +67,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-07-opencode-build-fixes.md | 2026-10-07T18:23 | round 0 authoring |
 | return | prop-1 (cdocs:proposer) | proposal + 3 RFP frontmatters | 2026-10-07T18:29 | 080ab4f, 6d84667; review_ready |
 | dispatch | rev-p1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | 2026-10-07T18:30 | proposal review r1 |
+| return | rev-p1 (cdocs:reviewer) | review + proposal last_reviewed | 2026-10-07T18:34 | a2c5c76; revise |
+| dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:35 | revision r1 |
 
 ## Steering Log
