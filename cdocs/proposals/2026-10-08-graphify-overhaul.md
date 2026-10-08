@@ -370,7 +370,6 @@ graphify is absent on the host, so verification uses a stub there and the real b
 5. Remove the stub and fixture and dispatch again: the reviewer completes normally, makes no install or build attempt, and mentions the absence in at most one line.
 
 > NOTE(claude-opus-5-5/cdocs/delete-ablate): `detect-usage` now lives at `scripts/detect-usage.sh` (`bash scripts/detect-usage.sh --transcript <jsonl> --tool <sig>`, same flags, same matching), since `/cdocs:ablate` is deleted per [`2026-10-08-delete-ablate-rfp.md`](2026-10-08-delete-ablate-rfp.md).
-> The step text above stays as written.
 
 **Devcontainer live run (post-accept, routed to the overseer or user):** a one-round `/cdocs:iterate` on a small real proposal in a `lace up` container with graphify 0.9.61.
 First rebuild the main graph from the repo after `.graphifyignore` lands: `graphify update /workspace/clauthier/main` with the baked `GRAPHIFY_OUT` (about 2.4 s).
