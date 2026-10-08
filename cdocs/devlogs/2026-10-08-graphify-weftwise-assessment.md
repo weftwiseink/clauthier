@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: impl-p4 running Phase 4; then fresh reviewer re-runs the Phase 4 floor; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: rev-p4 reviewing Phase 4 (impl-p4 at ~405K: any revision goes to a fresh implementer from its sub-devlog); then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -50,6 +50,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | devlog | concern | status | read this when |
 |---|---|---|---|
 | `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment-impl.md` | assessment execution | review_ready | per-phase commands, raw numbers, deviations |
+| `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md` | Phase 4 value beyond grep | review_ready | task set, A/B answers, judge prompt, card, transcript check |
 
 ## Iterate Brief (Turn 0)
 
@@ -109,6 +110,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:32 | N1, N2, optional items, ~25-line cut, `implementation_ready` |
 | return | prop-1 | `6d10392` | 2026-10-08T23:38 | `implementation_ready`: mixed outcome + per-arm unique important items as reach headline; per-arm host scratch dirs, read-target path check with 4 allowlisted roots; tsc note; RUNTIME COUPLING items excluded from reach; separate `source` build dropped (warm-up builds index, 9,744/25,774 check on it); restated lines cut (601 lines) |
 | dispatch | impl-p4 (cdocs:implementer, opus, fresh) | report "Value Beyond Grep" section, sub-devlog `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md`; throwaway weftwise worktrees | 2026-10-08T23:40 | Phase 4: inventory, card, pilot, sampler, leak check, arm pairs, blind judges, scenario map, skill guidance |
+| return | impl-p4 | `d0afc30..4ea238d` | 2026-10-09T00:25 | floor passes. Graph never better outright: 8 tallied tasks, grep better 2 (tests t2, concept c1), mixed 5 (blast b1/b2, orientation o1, cross-package x1/x2), tie 1 (t1); unique important items 13 graph / 19 grep; completeness 78/106 vs 84/106; tokens 659k vs 642k; wall 1,260 vs 1,056 s. Graph reach real on blast radius (`explain` neighbours: callers, importing harness) and orientation (`god-nodes`, but repo-wide hubs caused a false claim); 8 of 13 graph-unique items from graph output. Synthetic: dead code mixed, cycles grep better (built-in list stops at 5 files, counts `import type`). Guidance proposed: graph for blast radius + orientation + named entities; skip for tests, importers, concepts, cycles; wrapper allow `god-nodes`. Verdicts stand; BLUF "use alongside grep, not instead". Wrapper bug found: stamp filter exceeds ARG_MAX with 3,825 deleted ignored files, error swallowed, empty-set stamp, worktree never refreshes. Deviations: sampler spawned 7 subagents; 10 tasks/8 tallied; b1 at `3fbd7251`, y1 at `41b30188` with generalized `source` patch; prompts via files; Python not jq check; general-purpose judges. Not verified: one run per arm, mostly one judge, guidance untested. impl-p4 ~405K |
+| dispatch | rev-p4 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` | 2026-10-09T00:27 | re-run Phase 4 floor; blind re-judge a blast task; fairness both ways; wrapper stamp bug repro |
 
 ## Steering Log
 
@@ -119,3 +122,5 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 - 2026-10-08T22:30: maintainer: "Sounds like no meaningful improvement to graphify performance, only tiptoe-ing around their poor perf, right? How did the usefulness assessment fare?" then "It never found useful info beyond grep across all sample scenarios? What were the scenarios?" Overseer: correct on perf; usefulness grading was against a grep ground truth, so it measured efficiency, not discovery, and the devlog-sampled questions name their entities (favouring grep). Offered a discovery-style follow-up (questions without entity names, second grader); not dispatched.
 
 - 2026-10-08T22:45: maintainer: "This is why I asked for a focus on holistic assessment: the assessor should put more effort into verifying whether graphify could provide value beyond grep and in what scenarios. Otherwise it will always look inferior and pointless." Overseer miss: Phase 2 as proposed (and accepted through two reviews under this overseer) graded against a grep ground truth on entity-named questions, so its ceiling was a tie. Phase 4 added: two-arm discovery tasks across scenario classes, blind judge.
+
+- 2026-10-08T23:55: maintainer asked for a high-level BLUF; overseer's first answer was too long ("Too long, bluf should be brief, few sentences"); maintainer: "Ok, so in essence the holistic follow up remains unresolved so far" (yes, Phase 4 then running).
