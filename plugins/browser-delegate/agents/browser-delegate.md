@@ -153,7 +153,8 @@ Truncated: none | <what was omitted>; see: <path>
 ```
 
 - Repeat the key on every line, so each line parses alone: one `Sessions:` line per session, one `Artifacts:` line per artifact, and no bullets or indented continuation lines under them (only `Facts:` has `- ` items).
-  With no artifacts, write `Artifacts: none`.
+  With no artifacts, write `Artifacts: none`; when no session was opened or reused (a `FAILED` before any `open`), write `Sessions: none`.
+  The state is always exactly one of `opened`, `reused`, `reopened`.
 - `Sessions` lines: `opened` = not live at dispatch start, or closed first because fresh sessions were asked for; `reused` = live at dispatch start; `reopened` = died during this dispatch and was re-opened empty.
   A session that was re-opened is `reopened` even if it started as `opened` or `reused`.
 - `Facts` always include `cli: <abs command> (<version from --version>)`, `config: <abs path> | none`, and `scratch: <$out>`.
