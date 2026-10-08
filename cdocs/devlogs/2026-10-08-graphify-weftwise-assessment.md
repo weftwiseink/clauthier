@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: prop-1 applying r4 accept-round items; then fresh Phase 4 implementer, then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: impl-p4 running Phase 4; then fresh reviewer re-runs the Phase 4 floor; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -107,6 +107,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | rev-4 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r4.md` | 2026-10-08T23:17 | round 4; r3 resolution, fairness both ways, ceremony cut, mechanics probes |
 | return | rev-4 | `9538c23` | 2026-10-08T23:30 | proposal_accepted; 10/10 r3 items resolved; fair both ways (best-case seeking matched by inflation guards). Mechanics: card command works (wrapper explain 12.1 s cold / 0.66 s warm, raw `god-nodes` 0.40 s, stamp stays valid); `tsc` runs from fresh worktree but ~4,000 errors (1,662 missing external modules) and writes `tsconfig.tsbuildinfo` into the worktree. Pre-dispatch: N1 "mixed" outcome + per-arm unique items, N2 per-arm scratch dir + read-only path check. Phase 4 ~184 lines, ~25 restated. ~35-40 dispatches, 1-2 h arms. 2 maintainer questions |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:32 | N1, N2, optional items, ~25-line cut, `implementation_ready` |
+| return | prop-1 | `6d10392` | 2026-10-08T23:38 | `implementation_ready`: mixed outcome + per-arm unique important items as reach headline; per-arm host scratch dirs, read-target path check with 4 allowlisted roots; tsc note; RUNTIME COUPLING items excluded from reach; separate `source` build dropped (warm-up builds index, 9,744/25,774 check on it); restated lines cut (601 lines) |
+| dispatch | impl-p4 (cdocs:implementer, opus, fresh) | report "Value Beyond Grep" section, sub-devlog `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md`; throwaway weftwise worktrees | 2026-10-08T23:40 | Phase 4: inventory, card, pilot, sampler, leak check, arm pairs, blind judges, scenario map, skill guidance |
 
 ## Steering Log
 
