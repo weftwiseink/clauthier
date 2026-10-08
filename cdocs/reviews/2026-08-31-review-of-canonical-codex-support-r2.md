@@ -5,7 +5,7 @@ first_authored:
   at: 2026-08-31T12:05:06-07:00
 task_list: cdocs/codex-support
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, round_2, architecture, codex, portability, internal_consistency, missing_validation]
 ---

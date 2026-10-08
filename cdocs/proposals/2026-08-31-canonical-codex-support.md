@@ -4,7 +4,7 @@ first_authored:
   at: 2026-08-31T11:37:54-07:00
 task_list: cdocs/codex-support
 type: proposal
-state: live
+state: archived
 status: review_ready
 last_reviewed:
   status: revision_requested
@@ -19,6 +19,7 @@ tags: [architecture, codex, multi-target, portability, build-system]
 > BLUF(codex/cdocs-support): Extend CDocs to Codex from the canonical `plugins/cdocs/` source through two distinct surfaces: a Codex plugin package for optional user installation and generated `.agents/skills/` plus `.codex/agents/` artifacts for repository-scoped use.
 > Keep the skill bodies single-source, translate only host-specific metadata and orchestration language, and leave Claude Code behavior unchanged.
 > Repository-scoped setup must work in a fresh Codex environment with no marketplace or plugin entries in `~/.codex/config.toml`.
+> NOTE(opus-5-5/cdocs/triage): Archived 2026-10-07 by maintainer decision, with the round-2 Revise verdict unaddressed.
 
 ## Summary
 

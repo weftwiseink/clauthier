@@ -4,7 +4,7 @@ first_authored:
   at: 2026-08-31T11:37:54-07:00
 task_list: cdocs/codex-support
 type: devlog
-state: live
+state: archived
 status: review_ready
 tags: [architecture, codex, proposal]
 ---
