@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-overhaul
 type: proposal
 state: live
-status: implementation_ready
+status: review_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -14,12 +14,12 @@ last_reviewed:
 tags: [graphify, claude_skills, architecture, token_efficiency]
 ---
 
-# Graphify overhaul: a workstream seed query run by fresh contexts
+# Graphify overhaul: a workstream base query run by fresh contexts
 
-> BLUF: Replace `graphify-scope` (362 lines, overseer-run) with `code-query` (at most about 60 lines), which each code-reading agent runs itself.
-> It seeds a per-worktree index from the main graph if absent, runs `graphify update` (AST-only, no LLM), passes `query`/`explain`/`path`/`affected` through unchanged, and appends `.observe`/`.subscribe` sites the graph cannot see.
+> BLUF: Replace `graphify-scope` (362 lines, overseer-run) with `cdocs-graphify` (at most about 60 lines), which each code-reading agent runs itself.
+> It copies the main graph into a per-worktree index if absent, runs `graphify update` (AST-only, no LLM), passes `query`/`explain`/`path`/`affected` through unchanged, and appends `.observe`/`.subscribe` sites the graph cannot see.
 > `cdocs/` is excluded from every graph via the repo's `.graphifyignore` (written by `/cdocs:init`).
-> The overseer only writes the Scratchpoint `graphify_query:` string and passes it in dispatch prompts; a thin `/cdocs:code-query` skill and the "CDocs Tool Use Guidance › Tools and Skills" line deliver the rest.
+> The overseer only writes the Scratchpoint `graphify_base_query:` string and passes it in dispatch prompts; a thin `/cdocs:graphify` skill and the "CDocs Tool Use Guidance › Tools and Skills" line deliver the rest.
 
 ## Summary
 
@@ -28,16 +28,16 @@ That puts graph output in the overseer's context, reduces the graph to a union o
 In the lace devcontainer, the only environment with graphify, it also never scopes: it skips with `stale-index` whenever any changed file is newer than the index (`graphify-scope:251-254`), every review round's changed files are, and nothing refreshes the index (no git hook).
 
 The replacement:
-- **Seed query.** `graphify_query:` (already in both Scratchpoint templates) is one natural-language question, in the workstream's own entity names, that loads the code context the work needs.
+- **Base query.** `graphify_base_query:` (the Scratchpoint field both templates carry as `graphify_query:`, renamed in Phase 3) is one natural-language question, in the workstream's own entity names, that loads the code context the work needs.
   The overseer writes and refines it; it never runs graph commands or reads their output.
-- **Any agent that reads code runs it**, at startup, through `code-query`, then uses `explain`, `path`, and single-symbol `affected` as its work demands.
+- **Any agent that reads code runs it**, at startup, through `cdocs-graphify`, then uses `explain`, `path`, and single-symbol `affected` as its work demands.
   Implementers return a refined query in their report.
-- **`code-query`** gives each worktree its own index, copied once from the main graph and kept current by `graphify update` on every call, so no agent writes a shared index.
+- **`cdocs-graphify`** gives each worktree its own index, copied once from the main graph and kept current by `graphify update` on every call, so no agent writes a shared index.
 - **`cdocs/` stays out of the graph:** it is large and is prose the agents read directly.
   graphify's own `.graphifyignore` excludes it from every build and update; on clauthier it is 6637 of 7375 nodes (90%) otherwise.
-- **Delivery.** The rule line reaches every agent (discovery plus the overseer's duty); the skill carries the per-role procedure; iterate gains a short "Seed query" section.
+- **Delivery.** The rule line reaches every agent (discovery plus the overseer's duty); the skill carries the per-role procedure; iterate gains a short "Base query" section.
 
-Absent graphify or any index, `code-query` prints one line and exits 0, and the overseer leaves `graphify_query` empty.
+Absent graphify or any index, `cdocs-graphify` prints one line and exits 0, and the overseer leaves `graphify_base_query` empty.
 
 > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Neither design has been measured.
 > The only `/cdocs:ablate` run on graphify (Probe A, single-file) found `context_gap 0`, and the prior proposal's multi-file efficiency spot-check never ran.
@@ -66,7 +66,7 @@ Make graphify serve the agents that read code, on their own terms, with an index
   - Paths: node `source_file` values and `manifest.json` keys are relative; `.graphify_root` holds the absolute scan root.
   - `install` / `claude install`: the `/graphify` skill plus a `PreToolUse` `hook-guard` nudging toward `graphify query`; the lace container has neither.
 - **graphify's skill** ([v8 `skill.md`](https://github.com/Graphify-Labs/graphify/blob/v8/graphify/skill.md)): 723 lines, almost all build pipeline; the query fast path is a short block.
-- **Maintainer edits:** `dba0ac9` added "CDocs Tool Use Guidance › Tools and Skills" with a `/graphify` line; `58bb5fa` and `0832011` added the undefined `graphify_query:` Scratchpoint field.
+- **Maintainer edits:** `dba0ac9` added "CDocs Tool Use Guidance › Tools and Skills" with a `/graphify` line; `58bb5fa` and `0832011` added the undefined `graphify_query:` Scratchpoint field (renamed `graphify_base_query:` here).
 
 ## Proposed Solution
 
@@ -76,46 +76,49 @@ Make graphify serve the agents that read code, on their own terms, with an index
 sequenceDiagram
     participant O as Overseer
     participant F as Fresh code-reading agent
-    participant C as code-query
+    participant C as cdocs-graphify
     participant G as graphify CLI
-    O->>O: Scratchpoint graphify_query (string)
-    O->>F: dispatch prompt carries graphify_query
-    F->>C: code-query query "<seed>"
-    C->>C: seed worktree index if absent, update
+    O->>O: Scratchpoint graphify_base_query (string)
+    O->>F: dispatch prompt carries graphify_base_query
+    F->>C: cdocs-graphify query "<base query>"
+    C->>C: copy main graph if absent, update
     C->>G: query / explain / path / affected (passthrough)
     C-->>F: graph output + runtime-coupling sites
-    F-->>O: report: conclusions, paths, refined graphify_query
-    O->>O: adopt or rewrite graphify_query
+    F-->>O: report: conclusions, paths, refined graphify_base_query
+    O->>O: adopt or rewrite graphify_base_query
 ```
 
-| Role | `graphify_query` | Runs `code-query` | Uses |
+| Role | `graphify_base_query` | Runs `cdocs-graphify` | Uses |
 |---|---|---|---|
 | Overseer (iterate, propose-revise, full-send, oversee) | Writes on Turn 0; refines between rounds | Never | Passes the string to every agent that reads code |
-| Implementer | Returns a refined query in its report; may also keep it in its sub-devlog Scratchpoint | Yes | Seed at startup; `explain` an entity before changing it; `path` to trace how a change reaches a caller |
-| Reviewer | No | Yes | Seed at startup; `explain` each changed entity for callers and importers; `path` to test relationships the change assumes; `affected` on one symbol where available |
-| Proposer reading code | No | Yes | Seed at startup |
+| Implementer | Returns a refined query in its report; may also keep it in its sub-devlog Scratchpoint | Yes | Base query at startup; `explain` an entity before changing it; `path` to trace how a change reaches a caller |
+| Reviewer | No | Yes | Base query at startup; `explain` each changed entity for callers and importers; `path` to test relationships the change assumes; `affected` on one symbol where available |
+| Proposer reading code | No | Yes | Base query at startup |
 | Judge | No | No | Reads documents only |
 | Single-agent `/cdocs:implement` | Its own devlog Scratchpoint | Yes | As implementer |
 
-### Seed query lifecycle
+### Base query lifecycle
 
 - **Written** by the overseer on Turn 0, only when `command -v graphify` succeeds: one question naming the subsystem and behavior in entity names the graph can match.
   Example: `how does the iterate overseer dispatch implementer and reviewer subagents and record their returns in the devlog`.
-- **Passed** verbatim in each code-reading dispatch prompt as `graphify_query: "<q>"`.
-- **Refined:** an implementer whose work reveals sharper terms or a new subsystem ends its report with `graphify_query: "<refined>"`; the overseer adopts it or writes its own when the Steering Log or phase moves scope.
-- **Audited:** each Iteration Log row's `notes` carries `[seed: set]` or `[seed: empty]`.
+- **Passed** verbatim in each code-reading dispatch prompt as `graphify_base_query: "<q>"`.
+- **Refined:** an implementer whose work reveals sharper terms or a new subsystem ends its report with `graphify_base_query: "<refined>"`; the overseer adopts it or writes its own when the Steering Log or phase moves scope.
+- **Audited:** each Iteration Log row's `notes` carries `[base_query: set]` or `[base_query: empty]`.
 
-### `code-query` wrapper
+### `cdocs-graphify` wrapper
 
-`plugins/cdocs/bin/code-query`, on `PATH` from the plugin's `bin/`; target at most about 60 lines of portable bash (no bash-4 features or GNU-only flags, so CI runs it on Linux and macOS).
+`plugins/cdocs/bin/cdocs-graphify`, on `PATH` from the plugin's `bin/`.
+It is not named plain `graphify`: plugin `bin/` is on `PATH`, so that name would shadow the real CLI for every agent and make the wrapper call itself.
+The skill is `/cdocs:graphify` (the plugin namespace keeps it distinct from graphify's own `/graphify`), since agents use it for `explain`, `path`, and `affected`, not only `query`.
+Size: at most about 60 lines of portable bash (no bash-4 features or GNU-only flags, so CI runs it on Linux and macOS).
 
-Usage: `code-query {query|explain|path|affected} ARGS...`.
+Usage: `cdocs-graphify {query|explain|path|affected} ARGS...`.
 
 | Step | Behavior |
 |---|---|
-| Availability | No `graphify`, not in a git worktree, or no index anywhere: one `code-query: ...; skipping` line on stderr, exit 0. |
+| Availability | No `graphify`, not in a git worktree, or no index anywhere: one `cdocs-graphify: ...; skipping` line on stderr, exit 0. |
 | Paths | Worktree index: `<toplevel>/graphify-out/`. Main graph: `$GRAPHIFY_OUT` (the container's shared `/var/cache/graphify`), else `graphify-out/` in the worktree on branch `main` (`git worktree list --porcelain`). |
-| Seed (idempotent) | If the worktree index has no `graph.json`, copy the main graph directory into a temp dir beside it, delete the copied `.graphify_root` (it names the main checkout, and would keep the branch's deleted files alive through the first update), write a `*` `.gitignore` (so consuming repos need no `.gitignore` edit), then rename it into place. Skip if the worktree index exists; a lost rename race is ignored. On the host, the main checkout's own index is the main graph, so there the copy is a no-op. |
+| Copy (idempotent) | If the worktree index has no `graph.json`, copy the main graph directory into a temp dir beside it, delete the copied `.graphify_root` (it names the main checkout, and would keep the branch's deleted files alive through the first update), write a `*` `.gitignore` (so consuming repos need no `.gitignore` edit), then rename it into place. Skip if the worktree index exists; a lost rename race is ignored. On the host, the main checkout's own index is the main graph, so there the copy is a no-op. |
 | Ignore hint | If `cdocs/` exists and `.graphifyignore` has no `cdocs/` line, one stderr hint naming `/cdocs:init`; then proceed. |
 | Update | `GRAPHIFY_OUT=<worktree index> graphify update <toplevel>` on every call, output to `graphify-out/update.log`. On failure, one stderr line, and query the existing index. |
 | Passthrough | `graphify "$@" --graph <worktree graph.json>`, stdout unchanged, exit code preserved. |
@@ -140,35 +143,35 @@ GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
 
 - TODO(claude-opus-5-5/cdocs/graphify-overhaul): generalize the runtime-coupling pattern to a list the consuming repo supplies; `.observe`/`.subscribe` is weftwise's idiom.
 
-> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Two defaults the maintainer may override: (1) no update stamp: `update` runs on every call (about 2.4 s on clauthier; a porcelain-status stamp would miss repeat edits to a dirty file); (2) when `.graphifyignore` lacks `cdocs/`, `code-query` prints one stderr hint and otherwise proceeds, leaving the fix to `/cdocs:init`.
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Two defaults the maintainer may override: (1) no update stamp: `update` runs on every call (about 2.4 s on clauthier; a porcelain-status stamp would miss repeat edits to a dirty file); (2) when `.graphifyignore` lacks `cdocs/`, `cdocs-graphify` prints one stderr hint and otherwise proceeds, leaving the fix to `/cdocs:init`.
 
 The skip-scope labels, stale-index skip, near-empty threshold, and truncation markers are not carried over.
 They existed because the old brief could *narrow* a reviewer's attention: a small confident set might hide runtime coupling, so the script forced an unscoped sweep.
 Here nothing narrows: agents query as an aid to their own reading, the coupling sites are appended to every result, and staleness is fixed by updating rather than signaled by skipping.
 The same reasoning rules out a `cdocs/` purge step: a plain `update` evicts ignored nodes once the ignore line exists.
 
-### `/cdocs:code-query` skill (draft)
+### `/cdocs:graphify` skill (draft)
 
-`plugins/cdocs/skills/code-query/SKILL.md`:
+`plugins/cdocs/skills/graphify/SKILL.md`:
 
 ```md
 ---
-name: code-query
-description: Load code context from a graphify code graph (seed query, entities, paths) through the code-query command
+name: graphify
+description: Load code context from a graphify code graph (base query, entities, paths) through the cdocs-graphify command
 argument-hint: "[question]"
 ---
 
-# CDocs Code Query
+# CDocs Graphify
 
 Load code context from a graphify graph instead of grep sweeps and full-file reads.
-`code-query` keeps this worktree's index current and passes its arguments to `graphify` unchanged; if it prints a "skipping" line, continue without the graph.
+`cdocs-graphify` keeps this worktree's index current and passes its arguments to `graphify` unchanged; if it prints a "skipping" line, continue without the graph.
 
 ## Commands
 
-- `code-query query "<question>"`: concept-level context around the matched nodes; `--dfs` traces one chain.
-- `code-query explain "<entity>"`: an entity and its neighbors.
-- `code-query path "<A>" "<B>"`: how two entities connect.
-- `code-query affected "<symbol>"` (versions that have it): reverse dependents of one symbol, one at a time.
+- `cdocs-graphify query "<question>"`: concept-level context around the matched nodes; `--dfs` traces one chain.
+- `cdocs-graphify explain "<entity>"`: an entity and its neighbors.
+- `cdocs-graphify path "<A>" "<B>"`: how two entities connect.
+- `cdocs-graphify affected "<symbol>"` (versions that have it): reverse dependents of one symbol, one at a time.
 
 If a query matches nothing, retry once with entity names (files, functions, types), then proceed without it.
 
@@ -179,8 +182,8 @@ The appended runtime-coupling sites are the floor, not the ceiling: before concl
 
 ## By role
 
-- Seed: when your prompt or workstream Scratchpoint carries `graphify_query:`, run it before reading code.
-- Implementers: `explain` an entity before changing it; when your work reveals sharper terms, end your report with `graphify_query: "<refined>"`.
+- Base query: when your prompt or workstream Scratchpoint carries `graphify_base_query:`, run it before reading code.
+- Implementers: `explain` an entity before changing it; when your work reveals sharper terms, end your report with `graphify_base_query: "<refined>"`.
 - Reviewers: `explain` each changed entity; `path` to check relationships the change assumes.
 
 Report conclusions and file paths, not raw graph output.
@@ -191,8 +194,8 @@ Report conclusions and file paths, not raw graph output.
 "CDocs Tool Use Guidance › Tools and Skills", replacing the `/graphify` line:
 
 ```md
-- `/cdocs:code-query` when graphify is installed: agents that read code run the workstream's `graphify_query` at startup and `explain` code entities, preferring it when practical over `grep` and full-file reads.
-  Overseers write `graphify_query`, pass it in prompts to agents that read code, and never run graph queries themselves.
+- `/cdocs:graphify` when graphify is installed: agents that read code run the workstream's `graphify_base_query` at startup and `explain` code entities, preferring it when practical over `grep` and full-file reads.
+  Overseers write `graphify_base_query`, pass it in prompts to agents that read code, and never run graph queries themselves.
 ```
 
 ### Devlog and iterate skills
@@ -200,27 +203,50 @@ Report conclusions and file paths, not raw graph output.
 Devlog skill, "The Scratchpoint Section":
 
 ```md
-`graphify_query` is a natural-language seed question for `/cdocs:code-query`, in the workstream's own entity names, so a fresh context loads the relevant code first.
+`graphify_base_query` is a natural-language base question for `/cdocs:graphify`, in the workstream's own entity names, so a fresh context loads the relevant code first.
 Refine it as the change grows; leave it empty when graphify is not installed.
 ```
 
-Iterate skill: replace "Graphify scoping" with "Seed query": write `graphify_query` on Turn 0 when `command -v graphify` succeeds, adopt or rewrite it from implementer reports between rounds, tag each Iteration Log row `[seed: set|empty]`.
+Iterate skill: replace "Graphify scoping" with "Base query": write `graphify_base_query` on Turn 0 when `command -v graphify` succeeds, adopt or rewrite it from implementer reports between rounds, tag each Iteration Log row `[base_query: set|empty]`.
 Passing it in prompts and never running queries come from the rule line.
+
+### How `cdocs/` is kept out of the graph
+
+- **What holds the ignore:** a `cdocs/` line in `.graphifyignore` at the repository root, graphify's own exclusion file (gitignore syntax).
+  There is no CLI flag for exclusion, and gitignoring `cdocs/` is not an option because cdocs documents are tracked.
+- **Who writes it:** each repository, committed like `.gitignore`.
+  clauthier commits its own in Phase 2; `/cdocs:init` adds the line to consuming repos (creating the file if needed) when `graphify` is installed or `.graphifyignore` already exists, and leaves it alone if the line is present.
+- **When graphify reads it:** on every build and every `update`, including the main-graph refresh and each `cdocs-graphify` call; queries read only the graph, so they never see `cdocs/` once it is out.
+- **What the wrapper does:** nothing beyond a one-line stderr hint when `cdocs/` exists and the line is missing; it passes no exclusion arguments and filters no output.
+- **Verified eviction (0.9.61, r2 review):** `update` graphs markdown headings without an LLM, so without the line `cdocs/` is 6637 of clauthier's 7375 nodes; with the line, the next plain `update` evicts those nodes (no `--force`), whether in a worktree copy or the main graph.
+
+### Graph refresh ownership
+
+Refreshing the main graph is left to the consumer for now (operator, lace lifecycle command, or git hook); `cdocs-graphify` only updates the caller's own worktree index.
+The one exception is `/cdocs:rfp`, which starts new workstreams, so its Invocation gains one conditional step:
+
+```md
+6. If `graphify` is installed, make sure the main graphify graph is up to date (`graphify update` on the main checkout, output discarded) so new worktrees copy a current graph.
+```
+
+`update` takes graphify's per-output-dir lock, so this cannot corrupt the graph if a worktree copies it at the same moment; the copy may just be one refresh behind, which the copier's own `update` repairs.
 
 ### Replacement and deletion list
 
 | Path | Change |
 |---|---|
-| `plugins/cdocs/bin/graphify-scope` | delete; replaced by `plugins/cdocs/bin/code-query` |
-| `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | delete; replaced by `plugins/cdocs/hooks/tests/code-query.test.sh` |
-| `.github/workflows/cdocs-hooks.yml` | the graphify-scope step and header comments become a `code-query` step on both OSes |
-| `plugins/cdocs/bin/README.md` | `## graphify-scope` section becomes a short `## code-query` section |
-| `plugins/cdocs/README.md` | bundled commands line names `chat-record` and `code-query`; skills table gains `/cdocs:code-query` |
-| `plugins/cdocs/skills/iterate/SKILL.md` | drop `[--graphify-scope]` from `argument-hint`, the flag bullet, and "Graphify scoping" (replaced by "Seed query") |
+| `plugins/cdocs/bin/graphify-scope` | delete; replaced by `plugins/cdocs/bin/cdocs-graphify` |
+| `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | delete; replaced by `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` |
+| `.github/workflows/cdocs-hooks.yml` | the graphify-scope step and header comments become a `cdocs-graphify` step on both OSes |
+| `plugins/cdocs/bin/README.md` | `## graphify-scope` section becomes a short `## cdocs-graphify` section |
+| `plugins/cdocs/README.md` | bundled commands line names `chat-record` and `cdocs-graphify`; skills table gains `/cdocs:graphify` |
+| `plugins/cdocs/skills/iterate/SKILL.md` | drop `[--graphify-scope]` from `argument-hint`, the flag bullet, and "Graphify scoping" (replaced by "Base query") |
 | `plugins/cdocs/agents/reviewer.md` | drop "Graphify scoped-context brief (when present)" |
-| `CLAUDE.md` | Skills line gains `code-query` |
+| `CLAUDE.md` | Skills line gains `graphify` |
 | `.gitignore` | add `graphify-out/` (belt and braces with the self-ignoring directory) |
 | `.graphifyignore` | new, with `cdocs/` |
+| `plugins/cdocs/skills/rfp/SKILL.md` | one conditional main-graph refresh step (above) |
+| `plugins/cdocs/skills/devlog/template.md`, `plugins/cdocs/skills/iterate/template.md` | `graphify_query:` becomes `graphify_base_query:` |
 | `plugins/cdocs/skills/init/SKILL.md` | new step: ensure a `cdocs/` line in `.graphifyignore` when it exists or graphify is installed |
 
 Untouched: `/cdocs:ablate`, `.devcontainer/`, `scripts/build-opencode.ts`.
@@ -242,13 +268,13 @@ And only the consumer knows when to go deeper with `explain` or `path`.
 - **Rule bullet:** discovery for every agent, and the overseer's half of the contract, which must be in context without loading anything.
   Each duty is stated once: the overseer's in the rule, the consumers' in the skill, the loop bookkeeping in iterate.
 
-### D3: Per-worktree indexes, seeded from the main graph
+### D3: Per-worktree indexes, copied from the main graph
 
 Each worktree gets its own `graphify-out/`, copied once from the main graph and kept current by `update` on every call.
-No agent writes the shared index, so one-writer-per-file holds across worktrees, and an agent in one worktree never queries another branch's graph.
+No code-reading agent writes the shared index, so one-writer-per-file holds across worktrees, and an agent in one worktree never queries another branch's graph.
 This removes the cross-worktree staleness and overwrite risk that lace D3 accepted for a shared index.
 The copy works because node paths and manifest keys are relative (verified on 0.9.61); dropping the copied `.graphify_root` makes the first update resolve them against the worktree, so it prunes the branch's deleted files at once.
-Refreshing the main graph (`graphify update /workspace/clauthier/main` with the baked `GRAPHIFY_OUT` in the container) stays an operator task; a stale main graph only costs a larger first update.
+Refreshing the main graph (`graphify update /workspace/clauthier/main` with the baked `GRAPHIFY_OUT` in the container) is the consumer's, plus the `/cdocs:rfp` step; a stale main graph only costs a larger first update.
 
 ### D4: Plain `update`, no LLM
 
@@ -262,15 +288,15 @@ The lace container has neither (verified); users who install them anyway lose no
 
 ### D6: The dispatch prompt carries the query; agent files gain nothing
 
-The rule line tells overseers to pass `graphify_query` to any agent that reads code, so propose-revise, full-send, and oversee are covered without per-skill text.
+The rule line tells overseers to pass `graphify_base_query` to any agent that reads code, so propose-revise, full-send, and oversee are covered without per-skill text.
 An explicit prompt line is the most reliable trigger and makes verification direct.
 `implementer.md` and `reviewer.md` gain no graphify section; `reviewer.md` loses its brief section.
 
-> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): If Phase 5 shows fresh agents skipping the seed despite the prompt line, the fallback is one startup line per agent file, not more machinery.
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): If Phase 5 shows fresh agents skipping the base query despite the prompt line, the fallback is one startup line per agent file, not more machinery.
 
 ### D7: Reviewers may write their worktree's index
 
-`code-query` writes a self-gitignored derived cache in the reviewer's own checkout, the same class of side effect as a test run's build output, which `reviewer.md`'s "empirical verification" already allows.
+`cdocs-graphify` writes a self-gitignored derived cache in the reviewer's own checkout, the same class of side effect as a test run's build output, which `reviewer.md`'s "empirical verification" already allows.
 It never touches tracked files, configuration, or the shared index, so `reviewer.md`'s boundary text needs no change.
 
 ### D8: Replace, do not deprecate
@@ -279,18 +305,13 @@ It never touches tracked files, configuration, or the shared index, so `reviewer
 
 ### D9: Exclude `cdocs/` with the repo's `.graphifyignore`
 
-`cdocs/` is excluded from every graph: the main build, each worktree's updates, and therefore every query.
-**Mechanism:** a `cdocs/` line in the consuming repo's root `.graphifyignore`, graphify's only exclusion mechanism (no CLI flag exists).
-It lives in the repo, not the wrapper, because the operator's main-graph build never passes through `code-query` and must honor it too.
-`/cdocs:init` adds the line idempotently when `.graphifyignore` exists or `command -v graphify` succeeds, so repos without graphify get no stray file; clauthier commits its own.
-Gitignoring `cdocs/` is not an option: cdocs documents are tracked.
-
-`update` graphs markdown headings, so the ignore line is the only thing keeping `cdocs/` out.
-A graph built before the line lands loses its `cdocs/` nodes on the next plain `update`, whether in a worktree copy or the main graph.
+`cdocs/` is large prose that agents read directly, and on clauthier it would be 90% of the graph.
+The ignore lives in the repository, not the wrapper, because the main-graph refresh never passes through `cdocs-graphify` and must honor it too.
+Mechanics are in "How `cdocs/` is kept out of the graph" above.
 
 ## Edge Cases
 
-- **No graphify, no index, or not in git:** one stderr line, exit 0; the overseer leaves the seed empty.
+- **No graphify, no index, or not in git:** one stderr line, exit 0; the overseer leaves the base query empty.
 - **Main checkout is the caller (host only):** its `graphify-out/` is both main graph and worktree index; the copy is skipped and the update keeps the main graph current as a side effect.
   In the container, `GRAPHIFY_OUT` names `/var/cache/graphify` as the main graph, so the main checkout gets its own copy like any worktree.
 - **Bare-repo layout:** the main graph is found by branch (`main`), not list order; in this repo `git worktree list` lists the bare dir and `interfacer-agent` before `main`.
@@ -300,26 +321,26 @@ A graph built before the line lands loses its `cdocs/` nodes on the next plain `
 - **Update failure or timeout:** query the existing index; agents verify specific edges in code.
 - **Large output:** `query` caps itself at its default `--budget`; `explain` truncates its own connection list; the coupling section is capped at 30 lines.
 - **No match:** retry once with entity names, then proceed without the graph.
-- **Docs-heavy repos (clauthier):** skills and rules are graphed as markdown heading structure, which orients but carries no call edges; the overseer may leave the seed empty for pure-prose workstreams.
-- **OpenCode:** `build:cdocs` copies `skills/` wholesale; the skill ships unchanged, and `code-query` is plain bash, available wherever `bin/` is on `PATH`.
+- **Docs-heavy repos (clauthier):** skills and rules are graphed as markdown heading structure, which orients but carries no call edges; the overseer may leave the base query empty for pure-prose workstreams.
+- **OpenCode:** `build:cdocs` copies `skills/` wholesale; the skill ships unchanged, and `cdocs-graphify` is plain bash, available wherever `bin/` is on `PATH`.
 
 ## Test Plan
 
-`plugins/cdocs/hooks/tests/code-query.test.sh` (target at most about 80 lines), against a `graphify` stub on `PATH` that logs argv, `$GRAPHIFY_OUT`, and `$PWD`, in a temp git repo with a main-branch worktree and a sibling worktree:
+`plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` (target at most about 80 lines), against a `graphify` stub on `PATH` that logs argv, `$GRAPHIFY_OUT`, and `$PWD`, in a temp git repo with a main-branch worktree and a sibling worktree:
 - No `graphify` on `PATH`: exit 0, one stderr line, no `graphify-out/` created.
 - No index anywhere: exit 0, one stderr line, stub never called for a query.
 - Sibling worktree without an index: the main graph is copied without `.graphify_root`, `.gitignore` is `*`, `git status --porcelain` is clean.
 - Second call: no copy (an index-file sentinel is unchanged); `update` runs again.
 - Ignore hint: with `cdocs/` present and no `cdocs/` line in `.graphifyignore`, exactly one hint line on stderr and the query still runs; with the line, no hint.
 - Update writes only under the worktree's `graphify-out/` (stub log shows `GRAPHIFY_OUT=<worktree>/graphify-out`); the main graph's mtime is unchanged.
-- Passthrough: `code-query path "A B" C` reaches the stub as exactly `path`, `A B`, `C`, `--graph <worktree graph.json>`; stub stdout and exit code come back unchanged.
+- Passthrough: `cdocs-graphify path "A B" C` reaches the stub as exactly `path`, `A B`, `C`, `--graph <worktree graph.json>`; stub stdout and exit code come back unchanged.
 - Update failure: one stderr line, query still runs.
 - Runtime coupling: a file named in stub output with `.observe(` gets a `RUNTIME COUPLING` section; output naming no such file gets none.
 
 Also:
 - Exclusion: `.graphifyignore` at the repo root contains `cdocs/`; re-running the init step leaves exactly one such line.
 - Removal: `grep -rn 'graphify-scope\|graphify_scope\|scoped-context brief' plugins/ .github/ CLAUDE.md scripts/` is empty.
-- `npm run test:rules` passes; `npm run test:opencode` passes and `build/cdocs/opencode/skills/code-query/SKILL.md` exists.
+- `npm run test:rules` passes; `npm run test:opencode` passes and `build/cdocs/opencode/skills/graphify/SKILL.md` exists.
 - `chat-record.test.sh --unit` and `validate-cdocs-edit-path.test.sh` pass.
 
 ## Verification Methodology
@@ -331,12 +352,12 @@ graphify is absent on the host, so verification uses a stub there and the real b
    It appends argv to a scratch log, accepts `update`, and puts a unique `GFY-MARKER-<random>` on every output line, node labels included.
    It is time-boxed: it embeds an expiry 30 minutes out, after which it deletes itself and exits 127, so it cannot leak into concurrent sessions; remove it explicitly when done.
 2. Create a fixture main graph at `graphify-out/graph.json` in the `main` checkout.
-3. From a dispatched agent acting as overseer, dispatch a fresh `cdocs:reviewer` with `isolation: "worktree"` on a small real target, with `graphify_query: "<q>"` in the prompt.
+3. From a dispatched agent acting as overseer, dispatch a fresh `cdocs:reviewer` with `isolation: "worktree"` on a small real target, with `graphify_base_query: "<q>"` in the prompt.
 4. Check, in order:
    - **Primary:** the stub log contains `query <q>` with `GRAPHIFY_OUT` under the reviewer's worktree, preceded by one `update`.
-   - **Secondary:** `bash plugins/cdocs/skills/ablate/ablate.sh detect-usage --transcript <reviewer transcript> --tool 'cli:code-query (query|explain|path)'` reports `used`.
-   - **Positive control:** the dispatching agent's own transcript (the newest `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl` whose `Agent` `tool_use` prompt contains the seed query) contains the reviewer's returned report as that call's `tool_result`.
-   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:(code-query|graphify) '` on it reports `unused`.
+   - **Secondary:** `bash plugins/cdocs/skills/ablate/ablate.sh detect-usage --transcript <reviewer transcript> --tool 'cli:cdocs-graphify (query|explain|path)'` reports `used`.
+   - **Positive control:** the dispatching agent's own transcript (the newest `~/.claude/projects/<slug>/<session_id>/subagents/agent-*.jsonl` whose `Agent` `tool_use` prompt contains the base query) contains the reviewer's returned report as that call's `tool_result`.
+   - **Overseer clean:** `grep -c GFY-MARKER` on that same transcript is `0`, and `detect-usage --tool 'cli:(cdocs-)?graphify '` on it reports `unused`.
 5. Remove the stub and fixture and dispatch again: the reviewer completes normally, makes no install or build attempt, and mentions the absence in at most one line.
 
 **Devcontainer live run (post-accept, routed to the overseer or user):** a one-round `/cdocs:iterate` on a small real proposal in a `lace up` container with graphify 0.9.61.
@@ -344,9 +365,30 @@ First rebuild the main graph from the repo after `.graphifyignore` lands: `graph
 
 > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): `/var/cache/graphify` currently holds a stale 73-node fixture rooted at a deleted `/tmp` dir, left by the prior workstream's truncation test: the shared-index overwrite D3 removes, seen in practice.
 
-Check that the implementer's and reviewer's worktrees each gain `graphify-out/`, that `/var/cache/graphify/graph.json`'s mtime is unchanged, that the implementer's report carries a refined `graphify_query`, and that the overseer's transcript contains no distinctive node label from the real output.
+Check that the implementer's and reviewer's worktrees each gain `graphify-out/`, that `/var/cache/graphify/graph.json`'s mtime is unchanged, that the implementer's report carries a refined `graphify_base_query`, and that the overseer's transcript contains no distinctive node label from the real output.
 
-Failure pictures: the stub log has no `query` line (agents ignore the seed); the marker appears in the dispatching agent's transcript (graph output bled back); the shared index's mtime moves (a worktree wrote it); the no-op run shows an install attempt or an error paragraph.
+**Ablation run (devcontainer, after Phase 3):** neither the old nor this design has been measured, so run `/cdocs:ablate` once, single-shot (indicative, per that skill), on a multi-file task:
+
+```
+/cdocs:ablate \
+  --tool 'cli:^(cdocs-)?graphify ' \
+  --task "Rule references take the form \"<H1> › <section>\". List every file and symbol that produces, parses, materializes, or tests this format, and what each would need to change if the separator changed." \
+  --base <Phase 3 commit>
+```
+
+- Assisted arm: the prompt also carries `graphify_base_query: "how are rule references parsed, checked, and materialized"`.
+  Unassisted arm: the same task, plus "do not run graphify or cdocs-graphify"; `detect-usage` on its transcript must report `unused` (the rule line still advertises the skill, so the withhold is by instruction and is checked, not assumed).
+- The task spans `scripts/check-rule-refs.ts`, its test, the `inject-rules.ts` hook, the init skill, and many skills and agents, so recall is not reachable from one file.
+- **What would change the design:**
+  - VOID (`available_unused`): agents ignore a base query they were handed; apply D6's fallback (a startup line in agent files) and re-run.
+  - VALID with `context_gap` at or below 0 and no token saving: overseers stop writing `graphify_base_query` by default (the field stays, opt-in), and the wrapper remains for explicit use; repeat on a weftwise task before deciding.
+  - VALID with a positive `context_gap` or a clear token saving: keep the design; consider passing the base query to the judge too.
+  - TASK-FAIL with only the assisted arm failing: read its transcript for misleading graph output before anything else.
+
+**Exclusion check (devcontainer, with the live run):** after the main-graph rebuild, `grep -o '"source_file": *"cdocs/' /var/cache/graphify/graph.json | wc -l` is `0`, and the same count on each worktree's `graphify-out/graph.json` is `0`.
+The without-the-line count (6637 of 7375 nodes) was already measured by the r2 review and need not be repeated.
+
+Failure pictures: the stub log has no `query` line (agents ignore the base query); the marker appears in the dispatching agent's transcript (graph output bled back); the shared index's mtime moves (a worktree wrote it); the no-op run shows an install attempt or an error paragraph.
 
 ## Implementation Phases
 
@@ -359,30 +401,29 @@ Remaining, if a real graphify is reachable: time `update` on the target repo (we
 If none is reachable, record that and leave both to the devcontainer live run.
 **Done when:** each item is confirmed or explicitly deferred.
 
-### Phase 2: `code-query` replaces `graphify-scope`
+### Phase 2: `cdocs-graphify` replaces `graphify-scope`
 
-Write `bin/code-query` and `hooks/tests/code-query.test.sh` (TDD: tests first), delete the old script and test, update the CI step, `bin/README.md`, the plugin README commands line, and `.gitignore`; add `.graphifyignore` with `cdocs/`.
+Write `bin/cdocs-graphify` and `hooks/tests/cdocs-graphify.test.sh` (TDD: tests first), delete the old script and test, update the CI step, `bin/README.md`, the plugin README commands line, and `.gitignore`; add `.graphifyignore` with `cdocs/`.
 **Done when:** the new suite passes, the remaining hook suites pass, and the script is at most about 60 lines.
 **Do not change:** `/cdocs:ablate`, `.devcontainer/`, `scripts/build-opencode.ts`.
 
-### Phase 3: Seed-query wiring
+### Phase 3: Base-query wiring
 
-Add the skill; replace the `/graphify` rule bullet; define `graphify_query` in the devlog skill; replace iterate's "Graphify scoping" and flag with "Seed query"; drop the reviewer brief section; add the init `.graphifyignore` step; list the skill in the plugin README and `CLAUDE.md`.
-**Done when:** the removal grep is empty, and `npm run test:rules` and `npm run test:opencode` pass.
+Add the skill; rename `graphify_query:` to `graphify_base_query:` in both Scratchpoint templates and any other hit of `grep -rn graphify_query plugins/ CLAUDE.md`; add the `/cdocs:rfp` refresh step; replace the `/graphify` rule bullet; define `graphify_base_query` in the devlog skill; replace iterate's "Graphify scoping" and flag with "Base query"; drop the reviewer brief section; add the init `.graphifyignore` step; list the skill in the plugin README and `CLAUDE.md`.
+**Done when:** the removal grep and `grep -rn 'graphify_query' plugins/ CLAUDE.md` are empty, and `npm run test:rules` and `npm run test:opencode` pass.
 
 ### Phase 4: Supersede the prior proposal
 
 Set [`2026-09-17-graphify-cdocs-integration.md`](2026-09-17-graphify-cdocs-integration.md) to `status: evolved`, `state: archived`, with a NOTE under its title: replaced by this proposal; its D3 runtime-coupling guard is kept as unconditional `.observe`/`.subscribe` surfacing on every query (pattern to be generalized), while the forced unscoped fallback on near-empty sets is dropped because nothing narrows a reviewer's sweep any more.
-Add a NOTE to the lace proposal's D3: agents now query per-worktree indexes seeded from `/var/cache/graphify` and never write it, so the cross-worktree staleness and overwrite risk D3 accepted no longer applies; the shared index is a read-only seed the operator refreshes with a plain `update`.
+Add a NOTE to the lace proposal's D3: agents now query per-worktree indexes copied from `/var/cache/graphify` and never write it, so the cross-worktree staleness and overwrite risk D3 accepted no longer applies; the shared index is a read-only source the consumer refreshes (and `/cdocs:rfp` brings up to date when it starts a workstream).
 **Done when:** `/cdocs:triage` reports no frontmatter issues on either file.
 
 ### Phase 5: Verification
 
 Run the host stub verification; record the stub log excerpt, the `detect-usage` results, the positive control, and the marker count in the devlog.
-Route the devcontainer live run to the overseer as post-accept.
+Route the devcontainer live run, the exclusion check, and the ablation run to the overseer as post-accept.
 **Done when:** all host checks pass, or a failure picture is recorded with the D6 fallback applied and re-run.
 
 ## Open Questions
 
-- Is a multi-file `/cdocs:ablate` run worth scheduling after the devcontainer run, to measure recall and tokens with and without the seed query?
-- Should the operator's main-graph refresh become a lace `postStartCommand` (on the `main` checkout), or stay manual?
+- Should the consumer's main-graph refresh become a lace `postStartCommand` (on the `main` checkout), beyond the `/cdocs:rfp` step?
