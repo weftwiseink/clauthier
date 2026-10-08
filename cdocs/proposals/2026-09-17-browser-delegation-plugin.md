@@ -36,7 +36,8 @@ This proposal commits to:
    Within `/cdocs:iterate`, the reviewer dispatches the delegate and cites its artifacts as its own.
 4. **The dispatcher owns all durable state.**
    The delegate writes only to scratch and reports session facts (names, routes, re-opens).
-   The dispatcher (in iterate, the reviewer) records what it wants, and copies only the screenshots it cites into `cdocs/_media/`, embeds them in its review or devlog, and commits them by exact path with that doc.
+   The dispatcher records what it wants.
+   In a cdocs project, the dispatcher (in iterate, the reviewer) copies only the screenshots it cites into `cdocs/_media/`, embeds them in its review or devlog, and commits them by exact path with that doc.
 5. **Claude Code only.**
    No OpenCode build changes, and nothing in the design depends on OpenCode.
 
@@ -51,7 +52,7 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
 - Multi-client driving: one delegate drives N named sessions in one dispatch.
 - Usage guidance (dispatch shape, toolset complements, iterate integration) in the plugin README and the agent's description.
 - A one-clause clarification to `/cdocs:iterate`'s `confirmed` row so reviewer-dispatched artifacts unambiguously count.
-- A one-clause `reviewer.md` change so the reviewer commits the `cdocs/_media/` evidence it embeds alongside its review.
+- A `reviewer.md` change (one sentence on its commit rule plus a matching exception to its read-only Bash rule) that tells the reviewer to copy cited screenshots into `cdocs/_media/`, embed them, and commit them with its review.
 
 ### Non-Goals (v1)
 
@@ -64,7 +65,7 @@ Let opus/fable leads delegate browser driving, UI capture, and multi-client sync
   `scripts/build-opencode.ts` builds one named plugin (`npm run build:cdocs`), and this plugin is not added to it.
   No part of the design assumes OpenCode exists.
 - **No non-Claude model path.**
-  Model choice stays entirely with the dispatcher and the reviewer: the delegate runs as `model: sonnet`, and the plugin hosts no gateway or direct-API path to another provider.
+  Model choice stays entirely with the dispatcher and the reviewer: the delegate defaults to `model: sonnet`, the dispatcher may override it per dispatch with the Agent tool's `model` parameter (which takes precedence over agent frontmatter, Anthropic models only), and the plugin hosts no gateway or direct-API path to another provider.
 - **No fixer/auto-patch persona.**
   "Minor UI tweaking" stays in the existing implement/review loop (D3).
 - **No A2A surface** (D4).
@@ -124,7 +125,7 @@ description: |
   - Actions (navigate, click, type, wait-for, screenshot, snapshot, poll-until)
   - Optional: one baseline image and the screenshot to diff against it; convergence condition and timeout
   - Optional: fresh sessions (close any live session of that name, then open), required for independent verification; an iterate reviewer uses it with `<branch>-review-<role>` names
-  Responds with artifact paths and mechanical facts only. Prefer it over driving a browser MCP yourself.
+  Responds with artifact paths and mechanical facts only; when citing it as evidence, quote its Sessions, Artifacts, Facts, and AE score lines. Prefer it over driving a browser MCP yourself.
 tools: Bash, Read
 maxTurns: 40
 ```
@@ -188,13 +189,15 @@ The fresh-sessions option closes any review-suffixed session left live by a prev
 Its report must list each session as `opened`, and a `reused` session never backs a `confirmed` row.
 The reviewer learns this from the option's line in the agent description, which is in its Agent tool listing, so the rule reaches it at runtime without the README.
 
-Evidence has two parts, so it outlives scratch and survives worktrees:
-- **Textual audit trail.** The review inlines the report's `Sessions`, `Facts`, and `AE score` lines (so the `opened` requirement stays auditable) plus the reviewer's own description of what the artifact shows.
-- **Cited screenshots.** The reviewer copies each screenshot its verdict relies on from scratch to `cdocs/_media/YYYY-MM-DD-<description>.png` (the cdocs media convention, `frontmatter-spec.md` "Media"), embeds it in the review, and commits it with the review by exact path.
+Evidence has two parts, both committed with the review:
+- **Textual audit trail.** The review inlines the report's `Sessions`, `Artifacts`, `Facts`, and `AE score` lines (so the `opened` requirement and the scratch source paths stay auditable) plus the reviewer's own description of what the artifact shows.
+- **Cited screenshots.** The reviewer copies each screenshot its verdict relies on, and only paths listed in the inlined `Artifacts` line, from scratch to `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png`, embeds it captioned with its scratch source path, and commits it with the review by exact path.
+  The name keeps the cdocs media convention's `YYYY-MM-DD-description` shape (`frontmatter-spec.md` "Media") while never colliding with implementer devlog media, and an existing `_media` file is never overwritten.
+  The caption and the inlined `Artifacts` line tie each image to this round's `opened` dispatch, so the overseer can check provenance.
   Uncited captures stay in scratch.
 
-One writer per file holds: the delegate writes only to scratch, and the reviewer alone writes the `_media/` copies and the review that embeds them.
-Phase 3 adds the one clause `reviewer.md` needs for this to its commit rule.
+One writer per file holds: the delegate writes only to scratch, and the reviewer alone writes its review-named `_media/` copies and the review that embeds them.
+The instruction and its permission live in `reviewer.md`, the reviewer's own system prompt, so they reach it at runtime and are not browser-specific (Phase 3 gives the text), and iterate Turn N.b is unchanged apart from the `confirmed` clause.
 
 Depth: under a top-level overseer the reviewer is layer 1 and the delegate layer 2, and a nested overseer ([nest-overseers RFP](2026-10-06-nest-overseers-rfp.md)) puts the delegate at layer 3, the default limit, which is fine for a leaf.
 Under a nested overseer, any wrapper agent between the reviewer and the delegate pushes the delegate past the limit, so fan-out to multiple delegates is always done by the dispatcher directly, never by an intermediate agent.
@@ -238,9 +241,9 @@ Long flows pass `--idle-timeout=<ms>` at open, and `--persistent` stays out of t
 | `.claude-plugin/marketplace.json` | Add a `browser-delegate` entry (`source: ./plugins/browser-delegate`). |
 | `plugins/browser-delegate/.claude-plugin/plugin.json` | Plugin manifest. |
 | `plugins/browser-delegate/agents/browser-delegate.md` | The agent: frontmatter above, with a body holding workflow, session naming, convergence, report format. |
-| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines, copies cited screenshots to `cdocs/_media/` and embeds them), multi-client guidance. |
+| `plugins/browser-delegate/README.md` | Install, dispatch examples, the toolset complements table, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Artifacts`/`Facts`/`AE score` lines, copies cited screenshots to review-named `cdocs/_media/` files and embeds them with scratch-path captions), multi-client guidance. |
 | `plugins/cdocs/skills/iterate/SKILL.md` | One clause on the `confirmed` row: an artifact produced by a subagent the reviewer dispatched this round counts as its own. |
-| `plugins/cdocs/agents/reviewer.md` | One clause on the commit rule: the review commit also includes the `cdocs/_media/` evidence the review embeds. |
+| `plugins/cdocs/agents/reviewer.md` | One sentence on the commit rule (copy cited screenshots to review-named `cdocs/_media/` files, embed with scratch-path captions, include in the commit) and "except that `_media` copy" on the read-only Bash rule. |
 
 Example dispatch (Agent tool, `subagent_type: "browser-delegate:browser-delegate"`):
 
@@ -337,7 +340,7 @@ Lead-facing toolset guidance belongs where a lead looks when choosing a tool: th
   `playwright-cli -s=<name> close` between dispatches, then re-dispatch: `opened`.
   `playwright-cli -s=<name> close` from another shell during a dispatch's `wait-for`: `reopened` (not `kill-all`, which ends every session on the host).
 - **Worktree hygiene.** After a dispatch, the dispatcher's worktree has no new `.playwright-cli/` or other untracked files: the delegate writes only to scratch.
-- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches on `<branch>-review-<role>` names with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review inlines the report's `Sessions`, `Facts`, and `AE score` lines and embeds the cited screenshot from `cdocs/_media/YYYY-MM-DD-<description>.png`, committed with the review by exact path (uncited captures are not copied), the implementer's sessions are still live and untouched, and the overseer records `confirmed`.
+- **Iterate `review_proof`.** Run one iterate round whose floor needs a browser, after the implementer has driven the same route: the reviewer dispatches on `<branch>-review-<role>` names with the fresh-sessions option and its delegate reports its sessions as `opened` (not `reused`), the review inlines the report's `Sessions`, `Artifacts`, `Facts`, and `AE score` lines and embeds the cited screenshot from `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png`, captioned with a scratch path that appears in the inlined `Artifacts` line and committed with the review by exact path (uncited captures are not copied, and no existing `_media` file changed), the implementer's sessions are still live and untouched, and the overseer records `confirmed`.
 - **Multi-client convergence.** One delegate, two sessions (sharer/sharee) on a real sync-capable route: convergence detected by polling within the timeout, and a forced non-convergence reports divergence, not a pass.
 - **Missing CLI.** Make neither the global nor the project-local CLI resolve: the delegate reports `FAILED` and does not fall back.
 
@@ -372,7 +375,7 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 
 - Add the marketplace entry, `plugin.json`, `agents/browser-delegate.md`, and `README.md` per the file table.
 - Agent body: CLI resolution and availability check, scratch root and `--filename` captures, session naming and sanitization, the fresh-sessions option, re-open handling, action vocabulary, single-pair AE diff, bounded poll loop, report format.
-- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Facts`/`AE score` lines, copies cited screenshots to `cdocs/_media/` and embeds them), multi-client guidance.
+- README: dispatch examples, toolset complements (D2), pinning note per Phase 1, iterate integration (reviewer uses `<branch>-review-<role>` names with the fresh-sessions option, inlines the report's `Sessions`/`Artifacts`/`Facts`/`AE score` lines, copies cited screenshots to review-named `cdocs/_media/` files and embeds them with scratch-path captions), multi-client guidance.
 - Success: a dispatch from a session with no Playwright MCP server produces a named session, a saved screenshot, an `AE score` against a supplied baseline, and a report matching the format, verified by opening the artifacts.
 - Constraints: no skills, no `rules/`, no changes to `scripts/build-opencode.ts` or any OpenCode artifact.
 - Depends on: Phase 1 for README pinning wording and CLI resolution, and for session naming if the isolation spike fails.
@@ -380,9 +383,11 @@ Run the real flows against a real target, with the TDD posture of this repo's we
 ### Phase 3: Iterate integration
 
 - Add the one-clause `confirmed` clarification to `plugins/cdocs/skills/iterate/SKILL.md`.
-- Add the one-clause commit-rule change to `plugins/cdocs/agents/reviewer.md`: "Commit your review file, plus the `cdocs/_media/` evidence it embeds (and the reviewed doc's `last_reviewed` ...), by explicit path".
-- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched on `<branch>-review-<role>` names with the fresh-sessions option, whose inlined `Sessions` line reports `opened`, and whose cited screenshot is embedded from `cdocs/_media/` in the committed review.
-- Constraints: no cdocs agent or skill changes beyond these two clauses (`reviewer.md` already has `tools: "*"`).
+- Change two constraint bullets in `plugins/cdocs/agents/reviewer.md` to this final text:
+  - "Commit your review file (and the reviewed doc's `last_reviewed` if the review skill says so) by explicit path; run no other mutating VCS command. When your verdict relies on a screenshot listed in a subagent report's `Artifacts` line, `cp -n` it to `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png` (`<review-doc-name>` is your review file's name without its date prefix and `.md`; if that name exists, choose another description, never overwrite), embed it in your review captioned with its source scratch path, and include it in this commit."
+  - "Use `Bash` for read-only inspection and empirical verification (running tests, starting a dev server, `curl` against a local endpoint, etc.), except that `_media` copy. Do not install dependencies, modify configuration files, run codegen, or run migrations."
+- Success: an iterate round with a browser floor ends with a `confirmed` row citing an artifact from a delegate the reviewer dispatched on `<branch>-review-<role>` names with the fresh-sessions option, whose inlined `Sessions` line reports `opened`, and whose cited screenshot is embedded in the committed review from a `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png` copy captioned with a scratch path listed in the inlined `Artifacts` line.
+- Constraints: no cdocs agent or skill changes beyond the iterate `confirmed` clause and these two `reviewer.md` bullets (`reviewer.md` already has `tools: "*"`).
 - Depends on: Phase 2.
 
 ### Phase 4: Multi-client driving and convergence
