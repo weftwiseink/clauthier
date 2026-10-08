@@ -22,7 +22,7 @@ The record should carry the most important things the agent tells the user each 
 
 ## Scratchpoint
 
-- next_steps: iterate round 1 implementer running in `../chat-record-flexible`; then fresh reviewer. After landing, add the session-named record path to this and the other live devlogs' `chat_record:`.
+- next_steps: reviewer-accepted (`confirmed`), branch ready at `f20179a`; on maintainer acceptance set `implementation_accepted`, rebase onto main (after interfacer), ff-merge, remove worktree (delete its untracked `node_modules` symlink first), regenerate this repo's `cdocs/_chat/README.md` from the new init template. After landing, add the session-named record path to this and the other live devlogs' `chat_record:`.
 - graphify_query:
 - important_files: `plugins/cdocs/rules/overseers.md` "Chat record", `plugins/cdocs/bin/chat-record`, `plugins/cdocs/bin/README.md`, `plugins/cdocs/hooks/tests/` (chat-record tests), `plugins/cdocs/skills/init/SKILL.md` (`_chat/README.md` template), `plugins/cdocs/rules/frontmatter-spec.md` (`_chat` naming), `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`
 - callouts:
@@ -67,6 +67,7 @@ Failure picture: rename appends to the old record, `ai-title` changes the filena
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r1.md` (branch) | 2026-10-08T11:27 | implementation round 1 |
 | return | rev-impl-1 | `33ecf79` (branch) | 2026-10-08T11:35 | accept, `review_proof: confirmed`: unit 126/0, init_real 135/0, rules 11/0, headless 12/0; own `--name` and `/rename` runs: first turn fully in named record, `path` agrees with hooks, prose note byte-exact. `session_title` holds only user-set names (read from bundled CLI). 5 non-blocking (4 cuts + regenerate this repo's `_chat/README.md`) |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T11:36 | pre-landing items 1-4, statuses |
+| return | impl-1 | `67c8f31..f20179a` | 2026-10-08T11:40 | items 1-4 applied; unit 123/0, rules 11/0; proposal held at `implementation_wip` pending maintainer acceptance; untracked `node_modules` symlink in worktree |
 
 ## Steering Log
 
