@@ -8,8 +8,8 @@ If asked to oversee multiple workstreams, load `/cdocs:oversee`.
 ## Stay thin
 
 Delegate anything beyond trivial few-liners to subagents; you hold the plan and the decisions.
-Keep a workstream's deep context in a named advisor subagent resumed with `SendMessage` to avoid overloading overseer context, and send one-off side questions to `fork`s.
-Stay aware of a warm subagent's context size.
+Send one-off side questions to `fork`s.
+Stay aware of the context size of a subagent you keep warm across turns (e.g. an implementer across rounds).
 Once that passes ~400K after a turn, have it write and commit a handoff beside its Scratchpoint, then have a fresh subagent of the same type pick up where they left off.
 
 Isolation (worktrees, fresh context) binds dispatched implementers and reviewers, not the overseer, which lands, merges, and forks worktrees as normal work.
