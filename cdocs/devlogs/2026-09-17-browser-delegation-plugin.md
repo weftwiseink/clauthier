@@ -150,6 +150,8 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `browser-delegate`: plugins/browser-delegate/**, .claude-plugin/marketplace.json, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/agents/reviewer.md, cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md | 2026-10-07 | Phases 1-4; nested `claude -p --plugin-dir` as real dispatch path |
+| return | impl-1 | branch `browser-delegate` `8089d2b..9b16cdb` (14 commits) | 2026-10-07 | Phases 1-4 done, sub-devlog review_ready. Gaps: convergence vs scratch relay fixture (not weftwise); SIGTRAP spike in throwaway container from weftwise devcontainer image; full iterate loop not run (Phase 3 checked via real reviewer in scratch repo); OC build of edited cdocs files not run. Deviations: `Optional: config` prompt line, `node_modules/.bin/playwright-cli` local resolution, `wait-for` via `run-code`, `colors=` fact, root README line |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | main: cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r1.md + cdocs/_media/2026-10-07-browser-delegation-plugin-impl-r1-*.png | 2026-10-07 | re-runs floor via nested `claude -p --plugin-dir` with review-suffixed fresh sessions |
 
 ## Steering Log
 
