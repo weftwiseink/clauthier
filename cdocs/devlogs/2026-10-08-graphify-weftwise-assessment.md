@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: rev-4 reviewing Phase 4; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: prop-1 applying r4 accept-round items; then fresh Phase 4 implementer, then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -42,6 +42,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): no LLM-labelled graph variant (our skill does not label; credentials/cost); recorded as a verdict-changer.
   - decision (overseer call): leaked tasks run on their pre-investigation commit with the `source` patch, not rephrased; replaced only if the patch does not apply.
   - decision (overseer call): grep arm gets everything but graphify (Bash, scripts, `tsc`, no installs); no subagents, no git, both arms.
+  - decision (overseer call): Phase 4 headlines reach as per-arm unique important items; Phases 1-3 text left as is.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -65,6 +66,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | `dist/` resolution gap + `source` condition fix; 39-edge misattribution; Q12 regrade |
 | impl-2 | impl-1 (warm) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | accept-round: BLUF framing, trim, small fixes |
 | r3 (Phase 4) | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r3.md` | graph arm silent fallback, in-worktree leaks, weak grep arm |
+| r4 (Phase 4) | prop-1 (warm) | rev-4 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r4.md` | N1 mixed outcome, N2 scratch dirs |
 
 ## Judge Log
 
@@ -103,6 +105,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:07 | r3 revisions + overseer calls on 3 questions; `--graph` scratch-copy rule |
 | return | prop-1 | `6f6a4df` | 2026-10-08T23:15 | all r3 items: one container command on card, pilot on held-out Q5/Q7, rerun graph arm with no graphify call; no git, no subagents, no writes/devlogs for arms; distinctive-phrase leak check, leaked tasks on pre-fix commit; grep arm everything but graphify incl. `main/node_modules/.bin` by absolute path; `--graph` scratch rule (report floor already compliant, NOTE); classes reshaped (cycles 1 synthetic lookup, 2 each for transitive/tests/cross-package, synthetic outside tally); answers capped 15, normalised `file:entity`; reach vs efficiency wins; jq transcript checks. Proposal 604 lines |
 | dispatch | rev-4 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r4.md` | 2026-10-08T23:17 | round 4; r3 resolution, fairness both ways, ceremony cut, mechanics probes |
+| return | rev-4 | `9538c23` | 2026-10-08T23:30 | proposal_accepted; 10/10 r3 items resolved; fair both ways (best-case seeking matched by inflation guards). Mechanics: card command works (wrapper explain 12.1 s cold / 0.66 s warm, raw `god-nodes` 0.40 s, stamp stays valid); `tsc` runs from fresh worktree but ~4,000 errors (1,662 missing external modules) and writes `tsconfig.tsbuildinfo` into the worktree. Pre-dispatch: N1 "mixed" outcome + per-arm unique items, N2 per-arm scratch dir + read-only path check. Phase 4 ~184 lines, ~25 restated. ~35-40 dispatches, 1-2 h arms. 2 maintainer questions |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T23:32 | N1, N2, optional items, ~25-line cut, `implementation_ready` |
 
 ## Steering Log
 
