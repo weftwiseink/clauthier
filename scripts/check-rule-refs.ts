@@ -7,8 +7,8 @@
  * and inlines them into `AGENTS.md`, so only the H1 survives every form.
  *
  * Usage:
- *   tsx scripts/check-rule-refs.ts                         check the source tree
- *   tsx scripts/check-rule-refs.ts --materialized <proj>   resolve against a
+ *   node --import tsx scripts/check-rule-refs.ts           check the source tree
+ *   node --import tsx scripts/check-rule-refs.ts --materialized <proj>  resolve against a
  *       project's `.claude/rules/cdocs.md` and `AGENTS.md` block
  *
  * The test suite is scripts/check-rule-refs.test.ts (`npm run test:rules`).
@@ -123,8 +123,8 @@ function escapeRegExp(s: string): string {
 /**
  * Rule-filename references: a `<rule-file>.md` name, any `rules/<name>.md`
  * path (including globs and deleted rules), and any `plugins/cdocs/rules` path.
- * `.claude/rules/` and `.opencode/rules/` paths are materialized locations that
- * exist downstream and are not flagged. One hit per line.
+ * The literal `.claude/rules/cdocs.md`, the materialized file that exists
+ * downstream, is not flagged. One hit per line.
  */
 export function findFilenameRefs(path: string, text: string, ruleFiles: string[]): Hit[] {
   const hits: Hit[] = [];
@@ -137,7 +137,7 @@ export function findFilenameRefs(path: string, text: string, ruleFiles: string[]
     }
     for (const m of line.matchAll(/rules\/([\w*.-]+\.md)/g)) {
       const before = line.slice(0, m.index);
-      if (/[\w-]$/.test(before) || /\.(claude|opencode)\/$/.test(before)) continue;
+      if (/[\w-]$/.test(before) || (m[1] === "cdocs.md" && before.endsWith(".claude/"))) continue;
       matches.push({ match: m[0], file: ruleFiles.includes(m[1]) ? m[1] : undefined });
     }
     for (const m of line.matchAll(/plugins\/cdocs\/rules[\w\/*.-]*/g)) matches.push({ match: m[0] });

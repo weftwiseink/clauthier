@@ -129,7 +129,7 @@ test("5f. the AGENTS.md block and concatenated file parse to the same rules", ()
   assert.deepEqual(parseRules(concatenated), expected);
 });
 
-test("5g. filename references are found; materialized paths are not", () => {
+test("5g. filename references are found; the literal .claude/rules/cdocs.md is not", () => {
   const files = ["overseers.md", "workflow-patterns.md"];
   const hits = (line: string) => findFilenameRefs("f.md", line, files);
   assert.deepEqual(
@@ -140,6 +140,8 @@ test("5g. filename references are found; materialized paths are not", () => {
   assert.equal(hits("see rules/deleted-rule.md").length, 1);
   assert.equal(hits("Glob `plugins/cdocs/rules/` first").length, 1);
   assert.equal(hits("written to `.claude/rules/cdocs.md`").length, 0);
+  assert.equal(hits("written to `.claude/rules/other.md`").length, 1);
+  assert.equal(hits("written to `.opencode/rules/cdocs.md`").length, 1);
   assert.equal(hits("copied to `.opencode/rules/cdocs/overseers-x.md`").length, 0);
   assert.equal(hits("my-overseers.md and overseers.mdx").length, 0);
 });
