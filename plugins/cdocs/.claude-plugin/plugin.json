@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "cdocs",
   "description": "Documentation framework for organizing development work with structured devlogs, proposals, reviews, and reports.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "keywords": ["documentation", "devlog", "proposal", "review", "workflow", "subagents"],
   "author": {
     "name": "weft"
