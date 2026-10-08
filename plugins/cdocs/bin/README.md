@@ -73,7 +73,8 @@ Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat rec
 
 - Copies the main graph into `<toplevel>/graphify-out/` if that has no `graph.json`: from `$GRAPHIFY_OUT` when set (the devcontainer's shared index), else from the `main` worktree's `graphify-out/`.
   The copy drops `.graphify_root` and graphify's dated backup dirs, and ignores itself (`.gitignore` of `*`).
-- Runs `graphify update <toplevel>` into that index (AST-only, no LLM), logging to `graphify-out/update.log`; on failure it says so and queries the existing index.
+- Runs `graphify update <toplevel>` into that index (AST-only, no LLM), logging to `graphify-out/update.log`, unless a stamp of `HEAD` plus the changed files graphify graphs (paths in `.graphifyignore` left out) matches the last successful update; on failure it says so and queries the existing index.
+  graphify 0.9.x rebuilds the whole corpus on every `update`, so the first query after a code edit costs about 14 s at weftwise scale.
 - Passes its arguments to `graphify` with `--graph <worktree index>`, stdout and exit code unchanged.
 - Appends `.observe`/`.subscribe` sites (up to 30) from files the output names, which the graph cannot see.
 - Without `graphify`, a git worktree, or any index: one `skipping` line on stderr, exit 0.

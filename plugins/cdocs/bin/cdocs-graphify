@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # cdocs-graphify {query|explain|path|affected} ARGS...
-# Runs graphify against this worktree's own index (<toplevel>/graphify-out/): copies the main
-# graph there if absent, refreshes it with `graphify update` (AST-only), passes the arguments
-# through with --graph, and appends .observe/.subscribe sites the graph cannot see.
+# Runs graphify on this worktree's own index (<toplevel>/graphify-out/): copies the main graph
+# there if absent, runs `graphify update` when the graphed tree changed (a full rebuild, about 14 s
+# at weftwise scale), passes the arguments through with --graph, and appends .observe/.subscribe sites.
 # Design: cdocs/proposals/2026-10-08-graphify-overhaul.md. Portable bash (Linux and macOS).
 set -u
 note() { echo "cdocs-graphify: $*" >&2; }
@@ -23,7 +23,7 @@ main_out="${GRAPHIFY_OUT:-}"
 if [ ! -f "$wt_out/graph.json" ]; then
   [ -f "$main_out/graph.json" ] || skip "no graph index"
   tmp=$(mktemp -d "$top/graphify-out.tmp.XXXXXX") && cp -R "$main_out/." "$tmp/" &&
-    rm -rf "$tmp/.graphify_root" "$tmp"/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
+    rm -rf "$tmp/.graphify_root" "$tmp/.stamp" "$tmp"/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
     echo '*' >"$tmp/.gitignore" && { [ -e "$wt_out" ] || mv "$tmp" "$wt_out"; }
   # shellcheck disable=SC2115 # guarded: a lost race nests tmp inside wt_out
   [ -n "$tmp" ] && rm -rf "$tmp" "$wt_out/${tmp##*/}"
@@ -31,7 +31,15 @@ if [ ! -f "$wt_out/graph.json" ]; then
 fi
 [ -d "$top/cdocs" ] && ! grep -qxE '/cdocs/?' "$top/.graphifyignore" 2>/dev/null &&
   note "hint: .graphifyignore lacks a /cdocs/ line; run /cdocs:init"
-GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 ||
+# Skip the refresh when HEAD and the graphed working-tree changes match the last successful update.
+stamp=$(cd "$top" && {
+  chg=$({ git diff HEAD --name-only; git ls-files -o --exclude-standard; } | sort -u)
+  ign=$(printf '%s\n' "$chg" | git -c core.excludesFile="$top/.graphifyignore" check-ignore --no-index --stdin)
+  chg=$(printf '%s\n' "$chg" | grep -vxF -e "${ign:-//}"); git rev-parse HEAD; printf '%s\n' "$chg"
+  printf '%s\n' "$chg" | while IFS= read -r f; do [ -f "$f" ] && echo "$f"; done | git hash-object --stdin-paths
+} 2>/dev/null | git hash-object --stdin)
+[ "$stamp" = "$(cat "$wt_out/.stamp" 2>/dev/null)" ] ||
+  { GRAPHIFY_OUT="$wt_out" graphify update "$top" >"$wt_out/update.log" 2>&1 && echo "$stamp" >"$wt_out/.stamp"; } ||
   note "update failed (graphify-out/update.log); querying existing index"
 
 # Pass through unchanged, then surface runtime coupling in files the output names.

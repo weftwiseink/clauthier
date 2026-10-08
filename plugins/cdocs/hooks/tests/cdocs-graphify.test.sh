@@ -51,7 +51,7 @@ check "update into the worktree index, then query" "$(sed 's/ PWD=.*//' "$GLOG")
 <query><how does b work><--graph><$WT/graphify-out/graph.json> OUT=$WT/graphify-out"
 check "main graph untouched" "$(cksum <"$MG/graph.json") $([ -e "$MG/update.log" ] && echo y || echo n)" "$sum0 n"
 echo m2 >"$MG/sentinel"; run query q
-check "second call: no copy, update again" "$(cat "$WT/graphify-out/sentinel") $(grep -c '^<update>' "$GLOG")" "m1 2"
+check "second call, unchanged tree: no copy, no update" "$(cat "$WT/graphify-out/sentinel") $(grep -c '^<update>' "$GLOG")" "m1 1"
 
 echo "== GRAPHIFY_OUT names the main graph (container)"
 rm -rf "$WT/graphify-out"; mv "$MG" "$T/shared"; CGENV=(env GRAPHIFY_OUT="$T/shared"); : >"$GLOG"; run query q
@@ -64,12 +64,19 @@ check "cdocs/ without ignore line: one hint, query runs" "$(grep -c 'hint' "$T/e
 echo "cdocs/" >"$WT/.graphifyignore"; run query q; check "unanchored cdocs/ line: hint" "$(grep -c 'hint' "$T/err")" "1"
 echo "/cdocs/" >"$WT/.graphifyignore"; run query q; check "with /cdocs/ line: no stderr" "$ERR" ""
 
+echo "== staleness stamp"
+ups() { grep -c '^<update>' "$GLOG"; }
+: >"$GLOG"; run query q; check "unchanged tree: update skipped" "$(ups)" "0"
+echo x >"$WT/cdocs/note.md"; run query q; check "edit under ignored /cdocs/: update skipped" "$(ups)" "0"
+echo "export const c = 2" >>"$WT/src/b.ts"; run query q; check "code edit: update runs" "$(ups)" "1"
+
 echo "== passthrough and update failure"
 CGENV=(env GSTUB_OUT="hello out" GSTUB_RC=3); run path "A B" C
 check "stdout and exit code unchanged" "$OUT|$RC" "hello out|3"
 check "argv exact" "$(tail -n 1 "$GLOG" | sed 's/ OUT=.*//')" "<path><A B><C><--graph><$WT/graphify-out/graph.json>"
-CGENV=(env GSTUB_UPDFAIL=1 GSTUB_OUT=x); run explain e
+echo "// e" >>"$WT/src/b.ts"; CGENV=(env GSTUB_UPDFAIL=1 GSTUB_OUT=x); run explain e
 check "update failure: one stderr line, query runs" "$(grep -c . "$T/err") $OUT $(tail -n 1 "$GLOG" | cut -c1-9)" "1 x <explain>"
+CGENV=(env); : >"$GLOG"; run query q; check "failed update leaves the stamp stale" "$(ups)" "1"
 
 echo "== runtime coupling"
 CGENV=(env GSTUB_OUT="NODE a [src=src/a.ts loc=L1] at=src/b.ts:L1 consumer.ts"); run query q
