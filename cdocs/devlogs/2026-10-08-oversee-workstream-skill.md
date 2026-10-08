@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: prop-1 r2 revision, then fresh rev-3; on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: rev-3 reviewing `eca42cd`; on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -51,6 +51,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r2.md` | 2026-10-08T15:11 | round 2 |
 | return | rev-2 | `ccf437d` | 2026-10-08T15:25 | revise; r1's 7 blocking applied. B1 Phase 2 adds skill refs before skills exist; B2 §1 "dispatcher owns the top-level devlog" contradicts iterate/propose-revise for a dispatched overseer; B3 verification grep misses README `.opencode/skills/oversee/`. Footprint complete (51 hits covered); top-level definition clear; trigger covered. ~20 lines of cuts. Maintainer questions: B2 wording, keep §7 check |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:27 | B1-B3, count fix, test clash, overlap NOTE, cuts. Overseer defaults (flagged as such): B2 = "your dispatcher owns the chat record"; keep §7 skill-reference check |
+| return | prop-1 | `eca42cd` | 2026-10-08T15:30 | r2 items applied; overseer defaults flagged in proposal |
+| dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r3.md` | 2026-10-08T15:31 | round 3 |
 
 ## Steering Log
 
