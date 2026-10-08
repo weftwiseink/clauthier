@@ -35,7 +35,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: iterate Turn 1.a: impl-1 implementing full proposal; then fresh reviewer.
+- next_steps: iterate Turn 1.b: rev-1 reviewing implementation 4ded3b7..e242f37.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
@@ -48,7 +48,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | implementation of the proposal (all phases) | wip | resuming implementation or reviewing verification evidence |
+| cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | implementation of the proposal (all phases) | review_ready | resuming implementation or reviewing verification evidence |
 
 ## Iteration Log
 
@@ -77,6 +77,8 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | dispatch | prop-1 (cdocs:proposer, warm) | proposal | 2026-10-07T18:53 | accept nits |
 | return | prop-1 (cdocs:proposer) | proposal | 2026-10-07T19:00 | 1d1695c |
 | dispatch | impl-1 (cdocs:implementer) | scripts/build-opencode.ts, scripts/build-opencode.test.ts, package.json, package-lock.json, .github/workflows/opencode-build.yml, cdocs/devlogs/2026-10-07-opencode-build-fixes-impl.md | 2026-10-07T19:01 | iteration 1, full proposal |
+| return | impl-1 (cdocs:implementer) | (as dispatched) | 2026-10-07T19:07 | 4ded3b7..e242f37; steps 0-8 pass; plugins/ diff empty |
+| dispatch | rev-1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes-impl.md | 2026-10-07T19:08 | implementation review r1 |
 
 ## Iterate Brief
 
