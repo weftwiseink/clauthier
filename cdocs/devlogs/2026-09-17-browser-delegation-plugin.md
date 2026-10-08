@@ -106,3 +106,11 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 Accepted at r5 (`7623a52`); accepting-round nits resolved and `status: implementation_ready` set (`4218982`).
 Design delta vs the r1-accepted version: D2 re-grounded (MCP inheritance premise dropped; named sessions, version-pin class, lead-not-invited-to-drive); R1-R6 verdict layer removed in favor of the plain reviewer under iterate's `review_proof`, with reviewer-dispatched delegate artifacts counting as reviewer-produced (one-clause iterate edit); surface collapsed to a single bash-runner-shaped agent with a fixed `BROWSER DELEGATE REPORT` and no `drive`/`sync` skills or rules files; delegate never writes devlogs; v1 Claude Code-only; explicit session-state contract (`opened`/`reused`/`reopened`) and reviewer fresh-session rule; CLI runs from a scratch root so the worktree stays clean.
 
+
+### Maintainer answers (post-r5) and r6 revision
+
+1. Model choice stays entirely with dispatcher/reviewer; plugin hosts no non-Claude path. Open question closed.
+2. One-clause iterate `confirmed` edit approved.
+3. Screenshot evidence moves into v1 under `cdocs/_media/` (`YYYY-MM-DD-description.ext`, embedded in the relevant doc) with the one-clause `reviewer.md` change; delegate still writes only to scratch, the dispatcher or reviewer copies cited evidence into `_media/`. Supersedes the r3 option-A "scratch path + quoted lines only" decision (quoted report lines stay as the textual audit trail).
+
+Next: proposer revision folding these in, fresh opus reviewer r6, then `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`, not merged by this overseer).
