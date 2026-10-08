@@ -82,7 +82,7 @@ description: |
   - Optional: which states to capture, and any logs wanted
 
   For a follow-up check, and for "tear down" before you return, dispatch a fresh interfacer naming the instance directory its report gave.
-  Dispatch in the foreground (`run_in_background: false`) where offered, else end your turn and the report wakes you.
+  Pass `run_in_background: false` on every interfacer dispatch, so its report returns as the tool result; only if your Agent tool has no such parameter, end your turn and the report wakes you.
   Responds with its report path, a short summary, and what it left running.
 color: cyan
 maxTurns: 40
