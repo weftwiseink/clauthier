@@ -149,6 +149,7 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
+| dispatch | impl-1 (cdocs:implementer, opus) | worktree `browser-delegate`: plugins/browser-delegate/**, .claude-plugin/marketplace.json, plugins/cdocs/skills/iterate/SKILL.md, plugins/cdocs/agents/reviewer.md, cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md | 2026-10-07 | Phases 1-4; nested `claude -p --plugin-dir` as real dispatch path |
 
 ## Steering Log
 
