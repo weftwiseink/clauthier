@@ -127,7 +127,7 @@ Four log sections live in the top-level devlog's body; copy them from `./templat
 
 The Iteration Log's `review_proof` takes one value per row:
 
-- `confirmed`: this round's reviewer re-ran the floor and cited an artifact it produced; re-citing an earlier round's artifact does not count.
+- `confirmed`: this round's reviewer re-ran the floor and cited an artifact it produced (an artifact produced by a subagent the reviewer dispatched this round counts as its own); re-citing an earlier round's artifact does not count.
 - `n/a`: the floor needs no runtime evidence (a floor naming browser, dev server, integration, end-to-end, or live behavior never does).
 - `deferred-to-followup`: a self-referential change whose smoke runs as a separate top-level invocation; `notes` points at where it will be recorded.
 - `skipped`: fail-loud; the overseer justifies it in `notes` before Accept.
