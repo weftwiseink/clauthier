@@ -111,6 +111,7 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | return | post-accept | container | 2026-10-08T16:52 | shared `/var/cache/graphify` was the stale 73-node fixture; rebuilt in 0.56 s to 787 nodes; 0 `cdocs/` source_file matches, 1103 `plugins/cdocs/`. Wrapper query from main (full path; plugin bin not on the container's PATH outside Claude) created a gitignored `graphify-out/` (`git status` clean), shared `graph.json` mtime unchanged. Unexplained: worktree index reports 714 nodes vs the main graph's 787 on the same tree |
 | dispatch | health (fork) | `cdocs/reports/2026-10-08-graphify-upstream-health.md` | 2026-10-08T17:46 | maintainer: upstream repo health, code quality, TS efficiency/consistency outlook, implications |
 | return | health | `f12636d` | 2026-10-08T17:55 | single gatekeeper (one account authored the last 100 commits, 66% of contributions), release ~every 1.4 days, 0 of last 200 PRs merged (fixes re-landed as maintainer commits); 4,000-9,400-line modules; no incremental-vs-full equivalence test for TS. Incremental TS work exists only as unreviewed community PRs (two duplicates for #3326, Python-only cache, conflicting incremental fix). Manifest skip is mostly wiring (`extract` has it, `update` does not). Recommendation: stay pinned, keep the stamp, treat graph output as hints, no fork; file one upstream issue for the manifest skip; 0.9.80 bump fine after a smoke check; scip-typescript or dependency-cruiser if TS precision becomes hard-required (unevaluated) |
+| dispatch | health-2 (general-purpose, opus) | health report follow-up section | 2026-10-08T18:31 | maintainer acknowledgement of perf/consistency issues, 60-day improvement classification, TS vs Python no-op timing per file, bottom line |
 
 ## Steering Log
 
@@ -119,6 +120,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 - 2026-10-08T10:25: maintainer: "make sure we aren't including cdocs in any graphify operations as it's quite large." Relayed to the reviser mid-revision.
 - 2026-10-08T11:45: maintainer: "lets go with cdocs:graphify over code-query after all as we're using it for more subcommands than just query"; use "graphify_base_query" instead of seed query and replace `graphify_query` in the Scratchpoint template/docs; "I'm not clear on how cdocs path is being ignored, an ablate seems like a good idea"; "graph-refresh outside our skills is left to consumer for now, except maybe /rfp 'make sure main graphify graph is up to date'". Post-acceptance revision dispatched; fresh review follows.
 - 2026-10-08T12:15: maintainer on r3's ablate questions: "We already did an ablate earlier in the initial workstream. See if that approach transfers to the new usage and use that if so." rfp step: unanswered; overseer default is r3's narrower condition (main graph exists). Dispatched to the warm proposer with r3 F1/F4-F7.
+
+- 2026-10-08T18:30: maintainer: health critiques (module size, who lands fixes, dev lifecycle) not compelling; asks whether maintainers care about and acknowledge the perf/consistency issues, whether they make meaningful improvements regularly, and whether TS perf is an anomaly vs other languages. Follow-up research dispatched into the health report.
 
 - 2026-10-08T16:45: maintainer: "Accept graphify worktree." Landed.
 
