@@ -22,10 +22,11 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: Phase 1 (agent and listings).
+- next_steps: Phase 4 live canary (fixture project, nested `claude -p` dispatch).
 - important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`.
 - callouts:
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
+  - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run (first `test:rules` failed only for that reason).
 
 ## Plan
 
@@ -40,9 +41,35 @@ Static checks (`test:rules`, `test:opencode`, `jq`, `grep`) per phase; the live 
 
 ## Implementation Notes
 
+- Phase 1: the agent body is the proposal's spec block verbatim (69 lines); no wording polish was needed.
+  The OpenCode build emits it with only `description` and `mode: subagent` (no `model`, `tools`, `permission`), as the proposal predicted.
+- Phase 2: one clause per file, worded as the proposal's "Callers" section gives them.
+  The reviewer's new sentence is its own bullet after the `Bash` bullet; the `_media` clause swaps the `Artifacts`-line/`.png` keying for "media a subagent produced ... `.<ext>`" and adds "look at it yourself".
+- Phase 3: the old proposal gets `state: archived`, `status: evolved`, and the NOTE under its H1; its body and `last_reviewed` are untouched.
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| `plugins/cdocs/agents/interfacer.md` | New sonnet testing-assistant agent (69 lines). |
+| `plugins/cdocs/AGENTS.md` | `interfacer` bullet under Formal Agents. |
+| `plugins/cdocs/README.md` | 8 agents in the OC table; `interfacer` named with `bash-runner` as following no rules. |
+| `plugins/cdocs/agents/reviewer.md` | Own-interfacer sentence; `_media` clause generalized to any subagent media. |
+| `plugins/cdocs/skills/iterate/SKILL.md` | Turn N.b floor and `confirmed` row name the reviewer's interfacer. |
+| `plugins/cdocs/skills/implement/SKILL.md` | Step 5 verification bullet prefers a warm interfacer. |
+| `plugins/cdocs/skills/devlog/SKILL.md` | Screenshots bullet: copy from an interfacer's report dir. |
+| `plugins/browser-delegate/` | Deleted. |
+| `.claude-plugin/marketplace.json`, `README.md` | `browser-delegate` entry and bullet deleted. |
+| `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` | Archived, `evolved`, superseded NOTE. |
 
 ## Verification
+
+### Static checks (Phases 1-3)
+
+```
+npm run test:rules     -> tests 11, pass 11, fail 0 (after Phase 1 and again after Phase 2)
+npm run test:opencode  -> tests 9, pass 9, fail 0; "✔ OC agent interfacer.md"
+wc -l plugins/cdocs/agents/interfacer.md -> 69
+jq -r '.plugins[].name' .claude-plugin/marketplace.json -> cdocs
+grep -rn -i 'browser-delegate' --exclude-dir={cdocs,.git,build,node_modules} . -> no output, exit 1
+```
