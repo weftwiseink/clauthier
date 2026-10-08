@@ -25,7 +25,8 @@ Scaffold the CDocs documentation structure in the current project.
 3. Create or update `.claude/rules/cdocs.md` with the content of every `${CLAUDE_PLUGIN_ROOT}/rules/*.md` file, frontmatter stripped, in the section order of the AGENTS.md block in step 6.
    This is the file Claude Code loads and re-injects after every compaction, so it must carry every rule file in full.
    If `.claude/rules/` doesn't exist, create it.
-   If the project has a CLAUDE.md, add a reference line: `@.claude/rules/cdocs.md`
+   Do not add an `@.claude/rules/cdocs.md` import to CLAUDE.md: Claude Code auto-loads every unscoped `.md` under `.claude/rules/`, gives it to subagents, and re-injects it after compaction.
+   If the project's CLAUDE.md contains the exact line `@.claude/rules/cdocs.md`, remove that line.
 
    Immediately after any frontmatter and before the body, write the version-and-hash marker comment in the canonical form:
    ```markdown
@@ -161,14 +162,14 @@ One file per Claude Code session (`YYYY-MM-DD-<session_id>.md`), appended by the
 After all materialization steps complete, if `.claude/rules/cdocs.md` (or its OC/AGENTS.md counterparts) was actually rewritten during this run, the final line of the skill's response output must be the literal directive:
 
 ```
-RULES_REFRESHED: .claude/rules/cdocs.md has been updated to version X.Y.Z. Read that file now to refresh your in-context rules. The @-imported version loaded at session start is stale and should be disregarded in favor of the freshly Read content.
+RULES_REFRESHED: .claude/rules/cdocs.md has been updated to version X.Y.Z. Read that file now to refresh your in-context rules. The version loaded at session start is stale and should be disregarded in favor of the freshly Read content.
 ```
 
-Substitute the plugin version for `X.Y.Z`. The directive primes the next tool call to be a `Read` against the rewritten file so the session's working context reflects the current rules rather than the stale `@`-imported copy baked into the system prompt at session start.
+Substitute the plugin version for `X.Y.Z`. The directive primes the next tool call to be a `Read` against the rewritten file so the session's working context reflects the current rules rather than the stale copy loaded into the system prompt at session start.
 
 Idempotency: emit the directive only when the rule file content actually changed during the run. On a no-op re-run (file already matches plugin source), suppress it.
 
-First-time init note: when there is no prior `.claude/rules/cdocs.md` to supersede (initial scaffolding), the directive is technically harmless — the @-import did not exist before this session — but it is still emitted on the assumption that the freshly written rules are not yet in working context. The Read costs one tool call.
+First-time init note: when there is no prior `.claude/rules/cdocs.md` to supersede (initial scaffolding), the directive is technically harmless — no cdocs rules were loaded at session start — but it is still emitted on the assumption that the freshly written rules are not yet in working context. The Read costs one tool call.
 
 ## Notes
 
