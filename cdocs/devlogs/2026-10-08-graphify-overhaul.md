@@ -41,6 +41,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | blocking: per-agent `graphify update` writes the shared index; runtime-coupling guard regressed to caveat-only; overseer-clean check vacuous (dispatcher is a subagent) |
 
 ## Judge Log
 
@@ -54,6 +55,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-graphify-overhaul.md` | 2026-10-08T08:55 | initial proposal |
 | return | prop-1 | `0e2148a` | 2026-10-08T09:01 | `review_ready`. Overseer writes/passes query only; thin `/cdocs:code-query` skill + retargeted rule line; no graphify skill/installer (723 lines, adds overseer-reaching hook); index refresh via `graphify update .` when stale; delete outright; old proposal `evolved`. Premise flags: `/graphify` skill likely absent in lace container; `affected` absent from current docs (0.9.80 vs pinned 0.9.61); container index is shared `/var/cache/graphify`; neither design measured; markdown-heavy repo limits value |
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | 2026-10-08T09:02 | round 1, with sonnet history explore |
+| return | rev-1 | `1c0d71a` | 2026-10-08T09:10 | revise; premise confirmed by history (bleed real, pipeline never chosen over `query`, old design skipped every round in-container, nothing measured); 3 blocking; 3 maintainer questions |
 
 ## Steering Log
 
