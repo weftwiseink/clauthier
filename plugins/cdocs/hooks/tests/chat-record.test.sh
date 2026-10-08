@@ -822,8 +822,10 @@ init_real() {
   has "rules file carries the resumption step" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" '\*\*After a compaction.* run `chat-record path`'
   hasnt "CLAUDE.md rules import line is gone" "$(cat "$P/CLAUDE.md")" '^@\.claude/rules/cdocs\.md'
   # Every rule reference in shipped content resolves against what init actually wrote.
+  # `node --import tsx`, not the tsx CLI, whose IPC socket under a long TMPDIR exceeds the
+  # unix socket path limit.
   local mat
-  if mat="$(cd "$PLUGIN/../.." && npx --no-install tsx scripts/check-rule-refs.ts --materialized "$P" 2>&1)"; then
+  if mat="$(cd "$PLUGIN/../.." && node --import tsx scripts/check-rule-refs.ts --materialized "$P" 2>&1)"; then
     ok "check-rule-refs --materialized passes"
   else
     bad "check-rule-refs --materialized: $(printf '%s' "$mat" | grep -v -i deprecat | tail -n 5)"
