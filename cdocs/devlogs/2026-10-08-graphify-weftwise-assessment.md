@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: proposal review round 2 (rev-2).
+- next_steps: prop-1 applying r2 accept-round fixes; then `/cdocs:iterate` with a fresh implementer.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -32,6 +32,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): `/.claude/rules/cdocs.md` and `AGENTS.md` stay in by default, tested as an exclusion variant.
   - decision (overseer call): background refresh (stale-index query + background refresh, `graphify watch`) measured as a scratch-prototype candidate.
   - decision (overseer call): fresh-worktree stamp derived from the copied graph's `built_at_commit`; scratch prototype.
+  - decision (overseer call): apply r2 candidate trims (graph-identity check for non-graph flags, one output-stage row, `.claude/`+`AGENTS.md` folded into all-md-out).
+  - decision (overseer call): drop `graphify watch` rather than install watchdog; audit shows it is the same full rebuild.
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -44,6 +46,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment.md` | md scope inverted, `GRAPHIFY_OUT` hazard, `--force` wrong, post-edit shape, background refresh missing |
+| r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 3 pre-dispatch fixes + trims |
 
 ## Judge Log
 
@@ -62,6 +65,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T20:07 | round-1 revisions + maintainer md direction + overseer calls on the 3 questions |
 | return | prop-1 | `6e4d7e1` | 2026-10-08T20:15 | `review_ready`: all r1 items applied; default ignore `/cdocs/ /_archive/ /docs/references/`; all-md-out and `.claude/`+`AGENTS.md`-out as variants; explicit scratch `GRAPHIFY_OUT` rule (only Phase 1 writes main graph); plain `update`, shrink-guard refusal reported not forced; structural post-edit; background refresh + `graphify watch` rows incl. stale-answer count; stamp from `built_at_commit` (ancestor check); `extract --code-only` parity, `GRAPHIFY_NO_BACKUP`, `--no-cluster`, `--timing`. Rough edge: floor `time` in `sh -c` |
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 2026-10-08T20:16 | round 2; r1 resolution + fresh pass, bloat check |
+| return | rev-2 | `9f74a07` | 2026-10-08T20:25 | proposal_accepted; 13/13 r1 items resolved. Pre-dispatch fixes: `gfy-assess` never moves onto cleaned ignore (silent `_archive/` return); container `sh` is dash so floor `time` exits 127; `graphify watch` needs uninstalled watchdog. Bloat: spot checks on non-graph flags meaningless, output-stage flags one row, `.claude/`+`AGENTS.md` variant subsumed. Verified: wrapper scopes `GRAPHIFY_OUT` to worktree, `graph.json` written atomically, default scope keeps 654 md nodes, weftwise main clean. Did not flip status (reviewer may edit only `last_reviewed`) |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T20:27 | accept-round fixes + trims, `implementation_ready` |
 
 ## Steering Log
 
