@@ -141,7 +141,7 @@ Before marking status as `review_ready`:
 - [] Dispatch a substantive `/cdocs:review` and integrate its feedback (sanity check; archive the resulting review immediately).
      Dispatched by a `/cdocs:propose-revise` loop, skip this item: the loop's reviewer is that review.
      See `/cdocs:implement` Invocation Modes for the dispatched/top-level model.
-     Top-level mode: as a thin lead, invoke `/cdocs:oversee-workstream` with the Skill tool before dispatching, so the discipline is not `iterate`-only.
+     Top-level mode: as a thin lead, invoke `/cdocs:oversee-workstream` with the Skill tool before dispatching.
 
 
 ## Revisions
