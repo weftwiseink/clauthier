@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: prop-1 final pass (drop rfp step, ablate prerequisite on rebuilt `weftwise` container, parallel ordering, `implementation_ready`), then `/cdocs:iterate` in worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: impl-1 running iterate round 1 in worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -36,6 +36,12 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-graphify-overhaul.md` (`implementation_ready`, `261a081`), overseer: this top-level session; worktree `../graphify-overhaul`, branch `graphify-overhaul` from `b988c57`.
+Verification floor: `cdocs-graphify.test.sh` and other hook suites green, removal and `graphify_query` greps empty, `test:rules` and `test:opencode` green, host stub run (primary, secondary, positive control, overseer-clean, no-op) with the branch's `cdocs-graphify` on `PATH`; weftwise ablation once its container prerequisites pass.
+Failure picture: no `query` line in the stub log, marker in the dispatcher transcript, shared-index mtime moves, install attempt on the no-op run.
 
 ## Iteration Log
 
@@ -74,6 +80,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | return | prop-1 | `1da4f80` | 2026-10-08T12:25 | earlier ablate = Probe A (`2026-09-18-ablate-e2e-probeA-inject-rules.md`): setup transfers (single-shot, 2 detached worktrees at a pinned commit, sonnet arms, opus evaluator, prompt-withheld arm + `detect-usage`, `ANSWER.md`); task does not (one small file, no clauthier task discriminates). Ablate moved to weftwise: blast radius of the most-imported atom in `packages/weft/src/lib/mounts/atoms.ts` (33 importers); deferred until weftwise's devcontainer has graphify + `.graphifyignore` + main graph. F1/F4-F7 applied; status left `review_ready` |
 | dispatch | weftwise-fs (claude, opus) | weftwise repo devcontainer, `.graphifyignore`, own devlog | 2026-10-08T12:52 | `/cdocs:full-send`: graphify lace feature + rebuild `weftwise` container + verify main graph |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T12:52 | drop rfp step; ablate prerequisite check on weftwise container; parallel ordering; `implementation_ready` |
+| return | prop-1 | `261a081` | 2026-10-08T12:56 | `implementation_ready`; rfp step removed (refresh owned by consumer); ablate prerequisite check adds plugin-on-`PATH`; parallel-ordering line under phases |
+| dispatch | impl-1 (cdocs:implementer, opus) | worktree `../graphify-overhaul`, branch `graphify-overhaul` | 2026-10-08T13:00 | iterate round 1, phases 1-5; ablation reports back if weftwise container not ready |
 
 ## Steering Log
 

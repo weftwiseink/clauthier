@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: devlog
 state: live
-status: wip
+status: done
 tags: [chat_record, oversight]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -23,7 +23,7 @@ The record should carry the most important things the agent tells the user each 
 
 ## Scratchpoint
 
-- next_steps: impl-r2 accepted; impl-1 applying nits + `implementation_accepted`; then rebase onto main, ff-merge, remove worktree (delete its untracked `node_modules` symlink first), regenerate this repo's `cdocs/_chat/README.md` from the init template.
+- next_steps: none; landed at `b988c57`.
 - graphify_query:
 - important_files: `plugins/cdocs/rules/overseers.md` "Chat record", `plugins/cdocs/bin/chat-record`, `plugins/cdocs/bin/README.md`, `plugins/cdocs/hooks/tests/` (chat-record tests), `plugins/cdocs/skills/init/SKILL.md` (`_chat/README.md` template), `plugins/cdocs/rules/frontmatter-spec.md` (`_chat` naming), `cdocs/proposals/2026-09-22-chat-record-devlog-management.md`
 - callouts:
@@ -75,6 +75,8 @@ Failure picture: rename appends to the old record, `ai-title` changes the filena
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r2.md` (branch) | 2026-10-08T12:32 | final holistic review in the context of the rest of the plugin; must re-run floor |
 | return | rev-impl-2 | `efc8cb5` (branch) | 2026-10-08T12:40 | accept, `review_proof: confirmed`: unit 97/0, rules 11/0, headless 22/0 (incl. `rename`); plugins diff is free-form wording only, no naming residue; notes described consistently plugin-wide. Non-blocking: stale impl-devlog Changes Made, redundant rule clause, self-referential example bullet, this repo's `_chat/README.md` |
 | dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T12:42 | impl-r2 nits 1-3, regenerate `cdocs/_chat/README.md` from init template (option a), `implementation_accepted` (maintainer pre-approved) |
+| return | impl-1 | `73f7a17..8d7a9a4` | 2026-10-08T12:55 | nits applied, `_chat/README.md` regenerated from init template, proposal `implementation_accepted`; unit 97/0, rules 11/0 |
+| land | overseer | main | 2026-10-08T12:58 | rebased onto main, ff-merged at `b988c57`; on main rules 11/0, unit 97/0; worktree and branch removed |
 
 ## Steering Log
 
