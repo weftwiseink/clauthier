@@ -394,4 +394,5 @@ last-seen r3-b: "r3 ok"
 ```
 Before the fix, the same stub converged after 0 s with the warning as last-seen (r2's probe table).
 My first attempt at this run forgot to set `d` (the template takes it from Setup), so every case failed on `cd ""`; the outputs above are the rerun.
+The template gained a trailing `rm -f "$errf"` after that run; the stub case rerun on the committed text (`$S/r3/stub-warn2.sh`, timeout `'3s'`, expected placeholder left unfilled so no `poll expected` line) printed `timeout parsed: asked '3s', used 3s`, `timed out at 3s`, last-seen `"1"` / `"2"`, and left no `poll-err.*` file.
 No nested dispatch was run for this change (optional per the overseer).
