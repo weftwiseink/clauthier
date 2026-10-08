@@ -7,6 +7,8 @@ type: devlog
 state: live
 status: done
 tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin]
+chat_record:
+  - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
 ---
 
 # Devlog: browser-delegation plugin (reports + propose-revise)

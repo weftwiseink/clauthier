@@ -7,6 +7,8 @@ type: devlog
 state: live
 status: done
 tags: [build, opencode, multi-target]
+chat_record:
+  - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
 ---
 
 # OpenCode Build Fixes (full-send): Devlog

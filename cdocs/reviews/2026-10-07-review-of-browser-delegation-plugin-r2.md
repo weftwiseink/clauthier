@@ -2,7 +2,7 @@
 review_of: cdocs/proposals/2026-09-17-browser-delegation-plugin.md
 first_authored:
   by: "@claude-opus-5-5"
-  at: 2026-10-07T10:00:00-07:00
+  at: 2026-10-07T18:25:55-07:00
 task_list: cdocs/browser-delegation
 type: review
 state: live

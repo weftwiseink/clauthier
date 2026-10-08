@@ -21,15 +21,15 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: maintainer `plugin.json` bump; commit maintainer's `overseers.md` handoff-line edit (typo "scratchpoitn"); remaining outstanding proposals per triage (bash-output-cap usage data, hook-testing v2, tiered chat records, redaction scanning, improvement verification).
-- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
+- next_steps: maintainer `plugin.json` bump; remaining outstanding proposals per triage (bash-output-cap usage data, hook-testing v2, tiered chat records, redaction scanning, improvement verification).
+- important_files: `cdocs/devlogs/2026-10-07-rules-references.md`, `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
-  - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
+  - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its dead rule references now point at "CDocs Overseer Rules › Chat record".
   - decision: `/cdocs:init` here skips rules materialization: `CLAUDE.md` `@`-imports `plugins/cdocs/rules/` directly, and `4155496` removed a materialized copy on purpose.
   - decision: OpenCode support must stay minimally invasive; if it gets in the CC setup's way the maintainer may drop it entirely.
   - decision: canonical Codex support archived with its round-2 Revise unaddressed.
   - decision: browser delegation: model choice stays with dispatcher/reviewer; iterate `confirmed`-row clause approved; screenshot evidence goes to `cdocs/_media/` in v1.
-  - todo: reconcile `propose-revise/SKILL.md` "Dispatch subagents for all tasks, even trivial ones" (2026-08-31) with "the overseer owns" the loop devlog (`686b40b`, 2026-10-06), and its role line assuming a top-level overseer while this session dispatched it as a subagent.
+  - decision: overseers are not nested and own the workstream's top-level devlog (`955bcfc`); propose-revise exempts top-level devlog edits from dispatch-everything (`747ed44`).
 
 ## Plan
 

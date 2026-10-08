@@ -10,7 +10,7 @@ last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
   at: 2026-10-07T22:34:29-07:00
-  round: 1
+  round: 5
 tags: [rules, rules_delivery, init, testing, architecture]
 ---
 
@@ -95,7 +95,8 @@ Each audit claim was checked against the tree at `7cad508`:
 
 ### Related documents
 
-- [Rules hook testing methodology v2 (RFP)](2026-09-01-rules-hook-testing-methodology-v2.md): hook branch tests, marker generation, round trip, directive size. This proposal leaves all of it there.
+- [Rules hook testing methodology v2 (RFP)](2026-09-01-rules-hook-testing-methodology-v2.md): hook branch tests, marker generation, round trip, directive size.
+  This proposal leaves all of it there.
 - [Rule delivery materialization](2026-05-12-cdocs-rule-delivery-materialization.md): the accepted design of the marker, hook, and Read-after-write directive.
 - [Subagents feature breakdown](../reports/2026-09-19-claude-code-subagents-feature-breakdown.md) section 3: subagent context contents.
 
@@ -271,19 +272,25 @@ It would remove the freshness hook, but the cache path is per machine and per ve
 ## Stories
 
 - **A rule heading is renamed.** A contributor renames "Chat record" to "Chat records". `npm run test:rules` fails with each `file:line` that uses the old name and the rule's current headings.
-- **A filename reference is authored in this repo.** A skill edit adds `` see `workflow-patterns.md` ``. It reads fine here, since `CLAUDE.md` imports the source rules. CI fails with `use "CDocs Workflow Patterns"`.
+- **A filename reference is authored in this repo.** A skill edit adds `` see `workflow-patterns.md` ``.
+  It reads fine here, since `CLAUDE.md` imports the source rules.
+  CI fails with `use "CDocs Workflow Patterns"`.
 - **A consumer upgrades the plugin.** The rule edits change the hash; the SessionStart hook nudges; `/cdocs:init` rewrites `.claude/rules/cdocs.md` and removes the import line.
 - **A reviewer is dispatched downstream.** It starts with the rules in context and spends no tool calls on rule files.
 
 ## Edge Cases / Challenging Scenarios
 
-- **Uninitialized or `--minimal` projects:** no rules in context, and no rule-file read could find any either. Agents say so; `nit-fix` stops.
+- **Uninitialized or `--minimal` projects:** no rules in context, and no rule-file read could find any either.
+  Agents say so; `nit-fix` stops.
 - **Explore, Plan, or `omitClaudeMd` agents:** they get no rules. cdocs dispatches its own agents or `general-purpose`, and assertion 4 keeps `omitClaudeMd` out of cdocs agents.
-- **OpenCode subagents:** OpenCode reads `AGENTS.md`, which carries every rule with its H1, so heading references hold. Whether OpenCode subagents receive conditional `.opencode/rules/` content is unverified and unchanged here.
-- **A reference split across lines:** the extractor works per line and misses it. Sentence-per-line makes this rare; a quoted heading path stays on one line.
+- **OpenCode subagents:** OpenCode reads `AGENTS.md`, which carries every rule with its H1, so heading references hold.
+  Whether OpenCode subagents receive conditional `.opencode/rules/` content is unverified and unchanged here.
+- **A reference split across lines:** the extractor works per line and misses it.
+  Sentence-per-line makes this rare; a quoted heading path stays on one line.
 - **A quoted `CDocs ...` string that is not a rule reference:** the check fails it; rephrase or name the skill by command.
 - **The import line edited by hand** (other text on the line, a different path): init removes only the exact line, and the file still loads once by auto-load.
-- **A consumer `CLAUDE.md` that `@`-imports `AGENTS.md`:** rules load twice (the block plus `.claude/rules/`). This is independent of this proposal and out of scope.
+- **A consumer `CLAUDE.md` that `@`-imports `AGENTS.md`:** rules load twice (the block plus `.claude/rules/`).
+  This is independent of this proposal and out of scope.
 
 > WARN(@claude-opus-5-5/cdocs/rules-references): The plugin README's claim that OpenCode "reads `.claude/rules/` natively" is unverified.
 > If it holds, OpenCode projects load `.claude/rules/cdocs.md` beside `.opencode/rules/cdocs/*.md`; this proposal neither adds nor removes that exposure.
@@ -332,7 +339,8 @@ Phase 3 can be deferred without affecting them, but should ship in the same plug
 
 ### Phase 3: Drop the import
 
-1. Gate: add the temporary `canary_check` extra, run the probe (section 3), record the result in the devlog, and remove the extra. If it fails, stop.
+1. Gate: add the temporary `canary_check` extra, run the probe (section 3), record the result in the devlog, and remove the extra.
+   If it fails, stop.
 2. Run `--only rules_check` with the import as the baseline, change `init_rules` (`chat-record.test.sh:804`) to write no import line, run it again, and compare per-assertion pass/fail.
 3. `init/SKILL.md` step 3 (no import, remove the legacy line) and the Read-after-write directive.
 4. `init_real` (`chat-record.test.sh:~821`): seed the import line, invert "CLAUDE.md imports the rules" to assert the line is gone, and call `--materialized`.
