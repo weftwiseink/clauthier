@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: trim-1 applying accept-round items; then maintainer acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: awaiting maintainer: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -90,9 +90,12 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | 2026-10-08T22:02 | impl round 2; re-run floor; spot-check toolchain + one regrade; final holistic read |
 | return | rev-impl-2 | `92f1522` | 2026-10-08T22:15 | accept, `review_proof: confirmed`: 7-step floor exit 0, counts exact, timings within 2.5%, collateral clean; toolchain inert (vite 7.3.0 / vitest 4.0.16 / tsc 5.9.3 bundler; 7 vite + 5 vitest configs, not 5 + 2); Q8 partial confirmed; Q4 35 not 34; fresh-worktree with `source` 8.96 s. Non-blocking: ~5,300 words, BLUF reaches per-role answer on line 9 and is stricter than the role table for implementers; repetition (tally, `path`, background caveat 3-4x); process detail belongs in devlog. 2 maintainer questions (BLUF framing, trim depth) |
 | dispatch | trim-1 (cdocs:implementer, opus, fresh) | report, impl devlog | 2026-10-08T22:17 | accept-round items: BLUF per-role first, full trim to ~half, wording/count fixes; docs only, no number or verdict change |
+| return | trim-1 | `72fc23c`, `f962f61` | 2026-10-08T22:35 | accept-round items applied; BLUF per-role first; 5,265 to 3,668 words before floor (~30%, not half: kept sections ~1,570 words; further cuts would drop Runtime Matrix/Candidates rows); process detail moved to impl devlog; floor byte-identical; only new values Q4 35 and config counts 7/5/13; nit_fix clean (semicolons left) |
 
 ## Steering Log
 
 - 2026-10-08T19:30: maintainer: "_archive is in the weftwise graph!? Ok, all the speed results are totally moot if that's the case. Have a more fully-fledged dedicated performance assessment /full-send in weftwise with cdocs, _archive, and any other cruft fixed. The assesser should have a sonnet sample recent devlogs for query ideas, and then the results from cdocs:graphify should be evaluated heuristically/holsitically. The assesser should aim to weigh the results pragmatically, both WRT to runtime performance and usefulness quality. Maybe there are some flags we can switch to improve graph build time or something without impacting our core usecase? An inefficient tool isn't the end of the world and maybe we do just wait for improvements, but it does hinder our ability to use the tool flexibly, ie for active implementers etc"
 
 - 2026-10-08T19:55: maintainer: "where do those other markdown headings come from? In weftwise docs/references should prob be excluded but otherwise markdown can prob be included unless detrimental". Overseer measured md heading nodes (current graph, 6,913 total): `_archive` 6,003 (devlogs 3,539, proposals 1,870, reports 576), `docs/` 553 (references 256, other 297), `packages/` 131, `.claude/` 117 (rules/cdocs.md 70, commands 47), `AGENTS.md` 77, `CLAUDE.md` 18, `README.md` 14. Proposal default flips to markdown in, except `/_archive/`, `/cdocs/`, `/docs/references/`; other exclusions only if shown detrimental.
+
+- 2026-10-08T22:30: maintainer: "Sounds like no meaningful improvement to graphify performance, only tiptoe-ing around their poor perf, right? How did the usefulness assessment fare?" then "It never found useful info beyond grep across all sample scenarios? What were the scenarios?" Overseer: correct on perf; usefulness grading was against a grep ground truth, so it measured efficiency, not discovery, and the devlog-sampled questions name their entities (favouring grep). Offered a discovery-style follow-up (questions without entity names, second grader); not dispatched.
