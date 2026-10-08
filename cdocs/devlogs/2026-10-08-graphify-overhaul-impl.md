@@ -22,7 +22,7 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: Phase 5 weftwise ablation, once `podman exec -u node weftwise graphify --version` succeeds and `$GRAPHIFY_OUT/graph.json` exists there (both failed at 10:30); then the overseer's post-accept devcontainer live run and exclusion check.
+- next_steps: await the overseer's direction on an update stamp (audit running); weftwise ablation once its container has graphify and a built main graph; overseer's post-accept devcontainer live run and exclusion check.
 - graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index, run graphify update, and pass query explain path affected through to graphify"
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`, `plugins/cdocs/skills/graphify/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/SKILL.md` "Base query", `.graphifyignore`
 - callouts:
@@ -79,7 +79,7 @@ Both items confirmed; scratch dirs removed afterwards.
 > WARN(claude-opus-5-5/cdocs/graphify-overhaul): Deviation: the ignore line is `/cdocs/`, not the proposal's `cdocs/`.
 > In gitignore syntax an unanchored `cdocs/` matches a `cdocs` directory at any depth, so graphify dropped `plugins/cdocs/` entirely (0 of its nodes; graph 248 nodes).
 > With `/cdocs/`: 732 nodes, 484 under `plugins/cdocs/`, 0 under root `cdocs/`, and a plain `update` on the existing worktree index restored them.
-> The wrapper's hint check accepts either form; init writes `/cdocs/`.
+> The wrapper's hint and init's guard both require the anchored form (`/cdocs/?`), so an unanchored `cdocs/` line draws the hint and init adds `/cdocs/`.
 
 ### Phase 3: base-query wiring
 
@@ -134,12 +134,43 @@ Per the overseer's instruction, reported back rather than skipped or moved.
 
 **Routed to the overseer (post-accept):** the clauthier devcontainer live run and the exclusion check.
 
+### Round 2: rebase and impl-r1 fixes
+
+Review: [`2026-10-08-review-of-graphify-overhaul-impl-r1.md`](../reviews/2026-10-08-review-of-graphify-overhaul-impl-r1.md) (revise, `review_proof: confirmed`).
+
+- **Rebase** onto `main` (`ebccbcc`, which includes the interfacer landing `70e48fc`): all 24 commits applied with no conflicts.
+  Git's three-way merge kept both sides in `plugins/cdocs/agents/reviewer.md` (interfacer text present, graphify brief section absent) and `plugins/cdocs/skills/iterate/SKILL.md` (interfacer text present, "Base query" present, no `--graphify-scope`); the removal and `graphify_query` greps stayed at 0.
+- **F1 (blocking):** coupling filter is `grep -v 'graphify-out/'`, so an absolute graph path (graphify prints one when `query` runs from a subdirectory) is not scanned; new test case with `.observe()` in the worktree's `graph.json` named by absolute path (failed before the fix, 21/22).
+  Real graphify from `plugins/cdocs/`: header names the absolute graph path, 0 coupling lines naming `graph.json`, `/var/cache/graphify` dir mtime unchanged.
+- **F2:** init's guard is `grep -qxE '/cdocs/?'`; on a file holding `cdocs/`, two runs leave `cdocs/` plus exactly one `/cdocs/`.
+- **F3:** proposal NOTE under "How `cdocs/` is kept out of the graph"; weftwise Environment bullet names the anchored `/cdocs/` line.
+- **F4:** ablation and overseer-clean signature is `cli:(^|[ /])(cdocs-)?graphify (query|explain|path|affected|update) ` at all three proposal sites, with a NOTE under "Signature"; checked with `detect-usage`: `used` for `timeout 60 cdocs-graphify query`, `/p/bin/cdocs-graphify path`, `cd /w && graphify explain`, `cdocs-graphify affected`; `unused` for `grep -rn "graphify " plugins/`, `grep -rn cdocs-graphify plugins/`, `command -v graphify`.
+  Reviews and this devlog's Phase 5 table keep the old signature because they record what was run.
+- **F5:** "A coupling section" example removed from `bin/README.md`.
+- Not done: impl-r1's optional item 6 (write the temp `.gitignore` before `cp -R`) and the update stamp, both held for the overseer's direction.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): impl-r1 saw `/var/cache/graphify`'s directory mtime at 10:23.
+> That fits this devlog's Phase 2 container smoke test (10:2x, pre-`bcd1491`), whose passthrough inherited `GRAPHIFY_OUT=/var/cache/graphify`; the Phase 2 note checked only `graph.json`'s mtime, which was unchanged.
+
+Floor after round 2:
+
+```
+cdocs-graphify.test.sh exit=0 22 passed, 0 failed
+chat-record.test.sh --unit exit=0 97 passed, 0 failed
+validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
+removal grep hits: 0
+graphify_query hits: 0
+test:rules exit=0 tests 11 pass 11 fail 0
+test:opencode exit=0 tests 9 pass 9 fail 0   (build/cdocs/opencode/skills/graphify/SKILL.md exists)
+cdocs-graphify 49 lines, test 84 lines, shellcheck clean
+```
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
 | `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper (49 lines) |
-| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 21-check suite against a graphify stub, bare-repo fixture |
+| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 22-check suite against a graphify stub, bare-repo fixture |
 | `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | deleted |
 | `.github/workflows/cdocs-hooks.yml` | cdocs-graphify step on Linux and macOS; header comments |
 | `plugins/cdocs/bin/README.md` | `## cdocs-graphify` section replaces `## graphify-scope` |
@@ -155,7 +186,7 @@ Per the overseer's instruction, reported back rather than skipped or moved.
 | `.gitignore`, `.graphifyignore` | `graphify-out/`; `/cdocs/` |
 | `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md` | `evolved`/`archived`, supersede NOTE |
 | `cdocs/proposals/2026-09-17-graphify-lace-devcontainer-enablement.md` | D3 NOTE |
-| `cdocs/proposals/2026-10-08-graphify-overhaul.md` | `implementation_wip` |
+| `cdocs/proposals/2026-10-08-graphify-overhaul.md` | `implementation_wip`; round 2 NOTEs on `/cdocs/` and the ablation signature |
 
 ## Verification
 
