@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -21,7 +21,7 @@ tags: [graphify, performance, evaluation]
 > - **runtime**: full build, post-edit, commit-only, fresh worktree, and query latency;
 > - **usefulness**: 12-15 questions a sonnet agent samples from recent weftwise devlogs, each judged against a grep baseline.
 >
-> Variants that drop all markdown and other config, plus a background-refresh prototype, test what might speed up builds or mid-edit queries without hurting query quality.
+> Scope variants (all markdown out, and others), config flags, and two scratch wrapper prototypes (background refresh, kept stamp) test what speeds up builds or mid-edit queries without hurting query quality.
 > The deliverable is one report, `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md`, giving a verdict per role: use now and with what config, or wait for upstream.
 
 ## Summary
@@ -32,7 +32,7 @@ The assessment has three phases:
 
 1. **Scope fix**: inventory the graph and add the cruft lines to weftwise `.graphifyignore`. Then rebuild the main graph and record counts before and after.
 2. **Usefulness**: sample realistic questions and fix a grep ground truth first. Then judge graphify's output on a four-level rubric, with the token cost of each output.
-3. **Runtime and config**: measure the runtime cases on the cleaned graph against a pre-clean baseline taken in the same session. Try the candidate flags, the scope variants, and two scratch wrapper prototypes (a background refresh and a stamp kept across the copy). Then write the report.
+3. **Runtime and config**: measure the runtime cases on the cleaned graph against a pre-clean baseline taken in the same session. Try the scope variants, the config flags, and two scratch wrapper prototypes (a background refresh and a stamp kept across the copy). Then write the report.
 
 This is not a statistics exercise: timings take three runs, and each question gets one judgment.
 
@@ -94,9 +94,9 @@ Markdown therefore never adds to `affected` or `path` results; its only effect o
 
 ### Operating rules
 
-- **Where it runs**: everything runs in container `weftwise` (`podman exec -u node -w <dir> weftwise sh -c '...'`; 20 cores; graphify 0.9.61).
+- **Where it runs**: everything runs in container `weftwise` (`podman exec -u node -w <dir> weftwise bash -c '...'`, since the container's `sh` is dash; 20 cores; graphify 0.9.61).
 - **The wrapper**: it is not on the container's `PATH` outside Claude. `podman cp` clauthier main's `plugins/cdocs/bin/cdocs-graphify` into a scratch dir in the container and call it by full path.
-- **`GRAPHIFY_OUT` is explicit on every raw `graphify` call** (`update`, `extract`, `query`, `explain`, `path`, `affected`), set as `env GRAPHIFY_OUT=<scratch> graphify ...`.
+- **`GRAPHIFY_OUT` is explicit on every raw `graphify` subcommand** (`update`, `extract`, `query`, `explain`, and the rest), set as `env GRAPHIFY_OUT=<scratch> graphify ...`.
   The container's environment sets `GRAPHIFY_OUT=/var/cache/graphify-weftwise`, so a raw call that does not override it writes into the main graph, and even `query` writes `cache/last_query_stamp` there.
   Only the Phase 1 main rebuild targets `/var/cache/graphify-weftwise`.
   Wrapper runs set `GRAPHIFY_OUT` to a scratch copy of the main graph, so that what the wrapper copies is under the implementer's control.
@@ -124,9 +124,11 @@ Steps:
 3. Commit `.graphifyignore` on weftwise `main` and rebuild the main graph with a plain `graphify update`, no `--force`.
    In 0.9.61, sources newly matched by the ignore are evicted as deletions and pass the shrink guard.
    A refusal from the guard therefore signals an unexplained loss: report it as a finding and do not override it.
-4. Record node and edge counts before and after, per-directory and per-extension tables, and code-edge counts for these relations: `imports`, `imports_from`, `calls`, `re_exports`, `dynamic_import`, `references`, `method`, `implements`.
+4. Move `gfy-assess` onto the cleaned main: `git -C /workspaces/weftwise/gfy-assess checkout --detach main`.
+   Every later build in that worktree, raw or through the wrapper, reads its `.graphifyignore`; left on the old commit, "cleaned" builds would silently regrow `_archive/`.
+5. Record node and edge counts before and after, per-directory and per-extension tables, and code-edge counts for these relations: `imports`, `imports_from`, `calls`, `re_exports`, `dynamic_import`, `references`, `method`, `implements`.
    Markdown removal cannot cut a code edge, so the code-edge counts should match. Attribute any drop to nondeterminism or to a variant.
-5. Self-heal check, run once in `gfy-assess`:
+6. Self-heal check, run once in `gfy-assess`:
    1. Copy in the pre-clean graph as its index, with a matching stamp.
    2. Apply the new `.graphifyignore`.
    3. Run the wrapper.
@@ -166,7 +168,7 @@ Close the phase with a short holistic paragraph: where graphify beats grep, wher
 ### Phase 3: runtime, candidates, report
 
 **Runtime matrix.**
-Every run logs `uptime` load.
+Every run logs `uptime` load, and every full build (matrix or candidate) records its node count, which catches a build that read the wrong ignore and feeds the nondeterminism range.
 The post-edit edit **adds a call or an import** in a `packages/weft/src` file, so that topology changes and clustering, the report, and `graph.html` all run.
 
 | Case | Runs | How |
@@ -179,25 +181,30 @@ The post-edit edit **adds a call or an import** in a `packages/weft/src` file, s
 | fresh-worktree first query | 3 | a new short-lived worktree, then the wrapper query (copy plus full update, because `.stamp` is not copied) |
 | query latency | 3 each | `query`, `explain`, `path` against the graph, with no refresh |
 
+Expected shape: in 0.9.61 every refresh is a full `update`, so full build, post-edit, and fresh-worktree should collapse to about two numbers, `update` with a topology change and without one (pre-clean about 13-14 s and about 10 s).
+The fresh-worktree row lands on "without", because the copied graph already matches the tree.
+The rows confirm that expectation rather than being three independent findings.
+
 Use `extract --timing` where a stage breakdown explains a number. No ad hoc profiling.
 
 **Candidates.**
-Each candidate gets a full build and a structural post-edit run.
-It is then spot-checked by re-running a 5-query subset that includes at least one blast-radius question and one cross-package question, watching for a changed verdict.
 
-| Candidate | What it tests |
-|---|---|
-| all markdown out (unanchored `*.md`) | Seed noise: does markdown crowd code seeds out, in the subset and the full set? Also markdown's share of build time. Cite the island evidence |
-| `.claude/` and `AGENTS.md` out | Seed noise from the duplicated cdocs rules text |
-| tests, e2e, and demo out | Speed against losing tests from blast radius |
-| `*.json` out except `tsconfig*.json` and `package.json` | Speed against code-edge loss (compare relation counts) |
-| `update --no-cluster` | The query path never reads communities; `explain` prints one `Community:` line |
-| `GRAPHIFY_VIZ_NODE_LIMIT=0` | Skips `graph.html` |
-| `GRAPHIFY_NO_BACKUP=1` | Skips the backup, which fires on every write when labels are derived from hub nodes |
-| `GRAPHIFY_MAX_WORKERS` | Expected small (it only affects the parse stage); confirm |
-| `extract --code-only` (incremental, no `--force`) | Manifest-gated, re-extracts changed files only. **Fidelity check**: after the same edit, diff its node and edge sets against a full `update`. TS cross-file resolution may be lossy, as the audit found for `_rebuild_code(changed_paths=...)` |
-| background refresh (scratch wrapper) | See below |
-| stamp kept across the copy (scratch wrapper) | See below |
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Overseer call (maintainer may override): the round-2 trims apply. Flags that cannot change `graph.json` get a graph-identity check instead of query spot checks; the output-stage flags are one combined row; the `.claude/` and `AGENTS.md` variant folds into all-markdown-out.
+
+Each candidate gets a full build and a structural post-edit run.
+Candidates that can change the graph are spot-checked by re-running a 5-query subset that includes at least one blast-radius question and one cross-package question, watching for a changed verdict.
+The others get a **graph-identity check**: sorted node and edge sets equal to the baseline's (for `--no-cluster`, with community attributes stripped).
+
+| Candidate | Check | What it tests |
+|---|---|---|
+| all markdown out (unanchored `*.md`) | spot check | Seed noise: does markdown crowd code seeds out, in the subset and the full set? Also markdown's share of build time. Cite the island evidence. Run a narrower `.claude/` plus `AGENTS.md` variant only if harm traces to those files |
+| tests, e2e, and demo out | spot check | Speed against losing tests from blast radius |
+| `*.json` out except `tsconfig*.json` and `package.json` | spot check | Speed against code-edge loss (compare relation counts) |
+| output stages off: `update --no-cluster` + `GRAPHIFY_VIZ_NODE_LIMIT=0` + `GRAPHIFY_NO_BACKUP=1` | identity | One combined row; attribute the saving per stage from `extract --timing` or the update log. The query path never reads communities, and `explain` prints one `Community:` line |
+| `GRAPHIFY_MAX_WORKERS` | identity | One sweep (for example 4, 10, 20); expected small, since it only affects the parse stage |
+| `extract --code-only` (incremental, no `--force`) | spot check + fidelity | Manifest-gated, re-extracts changed files only. **Fidelity check**: after the same edit, diff its node and edge sets against a full `update`. TS cross-file resolution may be lossy, as the audit found for `_rebuild_code(changed_paths=...)` |
+| background refresh (scratch wrapper) | see below | |
+| stamp kept across the copy (scratch wrapper) | see below | |
 
 Also confirm that no LLM or labeling call runs during `update`; labels come from `label_communities_by_hub`, so this is a single check.
 The private `_rebuild_code(changed_paths=...)` is out of scope: the audit already showed it lossy on TS.
@@ -212,15 +219,20 @@ The scratch wrapper works like this on a stale stamp:
 2. Start `graphify update` in the background. Graphify locks per output dir.
 3. Print a one-line staleness note.
 
-Measure three things: query latency while a refresh runs, the time from edit to fresh graph, and the share of the sampled questions that a stale-by-one-edit graph would answer differently.
-Also measure `graphify watch` (3 s debounce, a full rebuild per batch) the same way, as the off-the-shelf version.
+Measure three things:
+- query latency while a refresh runs;
+- the time from edit to fresh graph;
+- whether a query issued right after the structural edit, on the stale index, misses the new call or import edge (yes/no; expected yes, which bounds staleness to entities edited since the last refresh).
+
+`graphify watch` is not measured: it needs `watchdog`, which is not installed, and the install does not change.
+The report notes in one line that the audit shows `watch` is the same full rebuild per batch as this prototype's background `update`, plus a long-lived process per worktree.
 The report weighs these results against the audit's concern: `affected` right after an edit sees the old graph.
 
 **Stamp kept across the copy.**
 
 > NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Overseer call (maintainer may override): the stamp is derived from the copied graph's `built_at_commit`, with no dependence on whatever builds the main graph. It is a scratch prototype, measured.
 
-At copy time, the scratch wrapper writes `.stamp` as `<built_at_commit> <hash of the empty change set>`.
+At copy time, the scratch wrapper writes `.stamp` as `<built_at_commit> <hash of the empty change set>`, taking the empty-set hash from the wrapper's own stamp computation (`git hash-object --stdin` of a single newline) rather than a new format.
 If `built_at_commit` is missing, unknown, or not an ancestor of HEAD, it writes no stamp, which means a full update as today.
 A `.graphifyignore` change since the build shows up in the diff and forces an update.
 Residual risk: a main graph built from a dirty tree. The report states it.
@@ -280,9 +292,9 @@ The tests here check that the assessment's numbers are real:
   - code-relation counts unchanged, within the build-to-build range.
 - The all-markdown-out variant has zero `.md` nodes.
 - Every timing row records its runs and load. A row whose range exceeds 50% of its median is re-run once and flagged.
-- Each candidate's 5-query spot check either shows no verdict regression, or the report weighs the regression against the speed gained.
+- Each spot-checked candidate either shows no verdict regression, or the report weighs the regression against the speed gained; each identity-checked candidate has node and edge sets equal to the baseline's.
 - The `extract --code-only` fidelity diff is recorded as nodes and edges missing or extra compared with a full `update`.
-- Cleanup: `git worktree list` shows only `main` and the six maintainer worktrees, all with HEADs unchanged, and the scratch dirs are removed.
+- Cleanup: no `graphify` process (background `update`) is left running (`pgrep -af graphify` empty) before worktrees are removed; `git worktree list` then shows only `main` and the six maintainer worktrees, all with HEADs unchanged, and the scratch dirs are removed.
 
 ## Verification Methodology
 
@@ -291,17 +303,22 @@ Its shape:
 
 ```sh
 C=<assessed weftwise commit>; W=/workspaces/weftwise/gfy-floor; S=/tmp/gfy-floor
-x() { podman exec -u node -w "${1}" weftwise sh -c "$2"; }
-x /workspaces/weftwise/main "git worktree add --detach $W $C"
+x() { podman exec -u node -w "${1}" weftwise bash -c "$2"; }   # bash: the container's sh is dash, which has no `time`
+x /workspaces/weftwise/main "git worktree add --detach $W $C && mkdir -p $S"
+podman exec -i -u node weftwise bash -c "cat > $S/cdocs-graphify && chmod +x $S/cdocs-graphify" \
+  < /var/home/mjr/code/weft/clauthier/main/plugins/cdocs/bin/cdocs-graphify
 # 1. counts: build into an empty scratch dir (never the container default)
 x $W "env GRAPHIFY_OUT=$S/out graphify update $W"
-x $W "python3 <count script from the report> $S/out/graph.json"   # nodes, edges, per-prefix zeros, relation counts
-# 3. timings (3x each): raw full build, post-edit wrapper query, explain
+# 2. ignore holds: nodes, edges, per-prefix zeros, relation counts
+x $W "python3 <count script from the report> $S/out/graph.json"
+# 3. timings (3x each), timed inside the container: raw full build, explain, post-edit wrapper query
 x $W "rm -rf $S/out2; time env GRAPHIFY_OUT=$S/out2 graphify update $W"
 x $W "time env GRAPHIFY_OUT=$S/out graphify explain '<entity>' --graph $S/out/graph.json"
-# post-edit: apply the report's edit patch, then: time env GRAPHIFY_OUT=$S/out <scratch>/cdocs-graphify query '<q>'
+x $W "git apply <report's edit patch> && time env GRAPHIFY_OUT=$S/out $S/cdocs-graphify query '<q>'"
 # 4. queries against the step 1 graph
-x $W "env GRAPHIFY_OUT=$S/out graphify query '<q1>' --graph $S/out/graph.json"
+x $W "git checkout -- . && env GRAPHIFY_OUT=$S/out graphify query '<q1>' --graph $S/out/graph.json"
+# 5. no collateral, then cleanup
+x $W "pgrep -af graphify; git -C /workspaces/weftwise/main worktree list"
 x /workspaces/weftwise/main "git worktree remove --force $W && git worktree prune; rm -rf $S"
 ```
 
@@ -326,7 +343,7 @@ Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and
 - Run the pre-clean baseline: full build and structural post-edit, 3 runs each.
 - Write the inventory: per top-level directory, per nested `packages/*` subtree, and per extension.
   Confirm the default lines, and add a non-markdown line only where the inventory proves it graphed.
-- Commit `.graphifyignore` in weftwise `main` (`chore(graphify): ignore archive and reference docs` or similar). Rebuild `/var/cache/graphify-weftwise` with plain `update`.
+- Commit `.graphifyignore` in weftwise `main` (`chore(graphify): ignore archive and reference docs` or similar). Rebuild `/var/cache/graphify-weftwise` with plain `update`, then move `gfy-assess` to `checkout --detach main`.
 - Record the before/after tables and relation counts, then run the self-heal check.
 - Done when: the ignore checks pass, the relation counts are explained, and the baseline is recorded.
 
@@ -339,7 +356,7 @@ Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and
 ### Phase 3: runtime, candidates, report
 
 - Run the runtime matrix on the cleaned graph.
-- Run the candidates with their 5-query spot checks, including the `extract --code-only` fidelity diff and the two scratch-wrapper prototypes.
+- Run the candidates with their spot or identity checks, including the `extract --code-only` fidelity diff and the two scratch-wrapper prototypes.
 - Write the report.
   It includes the per-role verdict and the recommended config; any further `.graphifyignore` line is a separate weftwise commit.
   It also gives the recommended wrapper changes, which are not landed, and what would change the verdict: for example, the fork RFP's fixes 1 and 2, or a post-edit refresh below the bar.
