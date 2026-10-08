@@ -42,6 +42,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul.md` | blocking: per-agent `graphify update` writes the shared index; runtime-coupling guard regressed to caveat-only; overseer-clean check vacuous (dispatcher is a subagent) |
+| r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | CLI claims checked in devcontainer; F1-F5 trims |
 
 ## Judge Log
 
@@ -59,6 +60,8 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T10:10 | r1 revision with maintainer direction (thin wrapper: copy main graph to worktree path, incremental code-only update, pass-through; no lock; keep observe/subscribe with TODO) |
 | return | prop-1 | `abb75ba` | 2026-10-08T10:40 | `bin/code-query` ≤~80 lines: seed copy of main graph to `<toplevel>/graphify-out/` (self-gitignored), purge rebuild if cdocs nodes present, stamped incremental code-only update, pass-through with `--graph`, observe/subscribe hits appended with TODO; `.graphifyignore` (only exclusion mechanism) committed by consuming repo, init adds `cdocs/` line; skip-scope dropped. Unconfirmed on 0.9.61: relative node paths (copy viability), code-only update form |
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-r2.md` | 2026-10-08T10:42 | round 2; may check CLI claims against graphify 0.9.61 in the devcontainer |
+| return | rev-2 | `cd84ce3` | 2026-10-08T10:55 | proposal_accepted; container-verified 0.9.61: no `update --code-only` (exit 2); update uses no LLM but adds md heading nodes (cdocs/ = 6637/7375 nodes); `.graphifyignore` honored and evicts on plain update; `--graph` on query/explain/path/affected; relative node paths (copy works; `.graphify_root` absolute); update locks per output dir and prunes deleted files; ~2.4 s cold. F1-F5 trims; F6: shared `/var/cache/graphify` holds a stale 73-node test fixture (the overwrite problem, observed) |
+| dispatch | prop-1 (warm) | proposal | 2026-10-08T10:57 | accept-round F1-F5; defaults for 2 maintainer questions (stamp dropped; missing cdocs ignore = stderr hint) |
 
 ## Steering Log
 
