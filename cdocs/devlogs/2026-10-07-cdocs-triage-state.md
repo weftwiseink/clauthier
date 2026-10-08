@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: maintainer `plugin.json` bump; remaining outstanding proposals per triage (bash-output-cap usage data, hook-testing v2, tiered chat records, redaction scanning, improvement verification).
+- next_steps: maintainer push and tag (`cdocs--v0.2.0`, dry run clean); `@weftwise/cdocs-opencode` publish; remaining outstanding proposals per triage (bash-output-cap usage data, hook-testing v2, tiered chat records, redaction scanning, improvement verification).
 - important_files: `cdocs/devlogs/2026-10-07-rules-references.md`, `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its dead rule references now point at "CDocs Overseer Rules › Chat record".
@@ -81,6 +81,9 @@ Remaining: `workflow-patterns.md:18` and `overseers.md` "Stay thin" read as whol
 **Cleanup sweep** (fork, maintainer request "fix typos and any obvious cleanup"): `d1c1dcf` skill/agent typos, unclosed `<model_description` placeholders, redundant propose-revise lines; `19a5333` dead rule-file refs in two RFPs re-pointed to headings; `926e8a0` browser r2/r3 review timestamps set to commit times, rules-references proposal `last_reviewed.round` 5, `chat_record:` added to the browser-delegation and opencode-build-fixes devlogs, sentence-per-line splits.
 Left alone on purpose: em-dashes in the init-copied proposals README template, multi-sentence lines in reviews/devlogs (records), older-session docs, the maintainer's `overseers.md` wording.
 `test:rules` 11/11, `chat-record --unit` 95/95.
+
+**2026-10-08 arc:** chat-record free-form notes, interfacer agent (replaces browser-delegate), graphify overhaul, oversee-workstream (oversee renamed oversee-many; overseer rules and chat record become skills), delete-ablate (`detect-usage` kept as `scripts/detect-usage.sh`) all landed; each workstream has its own top-level devlog dated 2026-10-08.
+Plugin bumped to 0.2.0 (`c88c237`) at maintainer request; `claude plugin tag --dry-run` clean, OpenCode build version follows. Weftwise graphify devcontainer proposal set `implementation_accepted` (weftwise `5e446a84`, unpushed).
 
 ## Changes Made
 
