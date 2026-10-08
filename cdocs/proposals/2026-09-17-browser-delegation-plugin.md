@@ -190,7 +190,7 @@ Its report must list each session as `opened`, and a `reused` session never back
 The reviewer learns this from the option's line in the agent description, which is in its Agent tool listing, so the rule reaches it at runtime without the README.
 
 Evidence has two parts, both committed with the review:
-- **Textual audit trail.** The review inlines every report line except `Truncated` (`Sessions`, `Status`, `Artifacts`, `AE score`, `Facts`), so the `opened` requirement, the dispatch status, and the scratch source paths stay auditable, plus the reviewer's own description of what the artifact shows.
+- **Textual audit trail.** The review inlines every report line except `Truncated` (`Sessions`, `Status`, `Artifacts`, `AE score`, `Facts`) plus its own description of what the artifact shows, so the `opened` requirement, the dispatch status, and the scratch source paths stay auditable.
 - **Cited screenshots.** The reviewer copies each screenshot its verdict relies on, and only paths listed in the inlined `Artifacts` line, from scratch to `cdocs/_media/YYYY-MM-DD-<review-doc-name>-<description>.png`, embeds it captioned with its scratch source path, and commits it with the review by exact path.
   The name keeps the cdocs media convention's `YYYY-MM-DD-description` shape (`frontmatter-spec.md` "Media") while never colliding with implementer devlog media, and an existing `_media` file is never overwritten: after `cp -n`, a `cmp` against the source catches a taken name, and the reviewer chooses another description.
   The caption and the inlined `Artifacts` line tie each image to this round's `opened` dispatch, so the overseer can check provenance.
