@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-overhaul
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -222,14 +222,8 @@ Passing it in prompts and never running queries come from the rule line.
 
 ### Graph refresh ownership
 
-Refreshing the main graph is left to the consumer for now (operator, lace lifecycle command, or git hook); `cdocs-graphify` only updates the caller's own worktree index.
-The one exception is `/cdocs:rfp`, which starts new workstreams, so its Invocation gains one conditional step:
-
-```md
-6. If a main graphify graph exists (`$GRAPHIFY_OUT`, or `graphify-out/` in the main checkout), run `graphify update .` in the main checkout, output discarded, so new worktrees copy a current graph.
-```
-
-`update` takes graphify's per-output-dir lock, so this cannot corrupt the graph if a worktree copies it at the same moment; the copy may just be one refresh behind, which the copier's own `update` repairs.
+Refreshing the main graph is left to the consumer for now (operator, lace lifecycle command, or git hook); no cdocs skill refreshes it, and `cdocs-graphify` only updates the caller's own worktree index.
+`update` takes graphify's per-output-dir lock, so a refresh cannot corrupt the graph if a worktree copies it at the same moment; the copy may just be one refresh behind, which the copier's own `update` repairs.
 
 ### Replacement and deletion list
 
@@ -248,7 +242,6 @@ The one exception is `/cdocs:rfp`, which starts new workstreams, so its Invocati
 | `plugins/cdocs/skills/graphify/SKILL.md` | new skill (draft above) |
 | `plugins/cdocs/rules/tool-use-safeguards.md` | "Tools and Skills" `/graphify` bullet replaced by the rule line above |
 | `plugins/cdocs/skills/devlog/SKILL.md` | "The Scratchpoint Section" defines `graphify_base_query` |
-| `plugins/cdocs/skills/rfp/SKILL.md` | one conditional main-graph refresh step (above) |
 | `plugins/cdocs/skills/devlog/template.md`, `plugins/cdocs/skills/iterate/template.md` | `graphify_query:` becomes `graphify_base_query:` |
 | `plugins/cdocs/skills/init/SKILL.md` | new step: ensure a `cdocs/` line in `.graphifyignore` when it exists or graphify is installed |
 
@@ -277,7 +270,7 @@ Each worktree gets its own `graphify-out/`, copied once from the main graph and 
 No code-reading agent writes the shared index, so one-writer-per-file holds across worktrees, and an agent in one worktree never queries another branch's graph.
 This removes the cross-worktree staleness and overwrite risk that lace D3 accepted for a shared index.
 The copy works because node paths and manifest keys are relative (verified on 0.9.61); dropping the copied `.graphify_root` makes the first update resolve them against the worktree, so it prunes the branch's deleted files at once.
-Refreshing the main graph (`graphify update /workspace/clauthier/main` with the baked `GRAPHIFY_OUT` in the container) is the consumer's, plus the `/cdocs:rfp` step; a stale main graph only costs a larger first update.
+Refreshing the main graph (`graphify update /workspace/clauthier/main` with the baked `GRAPHIFY_OUT` in the container) is the consumer's; a stale main graph only costs a larger first update.
 
 ### D4: Plain `update`, no LLM
 
@@ -369,7 +362,7 @@ First rebuild the main graph from the repo after `.graphifyignore` lands: `graph
 
 Check that the implementer's and reviewer's worktrees each gain `graphify-out/`, that `/var/cache/graphify/graph.json`'s mtime is unchanged, that the implementer's report carries a refined `graphify_base_query`, and that the overseer's transcript contains no distinctive node label from the real output.
 
-**Ablation run (post-accept):** reuse the setup of the earlier `/cdocs:ablate` graphify run ([Probe A](../devlogs/2026-09-18-ablate-e2e-probeA-inject-rules.md), summarized in the [mcp-ablation devlog](../devlogs/2026-09-17-mcp-ablation-iterate.md)), changing only the signature, the treatment line, and the task.
+**Ablation run (weftwise container):** reuse the setup of the earlier `/cdocs:ablate` graphify run ([Probe A](../devlogs/2026-09-18-ablate-e2e-probeA-inject-rules.md), summarized in the [mcp-ablation devlog](../devlogs/2026-09-17-mcp-ablation-iterate.md)), changing only the signature, the treatment line, and the task.
 
 - **What transfers unchanged:** single-shot (`trials=1`, indicative); two detached worktrees at one pinned base; sonnet arms and an opus evaluator; the CLI withhold expressed in the unassisted arm's prompt and confirmed by `detect-usage` on its transcript reporting `unused`; answers written to `ANSWER.md`.
 - **Signature:** `cli:^(cdocs-)?graphify ` (Probe A used `cli:graphify `, before `detect-usage` matched per command segment).
@@ -388,8 +381,9 @@ Check that the implementer's and reviewer's worktrees each gain `graphify-out/`,
 
   `mounts/atoms.ts` has 33 direct importers across about ten directories; the graph's advantage, if any, is the transitive consumers that no single literal greps to.
   The base query: `how do mount atoms flow through hooks and tabs, palette, and editor settings consumers`.
-- **Prerequisite:** weftwise's devcontainer does not install graphify; the run needs the `graphify:1` lace feature (or a pinned `graphifyy` 0.9.61), a root `.graphifyignore` with `cdocs/`, a built main graph, and the cdocs plugin from this change on `PATH`.
-  Until then the run is deferred, not moved to clauthier.
+- **Environment:** the `weftwise` devcontainer, once a separate workstream lands the `graphify:1` lace feature and a root `.graphifyignore` with `cdocs/` there and rebuilds the container.
+  Prerequisite, checked by the implementer before the run: `podman exec -u node weftwise graphify --version` succeeds, a built main graph exists at the container's `$GRAPHIFY_OUT/graph.json`, and the cdocs plugin from this change is on `PATH`.
+  If any check fails, the implementer reports back to the overseer instead of skipping the run or moving it to clauthier.
 - **What would change the design:**
   - VOID (`available_unused`): agents ignore a base query they were handed; apply D6's fallback (a startup line in agent files) and re-run.
   - VALID with `context_gap` at or below 0 and no token saving: overseers stop writing `graphify_base_query` by default (the field stays, opt-in), and the wrapper remains for explicit use.
@@ -404,6 +398,7 @@ Failure pictures: the stub log has no `query` line (agents ignore the base query
 ## Implementation Phases
 
 Phases run in order; Phases 2 and 3 both touch `iterate/SKILL.md` and READMEs, so do not parallelize them.
+This workstream runs in parallel with the unlanded `interfacer-agent` branch, which also edits `plugins/cdocs/agents/reviewer.md` and `plugins/cdocs/skills/iterate/SKILL.md`: whichever lands second rebases over the other.
 
 ### Phase 1: CLI reconciliation (non-blocking)
 
@@ -420,21 +415,22 @@ Write `bin/cdocs-graphify` and `hooks/tests/cdocs-graphify.test.sh` (TDD: tests 
 
 ### Phase 3: Base-query wiring
 
-Add the skill; rename `graphify_query:` to `graphify_base_query:` in both Scratchpoint templates and any other hit of `grep -rn graphify_query plugins/ CLAUDE.md`; add the `/cdocs:rfp` refresh step; replace the `/graphify` rule bullet; define `graphify_base_query` in the devlog skill; replace iterate's "Graphify scoping" and flag with "Base query"; drop the reviewer brief section; add the init `.graphifyignore` step; list the skill in the plugin README and `CLAUDE.md`.
+Add the skill; rename `graphify_query:` to `graphify_base_query:` in both Scratchpoint templates and any other hit of `grep -rn graphify_query plugins/ CLAUDE.md`; replace the `/graphify` rule bullet; define `graphify_base_query` in the devlog skill; replace iterate's "Graphify scoping" and flag with "Base query"; drop the reviewer brief section; add the init `.graphifyignore` step; list the skill in the plugin README and `CLAUDE.md`.
 **Done when:** the removal grep and `grep -rn 'graphify_query' plugins/ CLAUDE.md` are empty, and `npm run test:rules` and `npm run test:opencode` pass.
 
 ### Phase 4: Supersede the prior proposal
 
 Set [`2026-09-17-graphify-cdocs-integration.md`](2026-09-17-graphify-cdocs-integration.md) to `status: evolved`, `state: archived`, with a NOTE under its title: replaced by this proposal; its D3 runtime-coupling guard is kept as unconditional `.observe`/`.subscribe` surfacing on every query (pattern to be generalized), while the forced unscoped fallback on near-empty sets is dropped because nothing narrows a reviewer's sweep any more.
-Add a NOTE to the lace proposal's D3: agents now query per-worktree indexes copied from `/var/cache/graphify` and never write it, so the cross-worktree staleness and overwrite risk D3 accepted no longer applies; the shared index is a read-only source the consumer refreshes (and `/cdocs:rfp` brings up to date when it starts a workstream).
+Add a NOTE to the lace proposal's D3: agents now query per-worktree indexes copied from `/var/cache/graphify` and never write it, so the cross-worktree staleness and overwrite risk D3 accepted no longer applies; the shared index is a read-only source the consumer refreshes.
 **Done when:** `/cdocs:triage` reports no frontmatter issues on either file.
 
 ### Phase 5: Verification
 
 Run the host stub verification; record the stub log excerpt, the `detect-usage` results, the positive control, and the marker count in the devlog.
-Route the devcontainer live run and the exclusion check to the overseer as post-accept, and the weftwise ablation run once its prerequisite is met.
+Route the clauthier devcontainer live run and the exclusion check to the overseer as post-accept.
+Run the weftwise ablation once its prerequisite checks pass; if they fail, report back rather than skip.
 **Done when:** all host checks pass, or a failure picture is recorded with the D6 fallback applied and re-run.
 
 ## Open Questions
 
-- Should the consumer's main-graph refresh become a lace `postStartCommand` (on the `main` checkout), beyond the `/cdocs:rfp` step?
+- Should the consumer's main-graph refresh become a lace `postStartCommand` (on the `main` checkout), or a step in a workstream-starting skill?
