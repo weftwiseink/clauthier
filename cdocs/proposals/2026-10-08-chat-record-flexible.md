@@ -5,7 +5,12 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
+last_reviewed:
+  status: accepted
+  by: "@claude-opus-5-5"
+  at: 2026-10-08T09:31:05-07:00
+  round: 1
 tags: [chat_record, hooks, claude_skills]
 ---
 
