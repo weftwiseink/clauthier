@@ -22,13 +22,25 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 ## Scratchpoint
 
-- next_steps: await r2 revision; fresh opus r3; on accept, `/cdocs:iterate` (Turn 0: this devlog continues; implementation in worktree `../rules-references`).
+- next_steps: iterate round 1: implementer on phases 1-3 in worktree `../rules-references` (branch `rules-references`), then fresh reviewer.
 - important_files: `plugins/cdocs/rules/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/inject-rules.ts`, `plugins/cdocs/agents/*.md` Startup blocks, `plugins/cdocs/README.md:112-116`
 - callouts:
   - decision: overseer is this top-level session (not nested), per `overseers.md`.
   - todo: maintainer has doubts about the "advisor subagent" wording in `overseers.md` "Stay thin"; out of this loop's scope.
 
 ## Workstream Devlogs
+
+| devlog | concern | writer | status |
+|---|---|---|---|
+| `cdocs/devlogs/2026-10-07-rules-references-impl.md` (branch `rules-references`) | phases 1-3 implementation | implementer (opus) | wip |
+
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-07-rules-references.md` (proposal `implementation_ready`, nits `6be476b`), overseer: this top-level session.
+Scope: full proposal, phases 1-3, in worktree `../rules-references` on branch `rules-references`; the overseer lands it.
+Verification floor: the proposal's Verification Methodology steps 1-5: `npm run test:rules` green and red on mutations; phase 3 canary gate passes on the swapped word and `rules_check` matches its with-import baseline per assertion (re-run once on mismatch); a scratch project from the changed init shows `.claude/rules/cdocs.md` once in `/context` with no import; plugin `cdocs:nit-fix` applies a sentinel convention with no rule-file Read/Glob in either agent transcript; `chat-record.test.sh --only init_real` passes.
+Failure picture: a canary reply with only `heliotrope`, a `nit-fix` transcript that Reads a rule path or misses the sentinel, or `test:rules` passing on a mutated filename reference.
+If the phase 3 gate fails, phase 3 stops and phases 1-2 land alone (an accepted outcome, not a Revise).
 
 ## Iteration Log
 
