@@ -58,8 +58,7 @@ For each target file:
    b. **Callout attribution**: find bare `NOTE:`, `TODO:`, `WARN:` without parenthetical attribution. Add `(task_list_value)` using the document's frontmatter `task_list` field. If `task_list` is missing, report instead of fixing.
    c. **Punctuation**: replace em-dashes (`—` or ` -- `) with colons or spaced hyphens (` - `).
    d. **Emoji removal**: remove emoji characters from prose.
-   e. **Any other MECHANICAL convention** in your working set: apply its fix.
-   f. Apply each fix via the Edit tool. Record in your report.
+   e. Apply each fix via the Edit tool. Record in your report.
 4. For non-protected prose, check each JUDGMENT-REQUIRED convention:
    a. Report likely violations with line numbers and surrounding context.
    b. Do NOT apply any fixes.
