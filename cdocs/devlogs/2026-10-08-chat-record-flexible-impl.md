@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/chat-record-flexible
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-chat-record-flexible.md
 tags: [chat_record, hooks, implementation]
 ---
@@ -18,16 +18,16 @@ tags: [chat_record, hooks, implementation]
 
 ## Objective
 
-Implement [the proposal](../proposals/2026-10-08-chat-record-flexible.md): free-form chat-record notes (no `gist:`-style types) and session-named record files (`YYYY-MM-DD-<name>-<session_id>.md`), with a rename starting a new record.
+Implement [the proposal](../proposals/2026-10-08-chat-record-flexible.md): free-form chat-record notes (no `gist:`-style types).
+Round 1 also built session-named record files, which the maintainer then dropped; see "Revert of session-named records".
 Dispatched by the `/cdocs:iterate` overseer, round 1; scope Phases 1-4.
 
 ## Scratchpoint
 
-- next_steps: overseer review of the revert (`39478f7..HEAD`) and landing.
+- next_steps: none; impl-r2 accepted (`cdocs/reviews/2026-10-08-review-of-chat-record-flexible-impl-r2.md`), its follow-ups applied; overseer lands the branch.
 - important_files: `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`, `plugins/cdocs/rules/overseers.md`, `cdocs/proposals/2026-10-08-chat-record-flexible.md`
 - callouts:
   - decision: maintainer dropped session-named records ("Retrieval/interpretability can be handled later"); free-form notes stay. Proposal keeps `status: implementation_wip`.
-  - todo(overseer): this repo's `cdocs/_chat/README.md` still says "the agent's gist bullets"; regenerate it from the init template on main after the merge.
   - decision: `node_modules` in the worktree is an untracked symlink to `../main/node_modules` (read-only use) so `npm run test:rules` runs; never committed.
 
 ## Plan
@@ -132,17 +132,28 @@ Maintainer decision (relayed by the overseer after r1 acceptance): keep free-for
 
 `git diff main -- plugins/cdocs/bin/chat-record` is one line: `- gist: <what a successor should know from this turn>` to `- <the most important thing you are telling the user>`.
 
+### Review r2 follow-ups
+
+- Rule sentence cut to "note the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words", in the rule and the proposal (the only verbatim copies).
+- Example bullet replaced with a typical note: "Reviewer r5 returned revise on two blockers; the retry cap is yours to decide."
+- `cdocs/_chat/README.md` regenerated from the branch's init template (an init-equivalent scaffold regeneration, not a record edit).
+- Proposal `status: implementation_accepted` (maintainer pre-approved on r2 acceptance).
+
 ## Changes Made
+
+Net change against main (after the revert and the r2 follow-ups):
 
 | file | change |
 |---|---|
-| `plugins/cdocs/rules/overseers.md` | free-form note sentence and example |
-| `plugins/cdocs/bin/chat-record` | untyped Stop template; `session_name`, `transcript_for`, name-aware lookup |
-| `plugins/cdocs/hooks/tests/chat-record.test.sh` | untyped fixtures; block-reason, slug, rename, agent-mode, name-exact tests |
-| `plugins/cdocs/bin/README.md`, `plugins/cdocs/README.md`, `plugins/cdocs/skills/init/SKILL.md` | free-form note wording; session-named filenames |
-| `plugins/cdocs/rules/frontmatter-spec.md`, `plugins/cdocs/skills/devlog/SKILL.md` | one `chat_record` entry per record; named filename |
+| `plugins/cdocs/rules/overseers.md` | free-form note sentence and one-bullet example |
+| `plugins/cdocs/bin/chat-record` | untyped Stop block template line |
+| `plugins/cdocs/hooks/tests/chat-record.test.sh` | untyped fixtures; two block-reason assertions |
+| `plugins/cdocs/bin/README.md` | untyped `note` example and block JSON |
+| `plugins/cdocs/README.md` | "note of each turn" and "note" for "gist bullets" and "gist bullet" |
+| `plugins/cdocs/skills/init/SKILL.md` | `_chat/README.md` template: "the agent's note of each turn" |
+| `cdocs/proposals/2026-10-08-chat-record-flexible.md` | narrowed to free-form notes; naming design in a NOTE; `status: implementation_accepted` |
 | `cdocs/proposals/2026-09-22-chat-record-devlog-management.md` | NOTE pointing at the flexible proposal |
-| `cdocs/proposals/2026-10-08-chat-record-flexible.md` | `status: implementation_wip`; NOTE on the `session_title` fallback |
+| `cdocs/_chat/README.md` | regenerated verbatim from the init template (impl-r2 item 4, option (a)) |
 
 ## Verification
 
