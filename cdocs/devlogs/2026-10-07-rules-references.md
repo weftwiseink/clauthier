@@ -22,7 +22,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 ## Scratchpoint
 
-- next_steps: await r2 review.
+- next_steps: await r2 revision; fresh opus r3; on accept, `/cdocs:iterate` (Turn 0: this devlog continues; implementation in worktree `../rules-references`).
 - important_files: `plugins/cdocs/rules/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/inject-rules.ts`, `plugins/cdocs/agents/*.md` Startup blocks, `plugins/cdocs/README.md:112-116`
 - callouts:
   - decision: overseer is this top-level session (not nested), per `overseers.md`.
@@ -35,6 +35,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | proposer (opus) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references.md` | blocking: per-file delivery not worth migration (drop `@`-import instead); drop simulated init from check |
+| r2 | proposer (opus, warm) | reviewer (opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-07-review-of-rules-references-r2.md` | blocking: phase 3 `rules_check` gate can never pass (fails 3/5 with import); use canary compaction probe |
 
 ## Judge Log
 
@@ -48,8 +49,11 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T22:06 dispatch: same warm proposer for r1 revision (findings moderate, context ~170K).
 - 2026-10-07T22:12 return: r1 revision `1add187`: keep `cdocs.md`, drop `@`-import gated on `rules_check` without import (phase 3 step 1, revert on fail); alphabetical concat; no hook changes; check against source headings + `--materialized` in `init_real`. Unrequested: removed TS init-list assertion (bash `chat-record.test.sh --unit` already covers it).
 - 2026-10-07T22:13 dispatch: fresh opus `cdocs:reviewer`, round 2.
+- 2026-10-07T22:20 return: r2 revise (`cabe8f9`).
+- 2026-10-07T22:31 dispatch: warm proposer for r2 revision.
 
 ## Steering Log
 
 - 2026-10-07: maintainer: advisor-subagent line removed from `overseers.md` (`20c83f3`); oversee concurrency defaults to parallel when practical (`c9e57f5`, `141049c`).
 - 2026-10-07: maintainer: "Rules heading replacements work fine but we should have a way to 2x check it"; "Maybe we can reconsider the concatenation through some more recent affordance."
+- 2026-10-07T22:30: maintainer considered path-style refs (`cdocs/rules/overseers.md#Stay thin`); rejected as awkward (collides with consumer `cdocs/` docs dir, internal rule files). Decision: heading references, keep concatenated `cdocs.md`, drop `@`-import. `/cdocs:full-send` the remainder: finish propose-revise, then `/cdocs:iterate` with this session as overseer.
