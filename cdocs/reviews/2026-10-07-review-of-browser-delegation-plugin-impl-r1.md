@@ -196,7 +196,7 @@ Findings:
   Fix: capture each eval's exit status (`${PIPESTATUS[0]}`), and treat a nonzero exit or empty output as non-agreement for that iteration. Seed `first` with a first-iteration flag rather than an emptiness test.
   A one-line addition to the Convergence prose would also help: "an eval error is never agreement; it shows as the session's last-seen state."
   Re-verify with a both-sessions-missing-selector poll that must report `converged: no, timed out ...`.
-- **Non-blocking: free-text commentary in `cli` facts.** r1 reported `(0.1.22, global; the `command -v` check was folded into an `&&` chain, so I can't confirm ...)`.
+- **Non-blocking: free-text commentary in `cli` facts.** r1 reported ``(0.1.22, global; the `command -v` check was folded into an `&&` chain, so I can't confirm ...)``.
   The `(which Setup rule resolved it)` wording in Output Format invites narration. Specify the literal tokens instead: `(<version>, global | project-local)`.
   Other Facts lines also drift into prose (`both screenshot files exist (confirmed with ls -l).`). None of it is verdict language and the parser accepts it, but tighter facts would keep reports compact.
 
