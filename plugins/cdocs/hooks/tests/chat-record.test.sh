@@ -501,7 +501,7 @@ hs() { # hs <name> <description>: scenario header; returns 1 when filtered out
 
 headless_suite() {
   headless_setup
-  local P F J out sid sid2 b
+  local P F J C out sid sid2 b
 
   if hs cmdv "command -v chat-record resolves into the plugin under test"; then
     P="$(hproj cmdv)"
@@ -653,29 +653,44 @@ and then reply received." --permission-mode bypassPermissions
     has "the agent reported a.txt" "$out" 'canary fixture'
   fi
 
-  if hs top_level_only "rules loaded; proposer and fork dispatched; no subagent chat-record call"; then
+  if hs top_level_only "rules loaded; parent loads /cdocs:chat-record; proposer, general-purpose and fork dispatched; no subagent chat-record call"; then
     P="$(hproj top_level_only)"
     init_rules "$P"
     # Forks are gated behind CLAUDE_CODE_FORK_SUBAGENT in 2.1.289, and agents run in the
     # background by default there; CLAUDE_CODE_DISABLE_BACKGROUND_TASKS forces foreground.
-    claude_run top_level_only "$P" CLAUDE_CODE_FORK_SUBAGENT=1 CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p 'Do not run chat-record yourself unless a hook tells you to. First, use the Agent tool to dispatch a foreground agent with subagent_type "cdocs:proposer" whose task is: write a short 3-section proposal stub about adding a --verbose flag to a hypothetical CLI, at cdocs/proposals/2026-10-05-verbose-flag.md, then re-read it and tighten one sentence. Wait for it. Second, use the Agent tool with subagent_type "fork" and the task: report the first line of a.txt. Wait for it. Then reply done.' --permission-mode bypassPermissions
-    J="$SB/top_level_only.jsonl"; F="$(the_rec "$P")"
+    # The parent loads /cdocs:chat-record first, so the fork inherits its text and must obey
+    # the skill's top-level-only guard.
+    claude_run top_level_only "$P" CLAUDE_CODE_FORK_SUBAGENT=1 CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 -- -p 'First, invoke /cdocs:chat-record with the Skill tool and follow it for this turn. Then, use the Agent tool to dispatch a foreground agent with subagent_type "cdocs:proposer" whose task is: write a short 3-section proposal stub about adding a --verbose flag to a hypothetical CLI, at cdocs/proposals/2026-10-05-verbose-flag.md, then re-read it and tighten one sentence. Wait for it. Next, use the Agent tool with subagent_type "general-purpose" and the task: count the lines of a.txt with the Bash tool and report the count. Wait for it. Next, use the Agent tool with subagent_type "fork" and the task: report the first line of a.txt. Wait for it. Then reply done.' --permission-mode bypassPermissions
+    J="$SB/top_level_only.jsonl"; F="$(the_rec "$P")"; C="$SB/top_level_only.canary.jsonl"
     check "no chat-record call with an agent_id" \
-      "$(jq -c 'select(.event == "PreToolUse" and (.stdin.agent_id // null) != null)' "$SB/top_level_only.canary.jsonl" 2>/dev/null | grep -c .)" "0"
-    check "top-level first Stop still blocks" "$(jq -c 'select(.event == "Stop") | .stdin.stop_hook_active' "$SB/top_level_only.canary.jsonl" | head -n 1):$(stop_blocks "$J")" "false:1"
+      "$(jq -c 'select(.event == "PreToolUse" and (.stdin.agent_id // null) != null)' "$C" 2>/dev/null | grep -c .)" "0"
+    out="$(jq -r 'select(.type == "assistant" and .parent_tool_use_id != null) | .message.content[]? | select(.type == "tool_use" and .name == "Skill") | .input.skill' "$J" | paste -sd, -)"
+    hasnt "no subagent invoked the chat-record skill" "$out" 'chat-record'
+    out="$(jq -r 'select(.type == "assistant" and .parent_tool_use_id == null) | .message.content[]? | select(.type == "tool_use" and .name == "Skill") | .input.skill' "$J" | paste -sd, -)"
+    has "the parent invoked the chat-record skill" "$out" '(cdocs:)?chat-record'
+    # Positive control: the parent's own note lands, and every agent entry in the record is
+    # one of the parent's (agent_id-free) `chat-record note` calls.
+    echo "  info: record markers: $(markers "$F")"
+    has "the parent's note landed in the record" "$(markers "$F")" '^U A:[^ ]+'
+    check "every agent entry is a top-level note call" \
+      "$(markers "$F" | tr ' ' '\n' | grep -c '^A:')" \
+      "$(jq -c 'select(.event == "PreToolUse" and (.stdin.agent_id // null) == null and (.stdin.tool_input.command // "" | test("chat-record note")))' "$C" 2>/dev/null | grep -c .)"
     out="$(jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use" and .name == "Agent") | .input.subagent_type' "$J" | paste -sd, -)"
     echo "  info: Agent subagent_types dispatched: $out"
-    has "a cdocs:proposer and a fork were dispatched" "$out" 'cdocs:proposer.*fork|fork.*cdocs:proposer'
+    has "a cdocs:proposer was dispatched" "$out" 'cdocs:proposer'
+    has "a general-purpose agent was dispatched" "$out" 'general-purpose'
+    has "a fork was dispatched" "$out" 'fork'
     hasnt "the fork dispatch was not refused" "$(tool_results "$J")" "Agent type 'fork' not found"
     # Positive controls: the no-leak check above is vacuous unless the subagents worked.
     out="$(agent_results "$J")"
-    hasnt "both dispatches ran in the foreground" "$out" 'Async agent launched'
+    hasnt "all dispatches ran in the foreground" "$out" 'Async agent launched'
     has "the fork reported a.txt's first line" "$out" 'canary fixture'
     [ -s "$P/cdocs/proposals/2026-10-05-verbose-flag.md" ] && ok "the proposer wrote its proposal" \
       || bad "the proposer wrote no cdocs/proposals/2026-10-05-verbose-flag.md"
     out="$(jq -r 'select(.type == "assistant" and .parent_tool_use_id != null) | .message.content[]? | select(.type == "tool_use") | .name' "$J" | sort | uniq -c | awk '{printf "%s%s=%s", (NR > 1 ? "," : ""), $2, $1}')"
     echo "  info: subagent tool calls: $out"
     has "the subagents made tool calls under the rules" "$out" '(Write|Edit)='
+    has "the general-purpose agent ran Bash" "$out" 'Bash='
   fi
 
   if hs slash_command "user slash command recorded as the raw invocation"; then
@@ -814,15 +829,22 @@ init_rules() {
 init_real() {
   section "headless: init_real - /cdocs:init scaffolds cdocs/_chat and rules; --minimal does not"
   local P J HTIMEOUT=900 # init writes every rule file twice (rules file, AGENTS.md)
-  # CLAUDE.md is seeded with the legacy import line, which init must remove.
+  # CLAUDE.md is seeded with the legacy import line, which init must remove. opencode.json
+  # enables the OpenCode step; a stale rule copy there (no source rule) must be pruned.
   P="$(hproj init_real nochat)"; printf '# Project\n\n@.claude/rules/cdocs.md\n' > "$P/CLAUDE.md"
+  printf '{}\n' > "$P/opencode.json"
+  mkdir -p "$P/.opencode/rules/cdocs"; printf '# CDocs Overseer Rules\n' > "$P/.opencode/rules/cdocs/overseers.md"
   claude_run init_real "$P" -- -p '/cdocs:init' --permission-mode bypassPermissions
   J="$SB/init_real.jsonl"
   check ".gitattributes is the union rule" "$(cat "$P/cdocs/_chat/.gitattributes" 2>/dev/null)" "*.md merge=union"
   [ -s "$P/cdocs/_chat/README.md" ] && ok "_chat/README.md written" || bad "_chat/README.md missing"
-  has "rules file carries the scope sentence" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" \
-    'Top-level agents must use the `chat-record` command'
-  has "rules file carries the resumption step" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" '\*\*After a compaction.* run `chat-record path`'
+  local tl='Top-level session only \(not started by the Agent tool, and not a fork\): invoke `/cdocs:chat-record`'
+  has "rules file carries the top-level chat-record bullet" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" "$tl"
+  has "AGENTS.md block carries the top-level chat-record bullet" "$(cat "$P/AGENTS.md" 2>/dev/null)" "$tl"
+  hasnt "rules file has no overseer rule" "$(cat "$P/.claude/rules/cdocs.md" 2>/dev/null)" 'CDocs Overseer Rules'
+  hasnt "AGENTS.md has no overseer rule" "$(cat "$P/AGENTS.md" 2>/dev/null)" 'CDocs Overseer Rules'
+  [ ! -e "$P/.opencode/rules/cdocs/overseers.md" ] && ok "stale .opencode/rules/cdocs/overseers.md pruned" \
+    || bad ".opencode/rules/cdocs/overseers.md survived init"
   hasnt "CLAUDE.md rules import line is gone" "$(cat "$P/CLAUDE.md")" '^@\.claude/rules/cdocs\.md'
   # Every rule reference in shipped content resolves against what init actually wrote.
   # `node --import tsx`, not the tsx CLI, whose IPC socket under a long TMPDIR exceeds the
