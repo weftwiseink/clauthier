@@ -10,10 +10,6 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/workflow-patterns.md
 
-## Overseers
-
-@rules/overseers.md
-
 ## Tool Use Guidance
 
 @rules/tool-use-safeguards.md

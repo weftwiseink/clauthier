@@ -45,7 +45,6 @@ The rules below are real `@`-imports (no code span), so sessions in this repo lo
 
 - **Writing conventions** (BLUF, sentence-per-line, callouts, history-agnostic framing): @plugins/cdocs/rules/writing-conventions.md
 - **Workflow patterns** (model tiering, parallel investigation, loops and multi-phase plans, before review, completeness): @plugins/cdocs/rules/workflow-patterns.md
-- **Overseers** (stay thin, chat record): @plugins/cdocs/rules/overseers.md
 - **Tool use guidance** (tools and skills, one writer per file, Bash output): @plugins/cdocs/rules/tool-use-safeguards.md
 - **Frontmatter spec**: @plugins/cdocs/rules/frontmatter-spec.md
 - **Skills**: `plugins/cdocs/skills/<name>/SKILL.md` (ablate, chat-record, devlog, full-send, graphify, implement, init, iterate, nit_fix, oversee-many, oversee-workstream, propose, propose-revise, report, review, rfp, status, triage)
@@ -58,7 +57,7 @@ Rule files carry Claude Code guidance only; target-specific guidance is tracked 
 
 1. **`/cdocs:init` materialization** (primary): writes the rules into the consuming project as `.claude/rules/cdocs.md` (auto-loaded by Claude Code, no `@`-import), plus `.opencode/rules/cdocs/*.md` and an inlined `AGENTS.md` block for other tools. Each carries a version + sha256 marker.
 2. **SessionStart freshness hook** (`inject-rules.ts`): on a hash mismatch with the marker, a short directive to re-run `/cdocs:init` and `Read` the result; silent when uninitialized, fresh, or in this source repo. Interim until a plugin-native `rules` field ([#14200](https://github.com/anthropics/claude-code/issues/14200)).
-3. **Agents read rules from context**: subagents receive the rules with the CLAUDE.md hierarchy and read no rule files; shipped content references rules by heading (`"CDocs Overseer Rules › Chat record"`), checked by `npm run test:rules`.
+3. **Agents read rules from context**: subagents receive the rules with the CLAUDE.md hierarchy and read no rule files; shipped content references rules by heading (`"CDocs Workflow Patterns › Completeness"`), checked by `npm run test:rules`.
 
 See `plugins/cdocs/README.md` "Rules Integration" for details.
 

@@ -7,7 +7,7 @@ type: devlog
 state: live
 status: wip
 tags: []
-# chat_record: optional list of cdocs/_chat/ record paths; see "CDocs Overseer Rules › Chat record"
+# chat_record: optional list of cdocs/_chat/ record paths
 ---
 
 # TITLE: Devlog

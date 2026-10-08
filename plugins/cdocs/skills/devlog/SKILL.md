@@ -28,7 +28,7 @@ Fill in:
 - `task_list` with the relevant workstream path.
 - `type: devlog`, `state: live`, `status: wip`.
 - Tags relevant to the work.
-- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session as "CDocs Overseer Rules › Chat record" describes.
+- `chat_record:` (optional): repo-root paths of the chat records of the sessions that worked on this devlog, one appended per session.
 
 Quote a chat record only inside a code fence: its column-0 `@` header and `--` sign-off lines are not cdocs markdown.
 

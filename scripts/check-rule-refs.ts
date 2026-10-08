@@ -2,7 +2,7 @@
  * check-rule-refs.ts — Rule reference checker for shipped cdocs content.
  *
  * Shipped content (rules, skills, skill templates, agents) refers to a rule by
- * its heading, never its filename: `"CDocs Overseer Rules › Chat record"`.
+ * its heading, never its filename: `"CDocs Workflow Patterns › Completeness"`.
  * Downstream, `/cdocs:init` concatenates the rules into `.claude/rules/cdocs.md`
  * and inlines them into `AGENTS.md`, so only the H1 survives every form.
  *

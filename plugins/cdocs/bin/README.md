@@ -61,7 +61,7 @@ A real `Stop` block, from a turn with no note yet:
 ### More
 
 Design rationale: [`cdocs/proposals/2026-09-22-chat-record-devlog-management.md`](../../../cdocs/proposals/2026-09-22-chat-record-devlog-management.md).
-Usage rule for agents: [`../rules/overseers.md`](../rules/overseers.md) "Chat record".
+Usage for the top-level agent: [`../skills/chat-record/SKILL.md`](../skills/chat-record/SKILL.md).
 Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat record".
 
 ## `cdocs-graphify`

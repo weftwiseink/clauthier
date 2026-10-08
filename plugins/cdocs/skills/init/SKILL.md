@@ -82,10 +82,6 @@ Scaffold the CDocs documentation structure in the current project.
 
      [Full content of workflow-patterns.md, frontmatter stripped]
 
-     ## CDocs Overseer Rules
-
-     [Full content of overseers.md, frontmatter stripped]
-
      ## CDocs Tool Use Guidance
 
      [Full content of tool-use-safeguards.md, frontmatter stripped]
