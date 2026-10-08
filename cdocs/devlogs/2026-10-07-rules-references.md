@@ -73,6 +73,8 @@ If the phase 3 gate fails, phase 3 stops and phases 1-2 land alone (an accepted 
 - 2026-10-07T22:51 dispatch: fresh opus `cdocs:reviewer`, round 4.
 - 2026-10-07T22:58 return: r4 accept (`c6fd58d`), proposal `implementation_ready`.
 - 2026-10-07T22:59 dispatch: warm proposer for r4 accept-round nits (nit 3 resolved as: re-run once on mismatch, only a repeated difference counts).
+- 2026-10-07T23:03 return: accept-round nits `6be476b`.
+- 2026-10-07T23:05 dispatch: opus `cdocs:implementer` (iterate round 1), worktree `../rules-references`; may claim files on branch `rules-references` only.
 
 ## Steering Log
 
