@@ -12,9 +12,9 @@ tags: [graphify, claude_skills]
 
 # Graphify Overhaul Implementation: Devlog
 
-> BLUF: Iterate round 1 implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md) in worktree `graphify-overhaul`: Phases 1-4 done and the host stub run passes every check; the weftwise ablation is not run (its container lacks graphify).
-> Deviations: the ignore line is `/cdocs/` (an unanchored `cdocs/` drops `plugins/cdocs/`), and the stub run used a headless branch-plugin dispatcher instead of a subagent one.
-> `update` costs about 11 s per call at weftwise scale, so the no-stamp default needs a maintainer decision.
+> BLUF: Implementation of [`2026-10-08-graphify-overhaul.md`](../proposals/2026-10-08-graphify-overhaul.md) in worktree `graphify-overhaul`, rebased on `main`: Phases 1-5 done, the host stub run passes every check, and the weftwise ablation is VALID with `context_gap` +1 (single-shot, not gate-admissible).
+> The wrapper gains the audit's staleness stamp (57 lines): a no-op query skips the about 10 s full rebuild, but the first query after a code edit still costs about 14 s until graphify fixes `update` upstream.
+> Deviations: the ignore line is `/cdocs/` (an unanchored `cdocs/` drops `plugins/cdocs/`); the stub run and the ablation used headless branch-plugin overseers rather than subagent dispatchers.
 
 ## Objective
 
@@ -22,14 +22,15 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: await the overseer's direction on an update stamp (audit running); weftwise ablation once its container has graphify and a built main graph; overseer's post-accept devcontainer live run and exclusion check.
-- graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index, run graphify update, and pass query explain path affected through to graphify"
-- important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`, `plugins/cdocs/skills/graphify/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/SKILL.md` "Base query", `.graphifyignore`
+- next_steps: overseer's post-accept clauthier devcontainer live run and exclusion check; maintainer reads the ablation's decision-map row (Phase 5, "Weftwise ablation"); upstream graphify issues (Future work).
+- graphify_base_query: "how does cdocs-graphify copy the main graph into a worktree index, stamp the graphed tree, run graphify update, and pass query explain path affected through to graphify"
+- important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`, `plugins/cdocs/skills/graphify/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/SKILL.md` "Base query", `.graphifyignore`, `cdocs/_media/2026-10-08-graphify-ablation-weftwise-scorecard.md`
 - callouts:
   - decision: dispatched mode; the overseer owns the top-level devlog.
   - decision: ignore line is `/cdocs/` (root-anchored), not `cdocs/`; see Phase 2.
-  - todo: maintainer decision on an update stamp (about 11 s per call at weftwise scale); see Phase 1.
-  - blocker: weftwise ablation prerequisites unmet.
+  - decision: staleness stamp added per the coordinator after the perf audit (Round 3).
+  - todo: upstream graphify issues for a manifest-gated no-op `update` and cached JS/TS work (Future work).
+  - todo: the base query never matched `currentDocumentRefAtom` in the ablation; a refined query naming the atom is the implementer-refinement path the design relies on.
 
 ## Plan
 
@@ -152,6 +153,77 @@ Review: [`2026-10-08-review-of-graphify-overhaul-impl-r1.md`](../reviews/2026-10
 > NOTE(claude-opus-5-5/cdocs/graphify-overhaul): impl-r1 saw `/var/cache/graphify`'s directory mtime at 10:23.
 > That fits this devlog's Phase 2 container smoke test (10:2x, pre-`bcd1491`), whose passthrough inherited `GRAPHIFY_OUT=/var/cache/graphify`; the Phase 2 note checked only `graph.json`'s mtime, which was unchanged.
 
+### Round 3: weftwise ablation and the staleness stamp
+
+**Weftwise ablation** (container `weftwise`, base `99475534`, at or after the `.graphifyignore` commit `0268293a`; hand-off read from weftwise `cdocs/devlogs/2026-10-08-graphify-devcontainer-feature.md`).
+
+Prerequisites, checked first: `graphify --version` = 0.9.61; `$GRAPHIFY_OUT` = `/var/cache/graphify-weftwise`, `graph.json` 16129 nodes, 0 under `cdocs/`, 6058 under `_archive/`; the branch's `cdocs-graphify` was not on `PATH` (the container mounts clauthier `main`, not this worktree), so the branch's `plugins/cdocs` (`git archive` of `31cb617`) went to a container scratch dir whose `bin/` led `PATH`.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): How it ran: a headless `claude -p --model opus --plugin-dir <scratch plugin>` session inside the container, with a sandbox `CLAUDE_CONFIG_DIR` holding credential copies and `CDOCS_CHAT_RECORD=off`, ran `/cdocs:ablate` as the top-level overseer the skill asks for.
+> It dispatched two sonnet `general-purpose` arms (foreground) in detached worktrees under the scratch dir, and one opus evaluator.
+> The evaluator got the coordinator's `affected` calibration (26 depth-1 files, all grep-confirmed; depth 2 adds 7 real re-export hops and about 43 false positives).
+> Overseer deviation: it built the arm payloads from the dispatch usage summaries rather than a `toolUseResult` object; the token and tool-call counts come from those summaries.
+
+| | Assisted (A) | Unassisted (B) |
+|---|---|---|
+| tokens | 64,362 | 65,870 (delta -1,508, corroborating only) |
+| tool calls | 8 (Skill `cdocs:graphify`, then the base query as call 2, then grep and sed) | 5 (grep, cat, sed) |
+| duration | 61.3 s | 32.3 s (indicative only; A's first call paid the copy plus an about 11 s update) |
+| `detect-usage` (new signature) | `used` (re-run by me) | `unused` (re-run by me), so the withhold held |
+| answer | 46 entries, 0 refuted by grep | 54 entries, 8 refuted by grep (for example `vite.config.ts`) |
+
+- **Outcome: VALID**, `void_reason` null, **`context_gap` +1**, `gate_admissible: false` (single-shot).
+- Evaluator: both arms found `currentDocumentRefAtom` and the same grep-driven core (about 27 importers, the layout facade, the `store.sub` mirror, derived atoms, the same tests).
+  graphify added marginal tail entries (`tabs/list_ops.ts`, `tabs/types.ts`, and the coupling line `atoms.ts:350`); its output also named three relevant files A did not use, and A wrongly ruled the palette out, missing `currentMountIdAtom` -> last-visited mirror -> `palette/create_document.ts`, which B listed.
+  Neither arm listed graphify's depth-2 false positives.
+- First agent in any run to load `/cdocs:graphify` via the Skill tool; it ran only the base query, with no `explain`, `path`, or `affected`.
+- `_archive/` crowding: the base query was truncated to 51 of 942 nodes, 3 of them `_archive/`, so crowding was mild; the worse problem was the start nodes (3 of 11 were `_archive/` docs, others a style guide and a test helper) and `currentDocumentRefAtom` never appeared.
+- The dispatching overseer's transcript: `detect-usage` `unused` (re-run by me).
+- `$GRAPHIFY_OUT/graph.json` mtime `2026-10-08 10:46:05.603399155 -0700` before and after.
+- Artifacts: [`scorecard.md`](../_media/2026-10-08-graphify-ablation-weftwise-scorecard.md), [`scorecard.json`](../_media/2026-10-08-graphify-ablation-weftwise-scorecard.json), [`eval.json`](../_media/2026-10-08-graphify-ablation-weftwise-eval.json), [`step0.json`](../_media/2026-10-08-graphify-ablation-weftwise-step0.json); transcript paths inside them point at the deleted sandbox.
+- Cleanup: both arm worktrees removed by `ablate.sh worktree-remove` and pruned; the scratch dir (plugin copy, credential copies, run dir, transcripts) deleted; weftwise `main` `git status` empty, no `gfy`/`tmp` worktrees from host or container.
+
+**Decision-map row:** literally the third ("VALID with a positive `context_gap` ... keep the design; consider passing the base query to the judge too"), but on a +1 from one draw with a 2% token delta.
+
+> WARN(claude-opus-5-5/cdocs/graphify-overhaul): Read this as "no harm, marginal help", not as evidence for the design.
+> +1 is the smallest positive score, from a single draw (`gate_admissible: false`), and it sits next to the second row (`context_gap` at or below 0, no token saving).
+> The base query, written before anyone knew the atom, matched none of `currentDocumentRefAtom`'s nodes; the design's answer is the implementer-refined query, which this ablation does not exercise.
+> The arms differ in tool-call count partly because A loaded the skill.
+> A multi-trial run (Phase 3 of `/cdocs:ablate`) with a base query naming the atom would settle it.
+
+**Staleness stamp** (coordinator direction, after the [perf audit](../reports/2026-10-08-graphify-update-performance-audit.md) on `main` at `697b3df`, not yet on this branch).
+
+- The audit's A2 sketch, verbatim, plus `.stamp` in the copy's drop list and a shorter header comment: the wrapper is 57 lines.
+- Suite at 26 checks: an unchanged tree skips `update`; an edit under the ignored `/cdocs/` skips it; a code edit runs it; a failed update leaves the stamp stale so the next call retries.
+  Mutations caught: no ignore filter, no skip, stamp written on failure, names hashed without contents (each 2-4 failures).
+- Real graphify (clauthier container, this worktree): first call 744 ms (update ran), unchanged 153 ms, untracked `cdocs/` file 141 ms (skipped), untracked `scripts/*.ts` 675 ms (update ran), unchanged again 146 ms; probe files and `graphify-out/` removed.
+- Proposal D4 and the wrapper steps describe the stamp (`1bd77c9`); `bin/README.md` too.
+
+> WARN(claude-opus-5-5/cdocs/graphify-overhaul): The first query after a code edit still costs a full rebuild, about 14 s at weftwise scale (13.8-14.3 s in the audit), until graphify fixes `update` upstream.
+> Also from the audit: a graphify upgrade does not change the stamp, so a stale graph survives until the next code edit.
+
+### Future work (upstream graphify, from the perf audit, not filed)
+
+1. Gate `update` on its own AST manifest: call `detect_incremental(kind="ast")`, exit early when nothing changed (expected no-op about 0.7 s); the gate must also cover `tsconfig*.json` and `package.json` workspace maps.
+2. Cache per-file JS/TS extraction and `_SymbolResolutionFacts` by content hash, running only the cross-file join each time (about 5 s of the 10 s); depends on [#3326](https://github.com/Graphify-Labs/graphify/issues/3326) splitting the cache-bypass set from the resolution gate.
+3. Make incremental `changed_paths` rebuilds match full rebuilds for TS (they currently drop external-module nodes and import/call edges), then route `update` through them.
+4. Optional `update --no-report` that skips `suggest_questions`, `GRAPH_REPORT.md`, and `graph.html` (about 2-3 s of an edited update).
+
+Once (1) ships, the wrapper's stamp is redundant and can go.
+
+Floor after round 3 (at `15c14c9`):
+
+```
+cdocs-graphify.test.sh exit=0 26 passed, 0 failed
+chat-record.test.sh --unit exit=0 chat-record tests: 97 passed, 0 failed
+validate-cdocs-edit-path.test.sh exit=0 17 passed, 0 failed
+removal grep hits: 0
+graphify_query hits: 0
+test:rules exit=0 tests 11 pass 11 fail 0 
+test:opencode exit=0 tests 9 pass 9 fail 0 
+cdocs-graphify 57 lines, test 91 lines, shellcheck clean
+```
+
 Floor after round 2:
 
 ```
@@ -169,8 +241,8 @@ cdocs-graphify 49 lines, test 84 lines, shellcheck clean
 
 | File | Description |
 |------|-------------|
-| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper (49 lines) |
-| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 22-check suite against a graphify stub, bare-repo fixture |
+| `plugins/cdocs/bin/cdocs-graphify` | new: per-worktree graphify wrapper with a staleness stamp (57 lines) |
+| `plugins/cdocs/hooks/tests/cdocs-graphify.test.sh` | new: 26-check suite against a graphify stub, bare-repo fixture |
 | `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh` | deleted |
 | `.github/workflows/cdocs-hooks.yml` | cdocs-graphify step on Linux and macOS; header comments |
 | `plugins/cdocs/bin/README.md` | `## cdocs-graphify` section replaces `## graphify-scope` |
@@ -186,7 +258,8 @@ cdocs-graphify 49 lines, test 84 lines, shellcheck clean
 | `.gitignore`, `.graphifyignore` | `graphify-out/`; `/cdocs/` |
 | `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md` | `evolved`/`archived`, supersede NOTE |
 | `cdocs/proposals/2026-09-17-graphify-lace-devcontainer-enablement.md` | D3 NOTE |
-| `cdocs/proposals/2026-10-08-graphify-overhaul.md` | `implementation_wip`; round 2 NOTEs on `/cdocs/` and the ablation signature |
+| `cdocs/proposals/2026-10-08-graphify-overhaul.md` | `implementation_wip`; round 2 NOTEs on `/cdocs/` and the ablation signature; D4 and wrapper steps describe the stamp |
+| `cdocs/_media/2026-10-08-graphify-ablation-weftwise-*` | weftwise ablation scorecard, eval, and Step 0 record |
 
 ## Verification
 
