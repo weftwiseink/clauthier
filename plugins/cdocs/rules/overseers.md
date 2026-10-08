@@ -17,12 +17,12 @@ Isolation (worktrees, fresh context) binds dispatched implementers and reviewers
 ## Chat record
 
 Top-level agents must use the `chat-record` command to maintain chat records (subagents should never).
-Before ending a turn that began with a human prompt, briefly note the turn's most salient information: the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words.
+Before ending a turn that began with a human prompt, note the most important things you are about to tell the user, in at most 300 words of bullets, each at most 100 words.
 The quoted heredoc keeps the body byte-exact:
 
 ```bash
 chat-record note --as opus-5-5 <<'EOF'
-- Proposal ready for review: notes are free-form, so the record carries why decisions were made and what stays open.
+- Reviewer r5 returned revise on two blockers; the retry cap is yours to decide.
 EOF
 ```
 
