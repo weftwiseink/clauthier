@@ -35,13 +35,13 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 
 ## Scratchpoint
 
-- next_steps: dispatch proposer (round 0).
+- next_steps: proposal review r1 in flight.
 - graphify_query:
 - important_files: `scripts/build-opencode.ts`, `.github/workflows/opencode-build.yml`, `package.json`
 - callouts:
   - deferred:
   - todo:
-  - decision:
+  - decision: proposer chose to omit OC `model:` (inherit caller) instead of pinning ids; brief's floor said "current model ids". Reviewer asked to weigh this against tier fidelity.
   - blocker:
 
 ## Workstream Devlogs
@@ -64,5 +64,7 @@ Chat record: skipped (overseer is a dispatched subagent, per the invoking agent'
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer) | cdocs/proposals/2026-10-07-opencode-build-fixes.md | 2026-10-07T18:23 | round 0 authoring |
+| return | prop-1 (cdocs:proposer) | proposal + 3 RFP frontmatters | 2026-10-07T18:29 | 080ab4f, 6d84667; review_ready |
+| dispatch | rev-p1 (cdocs:reviewer) | cdocs/reviews/2026-10-07-review-of-opencode-build-fixes.md | 2026-10-07T18:30 | proposal review r1 |
 
 ## Steering Log
