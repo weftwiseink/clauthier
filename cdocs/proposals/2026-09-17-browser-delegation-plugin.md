@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_accepted
 tags: [architecture, browser, delegation, mcp, model_tiering, testing]
 last_reviewed:
   status: accepted

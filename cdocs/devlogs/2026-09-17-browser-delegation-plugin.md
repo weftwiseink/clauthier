@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/browser-delegation
 type: devlog
 state: live
-status: wip
+status: done
 tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin]
 ---
 
