@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: proposal round 1.
+- next_steps: proposal review round 1 (rev-1).
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -51,6 +51,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 | event | agent_handle | target_files | at | notes |
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` | 2026-10-08T19:38 | assessment plan: scope fix, sonnet devlog query sampling, holistic usefulness rubric, runtime matrix, flags/config exploration, report deliverable |
+| return | prop-1 | `2ee96f8`, `0de4e1c` | 2026-10-08T19:45 | `review_ready`, 3 phases: (1) same-session baseline, ignore `/_archive/ /docs/ /.claude/ /data/ /df-feedback/ /infra/` + unanchored `*.md` (keep tsconfig/package.json), `--force` rebuild (shrink guard), node/edge + code-to-code edge counts; (2) sonnet samples 12-15 questions from ~30 recent devlogs, separate sonnet grep ground truth first, rubric hit/partial/miss/misleading + tokens, vs pre-clean graph; (3) 6 timing cases x3 with load, candidates (docs back, tests out, JSON out, skip html/report, `GRAPHIFY_MAX_WORKERS`, `--no-cluster`, stamp-across-copy scratch prototype) with 5-query spot checks; thresholds <=3 s usable mid-edit, >10 s wait. Findings: 6,913 of 16,129 nodes are md headings; `_archive/` tracked (437 files); `cdocs-graphify` not on container PATH; main graph has no `.stamp`. Maintainer worktrees keep stale indexes (report recommends deletion, not touched) |
+| dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment.md` | 2026-10-08T19:47 | round 1; probe scope fix, flag existence, missed speed levers, measurement minimality, floor re-runnability, stamp prototype |
 
 ## Steering Log
 
