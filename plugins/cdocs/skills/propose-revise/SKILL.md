@@ -14,7 +14,7 @@ Any minor issues or nits that come along with the accepting round should still b
 The invoking session agent enters *overseer mode* documented in the cdocs rules, restricting itself to orchestration:
 it dispatches subagents in alternation, terminates on accept-or-escalate, and should AskUserQuestion as appropriate or if the proposal hasn't been accepted after 6 rounds.
 
-Overseers should follow rules layed out in the cdocs rules, and should dispatch subagents for all tasks.
+Overseers should follow rules layed out in the cdocs rules, and should dispatch subagents for all tasks aside from top-level devlog edits.
 
 Propose-revise loop state should be tracked in the workstream's top-level devlog by the overseer.
 When logging a review round to the devlog's Iteration Log, an accepted round is `review_verdict: proposal_accepted` for specificity.
