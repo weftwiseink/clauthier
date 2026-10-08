@@ -82,6 +82,12 @@ Container-specific setup, all by the verifier:
 | `.claude-plugin/marketplace.json`, `README.md` | `browser-delegate` entry and bullet deleted. |
 | `cdocs/proposals/2026-09-17-browser-delegation-plugin.md` | Archived, `evolved`, superseded NOTE. |
 
+## Screenshots
+
+![Page two after the interfacer clicked the home page link: "Page Two" heading, a disabled Save button, and a Back home link](../_media/2026-10-08-interfacer-canary-page-two.png)
+
+Host canary check 02, copied from `/tmp/claude-1000/interfacer/E24cvT/02-click-link-page2/page2.png` (`cp -n`, then `cmp` identical).
+
 ## Verification
 
 ### Static checks (Phases 1-3)
@@ -117,7 +123,7 @@ Five runs; all evidence is container-local and ephemeral (`/tmp/ifx-canary-runN.
 | 4 | `1c20ce0` (in-turn wait in the description), original prompt | `IZhswX` | All steps; stand-in waited with `sleep 20` unprompted; tear down used `pkill -f "http.server 8799"`, which matched its own shell (exit 144). |
 | 5 | `47da807` (tear down by PID), original prompt | `uAlIdy` | All steps, every criterion below. Run of record. |
 
-> NOTE(opus-5-5/cdocs/interfacer-agent): Three agent fixes came out of the canary; each is one clause, and the agent is 70 lines.
+> NOTE(opus-5-5/cdocs/interfacer-agent): Four agent fixes came out of the canary; each is one clause, and the agent is 70 lines.
 > 1. Status rule: a 404, missing element, or other error makes `Status:` `WARNINGS`/`FAILED` "even when the check was probing for it" (run 1).
 > 2. Final message only, never `SendMessage` (run 1's resumed turns sent headerless replies).
 > 3. Description: "A resumed check runs in the background and its reply arrives at your next tool call: stay in your turn (e.g. Bash `sleep 10`) until it does." (runs 2-3).
@@ -198,3 +204,25 @@ Other observations:
 - It started the server with `setsid` each run (parent PID 1 in the monitor), never `run_in_background`.
 - The tear-down reply reuses check 03's report path rather than writing a new check directory; the agent body does not ask for one, so this matches the spec.
 - Run 5's check 01 notes "server.pid initially recorded the wrapper PID; corrected to 548444", a self-corrected slip that the report surfaced rather than hid.
+
+### Phase 4: host canary (secondary, browser path)
+
+The devcontainer cannot run a browser, so a host run (claude 2.1.293, agent at `47da807`) covers the screenshot criteria.
+Its fixture (`mktemp -d` in the session scratchpad) has the same site, a project-local `@playwright/cli` 0.1.22, a `.playwright/cli.config.json` pinning `~/.cache/ms-playwright/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell`, and a README naming `npx playwright-cli -s=<name>` as the driver plus how to set `outputDir` via a `--config` copy (playwright-cli otherwise writes `.playwright-cli/` into its cwd).
+The prompt is the container one with "click the link on the home page and screenshot page two" and "Open /missing.html and screenshot it" as follow-ups, run from a sandboxed `CLAUDE_CONFIG_DIR`.
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| Depth 2, same `agentId` | Pass | `task_started` `spawn_depth: 2`, `cdocs:interfacer`; three `SendMessage` `to: aee6c5abf76331362`; stand-in waited with `sleep 15`-`30` between them |
+| Instance dir with `01-*/`, `02-*/`, `report.md` and screenshots | Pass | `/tmp/claude-1000/interfacer/E24cvT/{01-home-to-page2/{home,page2}.png, 02-click-link-page2/page2.png, 03-missing-and-delete/{missing,page2}.png}`; the verifier viewed `home.png`, both `page2.png`, and `missing.png`, and each matches its description |
+| `Setup:` cites the README | Pass | "README.md in the project ... Driven with `npx playwright-cli -s=chk --config .../E24cvT/cli.config.json` (copy of project config plus outputDir)" |
+| Server and session reused | Pass | one new headless-shell PID (`3959784`, 09:42:42-09:44:04, versus a 19-process baseline from other sessions) and one server PID (`3959597`) across all checks; checks 02-03 use `goto`, never `open` |
+| Error probe not `OK` | Pass | 03 `Status: WARNINGS` (404 plus console error); 02 `Status: WARNINGS` too, for two stale-ref click errors a retry got past |
+| Tear down leaves nothing | Pass | `playwright-cli list` -> `(no browsers)`; no `http.server 8799`; monitor empty from 09:44:10 |
+| Fixture `git status` clean | Pass | `!! node_modules/` only; the README's `outputDir` recipe kept `.playwright-cli/` out of the tree (its snapshots landed in the instance dir) |
+
+Host-run caveats:
+
+- The recorded `server.pid` (3959595) was the `setsid` wrapper, not the server (3959597); the first tear-down `kill` missed, and the interfacer checked `ss`, then killed 3959597 by PID.
+  The reports' `Left running` lines carried the wrong PID until tear down.
+- Check 01's tool calls do not appear in either stream (the foreground depth-2 run is not streamed); only its files and its final report are evidence for it.
