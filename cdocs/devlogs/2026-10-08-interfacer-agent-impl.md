@@ -259,3 +259,72 @@ Host-run caveats:
 
 The three canary-driven clauses stay: the error rule is unchanged; the final-message-only reply keeps "never `SendMessage`" (a fresh interfacer can still `SendMessage` its parent, as run 1's did); tear down by recorded PID or session now reads the PIDs from `notes.md`.
 
+
+### Canary: headless, devcontainer (runs 6-7)
+
+Same fixture (`/tmp/ifx-fixture.Nau89p`, curl driver) and sandboxing as runs 1-5, from `/tmp/ifx-run.sh <n> <prompt>` in container `clauthier` (claude 2.1.285), which starts the PID monitor, copies credentials into a fresh `CLAUDE_CONFIG_DIR`, runs `claude -p ... --model sonnet --output-format stream-json --verbose`, and deletes the sandbox (both runs: "sandbox deleted").
+The prompt (`/tmp/ifx-prompt6.txt`, reused for run 7) has the top level dispatch a `general-purpose` stand-in with `run_in_background: false`; the stand-in is told only what to check and to "Follow the `cdocs:interfacer` agent's description for how to dispatch it and how to wait for it": (1) the home page check, (2) the follow-up "Now follow the link from the home page and capture page two. Also fetch /missing.html, and check whether page two has an element with id `delete`." (the error probe), (3) a tear down.
+
+| Run | Agent at | Instance | Outcome |
+|---|---|---|---|
+| 6 | `fabc2e8` (description: "Dispatch in the foreground (`run_in_background: false`) where offered, else end your turn and the report wakes you.") | `5Zy3NA` | Stand-in dispatched check 01 without `run_in_background` (`is_backgrounded: true`) and ended its turn ("I've dispatched the first interfacer check and am waiting for its report"); the report surfaced at the root (report finding 1); checks 02-03 never ran, and server PID 554223 was left up (verifier killed it). |
+| 7 | `7be77de` (description: "Pass `run_in_background: false` on every interfacer dispatch, so its report returns as the tool result; only if your Agent tool has no such parameter, end your turn and the report wakes you.") | `ZYGPZn` | All three dispatches, every criterion below. Run of record. |
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): Run 6 is a wording failure, not a design one: the stand-in had `run_in_background` but read "where offered, else end your turn" as a free choice.
+> The fix leads with the parameter; the agent stays 70 lines, and the proposal's spec block carries the same line.
+
+Run 7 events (`jq` over `/tmp/ifx-canary-run7.jsonl`; 70 s wall time):
+
+```
+{"s":"task_started","task":"a4b8e9a6","depth":1,"bg":false,"type":"general-purpose"}
+{"s":"task_started","task":"a6c26b22","depth":2,"bg":false,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a6c26b22","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/ZYGPZn/01-home-to-page2/report.md"}
+{"s":"task_started","task":"a1435511","depth":2,"bg":false,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a1435511","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/ZYGPZn/02-page2-missing/report.md"}
+{"s":"task_started","task":"a3e920e5","depth":2,"bg":false,"type":"cdocs:interfacer"}
+{"s":"task_notification","task":"a3e920e5","sum":"INTERFACER REPORT\nReport: /tmp/claude-1000/interfacer/ZYGPZn/03-teardown/report.md"}
+[stand-in] Agent: {"subagent_type":"cdocs:interfacer","prompt":"Check that the home page of this project's site renders and that its link reaches page two.","run_in_background":false}
+[stand-in] Agent: {"subagent_type":"cdocs:interfacer","prompt":"Now follow the link ... id `delete`.\n\nInstance directory from the previous report: /tmp/claude-1000/interfacer/ZYGPZn ...","run_in_background":false}
+[stand-in] Agent: {"subagent_type":"cdocs:interfacer","prompt":"Tear down. Instance directory: /tmp/claude-1000/interfacer/ZYGPZn. Stop everything the previous checks left running (python http.server 8799, PID 554758) ...","run_in_background":false}
+```
+
+The stand-in made no other tool calls: no `SendMessage`, no Bash.
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| Each check an `Agent` call, `cdocs:interfacer`, depth 2, `is_backgrounded: false` | Pass | three `task_started`, three distinct task ids, all `bg:false`, `spawn_depth: 2` |
+| No `SendMessage`, no stand-in `sleep` | Pass | stand-in tool calls are the three `Agent` calls only |
+| One instance dir with `notes.md`, `01-*/`, `02-*/`, each with `report.md` | Pass | `ZYGPZn/{notes.md,01-home-to-page2,02-page2-missing,03-teardown}`, each check with `report.md` |
+| Screenshot per check | Not met (container) | no browser in the container; media are saved HTML and headers, as in run 5 |
+| Check 1 `Setup:` cites the README | Pass | "README.md: python3 -m http.server 8799 --directory site; driven with curl (no browser available per README)." |
+| `notes.md` carried over; check 2 reused check 1's server | Pass | 02 `Setup:` "reused python http.server 8799 (PID 554758, confirmed alive); driven with curl (no browser, per notes.md)"; monitor shows only `554758` from 10:24:27 for 33 samples |
+| Error probe not `OK` | Pass | 02 `Status: WARNINGS`: "/missing.html returned 404 (expected by the probe, but an error status)"; `id="delete"` 0 matches |
+| Tear down leaves nothing; `notes.md` lists nothing running | Pass | 03 "kill by recorded PID from notes.md ... kill 554758 -> gone"; `notes.md` ends "Torn down in check 03: PID 554758 stopped. Nothing running."; monitor empty from 10:25:02; `pgrep` finds no server |
+| Fixture `git status` clean | Pass | `git status --short --ignored` -> `!! node_modules/` only (verifier's install) |
+
+Run 7 `notes.md`, as tear down left it:
+
+```
+# notes
+- Drive: README.md in /tmp/ifx-fixture.Nau89p; no browser, use curl.
+- Running: python http.server 8799, PID 554758 (serves site/). Log: /tmp/claude-1000/interfacer/ZYGPZn/01-home-to-page2/server.log
+- Gotcha: shell's $! (554756) was a wrapper; real PID is 554758.
+- Check 02 reused server; still running PID 554758.
+- Torn down in check 03: PID 554758 stopped. Nothing running.
+```
+
+Observations:
+
+- The wrapper-PID slip from runs 5 and the host run was caught in check 01 and written to `notes.md` as a gotcha, which is the tacit knowledge the report expected the notes to carry.
+- `notes.md` is append-style (a log of checks) rather than a current-state file; "keep its PIDs current" holds because the last line states what is running, but a longer engagement could grow it.
+- The stand-in copied the PID from `Left running` into the tear-down prompt; the interfacer still verified it against `notes.md` before killing.
+- The monitor's single `555069<554500` sample at 10:25:01 is the tear-down check's own `ps`/`grep` command line matching the monitor's pattern, not a server.
+- Interfacer tool calls are not streamed for foreground depth-2 dispatches (as in run 5), so the reports, `notes.md`, and the monitor are the evidence for what each check did.
+
+### Static checks (revision)
+
+```
+npm run test:rules     -> tests 11, pass 11, fail 0
+npm run test:opencode  -> tests 9, pass 9, fail 0; "✔ OC agent interfacer.md"; built description carries the new run_in_background line
+wc -l plugins/cdocs/agents/interfacer.md -> 70
+```
