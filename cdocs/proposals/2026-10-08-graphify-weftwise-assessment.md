@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: implementation_wip
+status: review_ready
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
@@ -23,6 +23,11 @@ tags: [graphify, performance, evaluation]
 >
 > Scope variants (all markdown out, and others), config flags, and two scratch wrapper prototypes (background refresh, kept stamp) test what speeds up builds or mid-edit queries without hurting query quality.
 > The deliverable is one report, `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md`, giving a verdict per role: use now and with what config, or wait for upstream.
+>
+> Phase 4 tests discovery, which Phases 1-3 did not.
+> On 10-12 tasks phrased as they stood before investigation, a graph-assisted sonnet agent and a grep-only sonnet agent each answer every task, and a blind opus judge grades the two answers against the verified union of both.
+> The tasks span the classes where graphify should do best.
+> The result is a scenario map of where graphify adds value beyond grep, plus concrete guidance for `/cdocs:graphify`.
 
 ## Summary
 
@@ -34,7 +39,9 @@ The assessment has three phases:
 2. **Usefulness**: sample realistic questions and fix a grep ground truth first. Then judge graphify's output on a four-level rubric, with the token cost of each output.
 3. **Runtime and config**: measure the runtime cases on the cleaned graph against a pre-clean baseline taken in the same session. Try the scope variants, the config flags, and two scratch wrapper prototypes (a background refresh and a stamp kept across the copy). Then write the report.
 
-This is not a statistics exercise: timings take three runs, and each question gets one judgment.
+4. **Value beyond grep**: two independent agent arms per task, one with the graph and one with grep only, across the scenario classes that favour a graph. A blind judge grades them, and the results become a scenario map and steering guidance.
+
+This is not a statistics exercise: timings take three runs, and each question or task gets one judgment.
 
 > NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): The maintainer's framing: an inefficient tool is tolerable if we wait for upstream, but slow refreshes keep it from being used flexibly, especially by implementers mid-edit.
 > The verdict must answer that question per role, not only overall.
@@ -48,6 +55,7 @@ Decide whether `/cdocs:graphify`, on a cleaned weftwise graph, is fast and usefu
 
 Also decide which config, if any, buys build or update time without hurting the core use case.
 That core use case is `query`/`explain` of code entities, plus blast radius (`affected`, `path`).
+Finally, map the scenarios in which graphify gives agents value beyond grep, and say how `/cdocs:graphify` should steer them.
 
 ## Background
 
@@ -137,6 +145,11 @@ Steps:
    This shows that other worktrees' indexes heal once those worktrees merge main.
 
 ### Phase 2: usefulness
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Phase 2's design measured efficiency, not discovery.
+> Its questions came from devlog conclusions that already name the entities, and grep's answer was written first as the ground truth.
+> Graphify's ceiling was therefore a tie with grep, on grep's best case.
+> Phase 4 tests discovery.
 
 1. **Sample** (sonnet subagent).
    - Source: the ~30 newest weftwise devlogs, by filename date rather than mtime, plus proposals where useful.
@@ -259,6 +272,107 @@ Default verdict bar, which the report may argue against:
 State the result against the bar with its variance, not only the median.
 The implementer verdict considers background refresh, not refresh latency alone.
 
+### Phase 4: value beyond grep
+
+**Goal**: a scenario map of where graphify gives value that grep does not, where it does not, and what that means for how `/cdocs:graphify` steers agents.
+Graphify gives value either by reaching an answer grep does not, or by reaching it materially faster or more completely.
+Phase 4 actively looks for graphify's best case, because a fair verdict needs it.
+Phase 2's named-entity rows stand as the part of the map that favours grep.
+
+**Setup** (container and `GRAPHIFY_OUT` rules as in Operating rules):
+- **Worktrees**: two throwaway detached worktrees at the assessed commit `2791713d`, `gfy-value-graph` and `gfy-value-grep`.
+  - Apply the report floor's `srcpatch.py` to both, uncommitted, so the code matches.
+  - Delete `cdocs/` and `_archive/` in both, so that neither arm can read the devlogs the tasks came from.
+- **Graph**: build the `source`-conditions graph (the report's recommended config) from `gfy-value-graph`, with a full `update` into a scratch `GRAPHIFY_OUT`, so that `GRAPH_REPORT.md` and communities exist.
+  Expect 9,744 nodes and 25,774 edges.
+  Mention the current main graph, which has no cross-package edges, only where it would change a conclusion.
+- **Wrapper**: the graph arm calls the wrapper from `gfy-value-graph`, with `GRAPHIFY_OUT` pointing at the scratch graph.
+  Warm it with one call before any dispatch, so that the one-time copy and refresh stay out of the arm timings.
+- **Feature inventory** (the implementer does this before sampling).
+  - List what 0.9.61 offers beyond `query`/`explain`/`path`/`affected`:
+    - `GRAPH_REPORT.md` (communities, god nodes, surprising connections, suggested questions)
+    - `god-nodes`
+    - `query --dfs/--context/--budget`
+    - `affected --relation/--depth`
+    - `export callflow-html`
+    - `tree`
+    - the analyses in `analyze.py` and `report.py`
+  - Outputs: any scenario class to add, and a one-page capability card for the graph arm.
+
+**Scenario classes**, at least one task each, plus any class the inventory adds:
+
+| Class | Task shape | Graphify feature likely to matter |
+|---|---|---|
+| concept discovery | "where does behaviour X live", with no entity named | `query`, communities |
+| transitive blast radius | 2+ hops, through re-exports, barrels, `import {x as y}`, aliases | `affected --depth`, `path` |
+| tests covering a behaviour | "what tests exercise X" | `affected`, test-file neighbours |
+| cross-package dependents | "what outside package P uses its X" | `affected` across packages (needs `source`) |
+| orientation | "brief me on subsystem Y: key modules, hubs, how it connects" | `GRAPH_REPORT.md` god nodes and surprising connections, communities, `explain` |
+| implementers and users | "what implements interface I", "what uses type T" | `implements` and `references` edges |
+| unused exports or dead code | "what in Y is exported but never imported" | in-degree-0 nodes, possibly by scripting over `graph.json` |
+| dependency cycles | "are there import cycles in Y" | cycle search, possibly by scripting over `graph.json` |
+
+Named-entity lookup and runtime-coupled flow are covered by Phase 2 and are not sampled again.
+
+**Tasks**: 10-12, one run each.
+The results are indicative, not statistical.
+- **Sampling** (a sonnet agent):
+  - Source: weftwise devlog Objectives and problem statements, and proposal prompts (`request_for_proposal` stubs, Objective sections). Not conclusions.
+  - Order by filename date, newest first, and skip graphify docs.
+  - Phrase each task as it stood before investigation, removing entity names the original asker did not know.
+  - Record provenance for each task: the doc path and a quote of the problem statement.
+  - The sampler does not answer the tasks.
+- **Synthetic tasks**: a class with no devlog provenance (likely dead code and cycles) may use a synthetic task, labelled as such, with one line on why a weftwise implementer would ask it.
+- **Leak check** (the implementer): a task fails if it names an answer entity the original asker did not name, or if its subject no longer exists at `2791713d`.
+  Rephrase or replace each failing task, and log which ones changed.
+
+**Arms**: for each task, both arms are dispatched together, as sonnet agents with independent contexts.
+- **Graph arm**: has `/cdocs:graphify` through the wrapper, plus the capability card, and may also grep and read.
+  It may use any graphify feature, including scripting over `graph.json`; flag such scripting, because the skill could only recommend it through a new wrapper subcommand.
+- **Grep arm**: grep, find, and read only. No graphify, no `graphify-out/`, no `graph.json`.
+- **Shared prompt**:
+  - the task;
+  - its worktree, on the host at `/var/home/mjr/code/weft/weftwise/<worktree>`; the graph arm's graphify calls run in the container;
+  - a stop rule: answer when confident, with a soft cap of about 40 tool calls;
+  - an answer format: items (`file:entity` and one line on why each), confidence, and what it would check next.
+    The answer does not mention tools.
+- **Record per arm**:
+  - the answer;
+  - tool calls by kind;
+  - total tokens, from the Agent result's usage, or output bytes / 4 if usage is missing (state which);
+  - wall time;
+  - for the graph arm, the graphify features it used.
+
+**Judge**: one fresh opus agent per task, blind to which arm is which.
+- **Input**: the task and the two answers as A and B, in random order, with any tool mentions scrubbed.
+  The implementer records the mapping.
+  The judge has read access to `gfy-value-grep`.
+- **Reference**: the union of both answers' items, each one verified, plus anything the judge's own check finds.
+  Wrong items are marked as wrong.
+- **Grades per answer**:
+  - completeness: verified items found out of the reference, naming the important ones;
+  - wrong items;
+  - whether an agent acting on the answer would be misled or miss something important (yes or no, with one line why).
+
+  The judge also notes any item only one answer found.
+- **Outcome per task**: graph better, grep better, or tie.
+  "Materially better" means it found an important item the other answer missed, or matched the other's completeness at half the tokens or wall time or less.
+
+After unblinding, the implementer reads the graph arm's transcript for serendipity: graph output that surfaced something relevant the agent had not asked for, and whether the agent used it.
+
+**Deliverable**: a "Value Beyond Grep" section in the existing report, after Usefulness, rather than a companion report.
+The maintainer's question deserves one verdict in one place, and a separate report would leave Phase 2's tie standing as the existing report's headline.
+The section contains:
+- **Task table**: class, task with provenance, outcome, and for both arms completeness, tokens, and wall time, plus items unique to one arm and the graphify features used.
+- **Scenario map**: per class, where graphify wins, ties, or loses, and why, merged with Phase 2's named-entity rows.
+- **Guidance for `/cdocs:graphify`**: which command for which shape of question, and when to skip graphify.
+  Proposed skill text goes in as a recommendation, not landed.
+- **The report's BLUF and Verdict per Role**, updated if the map moves them.
+- **A one-line NOTE in Usefulness** pointing to the new section.
+
+Per-arm transcript summaries (commands by kind, tokens, wall time) and the A/B mapping go in the Phase 4 devlog.
+If graphify wins nowhere, the section says so plainly, with the evidence that its best case was tried.
+
 ## Important Design Decisions
 
 - **Cruft out, markdown in unless shown harmful.** This follows maintainer direction. Markdown is an island in the graph, so its only cost is seed competition and build time, and the all-markdown-out variant measures both.
@@ -268,6 +382,9 @@ The implementer verdict considers background refresh, not refresh latency alone.
 - **Explicit `GRAPHIFY_OUT`, one rule.** The container's global setting points at the main graph, so any implicit call is a write to it.
 - **A structural post-edit.** A body-only edit can skip the output stages, which would under-measure the edit cost and make the output-stage candidates look useless by construction.
 - **Prototypes, not landings.** Background refresh and the kept stamp live only in a scratch wrapper. The report recommends; landing either one in clauthier is a separate decision.
+- **Phase 4: questions from problem statements, no ground truth first.** This removes the leak from conclusions and lets either arm find what the other misses; the judge's reference is the verified union of both answers.
+- **Phase 4: two working arms and a blind judge.** It compares the outcomes of real agent work, not graph output against a reference. The graph arm may also grep, so a graph win measures value added on top of grep.
+- **Phase 4: a capability card, not the current skill text.** The phase tests what graphify can do, so that the skill can be steered by the result; the features that won are recorded.
 - **Few phases, serialized timing.** Timing runs must not overlap graphify builds or tests in the container. Query judging may overlap only with work that is not being timed.
 
 ## Edge Cases / Challenging Scenarios
@@ -281,6 +398,11 @@ The implementer verdict considers background refresh, not refresh latency alone.
   If the main graph's mtime or `.graphify_root` changes outside the Phase 1 rebuild, restore it from the Phase 1 output and flag the change.
 - **Background refresh races**: a query issued during a refresh should read the old `graph.json`. Confirm, from the source or by running queries during a refresh, that graphify replaces the file atomically and that no query ever sees a partial file. If it does not, the prototype queries a snapshot copy.
 - **Stale sampled questions**: drop or rephrase questions about code that has moved, and note it in the provenance.
+- **Phase 4 leaks**: an arm reading outside its worktree (another worktree's or main's `cdocs/` holds the source devlogs), or the grep arm touching graphify output, voids that task's run.
+  Check every transcript's paths, and rerun a voided task once.
+- **Phase 4 variance**: one run per arm, so a one-item difference is a tie unless the item is important.
+  Both arms of a task run concurrently, so host contention is symmetric; wall time supports only relative claims.
+- **Maintainer checkouts**: also leave `/var/home/mjr/code/weft/weftwise/loro/`, a separate checkout, untouched.
 - **Nondeterminism**: if repeated full builds of one commit differ in node or edge counts, record the range. The floor uses that range.
 
 ## Test Plan
@@ -293,6 +415,11 @@ The tests here check that the assessment's numbers are real:
 - The all-markdown-out variant has zero `.md` nodes.
 - Every timing row records its runs and load. A row whose range exceeds 50% of its median is re-run once and flagged.
 - Each spot-checked candidate either shows no verdict regression, or the report weighs the regression against the speed gained; each identity-checked candidate has node and edge sets equal to the baseline's.
+- Phase 4:
+  - every class has at least one task;
+  - each task logs its leak-check result;
+  - the A/B mapping is recorded;
+  - no arm transcript leaves its worktree, and none of the grep arm's commands touch graphify output.
 - The `extract --code-only` fidelity diff is recorded as nodes and edges missing or extra compared with a full `update`.
 - Cleanup: no `graphify` process (background `update`) is left running (`pgrep -af graphify` empty) before worktrees are removed; `git worktree list` then shows only `main` and the six maintainer worktrees, all with HEADs unchanged, and the scratch dirs are removed.
 
@@ -331,9 +458,23 @@ Pass criteria:
 
 The implementer runs this floor itself before handing off and records the result in its devlog.
 
+**Phase 4 floor**, run by the Phase 4 implementer and re-runnable by a reviewer:
+1. **Graph reproducible**: rebuilding the `source` graph (report floor step 6) gives 9,744 nodes and 25,774 edges.
+2. **Records present**:
+   - the report holds the task set with provenance, leak-check results, and judge grades;
+   - the devlog holds the per-arm summaries (commands by kind, tokens, wall time) and the A/B mapping.
+3. **Grades reproducible**: a reviewer re-judges two tasks from the recorded answers, blind, and reaches the same outcome.
+4. **No collateral**:
+   - the maintainer worktrees and `loro/` are unchanged;
+   - the main graph's mtime is still `2026-10-08 14:09:35.88 -0700`;
+   - no `gfy-value-*` worktree remains;
+   - `pgrep -af "[g]raphify (update|extract|watch)"` is empty.
+
 ## Implementation Phases
 
-**Execution**: `/cdocs:iterate` with one opus implementer, whose sub-devlog sets `part_of: cdocs/devlogs/2026-10-08-graphify-weftwise-assessment.md`.
+**Execution**: Phases 1-3 are done (report accepted at implementation review round 2).
+Phase 4 goes to a fresh opus implementer with its own sub-devlog, `cdocs/devlogs/2026-10-08-graphify-value-beyond-grep.md`, which sets `part_of` the top-level devlog.
+Phases 1-3 used `/cdocs:iterate` with one opus implementer, whose sub-devlog sets `part_of: cdocs/devlogs/2026-10-08-graphify-weftwise-assessment.md`.
 Sonnet subagents do the sampling and the ground truth.
 Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and the report and devlog in clauthier `main`.
 
@@ -361,6 +502,19 @@ Commits, all by exact path: the `.graphifyignore` change in weftwise `main`, and
   It includes the per-role verdict and the recommended config; any further `.graphifyignore` line is a separate weftwise commit.
   It also gives the recommended wrapper changes, which are not landed, and what would change the verdict: for example, the fork RFP's fixes 1 and 2, or a post-edit refresh below the bar.
 - Run the verification floor. Remove `gfy-assess`, the short-lived worktrees, and the scratch dirs. Set the report to `review_ready`.
+
+### Phase 4: value beyond grep
+
+- Record the state of the maintainer worktrees and `loro/`.
+- Create `gfy-value-graph` and `gfy-value-grep`, apply `srcpatch.py` to both, and delete `cdocs/` and `_archive/` in both.
+- Build the `source` graph, warm the wrapper, and write the feature inventory and capability card.
+- Dispatch the sonnet sampler, then run the leak check and log the task set with provenance.
+- For each task, dispatch both arms in parallel, then the blind judge; log the per-arm summaries and the grades.
+- Write the report section, the guidance, and any updates to the verdict or BLUF.
+- Run the Phase 4 floor. Remove the worktrees and scratch dirs. Set the report to `review_ready`.
+- Done when: 10-12 graded tasks cover every class, the scenario map and guidance are written, and the floor passes.
+
+Commits: the report and sub-devlog in clauthier `main`, by exact path. Nothing is committed in weftwise.
 
 **Do not change**:
 - the maintainer worktrees;
