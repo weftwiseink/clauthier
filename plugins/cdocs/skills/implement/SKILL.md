@@ -16,7 +16,7 @@ Claude may also suggest implementation when it encounters an `implementation_rea
 `/cdocs:implement` runs in one of two modes:
 
 - **Top-level** (default): invoked directly by the user.
-  When dispatching, a top-level session is a thin lead per [`overseers.md`](../../rules/overseers.md) "Stay thin", so the discipline is not `iterate`-only.
+  When dispatching, a top-level session is a thin lead per "CDocs Overseer Rules › Stay thin", so the discipline is not `iterate`-only.
 - **Dispatched**: invoked as a subagent (typically by `/cdocs:iterate`'s overseer). Signaled by the `--dispatched` flag in `$ARGUMENTS` or a clear parent-agent dispatch prompt.
   Questions for the user go in your return.
 
@@ -50,7 +50,7 @@ If no proposals are `implementation_ready`, report that and suggest checking `/c
      The top-level devlog and its tables are the overseer's.
 4. **Create a task list**: break the proposal's implementation phases into trackable tasks.
 5. **Execute implementation phases** following the proposal's plan:
-   - Work through phases sequentially (or in parallel per `rules/workflow-patterns.md` when applicable).
+   - Work through phases sequentially (or in parallel per "CDocs Workflow Patterns › Loops and multi-phase plans" when applicable).
    - Commit frequently using conventional commit format.
    - Update the devlog as work proceeds (decisions, complications, deviations from the plan).
    - Follow verification and troubleshooting methodology to ensure results are as expected.

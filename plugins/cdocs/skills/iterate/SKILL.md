@@ -31,7 +31,7 @@ Code and cdocs should be committed early and often.
 - `-f | --first-round ["<model_description"]`: Use a different model config for the first round implementation and review.
   If this flag is passed without a value, any preferred expert expensive model in CLAUDE.md or elsewhere is used.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
-  For default tiers, see [`workflow-patterns.md`](../../rules/workflow-patterns.md) "Model Tiering".
+  For default tiers, see "CDocs Workflow Patterns › Model Tiering".
 - `--graphify-scope`: opt into priming a graphify-resolved dependent-set brief into the reviewer's dispatch (see "Graphify scoping" below).
   DEFAULT OFF: with the flag absent the loop behaves exactly as today and makes zero graphify calls.
 

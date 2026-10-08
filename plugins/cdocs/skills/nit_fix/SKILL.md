@@ -45,7 +45,7 @@ Enforce writing conventions on the following cdocs files:
 /absolute/path/to/cdocs/devlogs/2026-01-29-session.md
 ```
 
-The agent reads all rule files from `plugins/cdocs/rules/` at runtime, classifies conventions as mechanical or judgment-required, applies mechanical fixes directly via Edit, and returns a structured report.
+The agent enforces the conventions of the cdocs rules already in its context ("CDocs Writing Conventions" and "CDocs Frontmatter Specification"), classifies conventions as mechanical or judgment-required, applies mechanical fixes directly via Edit, and returns a structured report.
 
 ## Interpreting Results
 
