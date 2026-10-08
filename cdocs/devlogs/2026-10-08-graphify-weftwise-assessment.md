@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: impl-1 revising per impl r1 (warm, ~255K); then fresh rev-impl-2.
+- next_steps: rev-impl-2 reviewing; impl-1 at ~346K, so any further revision round uses a fresh implementer from its sub-devlog.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -42,7 +42,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment-impl.md` | assessment execution | revising (impl r1) | per-phase commands, raw numbers, deviations |
+| `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment-impl.md` | assessment execution | review_ready | per-phase commands, raw numbers, deviations |
 
 ## Iterate Brief (Turn 0)
 
@@ -83,6 +83,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | 2026-10-08T21:17 | impl round 1; must re-run floor; spot-check grading |
 | return | rev-impl-1 | `57a6f66` | 2026-10-08T21:35 | revise, `review_proof: confirmed` (floor within 2%, counts exact, collateral clean). Blocking: 39-edge diff is `packages/loro-repo/dist/` presence (gitignored, main only), not build path, kept stamp safe; graph has 0 edges weft to `loro-repo/src` (31 importers) because import resolves via `exports` to unextracted `dist/`, adding `"source": "./src/index.ts"` export condition added 204 edges and turned Q7 misleading to hit; Q12 miss to partial (7/5/1/1). Non-blocking: `--no-cluster` raw write is documented, lock-file existence check breaks after a killed update, stray write was an expired freshness marker, build-path text repeated 5x. 2 maintainer questions (`source` disposition, upstream note timing) |
 | dispatch | impl-1 (warm, SendMessage) | report, impl devlog; throwaway weftwise worktree | 2026-10-08T21:37 | r1 revisions; measure `source` condition fully (deltas, re-grade, timing, other packages, toolchain honouring `source`); report recommendation only; upstream note drafted not filed; re-run floor |
+| return | impl-1 | `9ed344b`, `8138133`, `0022b00` | 2026-10-08T22:00 | all r1 items applied, floor (6 steps) passes. `source` conditions on loro-repo + loro-multiplex (command-deer optional): +653 edges, 623 cross-package into `src/`, timing within noise, fresh-worktree first query 11.87 to 8.99 s (no topology change); Q7 misleading to hit, Q8 miss to partial, Q4 blast radius 6 to 34; tally on that graph 8 hit / 6 partial. Toolchain inert (no `resolve.conditions`/`customConditions`, vite 7.3.0 defaults, tsx, eslint resolver). Background-refresh lock WARN; kept-stamp residual risk broadened. Not verified: weftwise builds/tests with `source`, single grader, 3 startup questions. Weftwise unchanged at `2791713d`. impl-1 ~346K |
+| dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | 2026-10-08T22:02 | impl round 2; re-run floor; spot-check toolchain + one regrade; final holistic read |
 
 ## Steering Log
 
