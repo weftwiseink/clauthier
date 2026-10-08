@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-overhaul
 type: proposal
 state: live
-status: implementation_wip
+status: implementation_accepted
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
