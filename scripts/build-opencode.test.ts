@@ -17,7 +17,7 @@ const CC_AGENTS = join(REPO_ROOT, "plugins", "cdocs", "agents");
 const OC_AGENTS = join(REPO_ROOT, "build", "cdocs", "opencode", "agents");
 
 function frontmatter(path: string): Record<string, unknown> {
-  const match = readFileSync(path, "utf-8").match(/^---\n([\s\S]*?)\n---\n/);
+  const match = readFileSync(path, "utf-8").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   assert.ok(match, `${path}: no frontmatter delimiters`);
   const parsed: unknown = YAML.parse(match[1]);
   assert.ok(parsed && typeof parsed === "object" && !Array.isArray(parsed), `${path}: frontmatter is not a mapping`);
