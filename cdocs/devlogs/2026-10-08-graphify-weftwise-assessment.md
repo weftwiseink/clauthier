@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: rev-impl-2 reviewing; impl-1 at ~346K, so any further revision round uses a fresh implementer from its sub-devlog.
+- next_steps: trim-1 applying accept-round items; then maintainer acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -36,6 +36,8 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
   - decision (overseer call): drop `graphify watch` rather than install watchdog; audit shows it is the same full rebuild.
   - decision (overseer call): `source` export condition measured fully but kept a report recommendation, not committed to weftwise main (changes package metadata the app build reads).
   - decision (overseer call): upstream `dist/` resolution note drafted in the report, filing held for the maintainer.
+  - decision (overseer call): BLUF leads with per-role answer; implementers "usable now with discipline, flexible mid-edit waits for upstream".
+  - decision (overseer call): full trim to ~half (maintainer prefers minimal docs).
   - todo: weftwise has other worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`); the assessment must not touch them.
 
 ## Workstream Devlogs
@@ -57,6 +59,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment.md` | md scope inverted, `GRAPHIFY_OUT` hazard, `--force` wrong, post-edit shape, background refresh missing |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-r2.md` | 3 pre-dispatch fixes + trims |
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | revise | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r1.md` | `dist/` resolution gap + `source` condition fix; 39-edge misattribution; Q12 regrade |
+| impl-2 | impl-1 (warm) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | accept-round: BLUF framing, trim, small fixes |
 
 ## Judge Log
 
@@ -85,6 +88,8 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | dispatch | impl-1 (warm, SendMessage) | report, impl devlog; throwaway weftwise worktree | 2026-10-08T21:37 | r1 revisions; measure `source` condition fully (deltas, re-grade, timing, other packages, toolchain honouring `source`); report recommendation only; upstream note drafted not filed; re-run floor |
 | return | impl-1 | `9ed344b`, `8138133`, `0022b00` | 2026-10-08T22:00 | all r1 items applied, floor (6 steps) passes. `source` conditions on loro-repo + loro-multiplex (command-deer optional): +653 edges, 623 cross-package into `src/`, timing within noise, fresh-worktree first query 11.87 to 8.99 s (no topology change); Q7 misleading to hit, Q8 miss to partial, Q4 blast radius 6 to 34; tally on that graph 8 hit / 6 partial. Toolchain inert (no `resolve.conditions`/`customConditions`, vite 7.3.0 defaults, tsx, eslint resolver). Background-refresh lock WARN; kept-stamp residual risk broadened. Not verified: weftwise builds/tests with `source`, single grader, 3 startup questions. Weftwise unchanged at `2791713d`. impl-1 ~346K |
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-weftwise-assessment-impl-r2.md` | 2026-10-08T22:02 | impl round 2; re-run floor; spot-check toolchain + one regrade; final holistic read |
+| return | rev-impl-2 | `92f1522` | 2026-10-08T22:15 | accept, `review_proof: confirmed`: 7-step floor exit 0, counts exact, timings within 2.5%, collateral clean; toolchain inert (vite 7.3.0 / vitest 4.0.16 / tsc 5.9.3 bundler; 7 vite + 5 vitest configs, not 5 + 2); Q8 partial confirmed; Q4 35 not 34; fresh-worktree with `source` 8.96 s. Non-blocking: ~5,300 words, BLUF reaches per-role answer on line 9 and is stricter than the role table for implementers; repetition (tally, `path`, background caveat 3-4x); process detail belongs in devlog. 2 maintainer questions (BLUF framing, trim depth) |
+| dispatch | trim-1 (cdocs:implementer, opus, fresh) | report, impl devlog | 2026-10-08T22:17 | accept-round items: BLUF per-role first, full trim to ~half, wording/count fixes; docs only, no number or verdict change |
 
 ## Steering Log
 
