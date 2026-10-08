@@ -3,7 +3,8 @@
 ## Tools and Skills
 - `/cdocs:bash-runner` for any supported command whose output is not guaranteed to be trivially small.
 - `/cdocs:report` for external research or sweeping investigations.
-- `/graphify` if available, using `query` for loading initial workstream context and `explain` to gain understanding of code entities, and preferring it when practical over alternatives like `grep` and full-file reads.
+- `/cdocs:graphify` when graphify is installed: agents that read code run the workstream's `graphify_base_query` at startup and `explain` code entities, preferring it when practical over `grep` and full-file reads.
+  Overseers write `graphify_base_query`, pass it in prompts to agents that read code, and never run graph queries themselves.
 
 ## One writer per file
 
