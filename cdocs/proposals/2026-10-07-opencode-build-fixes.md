@@ -5,12 +5,12 @@ first_authored:
 task_list: build/opencode-build-fixes
 type: proposal
 state: live
-status: review_ready
+status: implementation_ready
 last_reviewed:
-  status: revision_requested
+  status: accepted
   by: "@claude-opus-5-5"
-  at: 2026-10-07T18:31:16-07:00
-  round: 1
+  at: 2026-10-07T18:37:12-07:00
+  round: 2
 tags: [build, opencode, yaml, frontmatter, models, multi-target]
 ---
 
