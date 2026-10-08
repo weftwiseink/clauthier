@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: impl-1 running iterate round 1 in `../oversee-workstream`; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: rev-impl-1 reviewing `dacf590`; rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -64,6 +64,8 @@ Failure picture: subagent/fork calls `chat-record`, stale `/cdocs:oversee` or "C
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:46 | accept-round F1-F5 + trivial; F1 and F4 are overseer calls, F4 flagged in a NOTE |
 | return | prop-1 | `8e9fabb` | 2026-10-08T15:48 | F1-F5 applied; dropped pointer leaves a resume+compaction gap for loop leads until they re-read the loop skill, accepted in Edge Cases |
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../oversee-workstream`, branch `oversee-workstream` | 2026-10-08T15:50 | iterate round 1, phases 1-4 |
+| return | impl-1 | `d025c88..dacf590` | 2026-10-08T16:40 | phases 1-4; rules 18/0, unit 98/0 (Stop reason 254 B), opencode 9/0, init_real 12/0, headless top_level_only 14/0 (parent + cdocs:proposer + general-purpose + fork; only parent calls chat-record), grep = listed exceptions + 5 test-file lines. Live opus propose-revise + `/compact`: `Skill(oversee-workstream)` then `Skill(chat-record)` before first Agent; both in post-compaction `invoked_skills`; no subagent loaded a skill. Deviations: unlisted `init_real` edits, skill text from current wording, consistency edits, background tasks off in live run. Unverified: `rules_check`, `multi_turn` scenarios. Post-compaction turn-3 note came only after one Stop block. Phase 4 evidence in sub-devlog Verification |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-impl-r1.md` (branch) | 2026-10-08T16:42 | must re-run floor incl. top_level_only; run rules_check and multi_turn |
 
 ## Steering Log
 
