@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T11:45:00-07:00
 task_list: cdocs/devlog-ownership-rework
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

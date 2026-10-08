@@ -4,7 +4,7 @@ first_authored:
   at: 2026-09-22T18:27:04-07:00
 task_list: meta/chat-record-devlog-management
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

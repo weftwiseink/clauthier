@@ -4,7 +4,7 @@ first_authored:
   at: 2026-09-22T10:39:14-07:00
 task_list: meta/token-spend-attribution
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

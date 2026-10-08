@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-07T12:52:25-07:00
 task_list: cdocs/script-location
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

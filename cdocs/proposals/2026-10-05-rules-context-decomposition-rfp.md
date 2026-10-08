@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-05T13:56:48-07:00
 task_list: cdocs/rules-context-decomposition
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

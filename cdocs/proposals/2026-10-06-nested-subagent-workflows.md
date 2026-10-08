@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T17:35:00-07:00
 task_list: cdocs/nested-subagent-workflows
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T12:25:00-07:00
 task_list: cdocs/triage-loop-lookup
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 tags: [triage, iterate, full_send, devlog]
 ---
