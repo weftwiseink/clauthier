@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: await browser-delegation sub-overseer (revise for maintainer answers, then `/cdocs:iterate` in worktree `../browser-delegate`); land that branch when accepted.
+- next_steps: on maintainer acceptance, flip browser-delegation proposal to `implementation_accepted` and land `browser-delegate` (21 commits, merge-tree clean vs main); then rule/skill consistency fixes (dead rule-filename refs, agent Startup rule reads, workflow-patterns:18 loop-delegation wording).
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
@@ -62,6 +62,15 @@ Verified: diff touches only `scripts/build-opencode{,.test}.ts`, `package{,-lock
 Maintainer accepted dropping `model:`. Landed: README build note fixed, `CLAUDE.md` Multi-Target section trimmed to a pointer, proposal `implementation_accepted`; rebased onto main and ff-merged at `1372ce3`; worktree and branch removed.
 Post-merge on main: `npm ci && npm run build:cdocs && npm run test:opencode` exit 0, 8/8 pass.
 Still open: CI unrun on GH Actions/Node 22; published `@weftwise/cdocs-opencode` 0.1.0 stale until a manual publish.
+
+**Browser-delegation loop (nested sub-overseer, predates `overseers.md` "not nested" at `955bcfc`):** proposal re-accepted r7 after maintainer answers; implementation accepted impl-r2 (impl-r1 caught a false convergence pass on matching errors), both `review_proof: confirmed`.
+Branch `browser-delegate` (`8089d2b..9fb01c0`, worktree `../browser-delegate`): new `plugins/browser-delegate/` (agent, README, plugin.json), marketplace entry, one-clause `reviewer.md` + iterate `confirmed`-row edits, `_media` evidence.
+Verified for real: Phase 1 spikes on `@playwright/cli` 0.1.22 (named-session isolation, dead-session errors, MCP inheritance confirmed), delegate dispatches via nested `claude -p --plugin-dir`, reviewers re-ran floors in fresh sessions.
+Not verified: convergence against weftwise (scratch relay only), SIGTRAP in the live devcontainer, dispatch from an installed plugin, an end-to-end `/cdocs:iterate` in a consumer repo, final nit round re-review.
+Deviation: reviewers ran with the installed (old) `reviewer.md`, so the `_media` copy rule was passed in-prompt.
+
+**Rules/skills consistency** (maintainer edits `2991c4d`, `18eb92d`, `955bcfc`, `747ed44`; fork nits `8853bf8`): devlog ownership and no-nesting now explicit.
+Remaining: `workflow-patterns.md:18` and `overseers.md` "Stay thin" read as whole-loop delegation; rule-filename refs dead downstream (`frontmatter-spec.md:85`, `devlog/template.md:10`); agent Startup rule reads (`reviewer.md:18-27` et al., `README.md:112-116`) never resolve downstream and are redundant given CLAUDE.md reaches subagents.
 
 ## Changes Made
 
