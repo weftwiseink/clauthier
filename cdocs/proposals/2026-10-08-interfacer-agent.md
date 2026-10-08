@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: proposal
 state: live
-status: implementation_accepted
+status: implementation_wip
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
