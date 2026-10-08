@@ -37,24 +37,20 @@ done
 [ -r "$t" ] || die "transcript not readable: $t"
 
 if [ "${tool#cli:}" != "$tool" ]; then
-  # CLI-command signature: match the regex against a Bash tool_use's .input.command.
   sig="${tool#cli:}"
   [ -n "$sig" ] || die "empty cli: signature"
   n="$(jq -r --arg sig "$sig" '
         select(.type=="assistant")
         | .message.content[]? | select(.type=="tool_use") | select(.name=="Bash")
         | (.input.command // "") as $cmd
-        # Match at a COMMAND BOUNDARY: test each separator-split segment as well as the whole
-        # string, so `^` anchors to a command rather than to a leading `cd <dir> &&`.
         | ( [$cmd] + [ $cmd | splits("[ \\t]*(&&|;|\\|)[ \\t]*") ] ) as $segs
         | select( any($segs[]; test($sig)) )
-      ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
+      ' "$t" | wc -l | tr -d ' ')"
 else
-  # MCP tool name (fully-qualified or bare trailing name).
   n="$(jq -r --arg tool "$tool" '
         select(.type=="assistant")
         | .message.content[]? | select(.type=="tool_use") | .name
         | select(. == $tool or endswith("__" + $tool))
-      ' "$t" 2>/dev/null | wc -l | tr -d ' ')"
+      ' "$t" | wc -l | tr -d ' ')"
 fi
 if [ "${n:-0}" -gt 0 ]; then echo "used"; else echo "unused"; fi
