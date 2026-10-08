@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: impl-1 running iterate round 1 in worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: rev-impl-1 reviewing `293f449`; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:
@@ -82,6 +82,9 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T12:52 | drop rfp step; ablate prerequisite check on weftwise container; parallel ordering; `implementation_ready` |
 | return | prop-1 | `261a081` | 2026-10-08T12:56 | `implementation_ready`; rfp step removed (refresh owned by consumer); ablate prerequisite check adds plugin-on-`PATH`; parallel-ordering line under phases |
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../graphify-overhaul`, branch `graphify-overhaul` | 2026-10-08T13:00 | iterate round 1, phases 1-5; ablation reports back if weftwise container not ready |
+| return | impl-1 | `b988c57..293f449` | 2026-10-08T13:45 | phases 1-4 done, Phase 5 host stub run passes (primary, secondary, positive control, overseer clean, no-op); wrapper 49 lines; cdocs-graphify 21/21, unit 97, edit-path 17, rules 11, opencode 8. Deviations: ignore line `/cdocs/` (unanchored dropped `plugins/cdocs/`, 732 to 248 nodes); headless `claude -p` overseer for the stub run; two stub-reviewer wrapper fixes. Weak: stub reviewers' worktrees from old main `ec948c4`, primary query only on 5th command, single runs. `update` ~11 s/call at weftwise scale (maintainer decision on a stamp). Weftwise ablation not run (container lacked graphify at 10:30); weftwise `docs/*.md` headings appear as query seeds |
+| steer | weftwise-fs (SendMessage) | weftwise `.graphifyignore` | 2026-10-08T13:47 | anchor as `/cdocs/`; report node counts by top-level dir incl. `docs/` |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-graphify-overhaul-impl-r1.md` (branch) | 2026-10-08T13:48 | must re-run floor incl. stub primary/overseer-clean and container `/cdocs/` exclusion; stamp recommendation |
 
 ## Steering Log
 
