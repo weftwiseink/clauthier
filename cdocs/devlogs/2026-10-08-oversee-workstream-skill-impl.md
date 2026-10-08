@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/rules-delivery/oversee-workstream-skill
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-oversee-workstream-skill.md
 tags: [claude_skills, rules_delivery]
 ---
@@ -20,13 +20,13 @@ Implement `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` (accepted r3)
 
 ## Scratchpoint
 
-- next_steps: round-1 review. All four phases are done and the floor is green; the proposal stays `implementation_wip`.
+- next_steps: none for the implementer. impl-r1 was accepted, the branch is rebased onto main (graphify-overhaul) with F1-F4 applied, and it is ready to land with `--ff-only`. The proposal stays `implementation_wip` until the maintainer accepts.
 - important_files: `scripts/check-rule-refs.ts`, `scripts/check-rule-refs.test.ts`, `plugins/cdocs/skills/{oversee-workstream,chat-record,oversee-many}/SKILL.md`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/bin/chat-record`, `plugins/cdocs/hooks/tests/chat-record.test.sh`
 - callouts:
   - decision: this implementer is a subagent and never calls `chat-record`.
   - todo: Phase 4 says "record transcript evidence in the overseer's devlog"; the overseer owns that devlog, so the evidence is under Verification here for the overseer to copy.
   - deviation: the full Verification 1 grep also hits 5 lines in `chat-record.test.sh` (`init_real`'s stale-file fixture and negative assertions), which are not in the listed exceptions; the `/oversee` floor grep returns only the listed exceptions.
-  - todo: the `rules_check` and `multi_turn` extras were not run (see the WARN under Phase 3).
+  - decision: whether to keep, move or delete the `rules_check` extra is the maintainer's call (review Q1); only its header comment changed (F4).
 
 ## Plan
 
@@ -199,4 +199,22 @@ Sandbox configs and credential copies were deleted after each run.
 - `chat-record.test.sh --unit`: 98 passed, 0 failed.
 - `npm run test:opencode`: 9 pass, 0 fail.
 - `grep -rnE '/oversee([^-a-z]|$)' plugins scripts .github CLAUDE.md README.md .gitignore` returns 5 lines, all listed exceptions: `README.md:194` (OpenCode NOTE), `oversee-many/template.md:3`, `.gitignore:17`, and `oversee-many/SKILL.md:51,58` (`.claude/oversee/`).
+
+### Rebase onto main and impl-r1 F1-F4
+
+Rebased onto main `23dcf18` (graphify-overhaul `21bdaaf` plus later devlog commits).
+Conflicts and resolutions:
+- `CLAUDE.md` skills list (twice, in the rename and new-skills commits): kept main's `graphify` and added `chat-record`, `oversee-many`, `oversee-workstream`.
+- `rules/tool-use-safeguards.md` "Tools and Skills": kept main's `/cdocs:graphify` bullet with its overseer sub-line, and kept the top-level `chat-record` bullet (after `/cdocs:report`, as before); the old `/graphify` line is main's deletion.
+- `.gitignore`: no conflict; main's `graphify-out/` entry follows the `/cdocs:oversee-many` comment and the `.claude/oversee/` entry, and both are intact.
+- `iterate/SKILL.md`: no conflict; main's edits and the `oversee-workstream` line coexist.
+- Main added no new `/cdocs:oversee` or "CDocs Overseer Rules" references.
+
+F1-F4 (`cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-impl-r1.md`):
+- F1: the rule bullet reads "invoke `/cdocs:chat-record` with the Skill tool whenever its text is not in context."
+- F2: `implement/SKILL.md:19` ends "... with the Skill tool first."; `propose/SKILL.md:144` drops ", so the discipline is not `iterate`-only".
+- F3: the `bin/README.md` `Stop` example includes " See /cdocs:chat-record.".
+- F4: the `rules_check` header comment says the resumption steps come from the restored `chat-record` skill; the scenario is unchanged.
+
+Post-rebase floor: `npm run test:rules` 18/0 (`check-rule-refs.ts`: "rule references OK"; `/cdocs:graphify` is indexed, and its 4 references resolve); `chat-record.test.sh --unit` 98/0; `npm run test:opencode` 9/0; the `/oversee` grep returns only the 5 listed exceptions (`README.md:195`, `oversee-many/template.md:3`, `oversee-many/SKILL.md:51,58`, `.gitignore:17`).
 
