@@ -7,7 +7,7 @@ argument-hint: "chain [p1, p2, ...] | full <topic> | resume [arc-id] [--afk] [-m
 # CDocs Oversee
 
 `/oversee` is the arc layer above `/cdocs:full-send`: it takes several proposals through their full lifecycle by composing the existing loop skills per proposal, never reimplementing a loop.
-Its unit of work is a proposal: it advances to the next one only when the current one reaches a terminal accepted state.
+Its unit of work is a proposal; which proposals run concurrently is the overseer's call (see Concurrency).
 
 The arc overseer runs in *overseer mode* per [`overseers.md`](../../rules/overseers.md).
 
@@ -16,12 +16,12 @@ The arc overseer runs in *overseer mode* per [`overseers.md`](../../rules/overse
 ## Invocation
 
 ```
-/oversee chain [p1, p2, ...]        # sequence an explicit list of proposals
+/oversee chain [p1, p2, ...]        # run an explicit list of proposals
 /oversee full <topic>               # scope a proposal set for a topic, then chain it
 /oversee resume [arc-id]            # resume an interrupted arc from its arc file
 ```
 
-- `chain`: an ordered list of proposal paths, each routed per its readiness at its turn (see Composition).
+- `chain`: a list of proposal paths, ordered where one depends on another, each routed per its readiness when it starts (see Composition).
 - `full <topic>`: dispatch `/cdocs:propose` to scope the arc's proposal set, then treat the result as a `chain`.
 - `resume`: see Resume.
 - `--afk`: the user is away. Soft gates ("continue to the next proposal?", "which of two acceptable defaults?") take the logged default and proceed; hard gates still stop. Record it as `afk` in the arc file so a resumed arc knows.
@@ -31,7 +31,7 @@ Mint `arc_id` as `YYYY-MM-DD` plus a dash-cased slug of the topic (or of the fir
 
 ## Composition
 
-Decide per proposal at its turn, since an earlier proposal may change a later one's readiness.
+Decide per proposal when it starts, since an earlier proposal may change a later one's readiness.
 The arc overseer runs each composed loop as itself, so it is the only overseer in the arc and owns each proposal's top-level devlog.
 
 | Per-proposal condition | Composition |
@@ -53,7 +53,7 @@ Keep an arc devlog beside it for the arc narrative and links to each proposal's 
 
 ## Concurrency
 
-Proposals with overlapping or unpredictable footprints run in order; disjoint ones may run in parallel under this one overseer.
+Concurrency is at the overseer's discretion: disjoint footprints may run in parallel under this one overseer (implementations in separate worktrees), while overlapping or unpredictable footprints, and a proposal that depends on another's outcome, run in order.
 Before starting a proposal, read the sibling arc files under `.claude/oversee/` for in-progress footprints that overlap it.
 
 ## Hard gates
