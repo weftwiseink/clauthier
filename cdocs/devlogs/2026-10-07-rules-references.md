@@ -22,7 +22,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 ## Scratchpoint
 
-- next_steps: await r1 revision; then fresh opus reviewer r2.
+- next_steps: await r2 review.
 - important_files: `plugins/cdocs/rules/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/inject-rules.ts`, `plugins/cdocs/agents/*.md` Startup blocks, `plugins/cdocs/README.md:112-116`
 - callouts:
   - decision: overseer is this top-level session (not nested), per `overseers.md`.
@@ -46,6 +46,8 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 - 2026-10-07T21:57 dispatch: fresh opus `cdocs:reviewer`, round 1.
 - 2026-10-07T22:05 return: r1 revise (`8753317`).
 - 2026-10-07T22:06 dispatch: same warm proposer for r1 revision (findings moderate, context ~170K).
+- 2026-10-07T22:12 return: r1 revision `1add187`: keep `cdocs.md`, drop `@`-import gated on `rules_check` without import (phase 3 step 1, revert on fail); alphabetical concat; no hook changes; check against source headings + `--materialized` in `init_real`. Unrequested: removed TS init-list assertion (bash `chat-record.test.sh --unit` already covers it).
+- 2026-10-07T22:13 dispatch: fresh opus `cdocs:reviewer`, round 2.
 
 ## Steering Log
 
