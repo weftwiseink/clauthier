@@ -32,7 +32,7 @@ The replacement:
   The overseer writes and refines it; it never runs graph commands or reads their output.
 - **Any agent that reads code runs it**, at startup, through `cdocs-graphify`, then uses `explain`, `path`, and single-symbol `affected` as its work demands.
   Implementers return a refined query in their report.
-- **`cdocs-graphify`** gives each worktree its own index, copied once from the main graph and kept current by `graphify update` on every call, so no agent writes a shared index.
+- **`cdocs-graphify`** gives each worktree its own index, copied once from the main graph and kept current by `graphify update` whenever the graphed tree changes, so no agent writes a shared index.
 - **`cdocs/` stays out of the graph:** it is large and is prose the agents read directly.
   graphify's own `.graphifyignore` excludes it from every build and update.
 - **Delivery.** The rule line reaches every agent (discovery plus the overseer's duty); the skill carries the per-role procedure; iterate gains a short "Base query" section.
@@ -120,7 +120,7 @@ Usage: `cdocs-graphify {query|explain|path|affected} ARGS...`.
 | Paths | Worktree index: `<toplevel>/graphify-out/`. Main graph: `$GRAPHIFY_OUT` (the container's shared `/var/cache/graphify`), else `graphify-out/` in the worktree on branch `main` (`git worktree list --porcelain`). |
 | Copy (idempotent) | If the worktree index has no `graph.json`, copy the main graph directory into a temp dir beside it, delete the copied `.graphify_root` (it names the main checkout, and would keep the branch's deleted files alive through the first update), write a `*` `.gitignore` (so consuming repos need no `.gitignore` edit), then rename it into place. Skip if the worktree index exists; a lost rename race is ignored. On the host, the main checkout's own index is the main graph, so there the copy is a no-op. |
 | Ignore hint | If `cdocs/` exists and `.graphifyignore` has no `cdocs/` line, one stderr hint naming `/cdocs:init`; then proceed. |
-| Stamp | Hash `HEAD`, the changed tracked and untracked file names, and their contents, leaving out paths `.graphifyignore` matches (`git check-ignore --no-index`). The copy step also drops a copied `.stamp`. |
+| Stamp | Record a base commit (the one in `graphify-out/.stamp`, else `HEAD`), then hash it with the names and contents of files that differ from it, tracked or untracked, leaving out paths `.graphifyignore` matches (`git check-ignore --no-index`); names are listed with `core.quotePath=false`. The copy step also drops a copied `.stamp`. |
 | Update | When the stamp differs from `graphify-out/.stamp`: `GRAPHIFY_OUT=<worktree index> graphify update <toplevel>`, output to `graphify-out/update.log`, then write the stamp only on success. On failure, one stderr line, and query the existing index. |
 | Passthrough | `graphify "$@" --graph <worktree graph.json>`, stdout unchanged, exit code preserved. |
 | Runtime coupling | Grep files named in the output (that exist in the worktree) for `\.(observe\|subscribe)\(`; if any match, append a `RUNTIME COUPLING (not in the graph):` header and up to 30 `path:line: text` hits. |
@@ -271,7 +271,7 @@ And only the consumer knows when to go deeper with `explain` or `path`.
 
 ### D3: Per-worktree indexes, copied from the main graph
 
-Each worktree gets its own `graphify-out/`, copied once from the main graph and kept current by `update` on every call.
+Each worktree gets its own `graphify-out/`, copied once from the main graph and kept current by `update` whenever the graphed tree changes (D4).
 No code-reading agent writes the shared index, so one-writer-per-file holds across worktrees, and an agent in one worktree never queries another branch's graph.
 This removes the cross-worktree staleness and overwrite risk that lace D3 accepted for a shared index.
 The copy works because node paths and manifest keys are relative (verified on 0.9.61); dropping the copied `.graphify_root` makes the first update resolve them against the worktree, so it prunes the branch's deleted files at once.
@@ -281,8 +281,10 @@ Refreshing the main graph (`graphify update /workspace/clauthier/main` with the 
 
 `graphify update <toplevel>` is AST-only on 0.9.61 (`--code-only` is rejected), so no markdown edit ever triggers LLM extraction.
 It has no no-op path: every call rebuilds the whole corpus (about 10.3 s at weftwise scale, on 0.9.80 too, and no flag avoids it; see the [update performance audit](../reports/2026-10-08-graphify-update-performance-audit.md)).
-So the wrapper skips it when a stamp of `HEAD` plus the graphed working-tree changes matches the last successful update (16-42 ms), which brings a no-op query from about 11.1 s to about 0.85 s.
-Leaving `.graphifyignore` paths out of the stamp means a `cdocs/` devlog edit, which happens between almost every pair of queries, does not trigger a rebuild; any code edit, new file, or deletion does.
+So the wrapper skips it when the graphed tree is unchanged since the last successful update, which brings a no-op query from about 11.1 s to about 0.75-0.85 s at weftwise scale.
+The stamp is the diff from a base commit it records, not from `HEAD`, so it identifies the graphed tree's content rather than its history: committing code that is already graphed, or a `cdocs/`-only change, leaves it unchanged, which matters because agents commit early and often.
+Leaving `.graphifyignore` paths out of the stamp means a `cdocs/` devlog edit, which happens between almost every pair of queries, does not trigger a rebuild either; any code edit, new file, or deletion does.
+Its cost grows with distance from the base, which stays fixed until a fresh copy resets it: about 22 ms at the base, 130-180 ms at 100-300 commits back, and 720 ms at 1000 (weftwise), fine for a per-workstream worktree and slower for a long-lived `main` copy.
 The first query after a code edit still costs a full rebuild (about 14 s on weftwise) until graphify gates `update` on its own AST manifest and caches JS/TS work upstream.
 
 ### D5: Not graphify's own `/graphify` skill or `graphify claude install`
@@ -334,7 +336,8 @@ Mechanics are in "How `cdocs/` is kept out of the graph" above.
 - No `graphify` on `PATH`: exit 0, one stderr line, no `graphify-out/` created.
 - No index anywhere: exit 0, one stderr line, stub never called for a query.
 - Sibling worktree without an index: the main graph is copied without `.graphify_root`, `.gitignore` is `*`, `git status --porcelain` is clean.
-- Second call: no copy (an index-file sentinel is unchanged); `update` runs again.
+- Second call on an unchanged tree: no copy (an index-file sentinel is unchanged), no update.
+- Stamp: an edit under the ignored `cdocs/` skips the update, a code edit runs it, committing that edit skips it, and a failed update leaves the stamp stale so the next call retries.
 - Ignore hint: with `cdocs/` present and no `cdocs/` line in `.graphifyignore`, exactly one hint line on stderr and the query still runs; with the line, no hint.
 - Update writes only under the worktree's `graphify-out/` (stub log shows `GRAPHIFY_OUT=<worktree>/graphify-out`); the main graph's mtime is unchanged.
 - Passthrough: `cdocs-graphify path "A B" C` reaches the stub as exactly `path`, `A B`, `C`, `--graph <worktree graph.json>`; stub stdout and exit code come back unchanged.
