@@ -1,5 +1,10 @@
 {
   "enabledPlugins": {
     "cdocs@clauthier": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(chat-record:*)"
+    ]
   }
 }
