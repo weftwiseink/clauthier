@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T17:27:59-07:00
 task_list: meta/atlas-loose-ends
 type: devlog
-state: live
+state: archived
 status: done
 tags: [hooks, documentation, maintenance]
 ---

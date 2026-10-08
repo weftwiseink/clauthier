@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-07T12:00:00-07:00
 task_list: cdocs/script-location
 type: devlog
-state: live
+state: archived
 status: done
 tags: [plugin-architecture, graphify, full_send]
 ---

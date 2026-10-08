@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-07T13:00:00-07:00
 task_list: cdocs/script-location
 type: devlog
-state: live
-status: review_ready
+state: archived
+status: done
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"

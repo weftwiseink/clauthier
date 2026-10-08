@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T17:00:00-07:00
 task_list: cdocs/nested-subagent-workflows
 type: devlog
-state: live
+state: archived
 status: done
 tags: [orchestration, subagents, propose_revise]
 ---

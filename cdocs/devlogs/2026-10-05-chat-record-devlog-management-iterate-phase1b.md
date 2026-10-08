@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-05T12:17:00-07:00
 task_list: meta/chat-record-devlog-management
 type: devlog
-state: live
+state: archived
 status: done
 part_of: cdocs/devlogs/2026-10-05-chat-record-devlog-management-iterate.md
 tags: [chat-record, hooks, devlog, orchestration, iterate]

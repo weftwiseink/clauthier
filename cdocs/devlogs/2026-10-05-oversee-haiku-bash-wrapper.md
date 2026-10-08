@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-05T09:01:33-07:00
 task_list: meta/token-spend-attribution
 type: devlog
-state: live
-status: wip
+state: archived
+status: done
 tags: [meta, orchestration, oversee, haiku, hooks, devlog]
 ---
 

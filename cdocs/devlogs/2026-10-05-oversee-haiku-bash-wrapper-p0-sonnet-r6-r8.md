@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-05T09:01:33-07:00
 task_list: meta/token-spend-attribution
 type: devlog
-state: live
+state: archived
 status: done
 part_of: cdocs/devlogs/2026-10-05-oversee-haiku-bash-wrapper.md
 tags: [meta, orchestration, oversee, haiku, hooks, devlog]

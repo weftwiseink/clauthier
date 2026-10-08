@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T09:50:00-07:00
 task_list: cdocs/rules-context-decomposition
 type: devlog
-state: live
+state: archived
 status: done
 tags: [rules, architecture, orchestration_discipline, init, full_send]
 ---

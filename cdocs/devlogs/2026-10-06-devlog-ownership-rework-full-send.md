@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-06T11:40:00-07:00
 task_list: cdocs/devlog-ownership-rework
 type: devlog
-state: live
+state: archived
 status: done
 tags: [devlog, orchestration_discipline, full_send]
 ---
