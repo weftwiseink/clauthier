@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: rev-3 reviewing `eca42cd`; on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: prop-1 accept-round nits; then `/cdocs:iterate` in worktree `../oversee-workstream` off main, rebasing over graphify-overhaul if it lands first (`iterate/SKILL.md`, `tool-use-safeguards.md`, `.gitignore`); on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -35,6 +35,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | reviewed against mid-review maintainer direction; fork leak blocking |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r2.md` | 3 one-line blocking defects |
+| r3 | prop-1 (warm) | rev-3 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r3.md` | non-blocking cuts only |
 
 ## Dispatch/Return Events
 
@@ -53,6 +54,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:27 | B1-B3, count fix, test clash, overlap NOTE, cuts. Overseer defaults (flagged as such): B2 = "your dispatcher owns the chat record"; keep §7 skill-reference check |
 | return | prop-1 | `eca42cd` | 2026-10-08T15:30 | r2 items applied; overseer defaults flagged in proposal |
 | dispatch | rev-3 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r3.md` | 2026-10-08T15:31 | round 3 |
+| return | rev-3 | `52e5bb2` | 2026-10-08T15:45 | proposal_accepted, `implementation_ready`; phases green in order (simulated reference check; Phase 3 turns exactly 3 refs red); no loop-skill contradictions. Non-blocking: F1 delete §1 dispatcher sentence; F2/F3 exception wording; F4 drop oversee-workstream from the rule bullet (loop skills load it; maintainer asked chat-record-only); F5 README:123 two examples |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:46 | accept-round F1-F5 + trivial; F1 and F4 are overseer calls, F4 flagged in a NOTE |
 
 ## Steering Log
 
