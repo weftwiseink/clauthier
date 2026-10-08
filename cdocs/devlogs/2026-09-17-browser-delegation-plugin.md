@@ -15,13 +15,13 @@ tags: [research, browser, delegation, mcp, a2a, visual_review, isolation, plugin
 
 ## Scratchpoint
 
-- next_steps: proposal is `implementation_ready` (re-accepted r5, nits resolved `4218982`); next is `/cdocs:implement` or `/cdocs:iterate` when the maintainer greenlights, starting with the Phase 1 spikes. A later `/cdocs:iterate` continues the Iteration Log below.
-- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r{2,3,4,5}.md`
+- next_steps: reopened propose-revise loop after maintainer answers; r7 proposer revision (r6 blockers on `_media/` evidence), then fresh opus reviewer; on accept set `implementation_ready` and run `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`; do not merge to main, coordinator lands it).
+- important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, `cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r{2..6}.md`
 - callouts:
-  - decision: maintainer defaults applied: no R1-R6 dependency (plain reviewer + iterate `review_proof`); agent-only bash-runner-shaped plugin (no `drive`/`sync` skills, no plugin rules files); v1 Claude Code-only, no OpenCode dependency; driving stays Claude/sonnet; one delegate drives N named sessions by default.
-  - decision: overseer picked minimal options on reviewer-offered choices: durable iterate evidence = scratch path + quoted report lines (no `reviewer.md` change); session states report only what one dispatch observes (no resume field); reviewer uses `<branch>-review-<role>` names plus the fresh-sessions option.
-  - open: maintainer questions: (1) pluggable/non-Claude visual or driving model path, (2) acceptance of the one-clause iterate `confirmed` edit (Phase 3) vs leaving cdocs untouched, (3) committed `_media/` iterate evidence (Phase 5 future work).
-  - deferred: Phase 1 spikes still unrun: `@playwright/cli` SIGTRAP/pinning, named-session isolation and cwd scoping, session liveness semantics, CLI resolution (project-local vs global, `cli.config.json`), browser-use GA; Healer integration gates the Phase 5 fixer.
+  - decision: maintainer answers (see "Maintainer answers"): no non-Claude model path; iterate `confirmed` clause approved; cited screenshots copied to `cdocs/_media/` in v1 via one `reviewer.md` clause.
+  - decision: earlier defaults stand: no R1-R6 dependency; agent-only bash-runner-shaped plugin; v1 Claude Code-only; one delegate drives N named sessions; session states report single-dispatch observations; reviewer uses `<branch>-review-<role>` fresh sessions.
+  - blocker: Phase 1 spikes need a real `@playwright/cli` and browser; if unavailable, record and escalate rather than simulate.
+  - todo: avoid paths the top-level is landing (scripts/build-opencode*, package*.json, CLAUDE.md, plugins/cdocs/README.md, opencode docs); iterate `SKILL.md` / `reviewer.md` edits happen in the implementation worktree.
 
 ## Plan / arc
 
@@ -90,34 +90,28 @@ Recorded as review r2; overseer (opus-5-5, subagent of the top-level session) ru
 |---|---|---|---|---|---|---|
 | 1 | proposer (sonnet) | sonnet cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-09-17-review-of-browser-delegation-plugin.md | original loop; superseded by r2 staleness |
 | 2 | - | opus cdocs:reviewer (staleness, read-only) | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r2.md | 4 blocking, 3 high, 3 medium, 1 low |
-
 | 3 | proposer r3 (opus, `7d89533`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r3.md | all 11 r2 items resolved; 2 new blocking (reviewer delegate reuses implementer session; `cdocs/_media/` durability conflicts with reviewer.md); 11 non-blocking. Reviser deviations (drop `sync`, one-clause iterate `confirmed` edit) judged sound |
+| 4 | proposer r4 (opus, warm, `ebb6e7a`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r4.md | all 13 r3 items resolved; 2 new blocking in session-state contract (fresh-session rule not delivered via agent description/prompt; `reopened` unobservable across dispatches); 7 non-blocking |
+| 5 | proposer r5 (opus, warm, `b26403b`) | fresh opus cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r5.md | r4 blockers resolved; 6 non-blocking nits handed to warm proposer for resolution |
+| 6 | proposer r6 (opus, warm, `2372ad0`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r6.md | answers 1-2 folded correctly; 2 blocking on answer 3 (copy instruction never reaches reviewer at runtime and reviewer Bash is read-only; embedded `_media` image not tied to this round's delegate `Artifacts`, collision with implementer media) |
+
+### Overseer decisions
 
 - r3 overseer decision: durable-screenshot question resolved as option A (scratch path + quoted report facts, no `reviewer.md` change) per minimal-design default; maintainer can override.
-| 4 | proposer r4 (opus, warm, `ebb6e7a`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r4.md | all 13 r3 items resolved; 2 new blocking in session-state contract (fresh-session rule not delivered via agent description/prompt; `reopened` unobservable across dispatches); 7 non-blocking |
-
 - r4 overseer decision: `reopened` semantics resolved as option A (report only what one dispatch observes; no `resume` prompt field) per minimal-design default.
-| 5 | proposer r5 (opus, warm, `b26403b`) | fresh opus cdocs:reviewer | proposal_accepted | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r5.md | r4 blockers resolved; 6 non-blocking nits handed to warm proposer for resolution |
-
 - r5 overseer decision: nit 2 resolved as option A (fresh-sessions option plus `<branch>-review-<role>` suffix, so implementer and reviewer never share a session either direction).
+- r6 overseer decisions (implementation details inside maintainer answer 3, not new maintainer questions): Q1 option A (copy instruction + Bash exception live in `reviewer.md` only); Q2 option A (reviewer copies named `YYYY-MM-DD-<review-doc-name>-<description>.png`, never overwrite).
+- Round cap: the 6-round escalation cap is counted from the post-answers reopen (r6 = reopened round 1), since the coordinator explicitly reopened the loop.
 
 ### Re-review outcome
 
 Accepted at r5 (`7623a52`); accepting-round nits resolved and `status: implementation_ready` set (`4218982`).
 Design delta vs the r1-accepted version: D2 re-grounded (MCP inheritance premise dropped; named sessions, version-pin class, lead-not-invited-to-drive); R1-R6 verdict layer removed in favor of the plain reviewer under iterate's `review_proof`, with reviewer-dispatched delegate artifacts counting as reviewer-produced (one-clause iterate edit); surface collapsed to a single bash-runner-shaped agent with a fixed `BROWSER DELEGATE REPORT` and no `drive`/`sync` skills or rules files; delegate never writes devlogs; v1 Claude Code-only; explicit session-state contract (`opened`/`reused`/`reopened`) and reviewer fresh-session rule; CLI runs from a scratch root so the worktree stays clean.
 
-
-### Maintainer answers (post-r5) and r6 revision
+### Maintainer answers (post-r5)
 
 1. Model choice stays entirely with dispatcher/reviewer; plugin hosts no non-Claude path. Open question closed.
 2. One-clause iterate `confirmed` edit approved.
 3. Screenshot evidence moves into v1 under `cdocs/_media/` (`YYYY-MM-DD-description.ext`, embedded in the relevant doc) with the one-clause `reviewer.md` change; delegate still writes only to scratch, the dispatcher or reviewer copies cited evidence into `_media/`. Supersedes the r3 option-A "scratch path + quoted lines only" decision (quoted report lines stay as the textual audit trail).
 
-Next: proposer revision folding these in, fresh opus reviewer r6, then `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`, not merged by this overseer).
-
-| iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
-|---|---|---|---|---|---|---|
-| 6 | proposer r6 (opus, warm, `2372ad0`) | fresh opus cdocs:reviewer | revise | n/a | cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-r6.md | answers 1-2 folded correctly; 2 blocking on answer 3 (copy instruction never reaches reviewer at runtime and reviewer Bash is read-only; embedded `_media` image not tied to this round's delegate `Artifacts`, collision with implementer media) |
-
-- r6 overseer decisions (implementation details inside maintainer answer 3, not new maintainer questions): Q1 option A (copy instruction + Bash exception live in `reviewer.md` only); Q2 option A (reviewer copies named `YYYY-MM-DD-<review-doc-name>-<description>.png`, never overwrite).
-- Round cap: the 6-round escalation cap is counted from the post-answers reopen (r6 = reopened round 1), since the coordinator explicitly reopened the loop.
+Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), then `/cdocs:iterate` in sibling worktree `../browser-delegate` (branch `browser-delegate`, not merged by this overseer).
