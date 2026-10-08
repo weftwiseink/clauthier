@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: devlog
 state: live
-status: review_ready
+status: wip
 last_reviewed:
   status: revision_requested
   by: "@claude-opus-5-5"
@@ -33,7 +33,7 @@ Seek graphify's best case honestly, keep reach and efficiency apart, and write t
 
 ## Scratchpoint
 
-- next_steps: Phase 4 complete, `review_ready`; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
+- next_steps: revision pass for `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` (revise, six blocking items) in progress by a fresh implementer; see Revision pass (review round 1). Proposal stays `implementation_wip`.
 - graphify_base_query:
 - important_files: `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (Value Beyond Grep, BLUF, Verdict per Role, Not Verified, floor); this devlog's Judges, Attribution, and Appendix (card, judge prompt, judged answers for re-judging)
 - callouts:
