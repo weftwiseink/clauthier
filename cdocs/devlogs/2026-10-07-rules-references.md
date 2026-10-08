@@ -75,6 +75,8 @@ If the phase 3 gate fails, phase 3 stops and phases 1-2 land alone (an accepted 
 - 2026-10-07T22:59 dispatch: warm proposer for r4 accept-round nits (nit 3 resolved as: re-run once on mismatch, only a repeated difference counts).
 - 2026-10-07T23:03 return: accept-round nits `6be476b`.
 - 2026-10-07T23:05 dispatch: opus `cdocs:implementer` (iterate round 1), worktree `../rules-references`; may claim files on branch `rules-references` only.
+- 2026-10-07T23:21 return: implementer round 1, `3fa8d3d..2457283` (20 commits): phases 1-3 done; self-verified steps 1-5; canary gate passed 2/2 (`marzipan`, no `heliotrope`); `rules_check` identical with/without import (2 pass / 3 fail). Deviations: nit-fix step 3e "apply any other MECHANICAL convention"; sentinel text self-labels MECHANICAL; check exempts `.claude/rules/`, `.opencode/rules/`; `init_real` uses `node --import tsx` (tsx socket path length). Not done: `plugin.json` bump (release is maintainer's), CI unrun on GitHub.
+- 2026-10-07T23:22 dispatch: fresh opus `cdocs:reviewer`, implementation round 1; claims `cdocs/reviews/2026-10-07-review-of-rules-references-impl-r1.md` + proposal `last_reviewed` on branch.
 
 ## Steering Log
 
