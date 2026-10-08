@@ -119,7 +119,7 @@ T=<timeout s>; I=<interval s>; start_s=$SECONDS; sessions=(<name1> <name2>)
 while :; do
   declare -A v=(); same=1; first=
   for s in "${sessions[@]}"; do
-    v[$s]=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>&1 | tail -n 1)
+    v[$s]=$("$cli" -s="$s" --raw eval "() => String($expr)" 2>&1 | grep -v -e '^###' -e '^[[:space:]]*$' | head -n 1)
     [ -z "$first" ] && first=${v[$s]}
     [ "${v[$s]}" != "$first" ] && same=0
   done
@@ -132,6 +132,7 @@ done
 for s in "${sessions[@]}"; do echo "last-seen $s: ${v[$s]}"; done
 ```
 
+`--raw eval` prints each value as one JSON-encoded line (a string arrives quoted, `"hello"`), which is why `expected` is compared with quotes added; keep expected values to plain text without quotes or backslashes.
 A timeout is divergence, never success: `converged: no, timed out at <n>s; last-seen <session>: <state>` with one `last-seen` per session.
 If a poll value is a dead-session error, re-open per Sessions (outside the loop) and re-run the poll once with the time remaining.
 Sequence cross-client actions ("sharer types, then sharee reads") yourself, in the order given, before starting the poll.
