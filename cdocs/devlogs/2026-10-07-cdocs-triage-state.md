@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: on maintainer acceptance, flip browser-delegation proposal to `implementation_accepted` and land `browser-delegate` (21 commits, merge-tree clean vs main); then rule/skill consistency fixes (dead rule-filename refs, agent Startup rule reads, workflow-patterns:18 loop-delegation wording).
+- next_steps: rules-references propose-revise (own devlog `2026-10-07-rules-references.md`).
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
@@ -71,6 +71,9 @@ Deviation: reviewers ran with the installed (old) `reviewer.md`, so the `_media`
 
 **Rules/skills consistency** (maintainer edits `2991c4d`, `18eb92d`, `955bcfc`, `747ed44`; fork nits `8853bf8`): devlog ownership and no-nesting now explicit.
 Remaining: `workflow-patterns.md:18` and `overseers.md` "Stay thin" read as whole-loop delegation; rule-filename refs dead downstream (`frontmatter-spec.md:85`, `devlog/template.md:10`); agent Startup rule reads (`reviewer.md:18-27` et al., `README.md:112-116`) never resolve downstream and are redundant given CLAUDE.md reaches subagents.
+
+
+**Browser-delegate landed:** maintainer accepted; proposal `implementation_accepted`, devlog `done`; rebased and ff-merged at `691ae6c`; on main `build:cdocs` + `test:opencode` 8/8 and marketplace/plugin JSON parse; worktree and branch removed.
 
 ## Changes Made
 

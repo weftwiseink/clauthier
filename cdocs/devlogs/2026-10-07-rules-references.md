@@ -22,7 +22,7 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 ## Scratchpoint
 
-- next_steps: dispatch proposer (`/cdocs:propose`), then fresh opus reviewer rounds.
+- next_steps: await r1 review of `cdocs/proposals/2026-10-07-rules-references.md`; revise with the same warm proposer unless findings are extreme.
 - important_files: `plugins/cdocs/rules/*.md`, `plugins/cdocs/skills/init/SKILL.md`, `plugins/cdocs/hooks/inject-rules.ts`, `plugins/cdocs/agents/*.md` Startup blocks, `plugins/cdocs/README.md:112-116`
 - callouts:
   - decision: overseer is this top-level session (not nested), per `overseers.md`.
@@ -41,6 +41,10 @@ Decide a reference convention, a way to double-check it mechanically, and whethe
 
 - 2026-10-07T21:42 dispatch: opus `cdocs:proposer` (`/cdocs:propose --dispatched`) to author `cdocs/proposals/2026-10-07-rules-references.md`.
 
+- 2026-10-07T21:55 return: proposal `e8faa7d`, `review_ready`. Recommends heading-name references, `scripts/check-rule-refs.ts` + `npm run test:rules` blocking CI job, per-file `.claude/rules/cdocs/<name>.md` delivery without `@`-import (docs + v2.1.293 probe; compaction re-injection docs-only). Adds `scripts/inject-rules.test.ts` (2 of 6 hook-testing RFP items). Found audit misses: `nit-fix.md` Startup variant, false rule-read claims at `nit_fix/SKILL.md:48`, `triage/SKILL.md:69`; skill links also broken in OC layout.
+- 2026-10-07T21:57 dispatch: fresh opus `cdocs:reviewer`, round 1.
+
 ## Steering Log
 
+- 2026-10-07: maintainer: advisor-subagent line removed from `overseers.md` (`20c83f3`); oversee concurrency defaults to parallel when practical (`c9e57f5`, `141049c`).
 - 2026-10-07: maintainer: "Rules heading replacements work fine but we should have a way to 2x check it"; "Maybe we can reconsider the concatenation through some more recent affordance."
