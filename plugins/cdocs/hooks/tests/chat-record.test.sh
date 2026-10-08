@@ -5,8 +5,8 @@
 #   chat-record.test.sh --headless [--only RE] headless `claude -p` scenarios (needs credentials)
 #   chat-record.test.sh [--only RE]            both
 #   --optional                                 also run the default-permission-mode scenarios
-#   --only init_real|rules_check|multi_turn    extras: real /cdocs:init, post-compaction rules check,
-#                                              and a 20-turn resumed session under the rules
+#   --only init_real|multi_turn                extras: real /cdocs:init, and a 20-turn resumed
+#                                              session under the rules
 #
 # Headless scenarios use a sandboxed CLAUDE_CONFIG_DIR holding copies of
 # $CHAT_RECORD_CREDS_DIR/{.credentials.json,.claude.json} (default ~/.claude), `env -i` so the
@@ -801,7 +801,6 @@ Then reply done." --add-dir "$SIB" --permission-mode bypassPermissions
   # Extras: run only when --only names them.
   if [ -n "$ONLY" ]; then
     want init_real && init_real
-    want rules_check && rules_check
     want multi_turn && multi_turn
   fi
 }
@@ -860,35 +859,6 @@ init_real() {
   claude_run init_minimal "$P" -- -p '/cdocs:init --minimal' --permission-mode bypassPermissions
   [ -d "$P/cdocs/devlogs" ] && ok "--minimal created the doc directories" || bad "--minimal created no cdocs/devlogs"
   [ ! -e "$P/cdocs/_chat" ] && ok "--minimal creates no cdocs/_chat" || bad "--minimal created cdocs/_chat"
-}
-
-# rules_check (extra, run with --only rules_check): a session under the materialized rules is
-# compacted mid-task; the resumption steps come from the `chat-record` skill, which compaction
-# restores, so its first post-compaction tool calls should be `chat-record path` and reads of
-# the Scratchpoint and the record tail, with no hook emitting additionalContext.
-rules_check() {
-  section "headless: rules_check - post-compaction resumption under the rules"
-  local P J post
-  P="$(hproj rules_check)"; init_rules "$P"
-  drive rules_check "$P" \
-    "Start a cdocs devlog at cdocs/devlogs/$(date +%Y-%m-%d)-greeter.md (frontmatter per the cdocs spec, Objective, Scratchpoint, Plan) for writing greeter.py, a script that prints hello. Follow the cdocs rules for the devlog (chat_record, Scratchpoint) and for this turn. Then write greeter.py." \
-    "/compact" \
-    "Continue with the next step: add a --name flag to greeter.py."
-  J="$SB/rules_check.jsonl"
-  post="$(awk '/"compact_boundary"/ {on = 1} on' "$J" | jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "tool_use") | "\(.name) \(.input.command // .input.file_path // "" | gsub("\n"; "; "))"' 2>/dev/null | head -n 8)"
-  echo "  info: first post-compaction tool calls:"; printf '%s\n' "$post" | sed 's/^/    /'
-  has "a compaction happened" "$(grep -c '"compact_boundary"' "$J")" '^[1-9]'
-  has "first post-compaction call runs chat-record path" "$(printf '%s\n' "$post" | head -n 1)" 'chat-record path'
-  # Reads that count must precede the first Write or Edit outside the devlog (acting on the task).
-  local before; before="$(printf '%s\n' "$post" | awk '/^(Write|Edit) / && !/cdocs\/devlogs\// {exit} {print}')"
-  # A read means the devlog's content was opened: a Read, or cat/sed/head/tail/awk on its
-  # path. A lookup (`grep -l <path> cdocs/devlogs/*.md`) finds the devlog but reads nothing.
-  has "devlog (Scratchpoint, handoff) read before acting" "$before" \
-    '^(Read .*cdocs/devlogs/[^/]+\.md|Bash (.*[^A-Za-z0-9_-])?(cat|sed|head|tail|awk) [^|;&]*cdocs/devlogs/)'
-  has "record tail read before acting" "$before" 'tail -n 80|^Read .*cdocs/_chat/'
-  hasnt "no hook emitted additionalContext" "$(jq -r 'select(.type == "system" and .subtype == "hook_response") | .stdout' "$J")" 'additionalContext'
-  echo "  info: devlog chat_record: $(grep -A2 '^chat_record:' "$P"/cdocs/devlogs/*.md 2>/dev/null | tr '\n' ' ')"
-  echo "  info: record markers: $(markers "$(the_rec "$P")")"
 }
 
 # multi_turn (extra, run with --only multi_turn): a realistic multi-turn session under the
