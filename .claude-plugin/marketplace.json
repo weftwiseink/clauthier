@@ -15,6 +15,13 @@
       "description": "Documentation framework for structured devlogs, proposals, reviews, and reports",
       "category": "productivity",
       "tags": ["documentation", "devlog", "proposal", "review", "workflow", "subagents"]
+    },
+    {
+      "name": "browser-delegate",
+      "source": "./plugins/browser-delegate",
+      "description": "Sonnet leaf agent that drives named @playwright/cli browser sessions and reports artifact paths and mechanical facts",
+      "category": "development",
+      "tags": ["browser", "playwright", "delegation", "testing", "subagents"]
     }
   ]
 }
