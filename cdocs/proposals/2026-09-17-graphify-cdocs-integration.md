@@ -4,8 +4,8 @@ first_authored:
   at: 2026-09-17T11:40:00-08:00
 task_list: code-graph/cdocs-integration
 type: proposal
-state: live
-status: implementation_accepted
+state: archived
+status: evolved
 tags: [tooling, code_review, architecture, model_tiering, token_efficiency, future_work]
 last_reviewed:
   status: accepted
@@ -15,6 +15,10 @@ last_reviewed:
 ---
 
 # Graphify integration into cdocs loops
+
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Replaced by [`2026-10-08-graphify-overhaul.md`](2026-10-08-graphify-overhaul.md).
+> Its D3 runtime-coupling guard is kept as unconditional `.observe`/`.subscribe` surfacing on every `cdocs-graphify` result (the pattern is to be generalized).
+> The forced unscoped fallback on near-empty dependent sets is dropped, because nothing narrows a reviewer's sweep any more.
 
 > NOTE(claude-opus-4-8/code-graph/cdocs-integration, scoping + lean-track revision): This is a targeted re-aim of an accepted-but-unbuilt proposal, not a rewrite; the spine (the stateless graph-scoping surface as core, recall parity as a hard principle, the CRDT blind-spot honesty) is intact.
 > WHY re-aimed: the accepted, e2e-verified `/cdocs:ablate` harness now exists (so the per-task "did scoping help" discriminator is DELEGATED to it); the near-term surface is CLI-FIRST (the MCP is shadowed by a config over-mount, the CLI covers every needed query over the same index); the ablate e2e (Probe A single-file -> `context_gap 0`) anchors task targeting to MULTI-FILE blast-radius shapes; and the graphify license is RESOLVED Apache-2.0.

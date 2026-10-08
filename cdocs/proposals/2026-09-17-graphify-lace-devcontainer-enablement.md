@@ -74,6 +74,9 @@ clauthier runs `customizations.lace.workspace.layout: bare-worktree` with `mount
 
 > NOTE(claude-opus-4-8/code-graph/lace-devcontainer-enablement): If cross-worktree index thrash proves costly in practice, per-worktree namespacing is the escalation, and it belongs to a follow-up (it needs feature or wrapper support, not a devcontainer.json edit).
 
+> NOTE(claude-opus-5-5/cdocs/graphify-overhaul): Agents now query per-worktree indexes that `cdocs-graphify` copies from `/var/cache/graphify` and never write it ([`2026-10-08-graphify-overhaul.md`](2026-10-08-graphify-overhaul.md) D3).
+> The cross-worktree staleness and overwrite risk this decision accepted no longer applies: the shared index is a read-only source the consumer refreshes.
+
 ### D4: Pin the version explicitly, carry the license precondition
 
 Set `version: 0.9.61` (the feature default, stated explicitly so the pin is visible and reviewable). graphify is pre-1.0 with frequent releases, so the pin is a standing maintenance item: bumping it is a deliberate, re-verified change, not an automatic float. The Apache/MIT license re-verification precondition is shared with the graphify-cdocs-integration proposal (its Open Questions and Phase 2 precondition); this proposal does NOT re-adjudicate it, it references it as a common precondition that must clear before graphify is a standing in-environment dependency.
