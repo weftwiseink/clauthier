@@ -21,7 +21,7 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 
 ## Scratchpoint
 
-- next_steps: await the two sub-overseers below; merge `opencode-build-fixes` into main with `--ff-only` once accepted (or relay its escalation); relay the browser-delegation verdict.
+- next_steps: await the OpenCode full-send; merge `opencode-build-fixes` into main with `--ff-only` once accepted (or relay its escalation). Browser delegation awaits maintainer answers (below) before `/cdocs:iterate`.
 - important_files: `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`, worktree `../opencode-build-fixes`
 - callouts:
   - deferred: `2026-10-05-post-compaction-resumption-rfp.md` (maintainer); its BLUF still cites the removed `orchestration-discipline.md`.
@@ -47,6 +47,12 @@ Bring the source repo's own cdocs setup current, find outstanding proposals wort
 - Lower priority: `rules-hook-testing-methodology-v2`, `tiered-chat-records-rfp`, `chat-record-redaction-scanning-rfp`, `clauthier-improvement-verification`, `nest-overseers-rfp` (deferred).
 
 **Browser-delegation staleness** (opus reviewer, read-only): revise. Blocking: the "MCP tools don't reach subagents" premise of D2 is contradicted by `2026-09-19-claude-code-subagents-feature-breakdown.md`; R1-R6 exists only as report recommendations, not code; verdict handoff conflicts with iterate's reviewer-produced-proof rule; delegate writing devlogs violates one-writer-per-file. Also: adopt bash-runner shape, plugin rules don't reach the lead, CC-only v1, dead rule-file references. Findings handed to the propose-revise sub-overseer as round-1 review input.
+
+**Browser-delegation propose-revise:** accepted at r5 (r2 staleness, r3/r4 revise, r5 accept; all opus), `status: implementation_ready`, commits `1e5fd06..638629b`.
+Now a single bash-runner-shaped sonnet leaf agent with a fixed `BROWSER DELEGATE REPORT`, CC-only, no skills or plugin rules; inside iterate the reviewer dispatches it with fresh `<branch>-review-<role>` sessions.
+Sub-overseer deviations: it wrote the r2 review copy and devlog entries itself; r2/r3 review timestamps are wrong (placeholder / out of order).
+Open maintainer questions: non-Claude model path in the plugin; one-clause edit to iterate's `confirmed` row (Phase 3); committing screenshot evidence under `cdocs/_media/` (Phase 5).
+Phase 1 spikes (SIGTRAP, session isolation, browser-use tool availability) still unrun.
 
 ## Changes Made
 
