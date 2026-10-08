@@ -863,8 +863,9 @@ init_real() {
 }
 
 # rules_check (extra, run with --only rules_check): a session under the materialized rules is
-# compacted mid-task; its first post-compaction tool calls should be `chat-record path` and
-# reads of the Scratchpoint and the record tail, with no hook emitting additionalContext.
+# compacted mid-task; the resumption steps come from the `chat-record` skill, which compaction
+# restores, so its first post-compaction tool calls should be `chat-record path` and reads of
+# the Scratchpoint and the record tail, with no hook emitting additionalContext.
 rules_check() {
   section "headless: rules_check - post-compaction resumption under the rules"
   local P J post
