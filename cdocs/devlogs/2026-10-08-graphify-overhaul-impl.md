@@ -20,7 +20,7 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: Phase 4 supersede notes on the two prior proposals.
+- next_steps: Phase 5 host stub run (headless sandbox); weftwise ablation waits on its container.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh`, `.github/workflows/cdocs-hooks.yml`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`
 - callouts:
@@ -82,6 +82,12 @@ Both items confirmed; scratch dirs removed afterwards.
 - `/cdocs:graphify` skill is the proposal's draft plus one line from the smoke test: `explain` on an ambiguous name (`cdocs-graphify` matched a README heading and the script) lists ids, so the skill says to rerun with one.
 - init step 7 writes `/cdocs/` behind the proposal's guard; running the snippet twice on a file holding `dist/` left exactly one `/cdocs/` line.
 - No other skill or agent names graphify (propose, propose-revise, full-send, oversee, implement, review, agents), per D6.
+
+### Phase 4: supersede the prior proposal
+
+- `2026-09-17-graphify-cdocs-integration.md`: `status: evolved`, `state: archived`, NOTE under the title (coupling guard kept, near-empty fallback dropped).
+- `2026-09-17-graphify-lace-devcontainer-enablement.md`: NOTE after D3 (agents never write the shared index).
+- `cdocs:triage` on both: 0 frontmatter issues, 0 fixes, no status recommendations.
 
 ## Changes Made
 
