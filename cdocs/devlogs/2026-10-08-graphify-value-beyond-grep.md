@@ -122,6 +122,50 @@ Card fixes from the pilot's notes:
   This is a graph gap in its own right: the pilot found the callee side by grepping `spareId`, not from the graph.
 - Added: same-named nodes can differ in degree (the `electron.ts` `revokeShareLink` is a degree-1 stub); `explain` each candidate.
 
+### Sampling
+
+Sonnet sampler, two rounds (class names and shapes only, no feature column): 14 tasks (1 primary + 1 backup per class, not the asked 2 + 1 for two-task classes), then 4 more on request (3 tests, 1 blast) from docs dated 2026-09-01 or later.
+Round 1: 102 tool calls, 126,745 tokens, 447 s; it dispatched 7 research subagents of its own (the sampler prompt did not forbid it; the arms' no-subagent rule does not apply to it).
+Round 2: 34 tool calls.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): The sampler ranged back to 2026-05 docs in round 1, so several tasks concern code that no longer exists at `2791713d`.
+> Weftwise code on `main` is frozen at 2026-09-21 (`cbdd203b`, the last commit touching `packages/`).
+
+### Leak check
+
+Step 1 (named entities, subject exists at `2791713d`) and step 2 (lexical traces: two or three distinctive phrases per task, `rg -i` in `gfy-value-grep`, top hits dated with `git log -S`).
+
+| Task | Source (added) | Step 1 | Step 2 | Code state |
+|---|---|---|---|---|
+| c1 concept | `proposals/2026-09-05-graceful-unshare-unmount-rfp.md` (`4f268d49`, RFP, unimplemented) | pass (no entities; the RFP's three candidate sites removed) | pass: `force-clos` hits are server-side `revokeShareLink` comments; `tabs/invalidation.ts:38` "Called for mount revocation" dates from `03baa60a` 2026-07-25, before the RFP, so not the fix's trace | `2791713d` |
+| b1 blast | `proposals/2026-09-17-relational-meta-surface-rethink.md` (`71bf5cb5`, RFP) | **fail**: `enableRelationalMeta`, `RelationalMetaDelegate`, `requireRelational` have 0 hits at `2791713d` (deleted by the bocsync/DoltLite ripout, `690c64c5`..`d0885a58`, 2026-09-16, after the RFP) | n/a | **`3fbd7251`** (`71bf5cb5^`), where `mount_store.ts` has 3 `enableRelationalMeta` hits |
+| b2 blast | `proposals/2026-09-17-distributable-acl-authority-rfp.md` (`ba65dd33`, RFP) | pass (names are the asker's own: the quote cites `acl_doc.ts:51-55`) | pass: "single-writer" / "totally ordered" hit `acl_doc.ts:62-63`, which the quote itself cites | `2791713d` |
+| t1 tests | `proposals/2026-09-21-engine-content-sync-robustness.md` (`ca1d323e`) | pass (`classifyBoot` and the write order are in the quote) | pass: "crash-safe" hits `disk_bridge_adapter.ts` (`a5a643ab` 2026-09-20, before the doc); every `classifyBoot` test predates it; no code commit follows 2026-09-21 on `main` | `2791713d` |
+| t2 tests | `proposals/2026-09-16-loro-multiplex-branching-carrier-roundtrip-test.md` (`88ef32d6`, RFP) | pass (names are the asker's) | pass: "round-trip" hits generic codec tests, no carrier test exists | `2791713d` |
+| x1 cross-package | `proposals/2026-09-17-actor-docs-to-host-app-rfp.md` (`ba65dd33`, RFP) | pass | pass: "profile" hits `actors_doc.ts`/`identity/index.ts`, the subject itself, pre-existing | `2791713d` |
+| x2 cross-package | `proposals/2026-09-17-branching-aware-transport-reconsideration.md` (`71bf5cb5`, RFP) | pass | pass: "production consumer"/"only consumer" hits unrelated comments | `2791713d` |
+| o1 orientation | `devlogs/2026-07-12-weft-architecture-reports-and-review.md` | pass | n/a (no fix; generic phrasing) | `2791713d` |
+| d1 dead code (outside tally) | `devlogs/2026-08-26-weft-code-smell-audit.md` | pass | pass: "dead code" hits one unrelated comment | `2791713d` |
+| y1 cycles (outside tally) | `proposals/2026-09-09-prod-build-circular-chunk-warnings.md` (`046212bb`) | pass (the build warning named `mounts/atoms.ts`, `mounts/index.ts`) | **fail**: "circular" top hit is `vite.config.ts:127`, written by the fix `fa4340e5` ("break mounts prod-build circular-chunk warnings via manualChunks", after the RFP) | **`41b30188`** (`046212bb^`) |
+
+Dropped: concept-1 (2026-05 UI-lag report: runtime performance, code since rewritten from Y.js to Loro); blast-2 (same doc as y1, overlapping answer); tests-1 (needs git history of deleted tests); tests-2 (runner config, not a code behaviour); orient-2 (Y.js subdoc architecture, gone); dead-1 (`NativeYjsByGuidBackend` gone, July-era tree); tests-5 (its fix landed characterization tests, so it would need an older commit; two tests tasks already pass).
+So the set is 10 tasks: concept 1, blast 2, tests 2, cross-package 2, orientation 1 (8 tallied), plus dead code and cycles outside the tally.
+
+**Older-commit builds.**
+At `3fbd7251` and `41b30188`, `packages/loro-repo` does not exist, so `srcpatch.py` as invoked in the floor crashes on its first argument and patches nothing.
+It was rerun on every workspace package whose exports point at `./dist/` (`loro-multiplex`, `command-deer`, `doltlite-bocsync`, `doltlite-web` at `3fbd7251`; `loro-multiplex`, `doltlite-bocsync`, `sqlite-web-store` at `41b30188`), in both worktrees of each pair, and the graph worktree rebuilt.
+
+> NOTE(claude-opus-5-5/cdocs/graphify-weftwise-assessment): Deviation: the proposal's `srcpatch.py` targets are the three current packages; at older commits I patched every `./dist/`-exporting workspace package, which is the same `source`-conditions config applied to that tree.
+> Without it, `weft -> doltlite-bocsync` (184 edges) is missing at `3fbd7251`, and b1 is about the relational (DoltLite) seam.
+
+| Code state | Nodes | Edges | Cross-package edges into `src/` |
+|---|---|---|---|
+| `2791713d` | 9,744 | 25,774 | loro-repo->loro-multiplex 72, weft->loro-multiplex 347, weft->loro-repo 204 |
+| `3fbd7251` (b1) | 10,327 | 27,153 | doltlite-bocsync->loro-multiplex 30, weft->doltlite-bocsync 184, weft->doltlite-web 9, weft->loro-multiplex 238 |
+| `41b30188` (y1) | 8,287 | 20,647 | doltlite-bocsync->loro-multiplex 28, weft->loro-multiplex 228 |
+
+The `41b30188` index's Import Cycles section lists 17 cycles, three through `lib/mounts/`.
+
 ## Changes Made
 
 | File | Description |
