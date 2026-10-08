@@ -191,6 +191,7 @@ npm install @weftwise/cdocs-opencode
 The postinstall script copies skills and rules to project paths automatically.
 Set `CDOCS_SKIP_POSTINSTALL=1` to skip the copy step.
 
+> NOTE(opus/oversee-workstream-skill): The postinstall script never prunes skill directories, so after upgrading past the `oversee` to `oversee-many` rename, delete the leftover `.opencode/skills/oversee/` by hand.
 
 Then add the plugin to your `opencode.json`:
 
