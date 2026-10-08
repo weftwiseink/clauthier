@@ -23,7 +23,7 @@ No project-specific tooling knowledge lives in clauthier, and the extra plugin g
 
 ## Scratchpoint
 
-- next_steps: rev-impl-2 reviewing `15eabe6`; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
+- next_steps: impl-2 applying r2 nits; then maintainer acceptance, rebase onto main (fixes report link), ff-merge, remove worktree; then maintainer acceptance and landing. Runs in parallel with the graphify iterate; second to land rebases over `reviewer.md`, `iterate/SKILL.md`.
 - graphify_query:
 - important_files: `plugins/browser-delegate/`, `plugins/cdocs/agents/bash-runner.md`, `.claude-plugin/marketplace.json`, `README.md:7`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/iterate/SKILL.md` (`confirmed` row), `cdocs/proposals/2026-09-17-browser-delegation-plugin.md`
 - callouts:
@@ -49,6 +49,7 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | both blocking fixes delete text; agent draft 78 lines vs bash-runner 65 |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 69 lines; nits only |
 | impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | reviewer's own container (curl) and host (browser) canaries pass; reviewer clauses untested until a real runtime-floor iterate round |
+| impl-2 | impl-2 (cdocs:implementer, opus, fresh) | rev-impl-2 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r2.md` (branch) | fresh dispatch per check + `notes.md`; browser path verified on host |
 
 ## Judge Log
 
@@ -80,6 +81,8 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | impl-2 (cdocs:implementer, opus, fresh) | branch | 2026-10-08T13:08 | apply report recommendation to agent, reviewer/iterate/skills/README text, proposal D5/D6/durable; re-run canary headless in container |
 | return | impl-2 | `7759b07..15eabe6` | 2026-10-08T13:25 | agent 70 lines; fresh dispatch per check (tear down too) naming the instance dir, `notes.md` read first, `run_in_background: false` led in description; one-clause edits to reviewer/iterate/implement/AGENTS; proposal D5/D6/durable rewritten, one NOTE to report. Container headless canary run 6 failed ("foreground where offered, else end turn" read as optional; checks 02/03 never ran), reworded `7be77de`; run 7 all criteria pass except screenshots (no browser). Interactive-equivalent host run passes (general-purpose stand-in, async + woken). rules 11/11, opencode 9/9. Unverified: browser path under revision, real agent type interactive, SDK |
 | dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r2.md` (branch) | 2026-10-08T13:27 | must re-run container floor; host browser screenshot if feasible |
+| return | rev-impl-2 | `641b744` (branch) | 2026-10-08T13:55 | accept, `review_proof: confirmed`: own container canary (curl) and host browser canary (playwright-cli, one PID/browser across checks, 3 screenshots viewed, 1 in `_media`); rules 11, opencode 9. Nits: `notes.md` "Update" to "Rewrite" (append-log can leave a dead PID listed, PIDs wrap); 2 proposal cuts; blockquote blank line; report link needs rebase onto main |
+| dispatch | impl-2 (warm, SendMessage) | branch | 2026-10-08T13:56 | accept-round nits 1-4 |
 
 ## Steering Log
 
