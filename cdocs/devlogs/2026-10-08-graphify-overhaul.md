@@ -103,6 +103,8 @@ Failure picture: no `query` line in the stub log, marker in the dispatcher trans
 | dispatch | rfp-fork (general-purpose, opus) | `cdocs/proposals/2026-10-08-graphify-fork-rfp.md` | 2026-10-08T16:26 | fork-and-fix RFP with known defects and upstream open issues |
 | dispatch | rfp-ablate (general-purpose, opus) | `cdocs/proposals/2026-10-08-delete-ablate-rfp.md` | 2026-10-08T16:26 | delete-`/cdocs:ablate` RFP with per-run evidence and footprint (incl. `detect-usage` use in this proposal's verification) |
 | dispatch | impl-1 (warm, SendMessage) | proposal | 2026-10-08T16:26 | NOTE: base query stays default regardless of row 2 |
+| return | impl-1 | `0648b9b` | 2026-10-08T16:28 | decision-map NOTE: base query stays default |
+| return | rfp-ablate | `e20d18b` | 2026-10-08T16:40 | delete-ablate RFP: 0 of 3 runs changed a decision (Probe A harness shakedown, Probe B VOID self-test, weftwise inconclusive; graphify-integration check never run); footprint `ablate/` 896 lines, CLAUDE.md/README lines, `graphify-scope` comment, this branch's `detect-usage` checks; plain grep is not a safe `detect-usage` swap (matches prompts and quoted reports), the ~10-line jq filter is; inline vs standalone left open |
 
 ## Steering Log
 
