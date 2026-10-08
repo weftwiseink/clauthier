@@ -48,7 +48,7 @@ You should also include novel sections as is appropriate/useful for your work.
 - **Debugging Process:** Systematic debugging using the 4-phase approach below.
 - **Changes Made:** Table of files modified/created with brief descriptions.
 - **Testing:** Build verification and test results.
-- **Screenshots:** Visual changes with captions. Save to `cdocs/_media/YYYY-MM-DD-description.png`.
+- **Screenshots:** Visual changes with captions. Save to `cdocs/_media/YYYY-MM-DD-description.png`; copy from an interfacer's report directory (tmp paths do not persist).
 - **Documentation Updated:** Checklist of docs changed.
 - **Verification:** Fresh evidence of completion. No completion claims without pasted evidence.
   This is the home for raw evidence (settings, commands, log lines), not the Scratchpoint.
