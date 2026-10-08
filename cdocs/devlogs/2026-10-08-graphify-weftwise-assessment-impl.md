@@ -78,11 +78,13 @@ Self-heal check: its index was the pre-clean graph with a matching stamp (`5e446
 
 ### Phase 2: usefulness
 
-- Sampler (sonnet): 14 questions from 13 of the newest non-graphify devlogs (entity 3, blast 3 + Q14, flow 3, where 3, base-tagged Q12-Q14); all entities existence-checked. Dropped: Rust-side `loro` fork questions (code outside this repo).
+- Sampler (sonnet): 14 questions from 13 of the newest non-graphify devlogs (entity 3, blast 3 + Q14, flow 3, where 3, base-tagged Q12-Q14); all entities existence-checked.
+  Dropped: Rust-side `loro` fork questions (code outside this repo).
 - Ground truth (sonnet, grep/read only, before any graphify output was read): 61 commands, ~21k tokens; all premises ok.
 - Graphify commands were fixed per kind before ground truth returned (entity `explain`, blast `affected`, flow `path`, where/base `query`) and run blind; retries applied mechanically: missing node -> file entity (Q1, Q7), ambiguous -> the id the question names (Q3, Q5), "No directed path" -> the tool's own `--undirected` hint (Q7-Q9).
 - Tally (cleaned graph): hit 7 (Q1 Q2 Q3 Q6 Q11 Q13 Q14), partial 4 (Q4 Q5 Q9 Q10), miss 2 (Q8 Q12), misleading 1 (Q7). Output ~10.7k tokens over 30 commands.
-- Pre-clean vs cleaned: entity/blast/path outputs identical up to ordering and the `ref_loro_repo` edge; `query` seeds lost both `_archive/` headings (Q13 `Persistence`, Q14 `5. Nested Liveblocks Rooms`); Q13 gained `activeBranchStorageKey()`. Q7's misleading undirected path exists only on the fresh-build lineage (it routes through the `ref_loro_repo` stub); the main-lineage graph returns no path.
+- Pre-clean vs cleaned: entity/blast/path outputs identical up to ordering and the `ref_loro_repo` edge; `query` seeds lost both `_archive/` headings (Q13 `Persistence`, Q14 `5. Nested Liveblocks Rooms`); Q13 gained `activeBranchStorageKey()`.
+  Q7's misleading undirected path exists only on the fresh-build lineage (it routes through the `ref_loro_repo` stub); the main-lineage graph returns no path.
 - Remaining md seeds on the cleaned graph: `docs/worktree_development.md` heading (Q12, Q14), `.claude/commands/dogfood-wt.md` heading (Q14).
 
 ### Phase 3: runtime, candidates, prototypes
