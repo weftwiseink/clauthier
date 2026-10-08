@@ -156,6 +156,8 @@ Loop reopened at r6 (proposer revision folding these in, fresh opus reviewer), t
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | main: cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r1.md + cdocs/_media/2026-10-07-browser-delegation-plugin-impl-r1-*.png | 2026-10-07 | re-runs floor via nested `claude -p --plugin-dir` with review-suffixed fresh sessions |
 | return | rev-impl-1 | main: review + 4 `_media` copies (`c302d5a`, `7c9bf42`) | 2026-10-07 | revise, review_proof confirmed |
 | dispatch | impl-1 (resumed for impl-2) | worktree: plugins/browser-delegate/**, cdocs/devlogs/2026-09-17-browser-delegation-plugin-impl.md | 2026-10-07 | fix poll loop + nits; build:cdocs check |
+| return | impl-2 | branch `browser-delegate` `9b16cdb..01c37e0` | 2026-10-07 | poll fix (exit status + firstiter) re-verified via nested dispatches e1 (missing selector -> timed out) and e2 (genuine converge); build:cdocs + test:opencode + pack dry-run green in worktree (node 26, not CI node 22); nits 2-5 done |
+| dispatch | rev-impl-2 (cdocs:reviewer, opus, fresh) | main: cdocs/reviews/2026-10-07-review-of-browser-delegation-plugin-impl-r2.md + `_media` copies | 2026-10-07 | |
 
 ## Steering Log
 
