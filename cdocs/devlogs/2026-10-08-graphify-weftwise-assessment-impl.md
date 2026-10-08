@@ -20,7 +20,7 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
 
 ## Scratchpoint
 
-- next_steps: Phase 1 done. Phase 2: await sonnet ground truth, then judge 14 questions (graphify outputs already captured blind in container `/tmp/gfy-assess/q-clean`, `q-pre`). Then Phase 3 matrix.
+- next_steps: Phases 1-2 done; Phase 3 matrix partly run (full build, post-edit, no-op, body-only, commit-only). Next: fresh-worktree x3 (+ kept-stamp prototype), query latency, candidates, background refresh, report, floor, cleanup.
 - graphify_base_query:
 - important_files: proposal above; `plugins/cdocs/bin/cdocs-graphify`; weftwise `.graphifyignore`; container scratch `/tmp/gfy-assess/`
 - callouts:
@@ -67,6 +67,15 @@ Every drop equals the count of edges touching a removed source in the pre-clean 
 
 `gfy-assess` moved to `checkout --detach main` (`2791713d`).
 Self-heal check: its index was the pre-clean graph with a matching stamp (`5e446a84 8b137891...`, stamp hit confirmed at the old commit); after the checkout, the wrapper ran `update`: `pruned 6398 node(s) from 323 newly-ignored file(s)`, 9,731 nodes, no `--force` (12.21 s). Maintainer worktrees heal the same way once they merge main.
+
+### Phase 2: usefulness
+
+- Sampler (sonnet): 14 questions from 13 of the newest non-graphify devlogs (entity 3, blast 3 + Q14, flow 3, where 3, base-tagged Q12-Q14); all entities existence-checked. Dropped: Rust-side `loro` fork questions (code outside this repo).
+- Ground truth (sonnet, grep/read only, before any graphify output was read): 61 commands, ~21k tokens; all premises ok.
+- Graphify commands were fixed per kind before ground truth returned (entity `explain`, blast `affected`, flow `path`, where/base `query`) and run blind; retries applied mechanically: missing node -> file entity (Q1, Q7), ambiguous -> the id the question names (Q3, Q5), "No directed path" -> the tool's own `--undirected` hint (Q7-Q9).
+- Tally (cleaned graph): hit 7 (Q1 Q2 Q3 Q6 Q11 Q13 Q14), partial 4 (Q4 Q5 Q9 Q10), miss 2 (Q8 Q12), misleading 1 (Q7). Output ~10.7k tokens over 30 commands.
+- Pre-clean vs cleaned: entity/blast/path outputs identical up to ordering and the `ref_loro_repo` edge; `query` seeds lost both `_archive/` headings (Q13 `Persistence`, Q14 `5. Nested Liveblocks Rooms`); Q13 gained `activeBranchStorageKey()`. Q7's misleading undirected path exists only on the fresh-build lineage (it routes through the `ref_loro_repo` stub); the main-lineage graph returns no path.
+- Remaining md seeds on the cleaned graph: `docs/worktree_development.md` heading (Q12, Q14), `.claude/commands/dogfood-wt.md` heading (Q14).
 
 ## Changes Made
 
