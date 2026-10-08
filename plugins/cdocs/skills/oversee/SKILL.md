@@ -53,7 +53,7 @@ Keep an arc devlog beside it for the arc narrative and links to each proposal's 
 
 ## Concurrency
 
-Concurrency is at the overseer's discretion: disjoint footprints may run in parallel under this one overseer (implementations in separate worktrees), while overlapping or unpredictable footprints, and a proposal that depends on another's outcome, run in order.
+Proposals with disjoint footprints run in parallel under this one overseer (implementations in separate worktrees); overlapping or unpredictable footprints, and a proposal that depends on another's outcome, run in order.
 Before starting a proposal, read the sibling arc files under `.claude/oversee/` for in-progress footprints that overlap it.
 
 ## Hard gates
