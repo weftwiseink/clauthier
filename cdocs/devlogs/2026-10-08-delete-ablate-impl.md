@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/delete-ablate
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-delete-ablate.md
 tags: [ablate, implementation]
 ---
@@ -23,12 +23,13 @@ Implement Phases 1-2 of `cdocs/proposals/2026-10-08-delete-ablate-rfp.md` in the
 
 ## Scratchpoint
 
-- next_steps: review of round 1; the proposal stays `implementation_wip` until the maintainer accepts.
+- next_steps: none for the implementer; impl-r1 accepted (`8e7b708`) and its three non-blocking findings are applied. The proposal stays `implementation_wip` until the maintainer accepts.
 - graphify_base_query:
 - important_files: `scripts/detect-usage.sh`, `scripts/detect-usage.test.sh`, `plugins/cdocs/skills/oversee-workstream/SKILL.md`, `plugins/cdocs/README.md`, `CLAUDE.md`, `cdocs/proposals/2026-10-08-graphify-overhaul.md`, `cdocs/proposals/2026-09-27-clauthier-improvement-verification.md`
 - callouts:
   - decision: parity of the moved script was checked by running the new test against a scratch `ablate.sh detect-usage` wrapper, not by adding an env override to the test.
   - unverified: the scripts are not wired into CI or npm (by design, per the proposal); nothing runs `detect-usage.test.sh` automatically.
+  - known_edge: an invalid `cli:` regex or a malformed line now prints jq's error on stderr, but when the erroring line is not the last input jq still exits 0 and the script prints `unused` (seen with `cli:(` on a 2-line fixture). The exit-code behavior predates the move.
 
 ## Plan
 
@@ -89,3 +90,13 @@ Phase 2 floor, after the deletion (`e5c1ab5`):
 
 Negative control for assertion 6: appending `` See `/cdocs:ablate`. `` to `plugins/cdocs/README.md` makes `test:rules` fail 1 with `/cdocs:ablate: no skill or agent named "ablate"`; the file was restored with `git checkout`.
 Remaining `ablate` mentions are only in `cdocs/` (historical devlogs, reviews, proposals, `_media/`, and the two new NOTEs) and the gitignored `build/`, which are the proposal's listed exceptions.
+
+### Review fixes (impl-r1 non-blocking findings)
+
+- F1: both `jq` calls in `scripts/detect-usage.sh` drop `2>/dev/null`, so jq errors (invalid regex, malformed or truncated transcript) reach stderr.
+  This changes only stderr relative to `ablate.sh`; stdout and the matching are unchanged.
+- F2: the four comment lines that repeated the header (the CLI-signature, command-boundary, and MCP-name comments) are deleted.
+- F3: "The step text above stays as written." is deleted from the graphify-overhaul NOTE.
+
+Re-run after the fixes: `bash scripts/detect-usage.test.sh` 11 passed, 0 failed; `npm run test:rules` tests 18, pass 18, fail 0.
+Spot check: `--tool 'cli:('` on a fixture now prints `jq: error ...: Regex failure: end pattern with unmatched parenthesis`; a malformed line prints `jq: parse error: Invalid numeric literal` and exits 5.
