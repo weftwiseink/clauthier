@@ -7,7 +7,7 @@
 
 > BLUF: Hooks write human prompts and turn sign-offs automatically.
 > The agent adds judgment with `chat-record note`.
-> The result is one append-only file per session at `cdocs/_chat/YYYY-MM-DD-<session_id>.md`.
+> The result is one append-only file per session name at `cdocs/_chat/YYYY-MM-DD-<name>-<session_id>.md`, or `cdocs/_chat/YYYY-MM-DD-<session_id>.md` while the session is unnamed.
 
 ### What it does
 
@@ -15,13 +15,15 @@
 - `Stop` hook appends a `-- <token> at <time>` sign-off.
 - `Stop` blocks once, instead, if a human-initiated turn has no agent note yet.
 - The agent runs `chat-record note --as <model>` to append its own `@<model>: <time>` bullet.
+- `<name>` is the slug of the session's last `/rename` or `--name` title (lowercase, runs of other characters to `-`, at most 64 characters); `ai-title` lines are ignored.
+  A rename starts a new record and leaves the old one; renaming back resumes it.
 - It is top-level-session only (keyed on `CLAUDE_CODE_SESSION_ID`): subagents must never call it.
 - The record lives in `cdocs/_chat/`, found by walking up from the working directory to the git toplevel; `/cdocs:init` creates it.
 
 ### Commands
 
 - `chat-record note [--as <speaker>]`: append a note; body on stdin via a quoted heredoc.
-- `chat-record path`: print the record's path, relative to the git toplevel.
+- `chat-record path`: print the current session name's record path, relative to the git toplevel.
 - `chat-record UserPromptSubmit` / `chat-record Stop`: hook-only modes, wired in `hooks.json`.
 
 ### Examples
@@ -42,7 +44,7 @@ $ echo "- Drafting bin/README.md: examples for each mode." | CLAUDE_CODE_SESSION
 
 ```console
 $ chat-record path
-cdocs/_chat/2026-10-07-7f3a9c21-88e4-4b0a-9d31-1234567890ab.md
+cdocs/_chat/2026-10-07-chat-record-flexible-7f3a9c21-88e4-4b0a-9d31-1234567890ab.md
 ```
 
 The error when a project has not opted in:

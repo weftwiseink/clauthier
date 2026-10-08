@@ -145,7 +145,7 @@ The freshness hook and Read-after-write directive are workarounds for the curren
 - **SessionStart:** Hash-based freshness check. Compares the plugin's current rule-content sha256 against the marker in `.claude/rules/cdocs.md` and emits a refresh directive on mismatch. Silent skip in the source repo and in projects without `.claude/rules/cdocs.md`. See "Rules Integration" above.
 - **PreToolUse (Write|Edit):** Restricts cdocs subagents (triage, nit-fix, reviewer) to editing only `cdocs/` document directories. Main session is unaffected. CC-only (OC lacks agent identity in events).
 - **PostToolUse (Write|Edit):** Validates frontmatter on cdocs files. Informational warnings only (non-blocking).
-- **UserPromptSubmit and Stop (chat record):** `bin/chat-record` keeps one record per session at `cdocs/_chat/YYYY-MM-DD-<session_id>.md`. See "Chat record" below.
+- **UserPromptSubmit and Stop (chat record):** `bin/chat-record` keeps one record per session name at `cdocs/_chat/YYYY-MM-DD-<name>-<session_id>.md` (`YYYY-MM-DD-<session_id>.md` while unnamed). See "Chat record" below.
 
 ### Chat record
 

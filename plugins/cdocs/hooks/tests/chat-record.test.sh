@@ -145,7 +145,7 @@ unit_suite() {
   f="$(rec "$P")"
   has "header timestamp matches SIGNOFF_RE time part" "$(head -n 1 "$f")" "^@user: ${TS_RE}\$"
   has "sign-off matches SIGNOFF_RE" "$(grep -E -- '^-- ' "$f")" "$SIGNOFF_RE"
-  has "record is named <date>-<session_id>.md" "$(basename "$f")" "^[0-9]{4}-[0-9]{2}-[0-9]{2}-$SID\.md\$"
+  has "unnamed record is <date>-<sid>.md" "$(basename "$f")" "^[0-9]{4}-[0-9]{2}-[0-9]{2}-$SID\.md\$"
 
   section "unit: grammar round trip"
   P="$U/grammar"; newproj "$P"
@@ -222,7 +222,7 @@ unit_suite() {
     "$(name_of "$(ct 'Real Name')" '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" "real-name"
   check "slug: ai-title alone -> unnamed" "$(name_of '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" ""
   P="$U/name/missing"; newproj "$P"; ups "$P" "x" "$U/name/missing.jsonl" >/dev/null
-  has "no transcript: record is <date>-<session_id>.md" "$(ls "$P/cdocs/_chat")" "^$D-$SID\.md\$"
+  has "no transcript: unnamed record <date>-<sid>.md" "$(ls "$P/cdocs/_chat")" "^$D-$SID\.md\$"
 
   section "unit: rename starts a new record; renaming back resumes"
   local RC="$U/cfg-rename" TR
