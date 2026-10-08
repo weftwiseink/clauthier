@@ -22,10 +22,12 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: Phase 4 live canary (fixture project, nested `claude -p` dispatch).
+- next_steps: Phase 4: read the devcontainer canary stream (`/tmp/ifx-canary.jsonl` in container `clauthier`), score criteria; then a secondary host canary for the browser path.
 - important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`.
 - callouts:
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
+  - decision: per maintainer steering, the canary that counts runs in the `clauthier` lace devcontainer (claude 2.1.285); a host run is secondary.
+  - blocker: the devcontainer cannot launch headless Chromium (missing system libraries), so its canary drives the fixture with `curl` and the browser path there is unverified.
   - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run (first `test:rules` failed only for that reason).
 
 ## Plan
@@ -46,6 +48,22 @@ Static checks (`test:rules`, `test:opencode`, `jq`, `grep`) per phase; the live 
 - Phase 2: one clause per file, worded as the proposal's "Callers" section gives them.
   The reviewer's new sentence is its own bullet after the `Bash` bullet; the `_media` clause swaps the `Artifacts`-line/`.png` keying for "media a subagent produced ... `.<ext>`" and adds "look at it yourself".
 - Phase 3: the old proposal gets `state: archived`, `status: evolved`, and the NOTE under its H1; its body and `last_reviewed` are untouched.
+
+### Phase 4: canary setup
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): Maintainer steering moved the counted canary into the `clauthier` lace devcontainer (`podman exec -u node -w /workspace/clauthier/interfacer-agent clauthier ...`; Debian 12, claude 2.1.285, node v24.21.0, Python 3.11.2).
+
+Container-specific setup, all by the verifier:
+
+- Fixture: `mktemp -d /tmp/ifx-fixture.XXXXXX` -> `/tmp/ifx-fixture.Nau89p` (container tmp), a git repo with `site/{index,page2}.html`, `site/health.json`, a README, `.gitignore` (`node_modules/`), and one commit.
+- Browser tooling: `npm install --save-dev @playwright/cli` (0.1.22) then `npx playwright-cli install-browser chromium --only-shell` (downloaded `chromium_headless_shell-1247`).
+  Default config failed (`Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`); a `.playwright/cli.config.json` with `browserName: chromium` then failed with `error while loading shared libraries: libatk-1.0.so.0`.
+  `ldd` lists 11 missing libraries: `libatk-1.0.so.0 libatk-bridge-2.0.so.0 libdbus-1.so.3 libXcomposite.so.1 libXdamage.so.1 libXfixes.so.3 libXrandr.so.2 libgbm.so.1 libxkbcommon.so.0 libasound.so.2 libatspi.so.0`.
+  `install-browser --with-deps --dry-run` fails too (`E: Unable to locate package fonts-ipafont-gothic`, and three more font packages); the container's apt state was not changed.
+  So the fixture README documents `curl` as the driver and says the browser does not work there.
+- Claude config: a sandboxed `CLAUDE_CONFIG_DIR` (`mktemp -d /tmp/ifx-ccsb.XXXXXX` with copies of `~/.claude/.credentials.json` and `~/.claude/.claude.json`), `CDOCS_CHAT_RECORD=off`, `--permission-mode bypassPermissions`, `--model sonnet` for the top level and stand-in.
+- Process monitor: `/tmp/ifx-psmon.sh` logs the `http.server 8799` PID once a second to `/tmp/ifx-psmon.log`.
+- Port 8765 is taken on the host (a `voicemode` service answered 401 during a host probe), so the fixture uses 8799.
 
 ## Changes Made
 
