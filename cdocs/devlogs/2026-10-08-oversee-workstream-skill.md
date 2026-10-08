@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: rev-2 reviewing `5da9513`; on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: prop-1 r2 revision, then fresh rev-3; on accept, `/cdocs:iterate` in a worktree after graphify lands (or rebasing over it); the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -34,6 +34,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | reviewed against mid-review maintainer direction; fork leak blocking |
+| r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r2.md` | 3 one-line blocking defects |
 
 ## Dispatch/Return Events
 
@@ -48,6 +49,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T14:57 | r1 revision with maintainer direction |
 | return | prop-1 | `5da9513` | 2026-10-08T15:10 | `review_ready`; `overseers.md` deleted into `oversee-workstream` (intro + Stay thin) and `chat-record` (whole section incl. post-compaction) skills; one top-level-only Tools and Skills bullet (not Agent-started, not a fork); chat-record skill first line stops dispatched agents/forks; Stop reason adds "See /cdocs:chat-record."; hook removed; no open questions |
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill-r2.md` | 2026-10-08T15:11 | round 2 |
+| return | rev-2 | `ccf437d` | 2026-10-08T15:25 | revise; r1's 7 blocking applied. B1 Phase 2 adds skill refs before skills exist; B2 §1 "dispatcher owns the top-level devlog" contradicts iterate/propose-revise for a dispatched overseer; B3 verification grep misses README `.opencode/skills/oversee/`. Footprint complete (51 hits covered); top-level definition clear; trigger covered. ~20 lines of cuts. Maintainer questions: B2 wording, keep §7 check |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-08T15:27 | B1-B3, count fix, test clash, overlap NOTE, cuts. Overseer defaults (flagged as such): B2 = "your dispatcher owns the chat record"; keep §7 skill-reference check |
 
 ## Steering Log
 
