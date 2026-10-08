@@ -20,7 +20,7 @@ Implement the proposal: `cdocs-graphify` replaces `graphify-scope`, `/cdocs:grap
 
 ## Scratchpoint
 
-- next_steps: Phase 3 base-query wiring.
+- next_steps: Phase 4 supersede notes on the two prior proposals.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/hooks/tests/graphify-scope.test.sh`, `.github/workflows/cdocs-hooks.yml`, `plugins/cdocs/skills/iterate/SKILL.md`, `plugins/cdocs/agents/reviewer.md`
 - callouts:
@@ -75,6 +75,13 @@ Both items confirmed; scratch dirs removed afterwards.
 > In gitignore syntax an unanchored `cdocs/` matches a `cdocs` directory at any depth, so graphify dropped `plugins/cdocs/` entirely (0 of its nodes; graph 248 nodes).
 > With `/cdocs/`: 732 nodes, 484 under `plugins/cdocs/`, 0 under root `cdocs/`, and a plain `update` on the existing worktree index restored them.
 > The wrapper's hint check accepts either form; init writes `/cdocs/`.
+
+### Phase 3: base-query wiring
+
+- iterate: flag and "Graphify scoping" replaced by a four-line "Base query" section; reviewer brief section dropped; Scratchpoint field renamed in both templates and defined in the devlog skill; rule bullet replaced verbatim from the proposal.
+- `/cdocs:graphify` skill is the proposal's draft plus one line from the smoke test: `explain` on an ambiguous name (`cdocs-graphify` matched a README heading and the script) lists ids, so the skill says to rerun with one.
+- init step 7 writes `/cdocs/` behind the proposal's guard; running the snippet twice on a file holding `dist/` left exactly one `/cdocs/` line.
+- No other skill or agent names graphify (propose, propose-revise, full-send, oversee, implement, review, agents), per D6.
 
 ## Changes Made
 
