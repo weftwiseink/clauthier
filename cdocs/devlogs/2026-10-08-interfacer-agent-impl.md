@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: review_ready
+status: done
 part_of: cdocs/devlogs/2026-10-08-interfacer-agent.md
 tags: [interfacer, browser_delegation, subagents, runtime_validated]
 ---
@@ -24,7 +24,7 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: review of the fresh-dispatch revision (sections from "Revision: fresh dispatch per check" on); the proposal stays `implementation_wip` until the maintainer accepts.
+- next_steps: none; impl r2 accepted (`641b744`) and its nits applied (`586f6d5`); the proposal stays `implementation_wip` until the maintainer accepts, and the overseer fixes the report link on rebase.
 - important_files: `plugins/cdocs/agents/interfacer.md`, `cdocs/proposals/2026-10-08-interfacer-agent.md`, this devlog's last section; container `/tmp/ifx-run.sh`, `/tmp/ifx-prompt6.txt`, `/tmp/ifx-canary-run6.jsonl`.
 - callouts:
   - decision: per maintainer direction and `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` (on `main`), no warm agent and no `SendMessage`: every check is a fresh dispatch naming the instance directory, which holds `notes.md`.
@@ -356,3 +356,22 @@ Unlike run 7's append-style log, this `notes.md` is sectioned current state (Pro
 - The agent keeps the canary's three clauses and is 70 lines; the description's waiting line took one canary-driven rewording (run 6).
 - Pass on every criterion in run 7 (headless, foreground) and the interactive-equivalent check, except screenshots in the container (no browser there, as in run 5).
 - Not run: the browser path under the revised agent (the host browser run of record predates it), an interactive run with the real `cdocs:interfacer` agent type (the body was loaded as a prompt instead), an SDK-driven caller, and a real iterate round with a runtime floor.
+
+## Review r2 follow-ups
+
+Impl r2 accepted (`641b744`, confirmed); nits 1-4 applied in `586f6d5`:
+
+1. Agent and spec block: "Rewrite `<instance>/notes.md`" in place of "Update", so the notes are current state rather than run 7's append-style log (agent still 70 lines).
+2. Proposal: "No sleeping or polling." removed from the Waiting bullet.
+3. Proposal: the report NOTE under "Durable by default" removed (Background links the report; D5 gives the why).
+4. Proposal: blank line added after the ordering NOTE.
+
+Item 5 (the report link, which resolves only once the report is on this branch) is the overseer's, on rebase onto `main`.
+
+```
+npm run test:rules     -> tests 11, pass 11, fail 0
+npm run test:opencode  -> tests 9, pass 9, fail 0; built interfacer.md carries "Rewrite `<instance>/notes.md`"
+```
+
+Not re-run: the canary; "Rewrite" is a one-word change to how `notes.md` is written, which the interactive run's current-state notes already exercised.
+
