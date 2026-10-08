@@ -86,7 +86,7 @@ Append a `dispatch` row to the Dispatch/Return Events table when a child (implem
 
 Dispatch a *new* reviewer subagent (never the previous one) with `subagent_type: "cdocs:reviewer"`, pointing it at the proposal and the sub-devlog the implementer wrote.
 The reviewer inspects the live system rather than only the diff and produces a review document with a verdict.
-For verification floors that require empirical evidence (browser, dev server, integration, end-to-end, live behavior), the reviewer empirically re-runs the floor and cites at least one artifact path in the review, inlining excerpts for ephemeral artifacts.
+For verification floors that require empirical evidence (browser, dev server, integration, end-to-end, live behavior), the reviewer empirically re-runs the floor, itself or through its own `cdocs:interfacer`, and cites at least one artifact path in the review, inlining excerpts for ephemeral artifacts.
 This citation is what makes a `confirmed` row admissible.
 
 ### Turn N.c (Decide)
@@ -127,7 +127,7 @@ Four log sections live in the top-level devlog's body; copy them from `./templat
 
 The Iteration Log's `review_proof` takes one value per row:
 
-- `confirmed`: this round's reviewer re-ran the floor and cited an artifact it produced (an artifact produced by a subagent the reviewer dispatched this round counts as its own); re-citing an earlier round's artifact does not count.
+- `confirmed`: this round's reviewer re-ran the floor and cited an artifact it produced (an artifact produced by a subagent the reviewer dispatched this round, such as its `cdocs:interfacer`, counts as its own; one from an interfacer another agent started does not); re-citing an earlier round's artifact does not count.
 - `n/a`: the floor needs no runtime evidence (a floor naming browser, dev server, integration, end-to-end, or live behavior never does).
 - `deferred-to-followup`: a self-referential change whose smoke runs as a separate top-level invocation; `notes` points at where it will be recorded.
 - `skipped`: fail-loud; the overseer justifies it in `notes` before Accept.
