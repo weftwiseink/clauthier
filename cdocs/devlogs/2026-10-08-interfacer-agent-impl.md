@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: done
+status: wip
 part_of: cdocs/devlogs/2026-10-08-interfacer-agent.md
 tags: [interfacer, browser_delegation, subagents, runtime_validated]
 ---
@@ -24,18 +24,13 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: none; review r1 accepted (`cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md`), its wording and NOTE items are applied, and the branch is ready to land.
-- important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`, this devlog's Phase 4 sections.
+- next_steps: run 6 (headless, container) and the interactive-equivalent check, record results under "Revision: fresh dispatch per check", run `test:rules`/`test:opencode`, set `review_ready`.
+- important_files: `plugins/cdocs/agents/interfacer.md`, `cdocs/proposals/2026-10-08-interfacer-agent.md`, this devlog's last section; container `/tmp/ifx-run.sh`, `/tmp/ifx-prompt6.txt`, `/tmp/ifx-canary-run6.jsonl`.
 - callouts:
+  - decision: per maintainer direction and `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` (on `main`), no warm agent and no `SendMessage`: every check is a fresh dispatch naming the instance directory, which holds `notes.md`.
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
-  - decision: per maintainer steering, the canary that counts ran in the `clauthier` lace devcontainer (claude 2.1.285); a host run (claude 2.1.293) is secondary and covers the browser.
-  - blocker: the devcontainer cannot launch headless Chromium (11 missing system libraries; `--with-deps` dry-run fails on apt), so the browser path is unverified there.
-  - deviation: four canary-driven agent fixes (probed errors are not `OK`, final-message-only replies, in-turn wait for resumes, tear down by PID); see the run table.
-  - deviation: replies are async (resumes always; a first dispatch unless `run_in_background: false`); a dispatcher that ends its turn never gets the reply. The proposal now carries NOTEs under "Durable by default" and D5.
-  - todo: the reviewer clauses (own interfacer, `_media` copy) are unexercised until the first real iterate round with a runtime floor, as the proposal says.
-  - observation: a `setsid` wrapper PID was twice recorded as the server PID (both runs self-corrected); tool knowledge, left to projects.
-  - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run.
-  - cleanup: sandboxed `CLAUDE_CONFIG_DIR`s (credential copies) deleted on host and in the container; fixtures, streams, and instance dirs left in place as ephemeral evidence.
+  - blocker: the devcontainer cannot launch headless Chromium, so container runs drive the fixture with `curl` (see Phase 4 setup).
+  - cleanup: sandboxed `CLAUDE_CONFIG_DIR`s (credential copies) are deleted by `/tmp/ifx-run.sh` after each run.
 
 ## Plan
 
@@ -243,3 +238,24 @@ Host-run caveats:
 - The recorded `server.pid` (3959595) was the `setsid` wrapper, not the server (3959597); the first tear-down `kill` missed, and the interfacer checked `ss`, then killed 3959597 by PID.
   The reports' `Left running` lines carried the wrong PID until tear down.
 - Check 01's tool calls do not appear in either stream (the foreground depth-2 run is not streamed); only its files and its final report are evidence for it.
+
+## Revision: fresh dispatch per check
+
+> NOTE(opus-5-5/cdocs/interfacer-agent): Maintainer direction: "SendMessage may be the wrong tool for the job here in this case, all we want is context preservation for efficiency's sake."
+> The report `cdocs/reports/2026-10-08-subagent-context-preservation-options.md` (on `main`, `2136ce9`) recommends option E, applied here; the runs 1-5 sections above describe the superseded warm-agent design and stay as written.
+
+### Changes
+
+| File | Change |
+|---|---|
+| `plugins/cdocs/agents/interfacer.md` | Description: fresh dispatch naming the instance directory for follow-ups and tear down; foreground where offered, else end the turn. Body: resume from `notes.md`, next free `NN`, tear down is a check too, `notes.md` kept current with real PIDs. Still 70 lines. |
+| `plugins/cdocs/agents/reviewer.md` | "never name an instance directory another agent started, and dispatch its tear down". |
+| `plugins/cdocs/skills/iterate/SKILL.md` | `confirmed` row: "an interfacer instance another agent started". |
+| `plugins/cdocs/skills/implement/SKILL.md` | "(follow-ups name its instance directory)" in place of "(kept warm)". |
+| `plugins/cdocs/AGENTS.md` | Listing: follow-ups are fresh dispatches naming the instance directory. |
+| `cdocs/proposals/2026-10-08-interfacer-agent.md` | BLUF, Background, spec block (now the shipped agent verbatim), output layout, "Durable by default", Callers, D5, D6, edge cases, canary, Phase 4, overrides NOTE. |
+
+`plugins/cdocs/skills/devlog/SKILL.md` and `plugins/cdocs/README.md` carry no warm, `SendMessage`, `agentId`, or in-turn-wait wording, so they are unchanged.
+
+The three canary-driven clauses stay: the error rule is unchanged; the final-message-only reply keeps "never `SendMessage`" (a fresh interfacer can still `SendMessage` its parent, as run 1's did); tear down by recorded PID or session now reads the PIDs from `notes.md`.
+
