@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: proposal
 state: live
-status: implementation_ready
+status: implementation_wip
 last_reviewed:
   status: accepted
   by: "@claude-opus-5-5"
