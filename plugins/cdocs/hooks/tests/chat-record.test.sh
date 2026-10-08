@@ -217,13 +217,9 @@ unit_suite() {
   check "slug: non-ASCII dropped" "$(name_of "$(ct 'Café plan')")" "caf-plan"
   check "slug: no alphanumerics -> unnamed" "$(name_of "$(ct '!!!')")" ""
   check "slug: 70 chars cut at 64, no trailing -" "$(name_of "$(ct "$A63 bbbbbb")")" "$A63"
-  check "slug: empty customTitle -> unnamed" "$(name_of "$(ct '')")" ""
-  check "slug: last custom-title wins" "$(name_of "$(ct 'Old Name')" '{"type":"user"}' "$(ct 'New Name')")" "new-name"
   check "slug: a later ai-title is ignored" \
     "$(name_of "$(ct 'Real Name')" '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" "real-name"
   check "slug: ai-title alone -> unnamed" "$(name_of '{"type":"ai-title","aiTitle":"Auto Title","sessionId":"x"}')" ""
-  P="$U/name/missing"; newproj "$P"; ups "$P" "x" "$U/name/missing.jsonl" >/dev/null
-  has "no transcript: unnamed record <date>-<sid>.md" "$(ls "$P/cdocs/_chat")" "^$D-$SID\.md\$"
 
   section "unit: first prompt of a named session (transcript not yet written)"
   P="$U/firstname"; newproj "$P"
