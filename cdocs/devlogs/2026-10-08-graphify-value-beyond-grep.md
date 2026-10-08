@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: devlog
 state: live
-status: wip
+status: review_ready
 last_reviewed:
   status: revision_requested
   by: "@claude-opus-5-5"
@@ -34,7 +34,7 @@ Seek graphify's best case honestly, keep reach and efficiency apart, and write t
 
 ## Scratchpoint
 
-- next_steps: revision pass for `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md` (revise, six blocking items) in progress by a fresh implementer; see Revision pass (review round 1). Proposal stays `implementation_wip`.
+- next_steps: revision pass for review round 1 complete (all six blocking items, most non-blocking), `review_ready`; awaiting the loop's re-review. Proposal stays `implementation_wip`.
 - graphify_base_query:
 - important_files: `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (Value Beyond Grep, BLUF, Candidates › Stamp ignore filter, Not Verified, floor); `cdocs/reviews/2026-10-08-review-of-graphify-value-beyond-grep.md`; this devlog's Judges, Attribution, Revision pass, and Appendix (arm prompt, card, judge prompt, judged answers for re-judging)
 - callouts:
@@ -338,6 +338,8 @@ Non-blocking items also applied: named-entity row relabelled as Phase 2's output
 
 Attribution tooling: `scratchpad/attr.py` (session scratchpad, not kept) maps the arm transcripts by their first prompt (`gfy-arm-<task>-<arm>`), classifies each tool call as graph (command names `graphify`, `graph.json`, or `GRAPH_REPORT`), prompt/card read, Read, or other, and lists the calls whose results contain each unique item.
 Its b1 call order is prompt, card, grep, graph, graph, then grep and reads only, confirming "grepped first".
+
+`/cdocs:nit_fix` on the report after the edits: clean, no fixes and nothing for judgment.
 
 ## Changes Made
 
