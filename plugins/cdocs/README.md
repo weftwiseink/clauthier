@@ -58,7 +58,7 @@ Rule files ship with the plugin and are delivered to consuming projects via `/cd
 - **`writing-conventions.md`:** BLUF, brevity, callout syntax, sentence-per-line, critical analysis, direct links for external references.
 - **`workflow-patterns.md`:** Model tiering, parallel investigation, loops and multi-phase plans, the pre-review pipeline, completeness.
 - **`overseers.md`:** Overseer rules (stay thin, chat record).
-- **`tool-use-safeguards.md`:** One writer per file and bash output hygiene.
+- **`tool-use-safeguards.md`:** Preferred tools and skills, one writer per file, and bash output hygiene.
 - **`frontmatter-spec.md`:** YAML frontmatter field definitions and valid values (scoped to `cdocs/**/*.md`).
 
 ### Rules Integration

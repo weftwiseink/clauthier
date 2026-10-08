@@ -86,7 +86,7 @@ Scaffold the CDocs documentation structure in the current project.
 
      [Full content of overseers.md, frontmatter stripped]
 
-     ## CDocs Tool Use Safeguards
+     ## CDocs Tool Use Guidance
 
      [Full content of tool-use-safeguards.md, frontmatter stripped]
 

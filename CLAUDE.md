@@ -46,7 +46,7 @@ The rules below are real `@`-imports (no code span), so sessions in this repo lo
 - **Writing conventions** (BLUF, sentence-per-line, callouts, history-agnostic framing): @plugins/cdocs/rules/writing-conventions.md
 - **Workflow patterns** (model tiering, parallel investigation, loops and multi-phase plans, before review, completeness): @plugins/cdocs/rules/workflow-patterns.md
 - **Overseers** (stay thin, chat record): @plugins/cdocs/rules/overseers.md
-- **Tool use safeguards** (one writer per file, Bash output): @plugins/cdocs/rules/tool-use-safeguards.md
+- **Tool use guidance** (tools and skills, one writer per file, Bash output): @plugins/cdocs/rules/tool-use-safeguards.md
 - **Frontmatter spec**: @plugins/cdocs/rules/frontmatter-spec.md
 - **Skills**: `plugins/cdocs/skills/<name>/SKILL.md` (ablate, devlog, full-send, implement, init, iterate, nit_fix, oversee, propose, propose-revise, report, review, rfp, status, triage)
 

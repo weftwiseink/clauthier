@@ -14,7 +14,7 @@ Follow these conventions when working with CDocs documentation.
 
 @rules/overseers.md
 
-## Tool Use Safeguards
+## Tool Use Guidance
 
 @rules/tool-use-safeguards.md
 
