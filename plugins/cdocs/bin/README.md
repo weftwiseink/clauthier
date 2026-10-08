@@ -64,66 +64,47 @@ Design rationale: [`cdocs/proposals/2026-09-22-chat-record-devlog-management.md`
 Usage rule for agents: [`../rules/overseers.md`](../rules/overseers.md) "Chat record".
 Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat record".
 
-## `graphify-scope`
+## `cdocs-graphify`
 
-> BLUF: Turns a round's changed files into a graphify-resolved dependent-set brief for the `/cdocs:iterate --graphify-scope` reviewer.
-> It is additive only: every non-scoped outcome prints a labeled `SCOPE-STATUS` and tells the role to run its normal sweep.
+> BLUF: Runs a graphify `query`, `explain`, `path`, or `affected` against the calling worktree's own index, kept current on every call.
+> Agents use it through the `/cdocs:graphify` skill; overseers never run it.
 
 ### What it does
 
-- `explain`s each changed file for its `[contains]` symbols, then `affected`s each symbol for its dependents, via the `graphify` CLI.
-- Prints `SCOPE-STATUS: scoped` plus the brief, or `skip-scope` (with a `SCOPE-REASON`) or `disabled`, and exits 0.
-- Exits 1 on a usage error or a missing `jq`.
-- Co-surfaces `.observe`/`.subscribe` sites in the touched files, which the graph cannot see.
-- Needs `jq`, and `graphify` with a built index for a scoped result.
-
-### Commands
-
-- `graphify-scope brief --enable`: brief for uncommitted changes against `HEAD`.
-- `graphify-scope brief --enable --diff-base <ref>`: brief for files changed since `<ref>`.
-- `graphify-scope brief --enable --files "<path> ..."`: brief for named files.
-- Options: `--symbols "<label> ..."` skips `explain` and runs `affected` on known symbols; `--index <path>` (or `--graph`) sets the index; `--near-empty-threshold <n>` sets the near-empty skip threshold.
+- Copies the main graph into `<toplevel>/graphify-out/` if that has no `graph.json`: from `$GRAPHIFY_OUT` when set (the devcontainer's shared index), else from the `main` worktree's `graphify-out/`.
+  The copy drops `.graphify_root` and ignores itself (`.gitignore` of `*`).
+- Runs `graphify update <toplevel>` into that index (AST-only, no LLM), logging to `graphify-out/update.log`; on failure it says so and queries the existing index.
+- Passes its arguments to `graphify` with `--graph <worktree index>`, stdout and exit code unchanged.
+- Appends `.observe`/`.subscribe` sites (up to 30) from files the output names, which the graph cannot see.
+- Without `graphify`, a git worktree, or any index: one `skipping` line on stderr, exit 0.
+- When `cdocs/` exists and `.graphifyignore` lacks a `cdocs/` line: a one-line hint to run `/cdocs:init`.
 
 ### Examples
 
-Without `--enable` (the iterate flag is off):
-
 ```console
-$ graphify-scope brief --files a.ts
-SCOPE-STATUS: disabled
-SCOPE-FALLBACK: unscoped-sweep
-# graphify scoping did not run this round; this is ADDITIVE fallback, not a narrowing.
-# Fall back to your normal unscoped context-gathering sweep -- recall is unchanged.
+$ cdocs-graphify query "how does the iterate overseer dispatch reviewers"
+$ cdocs-graphify explain "readMount()"
+$ cdocs-graphify path "renderView()" "readMount()"
 ```
 
-With no `graphify` installed:
+Without graphify:
 
 ```console
-$ graphify-scope brief --enable --diff-base HEAD~1
-SCOPE-STATUS: skip-scope
-SCOPE-REASON: no-binary
-SCOPE-FALLBACK: unscoped-sweep
-...
+$ cdocs-graphify query "anything"
+cdocs-graphify: graphify not installed; skipping
 ```
 
-A scoped brief, head only (run against the test suite's `graphify` stub):
+A coupling section (run against the test suite's stub):
 
-```console
-$ graphify-scope brief --enable --files src/widget.ts --index graph.json
-SCOPE-STATUS: scoped
-SCOPE-DEP-COUNT: 3
-SCOPE-OBSERVE-COUNT: 2
+```
+NODE a [src=src/a.ts loc=L1]
 
-SCOPED-CONTEXT BRIEF (graphify-resolved; an AID, never a completeness guarantee)
-...
-Resolved dependent set (3 file(s), graph-derived, NOT exhaustive):
-  - src/aliases.ts
-  - src/app/consumer.ts
-  - src/index.ts
+RUNTIME COUPLING (not in the graph):
+src/a.ts:1:a.observe(cb)
 ```
 
 ### More
 
-Design: [`cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`](../../../cdocs/proposals/2026-09-17-graphify-cdocs-integration.md).
-Loop wiring: [`../skills/iterate/SKILL.md`](../skills/iterate/SKILL.md) "Graphify scoping".
-Tests: `bash plugins/cdocs/hooks/tests/graphify-scope.test.sh`.
+Design: [`cdocs/proposals/2026-10-08-graphify-overhaul.md`](../../../cdocs/proposals/2026-10-08-graphify-overhaul.md).
+Agent usage: [`../skills/graphify/SKILL.md`](../skills/graphify/SKILL.md).
+Tests: `bash plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`.
