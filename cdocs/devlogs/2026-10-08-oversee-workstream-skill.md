@@ -22,7 +22,7 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Scratchpoint
 
-- next_steps: prop-1 drafting; the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
+- next_steps: rev-1 reviewing `6a0b09d`; the report's design departs from the literal request (chat record stays a rule, deny hook added), so surface that to the maintainer before implementation.
 - graphify_base_query:
 - important_files: `plugins/cdocs/rules/overseers.md`, `plugins/cdocs/skills/oversee/SKILL.md`, `plugins/cdocs/skills/{iterate,propose-revise,full-send}/SKILL.md`, `scripts/` rules test, `plugins/cdocs/skills/init/SKILL.md`, `CLAUDE.md`
 - callouts:
@@ -41,6 +41,8 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 | dispatch | eval (general-purpose, opus) | `cdocs/reports/2026-10-08-skill-load-by-reference-evaluation.md` | 2026-10-08T13:30 | load-by-reference vs rule-references: mechanics, subagent reach, compaction durability, cost/drift (test:rules, init, OpenCode), generalization, prior art; recommendation and outline |
 | return | eval | `4a21867` | 2026-10-08T14:15 | adapt: Skill-tool invocation by reference followed (probed haiku/sonnet, toy skills, once each); invoked skills re-injected post-compaction as load-time text up to 5K tokens (lost on cross-process resume + compaction, so add a one-line re-invoke reminder). Move only intro + "Stay thin" (~140 words); "Chat record" stays universal (Stop hook binds every top-level session). Moving text does not fix the trigger: subagent Bash env is identical to the parent's; PreToolUse payload carries `agent_id`, so a hook can deny `chat-record note|path` in subagents. Tests: `/cdocs:<name>` reference resolution, deny-hook cases. OpenCode leaves a stale `.opencode/skills/oversee/` after rename. Untested: opus in a long loop |
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-oversee-workstream-skill.md` | 2026-10-08T14:17 | full-send proposal phase on the report's adapted design; departures from the literal request as open questions |
+| return | prop-1 | `6a0b09d` | 2026-10-08T14:35 | `review_ready`. `oversee` to `oversee-many` (`.claude/oversee/` kept); `oversee-workstream` skill = intro + "Stay thin", one-line Skill-tool invocation in iterate/propose-revise/full-send/oversee-many/ablate and implement/propose top-level modes; `overseers.md` deleted, "Chat record" moves to Tool Use Guidance, Workflow Patterns gains a re-invoke line; `chat-record` PreToolUse deny mode (one `hooks.json` entry with `if`, ~10 lines); `test:rules` skill/agent reference resolution, deny unit cases, headless subagent-deny check; OpenCode postinstall removes stale cdocs `oversee/`. Kept ablate's inline floor (departs from report). Open: chat record stays rule; deny hook; pointer line; postinstall vs README |
+| dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-oversee-workstream-skill.md` | 2026-10-08T14:36 | round 1; recommendation per open question; verify `agent_id` and `if` filter on 2.1.293 |
 
 ## Steering Log
 
