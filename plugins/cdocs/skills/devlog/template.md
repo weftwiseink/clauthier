@@ -17,7 +17,7 @@ tags: []
 ## Scratchpoint
 
 - next_steps:
-- graphify_query:
+- graphify_base_query:
 - important_files:
 - callouts:
   - deferred:

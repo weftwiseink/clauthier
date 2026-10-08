@@ -5,7 +5,7 @@ These are the workstream's top-level devlog sections, which the overseer owns: c
 ## Scratchpoint
 
 - next_steps:
-- graphify_query:
+- graphify_base_query:
 - important_files:
 - callouts:
   - deferred:

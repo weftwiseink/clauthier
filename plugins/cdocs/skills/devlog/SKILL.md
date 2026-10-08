@@ -61,6 +61,9 @@ Each item in the callouts list should be type-prefixed, and types are an open se
 
 The scratchpoint can include content for orienting the next turn beyond the structured schema, but should remain forward-looking (they are not append only logs).
 
+`graphify_base_query` is a natural-language base question for `/cdocs:graphify`, in the workstream's own entity names, so a fresh context loads the relevant code first.
+Refine it as the change grows; leave it empty when graphify is not installed.
+
 ### Handoffs
 Optional scratchpoint subsection with expanded context/files, with context and references to earlier docs, as well as ongoing or unresolved concerns.
 They should include specifics (Completed / Decisions Made / Open Todos) a cold reader can act on.
