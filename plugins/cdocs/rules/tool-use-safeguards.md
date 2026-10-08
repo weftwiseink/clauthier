@@ -1,4 +1,9 @@
-# CDocs Tool Use Safeguards
+# CDocs Tool Use Guidance
+
+## Tools and Skills
+- `/cdocs:bash-runner` for any supported command whose output is not guaranteed to be trivially small.
+- `/cdocs:report` for external research or sweeping investigations.
+- `/graphify` if available, using `query` for loading initial workstream context and `explain` to gain understanding of code entities, and preferring it when practical over alternatives like `grep` and full-file reads.
 
 ## One writer per file
 
