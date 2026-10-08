@@ -48,7 +48,7 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent.md` | both blocking fixes delete text; agent draft 78 lines vs bash-runner 65 |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-r2.md` | 69 lines; nits only |
-| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | pending | pending | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | container canary via curl; host browser run secondary |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | reviewer's own container (curl) and host (browser) canaries pass; reviewer clauses untested until a real runtime-floor iterate round |
 
 ## Judge Log
 
@@ -72,6 +72,8 @@ Failure picture: setup not learned from the fixture README, a 404 reported OK, s
 | dispatch | impl-1 (cdocs:implementer, opus) | worktree `../interfacer-agent`, branch `interfacer-agent` | 2026-10-08T10:14 | iterate round 1, phases 1-4 incl. live canary; lands before graphify (ordering override) |
 | return | impl-1 | `7224fcb..a277fa5` | 2026-10-08T11:20 | phases 1-4; agent 70 lines; test:rules 11/11, test:opencode 9/9. Container canary (claude 2.1.285, run 5/5) passes all but screenshots (browser lacks 11 system libs; curl fallback); host run covers browser path, `_media` screenshot. Deviations: SendMessage follow-ups run in background, description now tells dispatchers to wait in-turn (run 2 stalled without it); 3 canary-driven clauses (probed 404 not OK, reply only in final message, tear down by PID/session not pattern). Unverified: browser in container, reviewer clauses until a real iterate round |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-interfacer-agent-impl-r1.md` (branch) | 2026-10-08T11:22 | implementation round 1; must re-run floor for `confirmed` |
+| return | rev-impl-1 | `34a2c45` (branch) | 2026-10-08T11:30 | accept, `review_proof: confirmed`: own fixtures in container (curl) and host (playwright-cli, 4 screenshots viewed); all criteria pass both. Keep all 3 canary clauses. Async replies apply to first dispatch too on 2.1.293; harness refuses `sleep 30`; proposal needs NOTEs (D5 async, lifetime WARN resolved, ordering). Wrapper-PID misrecord seen 3x, recovered by port; no clause |
+| dispatch | impl-1 (warm, SendMessage) | branch | 2026-10-08T11:32 | pre-landing: reviewer's async-reply sentence, 3 proposal NOTEs, devlog gap fixes, statuses |
 
 ## Steering Log
 
