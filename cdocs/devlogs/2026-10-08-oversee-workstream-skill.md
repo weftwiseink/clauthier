@@ -46,4 +46,6 @@ Trigger: a nested full-send subagent (weftwise graphify workstream) ran `chat-re
 
 ## Steering Log
 
+- 2026-10-08T14:45: maintainer on open questions 1-2: "Make chat-record a skill and make the rule to load the skill iff the agent is top-level. It's about avoiding confusion for sub agents like what we saw here, not a strict security boundary." So: `cdocs:chat-record` skill, universal top-level-only load line, no deny hook. Relayed to rev-1 mid-review; the proposer revises after.
+
 - 2026-10-08T13:28: maintainer request above; "IMO the solution to that chat-record issue is something I've been thinking on for a bit."
