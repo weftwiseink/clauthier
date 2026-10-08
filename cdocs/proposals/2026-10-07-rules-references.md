@@ -6,6 +6,11 @@ task_list: cdocs/rules-references
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-10-07T21:53:11-07:00
+  round: 1
 tags: [rules, rules_delivery, init, testing, architecture]
 ---
 
