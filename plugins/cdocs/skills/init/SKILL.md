@@ -101,11 +101,11 @@ Scaffold the CDocs documentation structure in the current project.
 7. **graphify exclusion:** when `graphify` is installed or `.graphifyignore` exists in the project root, ensure that file has a `/cdocs/` line, creating it if needed, so every graphify build and `update` leaves the cdocs documents out of the code graph:
    ```bash
    if command -v graphify >/dev/null 2>&1 || [ -e .graphifyignore ]; then
-     grep -qxE '/?cdocs/?' .graphifyignore 2>/dev/null || printf '/cdocs/\n' >>.graphifyignore
+     grep -qxE '/cdocs/?' .graphifyignore 2>/dev/null || printf '/cdocs/\n' >>.graphifyignore
    fi
    ```
    Add a newline first if the file lacks a trailing one.
-   The leading slash anchors the exclusion to the root `cdocs/`; an unanchored `cdocs/` also drops any nested `cdocs` source directory.
+   The leading slash anchors the exclusion to the root `cdocs/`; an unanchored `cdocs/` also drops any nested `cdocs` source directory, so it gets a `/cdocs/` line added too.
 
 ## README Templates
 
