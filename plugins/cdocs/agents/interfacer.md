@@ -11,6 +11,7 @@ description: |
   - Optional: which states to capture, and any logs wanted
 
   Durable by default: keep the returned `agentId`, resume it with `SendMessage` for follow-up checks, and say "tear down" before you return.
+  A resumed check runs in the background and its reply arrives at your next tool call: stay in your turn (e.g. Bash `sleep 10`) until it does.
   Responds with its report path, a short summary, and what it left running.
 color: cyan
 maxTurns: 40
