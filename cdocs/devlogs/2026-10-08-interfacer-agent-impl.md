@@ -5,14 +5,16 @@ first_authored:
 task_list: cdocs/interfacer-agent
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-interfacer-agent.md
 tags: [interfacer, browser_delegation, subagents, runtime_validated]
 ---
 
 # Interfacer Agent Implementation: Devlog
 
-> BLUF: Iterate round 1 implementation of [the interfacer proposal](../proposals/2026-10-08-interfacer-agent.md), Phases 1-4, on branch `interfacer-agent`.
+> BLUF: Iterate round 1 implementation of [the interfacer proposal](../proposals/2026-10-08-interfacer-agent.md), Phases 1-4, on branch `interfacer-agent`: agent, callers, and `browser-delegate` removal landed as specified, and static checks pass.
+> The devcontainer canary (run 5 of 5) meets every criterion except screenshots, because the container cannot launch a browser (curl fallback); a secondary host run covers the browser path and supplies the `_media` screenshot.
+> The canary forced four one-clause agent fixes (still 70 lines) and exposed a deviation from D5: a `SendMessage` resume runs in the background, so a dispatcher must stay in its turn to receive the reply.
 
 ## Objective
 
@@ -22,15 +24,18 @@ Implement `cdocs/proposals/2026-10-08-interfacer-agent.md` Phases 1-4: add `plug
 
 ## Scratchpoint
 
-- next_steps: score the secondary host (browser) canary, copy one screenshot to `cdocs/_media/`, final test runs.
-- important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`.
+- next_steps: overseer review of round 1; the proposal NOTE for the ordering reversal and the D5 resume mechanics are the overseer's.
+- important_files: `plugins/cdocs/agents/interfacer.md`, `plugins/cdocs/agents/reviewer.md`, `plugins/cdocs/skills/{iterate,implement,devlog}/SKILL.md`, this devlog's Phase 4 sections.
 - callouts:
   - decision: worktree `/var/home/mjr/code/weft/clauthier/interfacer-agent`, never writing `main/`.
-  - decision: per maintainer steering, the canary that counts runs in the `clauthier` lace devcontainer (claude 2.1.285); a host run is secondary.
-  - blocker: the devcontainer cannot launch headless Chromium (missing system libraries), so its canary drives the fixture with `curl` and the browser path there is unverified.
-  - decision: canary-driven agent fixes (status on probed errors, final-message-only replies, in-turn wait for resumes, tear down by PID); see the run table.
-  - deviation: `SendMessage` resumes run in the background, so dispatchers must stay in-turn; the proposal's D5 and sequence diagram do not say so (overseer may want a proposal NOTE).
-  - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run (first `test:rules` failed only for that reason).
+  - decision: per maintainer steering, the canary that counts ran in the `clauthier` lace devcontainer (claude 2.1.285); a host run (claude 2.1.293) is secondary and covers the browser.
+  - blocker: the devcontainer cannot launch headless Chromium (11 missing system libraries; `--with-deps` dry-run fails on apt), so the browser path is unverified there.
+  - deviation: four canary-driven agent fixes (probed errors are not `OK`, final-message-only replies, in-turn wait for resumes, tear down by PID); see the run table.
+  - deviation: `SendMessage` resumes run in the background (`is_backgrounded: true`); a dispatcher that ends its turn never gets the reply. The proposal's D5 and sequence diagram do not say so.
+  - todo: the reviewer clauses (own interfacer, `_media` copy) are unexercised until the first real iterate round with a runtime floor, as the proposal says.
+  - observation: a `setsid` wrapper PID was twice recorded as the server PID (both runs self-corrected); tool knowledge, left to projects.
+  - env: the worktree had no `node_modules`; `npm ci` (gitignored) was needed before `test:rules`/`test:opencode` could run.
+  - cleanup: sandboxed `CLAUDE_CONFIG_DIR`s (credential copies) deleted on host and in the container; fixtures, streams, and instance dirs left in place as ephemeral evidence.
 
 ## Plan
 
@@ -45,7 +50,7 @@ Static checks (`test:rules`, `test:opencode`, `jq`, `grep`) per phase; the live 
 
 ## Implementation Notes
 
-- Phase 1: the agent body is the proposal's spec block verbatim (69 lines); no wording polish was needed.
+- Phase 1: the agent body started as the proposal's spec block verbatim (69 lines); Phase 4 then added four one-clause fixes (70 lines).
   The OpenCode build emits it with only `description` and `mode: subagent` (no `model`, `tools`, `permission`), as the proposal predicted.
 - Phase 2: one clause per file, worded as the proposal's "Callers" section gives them.
   The reviewer's new sentence is its own bullet after the `Bash` bullet; the `_media` clause swaps the `Artifacts`-line/`.png` keying for "media a subagent produced ... `.<ext>`" and adds "look at it yourself".
@@ -71,7 +76,7 @@ Container-specific setup, all by the verifier:
 
 | File | Description |
 |------|-------------|
-| `plugins/cdocs/agents/interfacer.md` | New sonnet testing-assistant agent (69 lines). |
+| `plugins/cdocs/agents/interfacer.md` | New sonnet testing-assistant agent: the spec plus four canary fixes (70 lines). |
 | `plugins/cdocs/AGENTS.md` | `interfacer` bullet under Formal Agents. |
 | `plugins/cdocs/README.md` | 8 agents in the OC table; `interfacer` named with `bash-runner` as following no rules. |
 | `plugins/cdocs/agents/reviewer.md` | Own-interfacer sentence; `_media` clause generalized to any subagent media. |
@@ -90,7 +95,19 @@ Host canary check 02, copied from `/tmp/claude-1000/interfacer/E24cvT/02-click-l
 
 ## Verification
 
-### Static checks (Phases 1-3)
+### Static checks
+
+Final, against the agent at `47da807`:
+
+```
+npm run test:rules     -> tests 11, pass 11, fail 0
+npm run test:opencode  -> tests 9, pass 9, fail 0; "✔ OC agent interfacer.md"; built frontmatter has only description + mode: subagent
+wc -l plugins/cdocs/agents/interfacer.md -> 70
+jq -r '.plugins[].name' .claude-plugin/marketplace.json -> cdocs
+grep -rn -i 'browser-delegate' --exclude-dir={cdocs,.git,build,node_modules} . -> no output, exit 1
+```
+
+Phases 1-3, before the canary fixes:
 
 ```
 npm run test:rules     -> tests 11, pass 11, fail 0 (after Phase 1 and again after Phase 2)
