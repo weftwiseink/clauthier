@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/graphify-weftwise-assessment
 type: devlog
 state: live
-status: wip
+status: review_ready
 part_of: cdocs/devlogs/2026-10-08-graphify-weftwise-assessment.md
 tags: [graphify, performance, evaluation]
 ---
@@ -13,6 +13,9 @@ tags: [graphify, performance, evaluation]
 # Graphify Weftwise Assessment, Implementation: Devlog
 
 > BLUF: Implementer sub-devlog (iterate round 1, all phases) for `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md`.
+> All three phases ran; the deliverable is `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` (`review_ready`), and the floor passes verbatim.
+> Weftwise has one commit (`2791713d`, `.graphifyignore`), and all scratch is removed.
+> Deviations: one implicit-`GRAPHIFY_OUT` call wrote `cache/last_query_stamp` into the main graph dir (graph untouched); the fresh-worktree row and the `--no-cluster` identity expectation did not hold (both findings).
 
 ## Objective
 
@@ -20,7 +23,7 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
 
 ## Scratchpoint
 
-- next_steps: Phases 1-2 done; Phase 3 matrix partly run (full build, post-edit, no-op, body-only, commit-only). Next: fresh-worktree x3 (+ kept-stamp prototype), query latency, candidates, background refresh, report, floor, cleanup.
+- next_steps: done; awaiting the loop's reviewer. Proposal stays `implementation_wip` (only the maintainer sets `implementation_accepted`).
 - graphify_base_query:
 - important_files: proposal above; `plugins/cdocs/bin/cdocs-graphify`; weftwise `.graphifyignore`; container scratch `/tmp/gfy-assess/`
 - callouts:
@@ -29,6 +32,11 @@ Execute the three phases of `cdocs/proposals/2026-10-08-graphify-weftwise-assess
   - decision: `*.scss.d.ts` added as the one non-markdown ignore line (inventory-proven: 28 tracked typed-scss-modules outputs, 84 nodes, 0 edges to other files).
   - finding: empty-dir builds carry 39 more `imports_from` edges (bare `loro-repo` specifier to the `ref_loro_repo` stub) than updates from the main out dir's cache; node sets equal. Floor counts must come from empty-dir builds.
   - decision: Phase 2 commands fixed before ground truth returned, run blind (status lines only), retries applied mechanically per the skill.
+  - deviation: one raw `graphify explain --help` (inspecting an exit code, ~14:10) ran without an explicit `GRAPHIFY_OUT`, so it wrote `/var/cache/graphify-weftwise/cache/last_query_stamp` (18 bytes, 14:10:23). `graph.json` (14:09:35) and `.graphify_root` (14:09:36) are unchanged since Phase 1, so no restore was needed.
+  - finding: `--no-cluster` fails the identity check (raw extraction written); the proposal's expectation that it changes only community attributes was wrong for 0.9.61.
+  - finding: the fresh-worktree row lands on "update with topology change" (11.9 s), not the expected about 9 s, because of the 39-edge build-path difference.
+  - decision: candidate post-edit timings use raw `update` against a raw `update` baseline (11.14 s), not the wrapper (11.84 s), so the rows compare like with like.
+  - decision: the JSON candidate is degenerate by inventory (`.mcp.json` only); one extra all-JSON-out build checks the keep-resolution-inputs assumption instead.
 
 ## Plan
 
@@ -77,10 +85,23 @@ Self-heal check: its index was the pre-clean graph with a matching stamp (`5e446
 - Pre-clean vs cleaned: entity/blast/path outputs identical up to ordering and the `ref_loro_repo` edge; `query` seeds lost both `_archive/` headings (Q13 `Persistence`, Q14 `5. Nested Liveblocks Rooms`); Q13 gained `activeBranchStorageKey()`. Q7's misleading undirected path exists only on the fresh-build lineage (it routes through the `ref_loro_repo` stub); the main-lineage graph returns no path.
 - Remaining md seeds on the cleaned graph: `docs/worktree_development.md` heading (Q12, Q14), `.claude/commands/dogfood-wt.md` heading (Q14).
 
+### Phase 3: runtime, candidates, prototypes
+
+Full numbers are in the report; raw logs are archived at `<scratchpad>/gfy/container/gfy-assess-artifacts.tgz` (session scratch, not durable).
+- Cleaned matrix: full 9.60 (9.57-9.66), wrapper post-edit 11.84 (11.74-11.87), raw post-edit 11.14, body-only 9.03, stamp hit 0.63, commit-only 0.54 (skip confirmed), fresh-worktree 11.88 (11.75-11.90), query/explain/path/affected 0.50/0.46/0.50/0.23. No row exceeded a 50% range.
+- Candidates: md out -0.1 to -0.3 s, no verdict change; tests out 5.23 / 6.27 s, Q6 hit -> partial, Q7 misleading -> miss; output stages off 7.05 / 8.18 s, all from `--no-cluster`, which writes raw extraction (2,148 extra edges, no `built_at_commit`, no `norm_label`) and flips Q8 miss -> misleading; `MAX_WORKERS` 4/10/20 identical graphs, 20 fastest; `extract --code-only` 3.63 s post-edit on an extract-built index, -59 nodes / -114 code edges vs `update`, 10.03 s when started from an `update`-built index (manifests incompatible).
+- Background refresh prototype (`cdocs-graphify-bg`): first query 0.47-0.56 s, 0.31 s during refresh, edit-to-fresh 11.27-11.55 s, stale miss of the edited entity on 3/3 cycles. `update` blocks on `.rebuild.lock` (CLI `block_on_lock=True`), so the prototype checks the lock file before launching.
+- Kept-stamp prototype (`cdocs-graphify-ks`): fresh worktree 0.93 (0.63-1.00); its stamp is byte-identical to the current wrapper's post-update stamp; non-ancestor and code-commit negative cases both update.
+- No LLM on `update`: `label_communities_by_hub` (`watch.py:1991`).
+
 ## Changes Made
 
 | File | Description |
 |------|-------------|
+| weftwise `.graphifyignore` (`2791713d`) | `/_archive/`, `/docs/references/`, `*.scss.d.ts` added to `/cdocs/` |
+| `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md` | the deliverable |
+| `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` | status `implementation_wip` |
+| this devlog | implementation record |
 
 ## Verification
 
@@ -95,3 +116,24 @@ loro-branching 1ad160dbcc21c48bf082262d3bca0b3fdaede23a 0
 loro-repo-package bcb0711702c22a97710b75f0d4abd4570dd09715 1
 main graph.json mtime 2026-10-08 10:46:05.603 -0700, .graphify_root /workspaces/weftwise/main
 ```
+
+### Floor (report's block, extracted verbatim and run on the host, 2026-10-08T14:40)
+
+Exit 0.
+1. `Rebuilt: 9731 nodes, 25160 edges` (expected 9,731 / 25,160).
+2. Prefix zeros pass, `md_nodes 654`, relations `imports=6527 imports_from=3764 calls=4741 re_exports=1345 dynamic_import=36 references=410 method=1244 implements=31`: exact.
+3. Raw full build 9.537 / 9.582 / 9.476 s (report 9.60), `explain` 0.448 / 0.448 / 0.451 s (report 0.46), wrapper post-edit 11.582 / 11.850 / 11.712 s (report 11.84): all within ±25%.
+4. Tree clean (`0`); `query` seeds `['LoroDocumentStore', 'branch_checkout_persistence.test.ts', 'activeBranchStorageKey()', ...]`; `explain` `.mergeBranch()` L429 with `<-- .buildBranchOps() [calls]`; `affected BranchCard` lists the 4 expected files: all match.
+5. `no-graphify`; worktree list `.bare`, six maintainer worktrees, `gfy-floor`, `main` at `2791713d`; main `graph.json` mtime `2026-10-08 14:09:35.882 -0700`; maintainer lines identical to the before record.
+   Floor's last line removed `gfy-floor` and `/tmp/gfy-floor` (checked: 0 `gfy` worktrees, no scratch dir).
+
+The first floor draft had `pgrep -af graphify`, which matches its own `bash -c` line; the report uses `pgrep -af "[g]raphify (update|extract|watch)"`. The step 5 expectation text was corrected to include `gfy-floor` (removed by the next line).
+
+### Collateral: after (2026-10-08T14:41)
+
+Maintainer worktree HEADs and dirty counts identical to the before record (floor step 5 output above).
+`git worktree list`: `.bare`, `main` (`2791713d`), the six maintainer worktrees; no `gfy*` worktree, no `gfy*` branch.
+Container `/tmp/gfy-assess`, `/tmp/gfy-floor`, and the artifact tarball removed; no `graphify update|extract|watch` process.
+Main graph dir: `graph.json`, `.graphify_root`, labels, report, html, and manifest all from the Phase 1 rebuild (14:09:35-36), plus its dated backup dir `2026-10-08/` (written by that rebuild, since `GRAPHIFY_NO_BACKUP` was unset); `cache/last_query_stamp` 14:10:23 (see the deviation callout).
+The throwaway detached commits made in `gfy-assess` and `gfy-fresh-neg-b` (`gfy probe (throwaway)`) are unreferenced objects in the shared bare repo, left for `git gc`.
+
