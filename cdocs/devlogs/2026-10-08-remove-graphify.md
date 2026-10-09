@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: rev-impl-1 reviewing (re-runs floor); then land both repos and remove worktrees. Lace RFP done (`61a65162`, unpushed).
+- next_steps: impl-1 applying accept-round nits; then maintainer acceptance; then rebase + land both repos, remove worktrees. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -32,6 +32,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
   - decision (overseer call): weftwise `2026-09-15-code-graph-review-plugin-rfp.md` archived, the other two code-graph RFPs deferred, each with a NOTE pointing at the clauthier assessment.
   - decision: `scripts/detect-usage.sh` kept with reworded examples (maintainer earlier: "keep it around as a script for internal use").
   - decision (overseer call): weftwise code-graph checkpoint devlog archived with the review-plugin RFP.
+  - decision (overseer call): lace not pruning stale mount assignments, and `lace validate` rewriting clauthier's tracked `.lace/port-assignments.json` (running container holds the port), are pre-existing lace behaviors, out of scope.
   - todo: maintainer-owned weftwise worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`) and `loro/` are never touched.
 
 ## Workstream Devlogs
@@ -52,6 +53,7 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-remove-graphify.md` | `claude-code:1` rationale, step-5 self-match, RFP calls into proposal |
 | r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-remove-graphify-r2.md` | nits only |
+| impl-1 | impl-1 (cdocs:implementer, opus) | rev-impl-1 (cdocs:reviewer, opus, fresh) | accept | confirmed | `cdocs/reviews/2026-10-08-review-of-remove-graphify-impl.md` (branch) | nits only |
 
 ## Judge Log
 
@@ -75,6 +77,8 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 | dispatch | impl-1 (cdocs:implementer, opus) | clauthier worktree `../remove-graphify` (branch `remove-graphify`); weftwise worktree `remove-graphify` | 2026-10-09T03:17 | iterate round 1, phases 1-3 |
 | return | impl-1 | clauthier `9841ec1..4d261d3`; weftwise `726e07f5..e4d54915` | 2026-10-09T03:30 | all phases; floor green: greps empty, test:rules 18, test:opencode 9 (no graphify in build), chat-record 98, edit-path 17, detect-usage 11, `lace validate` passes both, step 5 empty (36 archived as planned), weftwise archival self-check empty, Dockerfile unchanged. Both `devcontainer.json` restored wholesale (clauthier = `041b1f6`, weftwise = `add5bd2b^`). Findings: weftwise untracked `main/.lace/mount-assignments.json` keeps stale graphify entries (maintainer state, untouched); clauthier `lace validate` rewrites tracked `.lace/port-assignments.json` (restored). Weftwise RFP NOTEs worded to what was measured. Cleanup left: `main/graphify-out/`, caches, arc file, worktrees |
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-impl.md` (branch) | 2026-10-09T03:32 | re-run floor; verify wholesale devcontainer restores revert nothing unrelated |
+| return | rev-impl-1 | `feaed3e` (branch) | 2026-10-09T03:45 | accept, `review_proof: confirmed`: full floor re-run both repos green; devcontainer restores are exact inverses of the single graphify commit each (nothing unrelated reverted); 19 non-cdocs paths = inventory; 35 archived + assessment `evolved`; weftwise 8 archived, 2 deferred. Stale weftwise mount entries tested harmless (listed, not applied); clauthier port-file rewrite pre-existing (running container holds 22431). Nits: devlog 7 vs 8, rebase note, assessment NOTE phase wording, review-plugin RFP NOTE fairness, bin/README plural. 3 maintainer questions |
+| dispatch | impl-1 (warm, SendMessage) | both branches | 2026-10-09T03:47 | accept-round nits; RFP NOTE names maintainer decision (overseer call); lace stale mounts and port rewrite out of scope (overseer call) |
 
 ## Steering Log
 
