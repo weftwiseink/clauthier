@@ -15,18 +15,7 @@
       "version": "latest"
     },
     "ghcr.io/weftwiseink/devcontainer-features/lace-fundamentals:1": {},
-    "ghcr.io/danzilberdan/devcontainers/opencode:0": {},
-    // claude-code is expansion-provided by lace-fundamentals, but declared
-    // explicitly here as the idempotent prerequisite for graphify's MCP
-    // registration (installMcpServer no-ops without it).
-    "ghcr.io/weftwiseink/devcontainer-features/claude-code:1": {},
-    // graphify: deterministic tree-sitter code-graph CLI + MCP server.
-    // Feature declares its own index mount and containerEnv; author none here.
-    "ghcr.io/weftwiseink/devcontainer-features/graphify:1": {
-      "version": "0.9.61",
-      "installMcpServer": true,
-      "installGitHook": false
-    }
+    "ghcr.io/danzilberdan/devcontainers/opencode:0": {}
   },
   "customizations": {
     "lace": {
