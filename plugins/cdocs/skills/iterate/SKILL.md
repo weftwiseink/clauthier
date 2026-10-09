@@ -34,13 +34,6 @@ Code and cdocs should be committed early and often.
   If no such preference exists, the overseer selects an appropriate larger model+config, like fable to lead an opus loop (a common pattern).
   For default tiers, see "CDocs Workflow Patterns › Model Tiering".
 
-## Base query
-
-On Turn 0, when `command -v graphify` succeeds, write the Scratchpoint's `graphify_base_query:` as one question naming the subsystem and behavior in entity names the graph can match, for example `how does the iterate overseer dispatch implementer and reviewer subagents and record their returns in the devlog`; otherwise leave it empty.
-Between rounds, adopt the refined `graphify_base_query: "<refined>"` an implementer's report ends with, or rewrite it when the Steering Log or the phase moves scope.
-Tag each Iteration Log row's `notes` with `[base_query: set]` or `[base_query: empty]`.
-Passing it in prompts, and never running graph queries yourself, are in "CDocs Tool Use Guidance › Tools and Skills".
-
 ## Roles
 
 - **Overseer**: top-level agent, restricted to orchestration; owns dispatch, freshness, termination.

@@ -94,15 +94,6 @@ Scaffold the CDocs documentation structure in the current project.
    - Add a version-and-hash comment inside the delimiters: `<!-- cdocs rules vX.Y.Z hash=<sha256> - regenerate with /cdocs:init (use version from plugin.json) -->` (same shape as `.claude/rules/cdocs.md`; see Step 3 for hash computation)
    - This is idempotent: running init multiple times updates the content between delimiters without duplication.
 
-7. **graphify exclusion:** when `graphify` is installed or `.graphifyignore` exists in the project root, ensure that file has a `/cdocs/` line, creating it if needed, so every graphify build and `update` leaves the cdocs documents out of the code graph:
-   ```bash
-   if command -v graphify >/dev/null 2>&1 || [ -e .graphifyignore ]; then
-     grep -qxE '/cdocs/?' .graphifyignore 2>/dev/null || printf '/cdocs/\n' >>.graphifyignore
-   fi
-   ```
-   Add a newline first if the file lacks a trailing one.
-   The leading slash anchors the exclusion to the root `cdocs/`; an unanchored `cdocs/` also drops any nested `cdocs` source directory, so it gets a `/cdocs/` line added too.
-
 ## README Templates
 
 ### devlogs/README.md
