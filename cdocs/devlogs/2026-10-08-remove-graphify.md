@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: prop-1 revising per r1; then fresh rev-2. Lace RFP done (`61a65162`, unpushed).
+- next_steps: rev-2 reviewing; then `/cdocs:iterate` with a fresh implementer. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -61,6 +61,8 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify.md` | 2026-10-09T02:57 | round 1; inventory greps, `claude-code:1` removal safety, proportionality, floor |
 | return | rev-1 | `93271ca` | 2026-10-09T03:05 | revise. `claude-code:1` removal safe but rationale wrong: claude-code comes from host `~/.config/lace/user.json` (lace `mergeUserFeatures`), not `lace-fundamentals`; both repos ran without it pre-graphify. Verification step 5 matches this workstream's own docs. Overseer call on weftwise RFPs sound (canvas NOTE must not imply product value disproved; path pointers, clauthier unpushed). Inventory matches reviewer greps exactly; test:rules, chat-record 98, edit-path 17, detect-usage 11 pass at `761a407`. 2 questions (detect-usage keep/delete; weftwise code-graph checkpoint devlog) |
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-09T03:07 | r1 revisions; detect-usage kept (maintainer earlier direction); checkpoint devlog archived (overseer call) |
+| return | prop-1 | `d48c41d` | 2026-10-09T03:10 | r1 items applied: claude-code rationale (host `user.json`, verified), step-5 exclusion, weftwise RFP calls written in, `.lace/` restore rule, both trailing commas, `:!cdocs` grep, detect-usage comments, MCP edge cut |
+| dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-r2.md` | 2026-10-09T03:11 | round 2, short |
 
 ## Steering Log
 
