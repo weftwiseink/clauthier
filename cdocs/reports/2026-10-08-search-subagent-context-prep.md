@@ -77,6 +77,7 @@ Search is clauthier's largest tool slice after reads (15-18% of growth), so its 
 | weftwise implementers, Opus 4.8 or Fable | 61 | 55K | 330K / 739K / 999K | 129 | 35%+ | 31% | 12% | 9% | 4% | 5% | 0% | 84% |
 | top 10 of those, by peak | 10 | 55K | 823K / 999K / 999K | 460 | 43%+ | 22% | 6% | 6% | 5% | 5% | 0% | 82% |
 
+Read slices overlap; "Attributed" also counts test, build, other-tool, and attachment tokens not shown.
 - **Weftwise implementer totals do not close.** 16-18% of their growth is unattributed:
   - 36 of 61 hit the chars-per-token floor;
   - three under-record `output_tokens` (a median of 4-5 per request);
