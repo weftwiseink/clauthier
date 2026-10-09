@@ -5,14 +5,13 @@ first_authored:
 task_list: cdocs/remove-graphify
 type: proposal
 state: live
-status: wip
+status: review_ready
 tags: [graphify, cleanup, devcontainer]
 ---
 
 # Remove Graphify from CDocs and Weftwise
 
-> BLUF: Delete every graphify surface from clauthier (the `/cdocs:graphify` skill, `cdocs-graphify` and its test and CI step, `graphify_base_query` in the rules, devlog and iterate skills, the init `.graphifyignore` step, the devcontainer feature, ignore files) and from weftwise (the devcontainer feature, its `graphify-index` mount and `GRAPHIFY_OUT`, `.graphifyignore`), then archive the graphify cdocs records.
-> Pure deletion: nothing replaces it.
+> BLUF: Pure deletion, nothing replaces it: remove every graphify surface from clauthier (`/cdocs:graphify`, `cdocs-graphify` with its test and CI step, `graphify_base_query`, the init `.graphifyignore` step, the devcontainer feature, ignore files) and from weftwise (devcontainer feature, mount, `GRAPHIFY_OUT`, `.graphifyignore`), then archive the graphify cdocs records.
 > Done when `git grep -i graphify` over shipped paths returns nothing, the test suites and `build:cdocs` pass, and `lace validate` passes in both repos.
 
 ## Summary
@@ -32,7 +31,7 @@ The maintainer's direction is to remove it entirely and pursue context-load redu
 ## Background
 
 - `cdocs/proposals/2026-10-08-graphify-weftwise-assessment.md` and `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md`: the measurement that motivates removal.
-- `cdocs/reports/2026-10-08-search-subagent-context-prep.md`: recommends dropping graphify; an earlier version (`git show 7060568:<path>`, "If graphify goes") listed the deletion pointers this inventory starts from.
+- `cdocs/reports/2026-10-08-search-subagent-context-prep.md`: recommends dropping graphify, and an earlier version (`git show 7060568:<path>`, "If graphify goes") listed the deletion pointers this inventory starts from.
 - `cdocs/proposals/2026-10-08-graphify-overhaul.md`: the design of the surfaces being removed.
 - `cdocs/proposals/2026-10-08-delete-ablate-rfp.md`: maintainer direction that `scripts/detect-usage.sh` stays as an internal script.
 
@@ -72,7 +71,7 @@ The graphify full-send (weftwise `1caa585d..99475534`, `5e446a84`, and the unpus
 
 | Path | Action |
 |---|---|
-| `.devcontainer/devcontainer.json` | Delete the `claude-code:1` and `graphify:1` feature entries with their comments, the `graphify-index` project mount, both `graphify/index ... (unused; see graphify-index)` comment lines, and `containerEnv.GRAPHIFY_OUT` with its comment. |
+| `.devcontainer/devcontainer.json` | Delete the `claude-code:1` and `graphify:1` feature entries with their comments, the `graphify-index` project mount, both `graphify/index ... (unused; see graphify-index)` comment lines, and `containerEnv.GRAPHIFY_OUT` with its comment, leaving the `portless:1` entry last in `features` with no trailing comma. |
 | `.graphifyignore` | Delete. |
 | `.devcontainer/Dockerfile` | Keep: the `.pnpmfile.cjs` copy fix (`a61e8e6a`) is unrelated. |
 
