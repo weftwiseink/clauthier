@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: proposal round 1; lace RFP.
+- next_steps: proposal round 1 (prop-1). Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -52,6 +52,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 |---|---|---|---|---|
 | dispatch | prop-1 (cdocs:proposer, opus) | `cdocs/proposals/2026-10-08-remove-graphify.md` | 2026-10-09T02:42 | removal proposal: clauthier + weftwise |
 | dispatch | rfp-lace (general-purpose, sonnet) | lace `cdocs/proposals/2026-10-08-delete-graphify-feature-rfp.md` | 2026-10-09T02:42 | `/cdocs:rfp` deleting lace's graphify feature |
+| return | rfp-lace | lace `61a65162` (unpushed) | 2026-10-09T02:50 | lace `cdocs/proposals/2026-10-08-delete-graphify-feature-rfp.md`: delete `devcontainers/features/src/graphify/`, its tests, lace's own devcontainer use; update 2 doc cross-refs; archive the six 2026-09-15 graphify records. Open questions: registry deprecation vs source deletion, other consumers, reuse of the host-cache-mount convention |
 
 ## Steering Log
 
