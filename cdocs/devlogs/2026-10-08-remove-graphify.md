@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: awaiting maintainer acceptance; then rebase + land both repos, remove worktrees. Lace RFP done (`61a65162`, unpushed).
+- next_steps: cleanup subagent running local follow-ups and container rebuilds; lace RFP (`61a65162`) left to the maintainer. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -39,7 +39,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
-| `cdocs/devlogs/2026-10-08-remove-graphify-impl.md` (branch) | removal execution | review_ready | verification outputs, deviations |
+| `cdocs/devlogs/2026-10-08-remove-graphify-impl.md` (branch) | removal execution | done | verification outputs, deviations |
 
 ## Iterate Brief (Turn 0)
 
@@ -80,6 +80,8 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 | return | rev-impl-1 | `feaed3e` (branch) | 2026-10-09T03:45 | accept, `review_proof: confirmed`: full floor re-run both repos green; devcontainer restores are exact inverses of the single graphify commit each (nothing unrelated reverted); 19 non-cdocs paths = inventory; 35 archived + assessment `evolved`; weftwise 8 archived, 2 deferred. Stale weftwise mount entries tested harmless (listed, not applied); clauthier port-file rewrite pre-existing (running container holds 22431). Nits: devlog 7 vs 8, rebase note, assessment NOTE phase wording, review-plugin RFP NOTE fairness, bin/README plural. 3 maintainer questions |
 | dispatch | impl-1 (warm, SendMessage) | both branches | 2026-10-09T03:47 | accept-round nits; RFP NOTE names maintainer decision (overseer call); lace stale mounts and port rewrite out of scope (overseer call) |
 | return | impl-1 | clauthier `55511e4`, `69375d5`, `3f8d0ec`; weftwise `37e8d121` | 2026-10-09T03:52 | nits resolved; greps and step 5 still empty, test:rules green |
+| land | overseer | clauthier main `12e5964`; weftwise main `37e8d121` | 2026-10-09T04:00 | maintainer: "accept". Clauthier: rebased onto main, `implementation_accepted`, ff-merged; `.devcontainer/devcontainer.json` had a skip-worktree local edit (converser `runArgs`) blocking ff: backed up, cleared skip-worktree, ff-merged, re-inserted the same 5 lines after `remoteUser`, re-set skip-worktree (diff vs HEAD identical to before; parses). Weftwise: ff-merged. Both worktrees and branches removed. Unpushed |
+| dispatch | cleanup (general-purpose, sonnet) | `main/graphify-out/`, arc file, weftwise `.lace/mount-assignments.json`, container rebuilds, `~/.cache/graphify*` | 2026-10-09T04:02 | maintainer-requested follow-ups (lace RFP excluded); rebuild only if no active sessions |
 
 ## Steering Log
 
