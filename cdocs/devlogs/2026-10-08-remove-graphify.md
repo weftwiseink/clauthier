@@ -5,7 +5,7 @@ first_authored:
 task_list: cdocs/remove-graphify
 type: devlog
 state: live
-status: wip
+status: done
 tags: [graphify, cleanup]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: cleanup subagent running local follow-ups and container rebuilds; lace RFP (`61a65162`) left to the maintainer. Lace RFP done (`61a65162`, unpushed).
+- next_steps: none in this workstream. Maintainer-owned: push clauthier and weftwise, tag `cdocs--v0.2.0`, act on lace RFP `61a65162` (unpushed); restart the `clauthier-overseer` session in the rebuilt container.
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -82,6 +82,9 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 | return | impl-1 | clauthier `55511e4`, `69375d5`, `3f8d0ec`; weftwise `37e8d121` | 2026-10-09T03:52 | nits resolved; greps and step 5 still empty, test:rules green |
 | land | overseer | clauthier main `12e5964`; weftwise main `37e8d121` | 2026-10-09T04:00 | maintainer: "accept". Clauthier: rebased onto main, `implementation_accepted`, ff-merged; `.devcontainer/devcontainer.json` had a skip-worktree local edit (converser `runArgs`) blocking ff: backed up, cleared skip-worktree, ff-merged, re-inserted the same 5 lines after `remoteUser`, re-set skip-worktree (diff vs HEAD identical to before; parses). Weftwise: ff-merged. Both worktrees and branches removed. Unpushed |
 | dispatch | cleanup (general-purpose, sonnet) | `main/graphify-out/`, arc file, weftwise `.lace/mount-assignments.json`, container rebuilds, `~/.cache/graphify*` | 2026-10-09T04:02 | maintainer-requested follow-ups (lace RFP excluded); rebuild only if no active sessions |
+| return | cleanup | n/a | 2026-10-09T04:20 | `main/graphify-out/` and arc file deleted; weftwise untracked `.lace/mount-assignments.json` graphify entries removed (backup in overseer scratchpad); weftwise rebuilt; clauthier skipped (live `clauthier-overseer` session inside) |
+| dispatch | rebuild (general-purpose, sonnet) | clauthier container, `~/.cache/graphify*` | 2026-10-09T04:25 | maintainer authorized killing the live session ("the running session needs to be reloaded for the chat-record stuff") |
+| return | rebuild | n/a | 2026-10-09T04:35 | weftwise and clauthier both verified: no `graphify` binary, no graphify mounts, `claude --version` 2.1.295; clauthier `lace up --rebuild` exit 0, converser `runArgs` applied (pasta `8765`, secret present), no tracked `.lace/` diff; `~/.cache/graphify` and `~/.cache/graphify-weftwise` deleted; interfacer arc file already absent |
 
 ## Steering Log
 
