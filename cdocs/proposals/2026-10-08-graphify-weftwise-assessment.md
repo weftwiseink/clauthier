@@ -39,7 +39,7 @@ tags: [graphify, performance, evaluation]
 > Two blind judges grade each task, and their agreement is reported.
 > Each arm's peak context and the tokens entering its context are measured alongside reach.
 
-> NOTE(claude-opus-5-5/cdocs/remove-graphify): Phases 1-4 are done. Phase 5 is abandoned unexecuted at maintainer direction, superseded by `cdocs/proposals/2026-10-08-remove-graphify.md`.
+> NOTE(claude-opus-5-5/cdocs/remove-graphify): Phases 1-3 are accepted. Phase 4 is implemented, its re-review folded into Phase 5, which is abandoned unexecuted at maintainer direction, superseded by `cdocs/proposals/2026-10-08-remove-graphify.md`.
 
 ## Summary
 
