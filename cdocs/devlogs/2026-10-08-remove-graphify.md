@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: impl-1 applying accept-round nits; then maintainer acceptance; then rebase + land both repos, remove worktrees. Lace RFP done (`61a65162`, unpushed).
+- next_steps: awaiting maintainer acceptance; then rebase + land both repos, remove worktrees. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -79,6 +79,7 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 | dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-impl.md` (branch) | 2026-10-09T03:32 | re-run floor; verify wholesale devcontainer restores revert nothing unrelated |
 | return | rev-impl-1 | `feaed3e` (branch) | 2026-10-09T03:45 | accept, `review_proof: confirmed`: full floor re-run both repos green; devcontainer restores are exact inverses of the single graphify commit each (nothing unrelated reverted); 19 non-cdocs paths = inventory; 35 archived + assessment `evolved`; weftwise 8 archived, 2 deferred. Stale weftwise mount entries tested harmless (listed, not applied); clauthier port-file rewrite pre-existing (running container holds 22431). Nits: devlog 7 vs 8, rebase note, assessment NOTE phase wording, review-plugin RFP NOTE fairness, bin/README plural. 3 maintainer questions |
 | dispatch | impl-1 (warm, SendMessage) | both branches | 2026-10-09T03:47 | accept-round nits; RFP NOTE names maintainer decision (overseer call); lace stale mounts and port rewrite out of scope (overseer call) |
+| return | impl-1 | clauthier `55511e4`, `69375d5`, `3f8d0ec`; weftwise `37e8d121` | 2026-10-09T03:52 | nits resolved; greps and step 5 still empty, test:rules green |
 
 ## Steering Log
 
