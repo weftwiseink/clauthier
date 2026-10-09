@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: impl-1 implementing (iterate round 1); then fresh reviewer re-runs the floor; then land both repos. Lace RFP done (`61a65162`, unpushed).
+- next_steps: rev-impl-1 reviewing (re-runs floor); then land both repos and remove worktrees. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -38,6 +38,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 | devlog | concern | status | read this when |
 |---|---|---|---|
+| `cdocs/devlogs/2026-10-08-remove-graphify-impl.md` (branch) | removal execution | review_ready | verification outputs, deviations |
 
 ## Iterate Brief (Turn 0)
 
@@ -72,6 +73,8 @@ Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcont
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-r2.md` | 2026-10-09T03:11 | round 2, short |
 | return | rev-2 | `08200f5` | 2026-10-09T03:15 | proposal_accepted; all r1 items resolved; step 5 lists exactly the 36 records; notes: weftwise archival self-check grep in review, follow per-file `state` values, confirm `.lace` removal directly if `lace validate` doesn't print mounts |
 | dispatch | impl-1 (cdocs:implementer, opus) | clauthier worktree `../remove-graphify` (branch `remove-graphify`); weftwise worktree `remove-graphify` | 2026-10-09T03:17 | iterate round 1, phases 1-3 |
+| return | impl-1 | clauthier `9841ec1..4d261d3`; weftwise `726e07f5..e4d54915` | 2026-10-09T03:30 | all phases; floor green: greps empty, test:rules 18, test:opencode 9 (no graphify in build), chat-record 98, edit-path 17, detect-usage 11, `lace validate` passes both, step 5 empty (36 archived as planned), weftwise archival self-check empty, Dockerfile unchanged. Both `devcontainer.json` restored wholesale (clauthier = `041b1f6`, weftwise = `add5bd2b^`). Findings: weftwise untracked `main/.lace/mount-assignments.json` keeps stale graphify entries (maintainer state, untouched); clauthier `lace validate` rewrites tracked `.lace/port-assignments.json` (restored). Weftwise RFP NOTEs worded to what was measured. Cleanup left: `main/graphify-out/`, caches, arc file, worktrees |
+| dispatch | rev-impl-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-impl.md` (branch) | 2026-10-09T03:32 | re-run floor; verify wholesale devcontainer restores revert nothing unrelated |
 
 ## Steering Log
 
