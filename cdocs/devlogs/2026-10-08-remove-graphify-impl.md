@@ -29,13 +29,14 @@ Plan of record: the overseer devlog `cdocs/devlogs/2026-10-08-remove-graphify.md
 
 ## Scratchpoint
 
-- next_steps: fresh reviewer re-runs the floor (commands under Verification); overseer lands both branches by `git merge --ff-only`. Clauthier `main` was still at `0853e2f` when verification finished, so no rebase was needed.
+- next_steps: implementation review r1 accepted (`feaed3e`) and its accept-round items resolved; the overseer rebases the clauthier branch onto `main`, then lands both branches by `git merge --ff-only`.
 - important_files: clauthier worktree `/var/home/mjr/code/weft/clauthier/remove-graphify`, weftwise worktree `/var/home/mjr/code/weft/weftwise/remove-graphify`, verification outputs in `/tmp/claude-1000/-var-home-mjr-code-weft-clauthier-main/63ac45de-462d-4f43-ae1c-4ab6d59049b8/scratchpad/verify/` (`clauthier-verify.txt`, `weftwise-verify.txt`, per-suite logs, `*-lace-validate-{before,after}.txt`).
 - callouts:
   - decision: both worktrees stay in place for the overseer to land; no merge, push, or container rebuild.
   - todo (maintainer): weftwise `main/.lace/mount-assignments.json` (untracked) still holds `graphify/index` and `project/graphify-index`; delete those entries or let lace regenerate the file.
   - todo (overseer): the clauthier worktree has an untracked `node_modules` symlink to `main/node_modules`; it goes with the worktree.
   - warn: `lace validate` in clauthier rewrites tracked `.lace/port-assignments.json` (sshPort reassigned) on every run; restore it with `git checkout --` after each validate.
+  - decision (overseer call): lace never pruning stale mount assignments, and the clauthier `.lace/port-assignments.json` rewrite, are pre-existing lace behaviors, out of scope; noted for the maintainer, no action here.
 
 ## Plan
 
@@ -65,12 +66,12 @@ Baselines (`lace validate` both repos, `detect-usage.test.sh`) were captured bef
 - Commits: `726e07f5` (devcontainer), `71fbaf0a` (`.graphifyignore`), `c327fe94` (archive the six graphify-devcontainer-feature records), `e4d54915` (code-graph RFPs and checkpoint devlog).
 - `add5bd2b` is the only commit touching weftwise `devcontainer.json` since `add5bd2b^`, so the file is restored from `add5bd2b^` (diff empty); this covers every inventory row, both trailing commas included.
 - RFP NOTEs, one line each under the BLUF, pointing at clauthier `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md`:
-  - review-plugin RFP (`archived`): clauthier built this graphify-scoped agent context and removed it after its assessment found graph-assisted agents did not reliably beat grep-only agents and came no cheaper.
+  - review-plugin RFP (`archived`, wording an overseer call): clauthier built this graphify-scoped agent context, and the maintainer dropped graphify for its maintenance and dependency overhead, with the assessment finding no reliable gain over grep on discovery tasks.
   - spike-comparison RFP (`deferred`): the agent-context use was measured and removed, so the spike feeds only the canvas target (#3).
   - vellum-canvas RFP (`deferred`): the assessment measured agent-context value, not product value, so it does not bear on this target.
 
-> NOTE(claude-opus-5-5/cdocs/remove-graphify): The NOTEs characterize the assessment by what it measured (Phase 4 discovery tasks: neither arm reliably better, nothing cheaper), not as "no value".
-> The report's own BLUF still recommends "use now" for startup and reviewers; removal is the maintainer's call on upkeep, which the proposal's Objective states.
+> NOTE(claude-opus-5-5/cdocs/remove-graphify): The NOTEs characterize the assessment by what it measured (Phase 4 discovery tasks: no reliable gain over grep), not as "no value" and not as a recommendation against reviewer use.
+> The report's own BLUF still recommends "use now" for startup and reviewers; removal is the maintainer's call on maintenance and dependency overhead.
 
 > NOTE(claude-opus-5-5/cdocs/remove-graphify): Weftwise stale lace state, outside the proposal.
 > The first post-edit `lace validate` still listed `project/graphify-index` and `graphify/index` under "Resolved mount sources" and "Mount configuration", although the auto-injected templates and the generated `.lace/devcontainer.json` had none.
@@ -82,13 +83,20 @@ Baselines (`lace validate` both repos, `detect-usage.test.sh`) were captured bef
 
 - Commits: `ba359aa` (35 records `state: archived`), `3c4e7f8` (assessment proposal `state: archived`, `status: evolved`, NOTE under its BLUF).
 - The step-5 grep before editing listed exactly the Docs disposition set: 4 proposals, 5 reports, 7 devlogs, 20 reviews.
-- Phase 1-4 status in the NOTE checked against the assessment's top-level devlog Scratchpoint ("Phase 5 abandoned unexecuted").
+- The NOTE reads: Phases 1-3 accepted, Phase 4 implemented with its re-review folded into Phase 5, Phase 5 abandoned unexecuted (per the assessment's top-level devlog; corrected in the accept round from "Phases 1-4 are done").
 
 ### Deviations and observations
 
 - The proposal's "18 tracked files" is 19: its inventory has 18 rows, one of which covers both detect-usage files. No effect.
-- `bin/README.md`'s BLUF keeps the proposal's wording, "OpenCode does not ship it", under a "Runtime commands" first line that now covers one command; left as specified.
+- `bin/README.md`'s BLUF uses the proposal's "OpenCode does not ship it"; its first line is made singular to match (accept round).
 - Nothing else deviates from the proposal.
+
+### Accept-round items (review r1, `feaed3e`)
+
+- `plugins/cdocs/bin/README.md` BLUF: "The runtime command Claude Code puts on ...", matching "OpenCode does not ship it".
+- Assessment proposal NOTE: phase states corrected (above).
+- Weftwise review-plugin RFP NOTE: reworded (above).
+- Devlog: weftwise archived count 8, landing note now says the overseer rebases before landing.
 
 ## Changes Made
 
@@ -101,7 +109,7 @@ Baselines (`lace validate` both repos, `detect-usage.test.sh`) were captured bef
 | clauthier `scripts/detect-usage.sh`, `scripts/detect-usage.test.sh` | Neutral example tool names. |
 | clauthier `cdocs/` (36 records) | `state: archived`; assessment proposal `status: evolved` plus NOTE. |
 | weftwise `.devcontainer/devcontainer.json`, `.graphifyignore` | Restored to `add5bd2b^`; deleted. |
-| weftwise `cdocs/` (10 records) | 7 archived, 2 deferred, 3 RFP NOTEs. |
+| weftwise `cdocs/` (10 records) | 8 archived, 2 deferred, 3 RFP NOTEs. |
 
 ## Verification
 
