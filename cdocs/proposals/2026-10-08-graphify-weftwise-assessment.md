@@ -7,10 +7,10 @@ type: proposal
 state: live
 status: review_ready
 last_reviewed:
-  status: accepted
+  status: revision_requested
   by: "@claude-opus-5-5"
-  at: 2026-10-08T15:49:31-07:00
-  round: 4
+  at: 2026-10-08T17:02:56-07:00
+  round: 5
 tags: [graphify, performance, evaluation]
 ---
 
