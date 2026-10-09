@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T14:35:11-07:00
 task_list: cdocs/graphify-weftwise-assessment
 type: report
-state: live
+state: archived
 status: review_ready
 last_reviewed:
   status: revision_requested

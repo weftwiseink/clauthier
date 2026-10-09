@@ -4,7 +4,7 @@ first_authored:
   at: 2026-09-17T15:30:00-08:00
 task_list: code-graph/lace-devcontainer-enablement
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

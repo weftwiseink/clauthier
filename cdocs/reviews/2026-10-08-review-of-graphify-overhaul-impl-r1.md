@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-08T10:45:00-07:00
 task_list: cdocs/graphify-overhaul
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, runtime_validated, minimalism, graphify, test_plan, verification_design]
 ---

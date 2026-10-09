@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-08T11:11:16-07:00
 task_list: cdocs/graphify-overhaul
 type: review
-state: live
+state: archived
 status: done
 tags: [rereview_agent, runtime_validated, minimalism, graphify, staleness_stamp, ablation]
 ---

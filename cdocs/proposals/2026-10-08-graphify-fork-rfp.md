@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T11:22:39-07:00
 task_list: cdocs/graphify-fork
 type: proposal
-state: live
+state: archived
 status: request_for_proposal
 tags: [future_work, graphify, performance, upstream]
 ---

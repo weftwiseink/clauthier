@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T12:30:00-07:00
 task_list: cdocs/graphify-overhaul
 type: report
-state: live
+state: archived
 status: review_ready
 tags: [graphify, upstream, maintenance]
 ---

@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T10:16:00-07:00
 task_list: cdocs/graphify-overhaul
 type: devlog
-state: live
+state: archived
 status: done
 part_of: cdocs/devlogs/2026-10-08-graphify-overhaul.md
 tags: [graphify, claude_skills]

@@ -4,7 +4,7 @@ first_authored:
   at: 2026-09-17T15:42:00-08:00
 task_list: code-graph/cdocs-integration
 type: report
-state: live
+state: archived
 status: review_ready
 tags: [analysis, tooling, code_graph, mcp, cli, integration]
 ---

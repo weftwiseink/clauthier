@@ -5,7 +5,7 @@ first_authored:
   at: 2026-09-17T14:05:00-08:00
 task_list: code-graph/cdocs-integration
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, rereview_agent, architecture, recall_parity, token_efficiency, model_tiering, writing_conventions]
 ---

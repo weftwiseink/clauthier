@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-08T13:53:20-07:00
 task_list: cdocs/graphify-weftwise-assessment
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, source_verified, test_plan, graphify, performance]
 ---

@@ -4,7 +4,7 @@ first_authored:
   at: 2026-09-17T15:30:00-08:00
 task_list: cdocs/graphify-lace-devcontainer-enablement
 type: devlog
-state: live
+state: archived
 status: wip
 tags: [devcontainer, lace, graphify, tooling, integration]
 ---

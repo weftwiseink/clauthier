@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T08:56:00-07:00
 task_list: cdocs/graphify-overhaul
 type: proposal
-state: live
+state: archived
 status: implementation_accepted
 last_reviewed:
   status: accepted

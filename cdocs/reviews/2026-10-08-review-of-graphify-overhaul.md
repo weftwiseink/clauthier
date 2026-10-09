@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-08T09:01:00-07:00
 task_list: cdocs/graphify-overhaul
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, architecture, history_check, shared_state, test_plan, recall_parity]
 ---

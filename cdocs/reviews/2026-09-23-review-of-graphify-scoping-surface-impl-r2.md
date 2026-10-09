@@ -5,7 +5,7 @@ first_authored:
   at: 2026-09-23T14:20:00-08:00
 task_list: code-graph/cdocs-integration
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, rereview_agent, runtime_validated, fixture_verified, graphify, scoping, recall_parity, cli_reconcile]
 ---

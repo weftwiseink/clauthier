@@ -5,7 +5,7 @@ first_authored:
   at: 2026-09-22T15:30:00-07:00
 task_list: code-graph/cdocs-integration
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, scoping_revision, architecture, recall_parity, cli_first, discriminator, first_increment]
 ---

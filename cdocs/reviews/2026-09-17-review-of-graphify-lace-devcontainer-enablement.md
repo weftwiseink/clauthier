@@ -5,7 +5,7 @@ first_authored:
   at: 2026-09-17T13:30:00-07:00
 task_list: code-graph/lace-devcontainer-enablement
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, devcontainer_features, lace, runtime_validated, implementation_review]
 ---

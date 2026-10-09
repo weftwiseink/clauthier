@@ -5,7 +5,7 @@ first_authored:
   at: 2026-10-08T10:03:56-07:00
 task_list: cdocs/graphify-overhaul
 type: review
-state: live
+state: archived
 status: done
 tags: [fresh_agent, minimalism, verification_design, ablation, naming]
 ---

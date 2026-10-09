@@ -4,7 +4,7 @@ first_authored:
   at: 2026-10-08T10:52:14-07:00
 task_list: cdocs/graphify-overhaul
 type: report
-state: live
+state: archived
 status: wip
 tags: [investigation, audit, performance, graphify, runtime_validated]
 ---
