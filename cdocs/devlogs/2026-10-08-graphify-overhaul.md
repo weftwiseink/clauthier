@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-08T08:53:00-07:00
 task_list: cdocs/graphify-overhaul
 type: devlog
-state: live
-status: wip
+state: archived
+status: done
 tags: [graphify, oversight]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -25,7 +25,7 @@ Maintainer edits pointing at the design: `dba0ac9` (`tool-use-safeguards.md` "To
 
 ## Scratchpoint
 
-- next_steps: landed `21bdaaf`; post-accept main-graph rebuild + exclusion check running; the live iterate-round check is logged on the next real `/cdocs:iterate` in the container; RFPs (fork, delete-ablate) open; land, post-accept clauthier devcontainer live run + exclusion check; multi-trial ablation follow-up pending maintainer; impl-1 near 400K, so any further round uses a fresh implementer from its Scratchpoint; weftwise ablation after the weftwise container rebuild (resume impl-1 or fresh); worktree `../graphify-overhaul`, in parallel with the unlanded interfacer branch (second to land rebases over `reviewer.md`, `iterate/SKILL.md`); ablate waits on the weftwise full-send; live run rebuilds `/var/cache/graphify` from the repo first.
+- next_steps: none; closed. Graphify dropped after `cdocs/devlogs/2026-10-08-graphify-weftwise-assessment.md`; removal in `cdocs/devlogs/2026-10-08-remove-graphify.md`.
 - graphify_query:
 - important_files: `plugins/cdocs/bin/graphify-scope`, `plugins/cdocs/skills/iterate/SKILL.md` "Graphify scoping", `plugins/cdocs/agents/reviewer.md` "Graphify scoped-context brief", `plugins/cdocs/rules/tool-use-safeguards.md`, `cdocs/proposals/2026-09-17-graphify-cdocs-integration.md`
 - callouts:

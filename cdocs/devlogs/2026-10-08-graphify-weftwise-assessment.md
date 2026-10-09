@@ -4,8 +4,8 @@ first_authored:
   at: 2026-10-08T19:35:00-07:00
 task_list: cdocs/graphify-weftwise-assessment
 type: devlog
-state: live
-status: wip
+state: archived
+status: done
 tags: [graphify, performance]
 chat_record:
   - cdocs/_chat/2026-10-07-63ac45de-462d-4f43-ae1c-4ab6d59049b8.md
@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: maintainer keep/drop decision (exploration: 2 of 22 useful, both covered by `madge`/`knip`); if drop, `/cdocs:rfp` removal of graphify from clauthier and weftwise. Then fresh implementer, review; rev-search adversarially reviewing the search report; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: none; closed. Maintainer dropped graphify after the informal exploration (2 of 22 useful, both covered by `madge`/`knip`); Phase 5 abandoned unexecuted. Removal continues in `cdocs/devlogs/2026-10-08-remove-graphify.md`.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -158,3 +158,5 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 - 2026-10-09T01:05: maintainer: "I'm leaning away from it based on our present results, so if we find insufficiencies in those results we should challenge them all the more rigorously". Overseer: Phase 4's conditioning was not real cdocs (stale 0.1.0 in weftwise, ad hoc card, sonnet, `podman exec`), so Phase 5 re-measures under real conditioning with a ceiling arm; the search report (which also supports dropping) gets an adversarial review.
 
 - 2026-10-09T01:50: overseer asked whether to run the reviewed Phase 5 (~3-5 h, $100-200 est.), noting Phase 4 arms already had the 0.2.0 rule line, skill listing and graph-first instruction. Maintainer: "Why would it take so long!? Just, look: let's just have an agent mess around with graphify queries exploring random ideas for what might be non-obvious with grep for like, 20 different queries aiming for as much variety as possible. If none of them seem good then we forget it! It doesn't have to be so complicated"; model: Opus 5.5; "Just forget this hyper-rigorous approach, it isn't getting us anywhere." Phase 5 abandoned (not executed); informal exploration dispatched.
+
+- 2026-10-09T02:38: maintainer: "fully yeet this misadventure": graphify removal full-sent (`cdocs/devlogs/2026-10-08-remove-graphify.md`); this workstream closed.
