@@ -6,6 +6,11 @@ task_list: cdocs/remove-graphify
 type: proposal
 state: live
 status: review_ready
+last_reviewed:
+  status: revision_requested
+  by: "@claude-opus-5-5"
+  at: 2026-10-08T17:40:00-07:00
+  round: 1
 tags: [graphify, cleanup, devcontainer]
 ---
 
