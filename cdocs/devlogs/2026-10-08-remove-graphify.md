@@ -23,13 +23,15 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: proposal review round 1 (rev-1). Lace RFP done (`61a65162`, unpushed).
+- next_steps: prop-1 revising per r1; then fresh rev-2. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
   - decision (overseer call): no container rebuilds in this workstream; config changes only, rebuild at the maintainer's convenience.
   - decision (overseer call): plugin stays 0.2.0 (untagged, unpushed), so the removal ships in the same release.
   - decision (overseer call): weftwise `2026-09-15-code-graph-review-plugin-rfp.md` archived, the other two code-graph RFPs deferred, each with a NOTE pointing at the clauthier assessment.
+  - decision: `scripts/detect-usage.sh` kept with reworded examples (maintainer earlier: "keep it around as a script for internal use").
+  - decision (overseer call): weftwise code-graph checkpoint devlog archived with the review-plugin RFP.
   - todo: maintainer-owned weftwise worktrees (`bocsync-bailout`, `df-to-mount`, `dogfood-sept`, `logical-core`, `loro-branching`, `loro-repo-package`) and `loro/` are never touched.
 
 ## Workstream Devlogs
@@ -41,6 +43,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
+| r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-remove-graphify.md` | `claude-code:1` rationale, step-5 self-match, RFP calls into proposal |
 
 ## Judge Log
 
@@ -56,6 +59,8 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 | return | rfp-lace | lace `61a65162` (unpushed) | 2026-10-09T02:50 | lace `cdocs/proposals/2026-10-08-delete-graphify-feature-rfp.md`: delete `devcontainers/features/src/graphify/`, its tests, lace's own devcontainer use; update 2 doc cross-refs; archive the six 2026-09-15 graphify records. Open questions: registry deprecation vs source deletion, other consumers, reuse of the host-cache-mount convention |
 | return | prop-1 | `2470c67`, `761a407` | 2026-10-09T02:55 | `review_ready`: 3 phases (clauthier branch `remove-graphify`; weftwise throwaway worktree `remove-graphify` from local main; docs archival on phase-1 branch). Agents and build/test scripts already clean; iterate `[base_query: set|empty]` tag needs separate grep; tracked `.lace/mount-assignments.json` graphify entry; removes `claude-code:1` feature in both devcontainers (added with graphify; clauthier gets claude-code from `lace-fundamentals`); reword `bin/README.md`, CI header; detect-usage examples reworded (`sometool`, `mcp__example__scope`) so shipped grep is zero; `lace validate` as parse check; docs `state: archived`, assessment proposal `evolved`. Leftovers for maintainer: `main/graphify-out/`, `~/.cache/graphify*`, `.claude/oversee/2026-10-08-graphify-interfacer.json`, possible `graphify` MCP registration. Open: weftwise code-graph RFPs |
 | dispatch | rev-1 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify.md` | 2026-10-09T02:57 | round 1; inventory greps, `claude-code:1` removal safety, proportionality, floor |
+| return | rev-1 | `93271ca` | 2026-10-09T03:05 | revise. `claude-code:1` removal safe but rationale wrong: claude-code comes from host `~/.config/lace/user.json` (lace `mergeUserFeatures`), not `lace-fundamentals`; both repos ran without it pre-graphify. Verification step 5 matches this workstream's own docs. Overseer call on weftwise RFPs sound (canvas NOTE must not imply product value disproved; path pointers, clauthier unpushed). Inventory matches reviewer greps exactly; test:rules, chat-record 98, edit-path 17, detect-usage 11 pass at `761a407`. 2 questions (detect-usage keep/delete; weftwise code-graph checkpoint devlog) |
+| dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-09T03:07 | r1 revisions; detect-usage kept (maintainer earlier direction); checkpoint devlog archived (overseer call) |
 
 ## Steering Log
 
