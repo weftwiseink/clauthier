@@ -23,7 +23,7 @@ Weigh runtime (full build, no-op, post-edit, fresh-worktree first query) and use
 
 ## Scratchpoint
 
-- next_steps: explore-1 running the informal exploration (Phase 5 abandoned at maintainer direction); if nothing useful, drop graphify. Then fresh implementer, review; rev-search adversarially reviewing the search report; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
+- next_steps: maintainer keep/drop decision (exploration: 2 of 22 useful, both covered by `madge`/`knip`); if drop, `/cdocs:rfp` removal of graphify from clauthier and weftwise. Then fresh implementer, review; rev-search adversarially reviewing the search report; then, fresh implementer. Pending maintainer after that: acceptance (`implementation_accepted`), `source` condition decision, upstream note filing decision, kept-stamp wrapper change decision.
 - graphify_base_query:
 - important_files: `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/skills/graphify/SKILL.md`, `cdocs/reports/2026-10-08-graphify-update-performance-audit.md`, `cdocs/reports/2026-10-08-graphify-upstream-health.md`, weftwise `.graphifyignore`
 - callouts:
@@ -137,6 +137,7 @@ Failure picture: `_archive/` silently back in a cleaned build, a raw command ove
 | return | rev-search-2 | `924a335` | 2026-10-09T02:00 | revise, wording only; scripts reproduce exactly. Counts: Explore users 3 correct; 114/162 vs 116/167 and 250 vs 209 both defensible. Blocking: 14% is pooled (per-agent median 17%, p90 25%); table covers 84% of growth, own output a lower bound (clean 25 agents: 50/10/5); Explore displacement inconclusive; read discipline and searcher target similar slices, only session length leads. Report grew to 2,270 words |
 | dispatch | rpt-search (warm, SendMessage) | search report | 2026-10-09T02:02 | r2 wording fixes + trim; final pass, `done` (overseer call: no round 3, per maintainer "forget this hyper-rigorous approach") |
 | return | rpt-search | `5fe72bd`, `e9f5f76` | 2026-10-09T02:10 | `done`: per-agent search ceiling 17% median / 25% p90 (pooled 14% labelled); 84% attributed, own output lower bound; Explore displacement inconclusive; session length the one clearly leading lever; no searcher, no prep pass (on cost, latency, miss rate, reviewer anchoring); graphify pointers and rho table dropped; 1,802 words. Clauthier search cost not re-priced |
+| return | explore-1 | `8d57adf` | 2026-10-09T02:20 | 22 queries, 2 useful and not grep-obvious, neither from interactive commands: GRAPH_REPORT import cycles (14; 4 checked, real runtime cycles) and a custom reachability script over `graph.json` (16 flagged, 12 truly dead; 7 of 11 files in `lib/storage/sync/` behind an unimported barrel). ~5 partly useful. `query`/`explain`/`path`/`affected` at best a convenience, often noisy or misleading (keyword seeds, external-package paths, missed imports, test-skewed hubs, object-literal calls missed). `madge --circular` and `knip` cover both useful results |
 
 ## Steering Log
 
