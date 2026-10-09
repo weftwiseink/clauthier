@@ -62,10 +62,10 @@ The maintainer's direction is to remove it entirely and pursue context-load redu
 | `plugins/cdocs/README.md` | Delete the `/cdocs:graphify` table row (line 50); line 54 becomes "bundles one command, `chat-record`". |
 | `CLAUDE.md` | Drop `graphify` from the skills list (line 50). |
 | `.devcontainer/devcontainer.json` | Delete the graphify feature block and the `claude-code:1` declaration whose comment justifies it only by graphify (lines 24-34), and the now-trailing comma after the `opencode:0` entry. |
-| `.lace/mount-assignments.json` | Delete the `graphify/index` entry (tracked lace state). |
+| `.lace/mount-assignments.json` | Delete the `graphify/index` entry (tracked lace state) and commit only that removal. |
 | `.graphifyignore` | Delete. |
 | `.gitignore` | Delete the `graphify-out/` comment and line (lines 18-19). |
-| `scripts/detect-usage.sh`, `scripts/detect-usage.test.sh` | Reword the example tool names: `mcp__graphify__scope` to `mcp__example__scope`, `graphify` as a CLI to `sometool`. Behavior unchanged. |
+| `scripts/detect-usage.sh`, `scripts/detect-usage.test.sh` | Reword the example tool names and the comments describing them: `mcp__graphify__scope` to `mcp__example__scope`, `graphify` as a CLI to `sometool`. Behavior unchanged. |
 
 Line numbers are as of commit `d6813e8`: match on content.
 `plugins/cdocs/agents/` already carries no graphify text.
@@ -76,7 +76,7 @@ The graphify full-send (weftwise `1caa585d..99475534`, `5e446a84`, and the unpus
 
 | Path | Action |
 |---|---|
-| `.devcontainer/devcontainer.json` | Delete the `claude-code:1` and `graphify:1` feature entries with their comments, the `graphify-index` project mount, both `graphify/index ... (unused; see graphify-index)` comment lines, and `containerEnv.GRAPHIFY_OUT` with its comment, leaving the `portless:1` entry last in `features` with no trailing comma. |
+| `.devcontainer/devcontainer.json` | Delete the `claude-code:1` and `graphify:1` feature entries with their comments, the `graphify-index` project mount, both `graphify/index ... (unused; see graphify-index)` comment lines, and `containerEnv.GRAPHIFY_OUT` with its comment. Drop the trailing commas this exposes: after `portless:1` (last in `features`) and after `aws-config` (last in `customizations.lace.mounts`). |
 | `.graphifyignore` | Delete. |
 | `.devcontainer/Dockerfile` | Keep: the `.pnpmfile.cjs` copy fix (`a61e8e6a`) is unrelated. |
 
@@ -98,17 +98,23 @@ Clauthier:
 
 Weftwise:
 - `cdocs/proposals/2026-10-08-graphify-devcontainer-feature.md`, `cdocs/devlogs/2026-10-08-graphify-devcontainer-feature.md`, `cdocs/devlogs/2026-10-08-graphify-devcontainer-feature-impl.md`, and the three `cdocs/reviews/2026-10-08-review-of-graphify-devcontainer-feature*.md`.
+- The 2026-09-15 code-graph chain (overseer call), each RFP with a one-line NOTE under its BLUF pointing at clauthier `cdocs/reports/2026-10-08-graphify-weftwise-assessment.md`:
+  - `cdocs/proposals/2026-09-15-code-graph-review-plugin-rfp.md`: `state: archived` (it proposes the graphify-style cdocs review integration being removed).
+  - `cdocs/devlogs/2026-09-15-code-graph-chain-checkpoint.md`: `state: archived`, no NOTE.
+  - `cdocs/proposals/2026-09-15-code-understanding-graph-spike-comparison-rfp.md`: `state: deferred`.
+  - `cdocs/proposals/2026-09-15-code-graph-adapter-vellum-canvas-rfp.md`: `state: deferred`, its NOTE saying the assessment measured agent-context value, not product value.
 
 Documents that only mention graphify in passing (the ablation, chat-record, rules, and interfacer records) are untouched.
 
-> NOTE(claude-opus-5-5/cdocs/remove-graphify): weftwise's 2026-09-14/15 code-graph research chain (archived reports plus three live RFPs, including `2026-09-15-code-graph-review-plugin-rfp.md`, "a graphify-or-equivalent plugin" for the cdocs review loop) is engine-agnostic product research, not the integration being removed.
-> It is left as is: whether to defer it is a maintainer call.
+> NOTE(claude-opus-5-5/cdocs/remove-graphify): The weftwise code-graph chain disposition is an overseer call.
+> The canvas RFP is deferred, not archived, because the assessment measured graphify's value as agent context, not a code graph's value as a product feature.
 
 ## Important Design Decisions
 
 - **Delete, do not stub.** No deprecation shim for `/cdocs:graphify` or `cdocs-graphify`: the plugin is unreleased at 0.2.0 and its only consumers are the maintainer's repos.
 - **Drop the `claude-code:1` declarations in both devcontainers.** Each was added with graphify, and each comment justifies it only as graphify's MCP-registration prerequisite.
-  Clauthier gets claude-code from `lace-fundamentals`, and weftwise had it from host user config before graphify.
+  Both repos get claude-code from the host's `~/.config/lace/user.json` features, which lace merges under every project's features (`mergeUserFeatures`), not from `lace-fundamentals`.
+  Removal restores the pre-graphify state (clauthier `041b1f6`, weftwise `add5bd2b^`), neither of which declares it.
 - **Reword `detect-usage` rather than keep graphify examples.** The script stays (maintainer direction), but its fixtures' tool names are arbitrary, and a zero-hit grep is a crisper gate than an allowlist of residue.
 - **Archive, do not delete, records.** cdocs records are the history.
   The shipped text is what goes, framed history-agnostically (no "graphify was removed" notes in shipped files).
@@ -119,14 +125,14 @@ Documents that only mention graphify in passing (the ablation, chat-record, rule
 - **Stale local index.** `main/graphify-out/` exists untracked with no inner `.gitignore`; once `.gitignore` drops `graphify-out/`, it shows as untracked in `main`.
   The overseer deletes it after landing (it does not block the ff-merge, since no tracked path collides).
   Host caches `~/.cache/graphify` and `~/.cache/graphify-weftwise` are the maintainer's to delete.
-- **Lingering MCP registration.** The feature registered a `graphify` MCP server into the container's Claude config, which is host-mounted.
-  If it survives the next rebuild, `claude mcp remove graphify` in each container clears it.
-  Until then it only fails to start: noise, not breakage.
+- **MCP registration.** The host-mounted Claude configs show no `graphify` MCP server, so nothing needs removing.
+  If one appears after the next rebuild, `claude mcp remove graphify` clears it.
 - **Concurrent commits on clauthier `main`.** Other sessions commit there, so the worktree branch may need a rebase onto `main` before the ff-merge.
   The frontmatter-only archival edits are unlikely to conflict.
 - **Unpushed weftwise `main`.** Weftwise `main` is ahead of origin (including `2791713d`); branch from local `main`, not `origin/main`.
 - **Materialized rules in consumers.** A project whose `.claude/rules/cdocs.md` was generated with the graphify bullet gets the SessionStart freshness directive on the next session and re-runs `/cdocs:init`; weftwise (v0.1.0) never had it.
-- **`.lace/mount-assignments.json`.** `lace validate` may rewrite it; after the run, confirm `graphify/index` stays absent and nothing else changed unexpectedly.
+- **Tracked `.lace/` state.** `lace validate` may rewrite tracked `.lace/*.json` in clauthier.
+  Commit only the `graphify/index` removal, and `git checkout --` any other validate-induced change.
 - **Arc state.** `.claude/oversee/2026-10-08-graphify-interfacer.json` is gitignored runtime state that the overseer may delete.
 
 ## Test Plan
@@ -140,11 +146,11 @@ No new tests: the existing suites guard the edits.
 ## Verification Methodology
 
 Run in the clauthier worktree after Phases 1 and 3, capturing output per "CDocs Tool Use Guidance › Bash":
-1. `git grep -il graphify -- plugins scripts .github .devcontainer .lace CLAUDE.md README.md .gitignore` returns nothing, and `git ls-files | grep -i graphify` lists only paths under `cdocs/`.
+1. `git grep -il graphify -- ':!cdocs'` returns nothing, and `git ls-files | grep -i graphify` lists only paths under `cdocs/`.
 2. `git grep -n base_query -- plugins` returns nothing.
 3. The test plan commands above all pass.
 4. `lace validate` reports "Validation passed." with no `graphify/index` mount in its output.
-5. `git grep -lE '^state: live' -- 'cdocs/*graphify*'` returns nothing (the two overseer-owned top-level devlogs are already archived).
+5. `git grep -lE '^state: live' -- 'cdocs/*graphify*' ':!cdocs/*remove-graphify*'` returns nothing (the two overseer-owned top-level devlogs are already archived, and this workstream's own records are excluded).
 
 Run in the weftwise worktree after Phase 2:
 1. `git grep -il graphify -- ':!cdocs'` returns nothing, and `git ls-files | grep -i graphify` lists only paths under `cdocs/`.
@@ -165,7 +171,7 @@ Do not touch: `cdocs/` (Phase 3), `plugins/cdocs/.claude-plugin/plugin.json` (ve
 On a throwaway worktree branch `remove-graphify` off weftwise local `main`, as a sibling worktree at `/var/home/mjr/code/weft/weftwise/remove-graphify/`.
 Apply the weftwise inventory and archive the weftwise docs listed under Docs disposition.
 Success: weftwise verification steps 1-3 pass.
-Do not touch: `.devcontainer/Dockerfile`, the 2026-09-14/15 code-graph research docs, `.claude/rules/cdocs.md`.
+Do not touch: `.devcontainer/Dockerfile`, the rest of the 2026-09-14/15 code-graph chain (the reports and devlogs not listed under Docs disposition), `.claude/rules/cdocs.md`.
 Independent of Phases 1 and 3.
 
 ### Phase 3: Clauthier docs archival
