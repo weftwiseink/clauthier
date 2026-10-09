@@ -1,6 +1,6 @@
 # `bin/`
 
-> BLUF: Runtime commands Claude Code puts on the Bash tool's `PATH` while the plugin is enabled.
+> BLUF: The runtime command Claude Code puts on the Bash tool's `PATH` while the plugin is enabled.
 > OpenCode does not ship it.
 
 ## `chat-record`
