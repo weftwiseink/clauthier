@@ -13,7 +13,7 @@ tags: [graphify, cleanup, devcontainer]
 # Remove Graphify Implementation: Devlog
 
 > BLUF: All three phases of `cdocs/proposals/2026-10-08-remove-graphify.md` are implemented and every verification step passes in both repos.
-> Clauthier branch `remove-graphify` (worktree `../remove-graphify`, 9 commits on `0853e2f`) and weftwise branch `remove-graphify` (worktree `/var/home/mjr/code/weft/weftwise/remove-graphify`, 4 commits on `2791713d`) are unmerged, for the overseer to land.
+> Clauthier branch `remove-graphify` (worktree `../remove-graphify`, from `0853e2f`) and weftwise branch `remove-graphify` (worktree `/var/home/mjr/code/weft/weftwise/remove-graphify`, 4 commits from `2791713d`) are unmerged, for the overseer to land.
 > Both `devcontainer.json` files equal their pre-graphify forms exactly.
 > One finding outside the plan: weftwise's untracked `.lace/mount-assignments.json` keeps stale graphify mount assignments, which lace lists but does not render into the generated config.
 
