@@ -10,9 +10,9 @@
 #   An errored call still counts as used (presence, not result).
 #
 # <sig> is EITHER:
-#   - an MCP tool name, e.g. "mcp__graphify__scope" (or a bare trailing name "scope"), matched
+#   - an MCP tool name, e.g. "mcp__example__scope" (or a bare trailing name "scope"), matched
 #     against tool_use `.name` == <sig> or endswith("__" + <sig>);
-#   - "cli:<regex>", e.g. "cli:^graphify ", matched against a Bash tool_use's `.input.command`.
+#   - "cli:<regex>", e.g. "cli:^sometool ", matched against a Bash tool_use's `.input.command`.
 #     The command is split at shell separators (&&, ||, ;, |) and the regex is tested per segment
 #     and against the whole string, so a caret anchor matches the real command through a
 #     `cd <dir> && ...` prefix while unanchored forms and true negatives are unaffected.
