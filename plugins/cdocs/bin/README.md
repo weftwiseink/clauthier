@@ -1,7 +1,7 @@
 # `bin/`
 
 > BLUF: Runtime commands Claude Code puts on the Bash tool's `PATH` while the plugin is enabled.
-> OpenCode ships neither.
+> OpenCode does not ship it.
 
 ## `chat-record`
 
@@ -63,40 +63,3 @@ A real `Stop` block, from a turn with no note yet:
 Design rationale: [`cdocs/proposals/2026-09-22-chat-record-devlog-management.md`](../../../cdocs/proposals/2026-09-22-chat-record-devlog-management.md).
 Usage for the top-level agent: [`../skills/chat-record/SKILL.md`](../skills/chat-record/SKILL.md).
 Hook wiring, permissions, and opt-outs: [`../README.md`](../README.md) "Chat record".
-
-## `cdocs-graphify`
-
-> BLUF: Runs a graphify `query`, `explain`, `path`, or `affected` against the calling worktree's own index, kept current on every call.
-> Agents use it through the `/cdocs:graphify` skill; overseers never run it.
-
-### What it does
-
-- Copies the main graph into `<toplevel>/graphify-out/` if that has no `graph.json`: from `$GRAPHIFY_OUT` when set (the devcontainer's shared index), else from the `main` worktree's `graphify-out/`.
-  The copy drops `.graphify_root` and graphify's dated backup dirs, and ignores itself (`.gitignore` of `*`).
-- Runs `graphify update <toplevel>` into that index (AST-only, no LLM), logging to `graphify-out/update.log`, unless a stamp of `HEAD` plus the changed files graphify graphs (paths in `.graphifyignore` left out) matches the last successful update; on failure it says so and queries the existing index.
-  graphify 0.9.x rebuilds the whole corpus on every `update`, so the first query after a code edit costs about 14 s at weftwise scale.
-- Passes its arguments to `graphify` with `--graph <worktree index>`, stdout and exit code unchanged.
-- Appends `.observe`/`.subscribe` sites (up to 30) from files the output names, which the graph cannot see.
-- Without `graphify`, a git worktree, or any index: one `skipping` line on stderr, exit 0.
-- When `cdocs/` exists and `.graphifyignore` lacks a root-anchored `/cdocs/` line: a one-line hint to run `/cdocs:init`.
-
-### Examples
-
-```console
-$ cdocs-graphify query "how does the iterate overseer dispatch reviewers"
-$ cdocs-graphify explain "readMount()"
-$ cdocs-graphify path "renderView()" "readMount()"
-```
-
-Without graphify:
-
-```console
-$ cdocs-graphify query "anything"
-cdocs-graphify: graphify not installed; skipping
-```
-
-### More
-
-Design: [`cdocs/proposals/2026-10-08-graphify-overhaul.md`](../../../cdocs/proposals/2026-10-08-graphify-overhaul.md).
-Agent usage: [`../skills/graphify/SKILL.md`](../skills/graphify/SKILL.md).
-Tests: `bash plugins/cdocs/hooks/tests/cdocs-graphify.test.sh`.
