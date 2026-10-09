@@ -23,7 +23,7 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 
 ## Scratchpoint
 
-- next_steps: rev-2 reviewing; then `/cdocs:iterate` with a fresh implementer. Lace RFP done (`61a65162`, unpushed).
+- next_steps: impl-1 implementing (iterate round 1); then fresh reviewer re-runs the floor; then land both repos. Lace RFP done (`61a65162`, unpushed).
 - graphify_base_query:
 - important_files: `plugins/cdocs/skills/graphify/`, `plugins/cdocs/bin/cdocs-graphify`, `plugins/cdocs/rules/tool-use-safeguards.md`, `plugins/cdocs/skills/iterate/`, `.devcontainer/devcontainer.json`, `.graphifyignore`, `.github/workflows/cdocs-hooks.yml`, weftwise `.devcontainer/`, weftwise `.graphifyignore`, lace `devcontainers/features/src/graphify/`
 - callouts:
@@ -39,11 +39,18 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 | devlog | concern | status | read this when |
 |---|---|---|---|
 
+## Iterate Brief (Turn 0)
+
+`/cdocs:iterate cdocs/proposals/2026-10-08-remove-graphify.md` (`implementation_ready`), overseer: this top-level session; clauthier worktree `../remove-graphify` (branch `remove-graphify`), weftwise throwaway worktree `remove-graphify`; overseer lands both by ff-merge.
+Verification floor: the proposal's verification steps (shipped-path graphify/base_query greps empty, step-5 archival list, test suites, `build:cdocs`, `lace validate` both repos, weftwise grep).
+Failure picture: leftover `/cdocs:graphify` or `base_query` text, broken devcontainer JSON, tracked `.lace` rewritten beyond the graphify entry, maintainer worktrees touched.
+
 ## Iteration Log
 
 | iteration | implementer | reviewer | review_verdict | review_proof | review_path | notes |
 |---|---|---|---|---|---|---|
 | r1 | prop-1 (cdocs:proposer, opus) | rev-1 (cdocs:reviewer, opus, fresh) | revise | n/a | `cdocs/reviews/2026-10-08-review-of-remove-graphify.md` | `claude-code:1` rationale, step-5 self-match, RFP calls into proposal |
+| r2 | prop-1 (warm) | rev-2 (cdocs:reviewer, opus, fresh) | proposal_accepted | n/a | `cdocs/reviews/2026-10-08-review-of-remove-graphify-r2.md` | nits only |
 
 ## Judge Log
 
@@ -63,6 +70,8 @@ Context-load reduction moves to better factoring and code cleanliness later; not
 | dispatch | prop-1 (warm, SendMessage) | proposal | 2026-10-09T03:07 | r1 revisions; detect-usage kept (maintainer earlier direction); checkpoint devlog archived (overseer call) |
 | return | prop-1 | `d48c41d` | 2026-10-09T03:10 | r1 items applied: claude-code rationale (host `user.json`, verified), step-5 exclusion, weftwise RFP calls written in, `.lace/` restore rule, both trailing commas, `:!cdocs` grep, detect-usage comments, MCP edge cut |
 | dispatch | rev-2 (cdocs:reviewer, opus, fresh) | `cdocs/reviews/2026-10-08-review-of-remove-graphify-r2.md` | 2026-10-09T03:11 | round 2, short |
+| return | rev-2 | `08200f5` | 2026-10-09T03:15 | proposal_accepted; all r1 items resolved; step 5 lists exactly the 36 records; notes: weftwise archival self-check grep in review, follow per-file `state` values, confirm `.lace` removal directly if `lace validate` doesn't print mounts |
+| dispatch | impl-1 (cdocs:implementer, opus) | clauthier worktree `../remove-graphify` (branch `remove-graphify`); weftwise worktree `remove-graphify` | 2026-10-09T03:17 | iterate round 1, phases 1-3 |
 
 ## Steering Log
 
